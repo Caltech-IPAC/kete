@@ -1,0 +1,51 @@
+# Visual Studio Proj Files
+.venv*
+.env
+.vscode
+
+# hide intellij files
+.idea
+
+# Cache
+.mypy_cache
+*__pycache__
+*.pyc
+*.coverage
+.coverage*
+*.pytest_cache
+
+# database files
+*.db*
+
+# dis pkg
+*egg-info
+*.eggs
+dist
+_skbuild
+build
+_skbuild
+
+# Mac files
+.DS_Store
+
+# Ignore built library
+*.so
+*.mod
+*.lock
+
+target/*
+*.lock
+
+# Ignore built documents
+doc/html
+doc/doctrees
+doc/auto_examples
+doc/plot_directive
+doc/doctest
+doc/latex
+doc/sg_execution_times.rst
+*.mod
+
+# Ignored downloaded cached files
+**/data/*.json.gz
+**/data/neowise_diameters_albedos*

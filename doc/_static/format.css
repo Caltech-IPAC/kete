@@ -1,0 +1,12 @@
+.function,
+.class {
+    border-bottom: 3px solid #d0d0d0;
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
+.method,
+.property {
+    padding-bottom: 10px;
+    padding-top: 10px;
+}

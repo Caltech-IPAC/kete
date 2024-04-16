@@ -1,0 +1,38 @@
+# This workflow will install Python dependencies, run tests, lint, and build docs
+# This run for every pull request
+
+name: Build Docs
+
+on:
+  push:
+    branches: [ "main" ]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip setuptools
+    - name: Build neospy
+      run: |
+        python3 -m pip install '.[dev]' -v
+    - name: Build Docs
+      run: |
+        (cd doc && make clean && make html && make doctest)
+    - name: Archive Docs
+      uses: actions/upload-artifact@v2
+      with:
+        name: "docs"
+        path:
+          doc/html/*

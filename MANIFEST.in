@@ -1,0 +1,3 @@
+include src/neospy/data/*
+include src/neospy/_rust*
+exclude src/neospy/data/*.gz

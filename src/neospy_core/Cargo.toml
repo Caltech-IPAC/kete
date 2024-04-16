@@ -1,0 +1,44 @@
+[package]
+name = "neospy_core"
+version = "0.2.0"
+edition = "2021"
+
+[lib]
+name = "neospy_core"
+
+[dependencies]
+itertools = "*"
+kdtree = "0.7.0"
+lazy_static = "*"
+nalgebra = {version = "*"}
+pathfinding = "4.3.0"
+pyo3 = { version =  "0.21", optional=true }
+rayon = "*"
+bincode = {version = "2.0.0-rc.3", features=["derive", "serde"]}
+serde = { version = "*", features = ["derive"] }
+crossbeam = "*"
+
+
+[dev-dependencies]
+criterion = { version = "*", features = ["html_reports"] }
+
+# pprof is used for flame graphs, this is failing on windows currently so only
+# linux and mac are supported here.
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+pprof = { version = "0.13", features = ["flamegraph", "criterion"] }
+
+# macos needs the frame-pointer flag, however this doesn't function on linux
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+pprof = { version = "0.13", features = ["flamegraph", "criterion", "frame-pointer"] }
+
+[[bench]]
+name = "propagation"
+harness = false
+
+[[bench]]
+name = "spice"
+harness = false
+
+[[bench]]
+name = "thermal"
+harness = false
