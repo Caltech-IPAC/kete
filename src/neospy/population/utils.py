@@ -87,7 +87,7 @@ def sample_orbits(filt, n_samples, bandwidth=0.05, seed=42):
         h_mag = np.zeros(len(data))
         filt_bool = filt(data.peri_dist, data.ecc, h_mag)
         filt_bool = filt_bool & (data.incl >= 0.0)
-        data['epoch'] = epoch
+        data["epoch"] = epoch
         if len(data[filt_bool]) >= n_samples:
             data["peri_arg"] %= 360
             data["lon_node"] %= 360
