@@ -7,7 +7,6 @@ import logging
 import urllib
 import os
 import zipfile
-from importlib import resources
 from urllib3.util.retry import Retry
 
 
@@ -25,12 +24,10 @@ by changing this variable after importing neospy.
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "data_path",
     "cache_path",
     "cached_file_download",
     "cached_gzip_json_download",
     "cached_zip_download",
-    "data_ls",
     "get_cache_size",
 ]
 
@@ -50,35 +47,12 @@ def cache_path(subfolder=""):
     return path
 
 
-def data_path(subfolder="", module_path="neospy.data"):
-    """
-    Helper function to the absolute path of the neospy data path.
-
-    The data path is where core data files are stored for neospy, such as required
-    spice kernels.
-    """
-    # Python > 3.9 needs this
-    try:
-        return os.path.abspath(resources.files(module_path).joinpath(subfolder))
-    except AttributeError:
-        pass
-
-    # python <= 3.9 needs this
-    with resources.path(module_path, "") as p:
-        return os.path.abspath(p / subfolder)
-
-
 def cache_ls(subfolder=""):
     """List the contents of the neospy cache directory"""
     path = os.path.join(cache_path(), subfolder)
     if not os.path.isdir(path):
         return ValueError(f"({path} is not a directory.)")
     return sorted(os.listdir(path))
-
-
-def data_ls():
-    """List the contents of the neospy data directory specified."""
-    return sorted(os.listdir(data_path(".")))
 
 
 def get_cache_size():
@@ -88,7 +62,7 @@ def get_cache_size():
     return (
         sum(
             os.path.getsize(os.path.join(dirpath, filename))
-            for dirpath, dirnames, filenames in os.walk(cache_path())
+            for dirpath, _, filenames in os.walk(cache_path())
             for filename in filenames
         )
         / 1024**2
@@ -142,7 +116,7 @@ def cached_gzip_json_download(url, force_download=False, subfolder=""):
 
 def cached_zip_download(url, force_download=False, subfolder=""):
     """
-    Download a zipped file to the `neospy/data` directory and unzip it in place.
+    Download a zipped file to the cache directory and unzip it in place.
     Returning the path to the folder where it is unzipped.
 
     This operation is cached, so requesting the same URL will result in the previously
