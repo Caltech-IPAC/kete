@@ -182,7 +182,12 @@ class SpiceKernels:
 
     @staticmethod
     def cached_kernel_horizons_download(
-        name, jd_start, jd_end, exact_name=False, update_cache=False
+        name,
+        jd_start,
+        jd_end,
+        exact_name=False,
+        update_cache=False,
+        apparition_year=None,
     ):
         """
         Download a SPICE kernel from JPL Horizons and save it directly into the Cache.
@@ -208,8 +213,18 @@ class SpiceKernels:
         update_cache:
             If the current state of the cache should be ignored and the file
             re-downloaded.
+        apparition_year:
+            If the object is a comet, retrieve the orbit fit which is previous to this
+            specified year. If this is not provided, then default to the most recent
+            epoch of orbit fit. Ex: `apparition_year=1980` will return the closest
+            epoch before 1980.
         """
         from .mpc import unpack_designation
+
+        if not isinstance(jd_start, Time):
+            jd_start = Time(jd_start)
+        if not isinstance(jd_end, Time):
+            jd_end = Time(jd_end)
 
         if isinstance(name, str):
             try:
@@ -227,11 +242,19 @@ class SpiceKernels:
         )
         if "object" not in name_dat.json():
             raise ValueError("Failed to find object: ", str(name_dat.json()))
-        comets = "c" in name_dat.json()["object"]["kind"].lower()
+        comet = "c" in name_dat.json()["object"]["kind"].lower()
+
+        if comet and apparition_year is None:
+            apparition_year = jd_end.ymd[0]
+
         spk_id = int(name_dat.json()["object"]["spkid"])
 
         dir_path = os.path.join(cache_path(), "kernels")
-        filename = os.path.join(dir_path, f"{spk_id}.bsp")
+
+        if apparition_year is not None:
+            filename = os.path.join(dir_path, f"{spk_id}_epoch_{apparition_year}.bsp")
+        else:
+            filename = os.path.join(dir_path, f"{spk_id}.bsp")
 
         if os.path.isfile(filename) and not update_cache:
             return
@@ -239,14 +262,9 @@ class SpiceKernels:
         if not os.path.isdir(dir_path):
             os.makedirs(dir_path)
 
-        if not isinstance(jd_start, Time):
-            jd_start = Time(jd_start)
-        if not isinstance(jd_end, Time):
-            jd_end = Time(jd_end)
         jd_start = jd_start.strftime("%Y-%m-%d")
         jd_end = jd_end.strftime("%Y-%m-%d")
-
-        cap = "CAP%3B" if comets else ""
+        cap = f"CAP<{apparition_year}%3B" if comet else ""
         response = requests.get(
             f"https://ssd.jpl.nasa.gov/api/horizons.api?COMMAND='DES={spk_id}%3B{cap}'"
             f"&EPHEM_TYPE=SPK&START_TIME='{jd_start}'&STOP_TIME='{jd_end}'&CENTER=0",
