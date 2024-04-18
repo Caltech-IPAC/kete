@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added support for querying SPK kernels of a specific epoch of fit from JPL Horizons.
+
+### Changed
+
+- Updated NAIF ID list to include new designations for about 20-30 comets.
+
 
 ## [0.2.0]  - 2024-3-16
 
@@ -19,6 +27,6 @@ Initial Release
   modeling, tools for computing what minor planets can be seen by an observer.
   Along with many helpful interfaces to web tools such as JPL Horizons or IPAC's IRSA.
 
-### Added
+
 [Unreleased]: https://github.com/IPAC-SW/neospy/tree/main
 [0.2.0]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.0

@@ -196,18 +196,19 @@ impl SpkSegmentCollection {
 
     /// Given an SPK filename, load all the segments present inside of it.
     /// These segments are added to the SPK singleton in memory.
-    pub fn load_file(&mut self, filename: &str) -> Result<(), NEOSpyError> {
+    pub fn load_file(&mut self, filename: &str) -> Result<Daf, NEOSpyError> {
         let mut file = std::fs::File::open(filename)?;
         let mut buffer = Vec::new();
         let _ = file.read_to_end(&mut buffer)?;
         let mut buffer = Cursor::new(&buffer);
 
-        self.load_segments(&mut buffer)
+        let daf = self.load_segments(&mut buffer)?;
+        Ok(daf)
     }
 
     /// Given a reference to a buffer, load all the segments present inside of it.
     /// These segments are added to the SPK singleton in memory.
-    pub fn load_segments<T: Read + Seek>(&mut self, mut buffer: T) -> Result<(), NEOSpyError> {
+    pub fn load_segments<T: Read + Seek>(&mut self, mut buffer: T) -> Result<Daf, NEOSpyError> {
         let daf = Daf::try_load_header(&mut buffer)?;
         if daf.daf_type != DAFType::Spk {
             return Err(NEOSpyError::IOError(
@@ -222,7 +223,7 @@ impl SpkSegmentCollection {
                 .push(SpkSegment::from_summary(&mut buffer, summary)?);
         }
 
-        Ok(())
+        Ok(daf)
     }
 
     /// Return all mappings from one object to another.
@@ -302,7 +303,7 @@ impl SpkSegmentCollection {
 
         for preload in PRELOAD_SPKS {
             let mut de440 = Cursor::new(preload);
-            self.load_segments(&mut de440).unwrap();
+            let _ = self.load_segments(&mut de440).unwrap();
         }
         self.build_cache();
     }
