@@ -50,24 +50,6 @@ pub struct SPKFile {
 }
 
 impl SPKFile {
-    /// Get the raw state from the loaded SPK file.
-    /// This state will have the center and frame of whatever was originally loaded
-    /// into the file.
-    pub fn try_get_raw_state(&self, id: isize, jd: f64) -> Result<State, NEOSpyError> {
-        for segment in self.segments.iter() {
-            if id == segment.obj_id && segment.contains(jd) {
-                return segment.try_get_state(jd);
-            }
-        }
-        Err(NEOSpyError::DAFLimits(
-            format!(
-                "Object ({}) does not have an SPK record for the target JD.",
-                id
-            )
-            .to_string(),
-        ))
-    }
-
     /// Given an SPK filename, load all the segments present inside of it.
     /// These segments are added to the SPK singleton in memory.
     pub fn from_file(filename: &str) -> Result<Self, NEOSpyError> {
