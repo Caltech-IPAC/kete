@@ -7,7 +7,7 @@
 /// ```
 ///
 ///
-use super::daf::{DAFType, Daf};
+use super::daf::{DAFType, DafHeader};
 use super::pck_segments::*;
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
@@ -44,7 +44,7 @@ impl PckSegmentCollection {
     /// Given an PCK buffer, load all the segments present inside of it.
     /// These segments are added to the PCK singleton in memory.
     pub fn load_segments<T: Read + Seek>(&mut self, mut buffer: T) -> Result<(), NEOSpyError> {
-        let daf = Daf::try_load_header(&mut buffer)?;
+        let daf = DafHeader::try_load_header(&mut buffer)?;
         if daf.daf_type != DAFType::Pck {
             return Err(NEOSpyError::IOError(
                 "Attempted to load a DAF file which is not an PCK as an PCK.".into(),

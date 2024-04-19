@@ -18,7 +18,7 @@
 /// ```
 ///
 ///
-use super::daf::{DAFType, Daf};
+use super::daf::{DAFType, DafHeader};
 use super::spk_segments::*;
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
@@ -41,21 +41,16 @@ const PRELOAD_SPKS: &[&[u8]] = &[
     include_bytes!("../../data/20000704.bsp"),
 ];
 
-/// A collection of segments.
+/// Contents of an SPK file.
 #[derive(Debug)]
-pub struct SpkSegmentCollection {
-    segments: Vec<SpkSegment>,
-    map_cache: HashMap<(isize, isize), Vec<isize>>,
+pub struct SPKFile {
+    header: Box<DafHeader>,
 
-    /// Map from object id to all connected pairs.
-    nodes: HashMap<isize, HashSet<(isize, isize)>>,
+    segments: Vec<SpkSegment>,
 }
 
-/// Define the SPK singleton structure.
-pub type SpkSingleton = ShardedLock<SpkSegmentCollection>;
-
-impl SpkSegmentCollection {
-    /// Get the raw state from the loaded SPK files.
+impl SPKFile {
+    /// Get the raw state from the loaded SPK file.
     /// This state will have the center and frame of whatever was originally loaded
     /// into the file.
     pub fn try_get_raw_state(&self, id: isize, jd: f64) -> Result<State, NEOSpyError> {
@@ -71,6 +66,41 @@ impl SpkSegmentCollection {
             )
             .to_string(),
         ))
+    }
+
+    /// Given an SPK filename, load all the segments present inside of it.
+    /// These segments are added to the SPK singleton in memory.
+    pub fn from_file(filename: &str) -> Result<Self, NEOSpyError> {
+        let mut file = std::fs::File::open(filename)?;
+        let mut buffer = Vec::new();
+        let _ = file.read_to_end(&mut buffer)?;
+        let mut buffer = Cursor::new(&buffer);
+
+        Self::from_buffer(&mut buffer)
+    }
+
+    /// Given a reference to a buffer, load all the segments present inside of it.
+    /// These segments are added to the SPK singleton in memory.
+    pub fn from_buffer<T: Read + Seek>(mut buffer: T) -> Result<Self, NEOSpyError> {
+        let header = DafHeader::try_load_header(&mut buffer)?;
+        if header.daf_type != DAFType::Spk {
+            return Err(NEOSpyError::IOError(
+                "Attempted to load a DAF file which is not an SPK as an SPK.".into(),
+            ));
+        }
+
+        let summaries = header.try_load_summaries(&mut buffer)?;
+
+        let mut segments = Vec::new();
+
+        for summary in summaries {
+            segments.push(SpkSegment::from_summary(&mut buffer, summary)?);
+        }
+
+        Ok(Self {
+            header: Box::new(header),
+            segments,
+        })
     }
 
     /// For a given NAIF ID, return all increments of time which are currently loaded.
@@ -110,6 +140,48 @@ impl SpkSegmentCollection {
         avail_times.push(cur_segment);
 
         avail_times
+    }
+
+    /// Return the comments in the SPK file.
+    pub fn get_comments(&self) -> &String {
+        &self.header.comments
+    }
+}
+
+/// A collection of segments.
+#[derive(Debug)]
+pub struct SpkCollection {
+    /// Collection of SPK file information
+    pub files: Vec<SPKFile>,
+
+    map_cache: HashMap<(isize, isize), Vec<isize>>,
+
+    /// Map from object id to all connected pairs.
+    nodes: HashMap<isize, HashSet<(isize, isize)>>,
+}
+
+/// Define the SPK singleton structure.
+pub type SpkSingleton = ShardedLock<SpkCollection>;
+
+impl SpkCollection {
+    /// Get the raw state from the loaded SPK files.
+    /// This state will have the center and frame of whatever was originally loaded
+    /// into the file.
+    pub fn try_get_raw_state(&self, id: isize, jd: f64) -> Result<State, NEOSpyError> {
+        for file in self.files.iter() {
+            for segment in file.segments.iter() {
+                if id == segment.obj_id && segment.contains(jd) {
+                    return segment.try_get_state(jd);
+                }
+            }
+        }
+        Err(NEOSpyError::DAFLimits(
+            format!(
+                "Object ({}) does not have an SPK record for the target JD.",
+                id
+            )
+            .to_string(),
+        ))
     }
 
     /// Load a state from the file, then attempt to change the center to the center id
@@ -155,10 +227,12 @@ impl SpkSegmentCollection {
     pub fn loaded_objects(&self, include_centers: bool) -> HashSet<isize> {
         let mut found = HashSet::new();
 
-        for segment in self.segments.iter() {
-            let _ = found.insert(segment.obj_id);
-            if include_centers {
-                let _ = found.insert(segment.center_id);
+        for file in self.files.iter() {
+            for segment in file.segments.iter() {
+                let _ = found.insert(segment.obj_id);
+                if include_centers {
+                    let _ = found.insert(segment.center_id);
+                }
             }
         }
         found
@@ -194,38 +268,6 @@ impl SpkSegmentCollection {
         }
     }
 
-    /// Given an SPK filename, load all the segments present inside of it.
-    /// These segments are added to the SPK singleton in memory.
-    pub fn load_file(&mut self, filename: &str) -> Result<Daf, NEOSpyError> {
-        let mut file = std::fs::File::open(filename)?;
-        let mut buffer = Vec::new();
-        let _ = file.read_to_end(&mut buffer)?;
-        let mut buffer = Cursor::new(&buffer);
-
-        let daf = self.load_segments(&mut buffer)?;
-        Ok(daf)
-    }
-
-    /// Given a reference to a buffer, load all the segments present inside of it.
-    /// These segments are added to the SPK singleton in memory.
-    pub fn load_segments<T: Read + Seek>(&mut self, mut buffer: T) -> Result<Daf, NEOSpyError> {
-        let daf = Daf::try_load_header(&mut buffer)?;
-        if daf.daf_type != DAFType::Spk {
-            return Err(NEOSpyError::IOError(
-                "Attempted to load a DAF file which is not an SPK as an SPK.".into(),
-            ));
-        }
-
-        let summaries = daf.try_load_summaries(&mut buffer)?;
-
-        for summary in summaries {
-            self.segments
-                .push(SpkSegment::from_summary(&mut buffer, summary)?);
-        }
-
-        Ok(daf)
-    }
-
     /// Return all mappings from one object to another.
     ///
     /// These mappings are used to be able to change the center ID from whatever is saved in
@@ -258,8 +300,10 @@ impl SpkSegmentCollection {
             }
         }
 
-        for segment in self.segments.iter() {
-            update_nodes(segment, &mut nodes);
+        for file in self.files.iter() {
+            for segment in file.segments.iter() {
+                update_nodes(segment, &mut nodes);
+            }
         }
 
         let loaded = self.loaded_objects(true);
@@ -291,19 +335,28 @@ impl SpkSegmentCollection {
         self.nodes = nodes;
     }
 
+    /// Given an SPK filename, load all the segments present inside of it.
+    /// These segments are added to the SPK singleton in memory.
+    pub fn load_file(&mut self, filename: &str) -> Result<(), NEOSpyError> {
+        let file = SPKFile::from_file(filename)?;
+        self.files.push(file);
+        Ok(())
+    }
+
     /// Delete all segments in the SPK singleton, equivalent to unloading all files.
     pub fn reset(&mut self) {
-        let segments: SpkSegmentCollection = SpkSegmentCollection {
-            segments: Vec::new(),
+        let spk_files: SpkCollection = SpkCollection {
             map_cache: HashMap::new(),
             nodes: HashMap::new(),
+            files: Vec::new(),
         };
 
-        *self = segments;
+        *self = spk_files;
 
         for preload in PRELOAD_SPKS {
             let mut de440 = Cursor::new(preload);
-            let _ = self.load_segments(&mut de440).unwrap();
+            let file = SPKFile::from_buffer(&mut de440).unwrap();
+            self.files.push(file);
         }
         self.build_cache();
     }
@@ -321,10 +374,10 @@ pub fn get_spk_singleton() -> &'static SpkSingleton {
 
     unsafe {
         ONCE.call_once(|| {
-            let mut segments: SpkSegmentCollection = SpkSegmentCollection {
-                segments: Vec::new(),
+            let mut segments: SpkCollection = SpkCollection {
                 map_cache: HashMap::new(),
                 nodes: HashMap::new(),
+                files: Vec::new(),
             };
             segments.reset();
             let singleton: SpkSingleton = ShardedLock::new(segments);

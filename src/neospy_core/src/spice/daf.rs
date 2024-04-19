@@ -27,24 +27,10 @@ pub enum DAFType {
     Pck,
 }
 
-impl DAFType {
-    /// Try to parse the magic string of the DAF file into the correct DAFType.
-    pub fn parse_magic(magic: &str) -> Result<DAFType, NEOSpyError> {
-        match &magic.to_uppercase()[4..7] {
-            "SPK" => Ok(DAFType::Spk),
-            "PCK" => Ok(DAFType::Pck),
-            _ => Err(NEOSpyError::IOError(format!(
-                "File type currently unsupported by NEOSpy. Magic Number {:?}",
-                magic
-            ))),
-        }
-    }
-}
-
 /// DAF files header information.
 /// This contains
 #[derive(Debug)]
-pub struct Daf {
+pub struct DafHeader {
     /// Magic number within the DAF file corresponds to this DAF type.
     pub daf_type: DAFType,
 
@@ -78,14 +64,14 @@ pub struct Daf {
     /// FTP Validation string
     pub ftp_validation_str: String,
 
-    /// Vector containing all of the comment records.
-    /// This is trimmed to 1000 chars, as that is what SPKs use internally.
-    pub comments: Vec<String>,
+    /// The comment records.
+    /// Each record is trimmed to 1000 chars, as that is what SPKs use internally.
+    pub comments: String,
 }
 
 type Summary = (Box<[f64]>, Box<[i32]>);
 
-impl Daf {
+impl DafHeader {
     /// Try to load a single record from the DAF.
     pub fn try_load_record<T: Read + Seek>(
         file: &mut T,
@@ -98,7 +84,7 @@ impl Daf {
     /// Load the header information from the DAF file.
     pub fn try_load_header<T: Read + Seek>(mut file: T) -> Result<Self, NEOSpyError> {
         let bytes = Self::try_load_record(&mut file, 1)?;
-        let daf_type = DAFType::parse_magic(&bytes_to_str(&bytes[0..8]))?;
+        let daf_type = Self::parse_magic(&bytes_to_str(&bytes[0..8]))?;
 
         let little_endian = match bytes_to_str(&bytes[88..96]).to_lowercase().as_str() {
             "ltl-ieee" => true,
@@ -128,14 +114,14 @@ impl Daf {
         // so read the next (init_summary_record_index-2) records:
         // -1 for fortran indexing
         // -1 for having already read a single record
-        let mut comments = Vec::with_capacity(init_summary_record_index as usize - 2);
+        let mut comments: Vec<String> = Vec::with_capacity(init_summary_record_index as usize - 2);
         for _ in 0..(init_summary_record_index - 2) {
             // TODO: Check if the 1000 character limit is what other formats use.
             // 1k is used by SPK for sure.
             comments.push(read_str(&mut file, 1024)?.split_at(1000).0.into());
         }
 
-        Ok(Daf {
+        Ok(DafHeader {
             daf_type,
             n_doubles,
             n_ints,
@@ -145,7 +131,7 @@ impl Daf {
             final_summary_record_index,
             first_free,
             ftp_validation_str,
-            comments,
+            comments: comments.join(""),
         })
     }
 
@@ -165,7 +151,7 @@ impl Daf {
             if next_idx == 0 {
                 break;
             }
-            let bytes = Daf::try_load_record(file, next_idx as u64)?;
+            let bytes = DafHeader::try_load_record(file, next_idx as u64)?;
 
             next_idx = bytes_to_f64(&bytes[0..8], self.little_endian)? as i32;
             // let prev_idx = bytes_to_f64(&bytes[8..16], daf.little_endian)? as i32;
@@ -186,5 +172,17 @@ impl Daf {
             }
         }
         Ok(summaries)
+    }
+
+    /// Try to parse the magic string of the DAF file into the correct DAFType.
+    pub fn parse_magic(magic: &str) -> Result<DAFType, NEOSpyError> {
+        match &magic.to_uppercase()[4..7] {
+            "SPK" => Ok(DAFType::Spk),
+            "PCK" => Ok(DAFType::Pck),
+            _ => Err(NEOSpyError::IOError(format!(
+                "File type currently unsupported by NEOSpy. Magic Number {:?}",
+                magic
+            ))),
+        }
     }
 }

@@ -1,5 +1,5 @@
 use neospy_core::prelude::*;
-use neospy_core::spice::{get_pck_singleton, get_spk_singleton, try_name_from_id, Daf};
+use neospy_core::spice::{get_pck_singleton, get_spk_singleton, try_name_from_id, DafHeader};
 use pyo3::{pyfunction, PyResult};
 
 use crate::frame::PyFrames;
@@ -93,13 +93,20 @@ pub fn pck_state_to_earth(state: PyState) -> PyResult<Vector> {
 #[pyo3(name = "spk_available_info")]
 pub fn spk_available_info_py(naif_id: isize) -> Vec<(f64, f64, isize, String, usize)> {
     let singleton = get_spk_singleton().try_read().unwrap();
-    let info = singleton.available_info(naif_id);
 
-    info.iter()
-        .map(|(t0, t1, center, frame, segment_type)| {
-            (*t0, *t1, *center, frame.to_string(), *segment_type)
-        })
-        .collect()
+    let mut info = Vec::new();
+    for file in singleton.files.iter() {
+        let file_info = file.available_info(naif_id);
+
+        info.extend(
+            file_info
+                .iter()
+                .map(|(t0, t1, center, frame, segment_type)| {
+                    (*t0, *t1, *center, frame.to_string(), *segment_type)
+                }),
+        )
+    }
+    info
 }
 
 /// Return a list of MPC observatory codes, along with the latitude, longitude (deg),
@@ -168,6 +175,6 @@ pub fn spk_raw_state_py(id: isize, jd: f64) -> PyResult<PyState> {
 #[pyo3(name = "daf_header_info")]
 pub fn daf_header_info_py(filename: &str) -> PyResult<String> {
     let mut file = std::fs::File::open(filename)?;
-    let daf = Daf::try_load_header(&mut file)?;
-    Ok(daf.comments.join(""))
+    let daf = DafHeader::try_load_header(&mut file)?;
+    Ok(daf.comments)
 }
