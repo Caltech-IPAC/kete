@@ -32,6 +32,8 @@ move out of frame.
    :maxdepth: 2
 
    background
+   code_structure
+   propagation
 
 .. toctree::
    :maxdepth: 1
