@@ -77,7 +77,7 @@ because of the small `r` effect. Many objects which cross the path of planets fr
 will have relatively close encounters with planets with some regularity, making long
 term predictions of their orbits difficult. Typically it only takes a few close
 encounters to completely ruin any hope of predicting the position of an object in the
-future or past. This makes the inner solar system a chaotic system in the mathematically
+future or past. This makes the inner solar system a chaotic system in the mathematical
 sense, small deviations of input parameters have large implications for future behavior
 (despite the fact that everything should in theory be precisely computable).  
 
