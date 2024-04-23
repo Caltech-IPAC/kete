@@ -9,7 +9,7 @@ import numpy as np
 from .time import Time
 from . import _rust  # pylint: disable=no-name-in-module
 from .constants import AU_KM
-from .data import data_path, cached_file_download, cache_path
+from .data import cached_file_download, cache_path
 from .vector import Frames, State
 
 __all__ = ["SpiceKernels"]
@@ -306,12 +306,10 @@ class SpiceKernels:
         folders into the spice loaded memory.
         """
         cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bsp"))
-        cache_files.extend(glob.glob(os.path.join(data_path(), "**.bsp")))
         _rust.spk_reset()
         _rust.spk_load(cache_files)
 
         cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bpc"))
-        cache_files.extend(glob.glob(os.path.join(data_path(), "**.bpc")))
         _rust.pck_reset()
         _rust.pck_load(cache_files)
 
