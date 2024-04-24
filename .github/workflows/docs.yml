@@ -35,14 +35,18 @@ jobs:
         chmod -c -R +rX "doc/" | while read line; do
           echo "::warning title=Invalid file permissions automatically fixed::$line"
         done
-    - name: Archive Docs
-      uses: actions/upload-artifact@v2
+    # - name: Archive Docs
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: "github-pages"
+    #     path:
+    #       doc/html/*
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
       with:
         name: "github-pages"
         path:
-          doc/html/*
-    - name: Upload Pages artifact
-      uses: actions/upload-pages-artifact@v3
+          doc/html/
 
   deploy:
     # Add a dependency to the build job
