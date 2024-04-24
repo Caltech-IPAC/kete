@@ -61,7 +61,7 @@ def query_irsa_tap(
         jd = neospy.Time(56823.933738, 'mjd').jd
 
         # This time corresponds to this phase:
-        phase = neospy.wise.WISE_phase_from_jd(jd)
+        phase = neospy.wise.mission_phase_from_jd(jd)
 
         # Single source table on IRSA is then: phase.source_table
 

@@ -65,11 +65,16 @@ pub fn fov_spk_checks_py(obj_ids: Vec<isize>, fovs: FOVListLike) -> Vec<Vec<PySi
     let fovs = fovs.into_sorted_vec_fov();
 
     fovs.into_par_iter()
-        .map(|fov| {
-            let vis: Vec<_> = fov.check_spks(&obj_ids);
-            vis.into_iter()
+        .filter_map(|fov| {
+            let vis: Vec<_> = fov
+                .check_spks(&obj_ids)
+                .into_iter()
                 .filter_map(|pop| pop.map(|p| PySimultaneousStates(Box::new(p))))
-                .collect()
+                .collect();
+            match vis.is_empty() {
+                true => None,
+                false => Some(vis),
+            }
         })
         .collect()
 }

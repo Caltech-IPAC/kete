@@ -6,11 +6,11 @@ import shutil
 from collections import namedtuple
 from functools import lru_cache
 import tempfile
+from typing import Optional
 import requests
 import warnings
 import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
-from typing import Optional
 
 from astropy.io import fits  # type: ignore
 from astropy.wcs import WCS  # type: ignore
@@ -188,10 +188,20 @@ for year in range(2015, 2023):
 MISSION_PHASES = dict(sorted(MISSION_PHASES.items(), key=lambda x: x[1].jd_start))
 
 
-def WISE_phase_from_jd(jd: float):
+def mission_phase_from_jd(jd: float):
     """
     Return which mission phase is associated with the provided JD. Returns None if no
     matching mission phase.
+
+    The WISE mission has different phases based on the cryogen on board and the
+    hibernation period, resulting in different useable bands and different locations in
+    the IRSA archive.
+
+    Parameters
+    ----------
+    jd :
+        The Julian Date in TDB scaled time, this is fully sufficient to determine the
+        mission phase.
     """
     for mission in MISSION_PHASES.values():
         if mission.jd_start <= jd and jd < mission.jd_end:
@@ -199,8 +209,14 @@ def WISE_phase_from_jd(jd: float):
     return None
 
 
-def WISE_phase_from_scan(scan_id: str) -> Optional[MissionPhase]:
+def mission_phase_from_scan(scan_id: str) -> Optional[MissionPhase]:
     """
+    Return the mission phase for WISE from the provided scan id.
+
+    During reactivation, scan ids do not end on exact dates at the end of the year, and
+    as a result this function may return the wrong reactivation year for scan IDs near
+    the end of a year. However the Cryo/3-band/post-cryo phases will all be exact.
+
     The WISE mission has different phases based on the cryogen on board and the
     hibernation period, resulting in different useable bands and different locations in
     the IRSA archive.
@@ -208,32 +224,89 @@ def WISE_phase_from_scan(scan_id: str) -> Optional[MissionPhase]:
     Parameters
     ----------
     scan_id :
-        The scan id to be converted, this is fully sufficient to decide which mission
-        phase.
+        The scan id to be converted, this is sufficient to determine the mission phase.
     """
+
     scan_num = int(scan_id[0:5])
-    if scan_id[-1] in ["r", "s", "t"]:
-        # late reactivation
-        if scan_num <= 45686:  # final scan number of year 9
-            return MISSION_PHASES["Reactivation_2022"]
-        return None
-    else:
-        # first pass through the 5 digit scan number cycle
-        if scan_num > 40000:
-            # early reactivation
-            return MISSION_PHASES["Reactivation_2014"]
-        elif scan_num > 8745:
-            return MISSION_PHASES["Post-Cryo"]
-        elif scan_num <= 7101 and scan_id[-1] in "a":
+    letter = scan_id[-1]
+
+    if letter == "j":
+        return MISSION_PHASES["Cryo"]
+    if letter == "d":
+        return MISSION_PHASES["Post-Cryo"]
+    if letter == "c":
+        if scan_num <= 6217:
             return MISSION_PHASES["Cryo"]
-        elif scan_num <= 7097 and scan_id[-1] == "b":
-            return MISSION_PHASES["Cryo"]
-        elif scan_num <= 6217 and scan_id[-1] == "c":
-            return MISSION_PHASES["Cryo"]
-        elif scan_num <= 831 and scan_id[-1] == "j":
-            return MISSION_PHASES["Cryo"]
-        else:
+        elif scan_num <= 8101:
             return MISSION_PHASES["3-Band"]
+        return None
+    elif letter == "a":
+        if scan_num <= 7101:
+            return MISSION_PHASES["Cryo"]
+        elif scan_num <= 8744:
+            return MISSION_PHASES["3-Band"]
+        elif scan_num <= 12514:
+            return MISSION_PHASES["Post-Cryo"]
+        elif scan_num <= 55858:
+            return MISSION_PHASES["Reactivation_2014"]
+        elif scan_num <= 66982:
+            return MISSION_PHASES["Reactivation_2015"]
+        elif scan_num <= 78154:
+            return MISSION_PHASES["Reactivation_2016"]
+        elif scan_num <= 89305:
+            return MISSION_PHASES["Reactivation_2017"]
+        elif scan_num <= 99799:
+            return MISSION_PHASES["Reactivation_2018"]
+        return None
+    elif letter == "b":
+        if scan_num <= 7097:
+            return MISSION_PHASES["Cryo"]
+        elif scan_num <= 8741:
+            return MISSION_PHASES["3-Band"]
+        elif scan_num <= 12514:
+            return MISSION_PHASES["Post-Cryo"]
+        elif scan_num <= 55857:
+            return MISSION_PHASES["Reactivation_2014"]
+        elif scan_num <= 66981:
+            return MISSION_PHASES["Reactivation_2015"]
+        elif scan_num <= 78153:
+            return MISSION_PHASES["Reactivation_2016"]
+        elif scan_num <= 89301:
+            return MISSION_PHASES["Reactivation_2017"]
+        elif scan_num <= 99105:
+            return MISSION_PHASES["Reactivation_2018"]
+        return None
+
+    # 2018 or later
+    elif letter == "r":
+        if scan_num <= 1660:
+            return MISSION_PHASES["Reactivation_2018"]
+        elif scan_num <= 12819:
+            return MISSION_PHASES["Reactivation_2019"]
+        elif scan_num <= 24012:
+            return MISSION_PHASES["Reactivation_2020"]
+        elif scan_num <= 35181:
+            return MISSION_PHASES["Reactivation_2021"]
+        elif scan_num <= 46370:
+            return MISSION_PHASES["Reactivation_2022"]
+        elif scan_num <= 57041:
+            return MISSION_PHASES["Reactivation_2023"]
+        return None
+    elif letter == "s":
+        if scan_num <= 1615:
+            return MISSION_PHASES["Reactivation_2018"]
+        elif scan_num <= 12037:
+            return MISSION_PHASES["Reactivation_2019"]
+        elif scan_num <= 23769:
+            return MISSION_PHASES["Reactivation_2020"]
+        elif scan_num <= 34831:
+            return MISSION_PHASES["Reactivation_2021"]
+        elif scan_num <= 46369:
+            return MISSION_PHASES["Reactivation_2022"]
+        elif scan_num <= 56807:
+            return MISSION_PHASES["Reactivation_2023"]
+        return None
+    return None
 
 
 def cache_WISE_frame(scan_id, frame_num, band=3, im_type="int"):
@@ -256,7 +329,7 @@ def cache_WISE_frame(scan_id, frame_num, band=3, im_type="int"):
         if not os.path.isdir(dir_path):
             os.makedirs(dir_path)
 
-        phase = WISE_phase_from_scan(scan_id)
+        phase = mission_phase_from_scan(scan_id)
         url = f"{phase.frame_url}{scan_grp}/{scan_id}/{frame_num}/{filename}"
         res = requests.get(url, timeout=30)
         if res.status_code == 404:
@@ -298,7 +371,7 @@ def fetch_WISE_frame(scan_id, frame_num, band=3, im_type="int", cache=True):
 
     filename = f"{scan_id}{frame_num}-{band}-{im_type}-1b.{ext}"
 
-    phase = WISE_phase_from_scan(scan_id)
+    phase = mission_phase_from_scan(scan_id)
     url = f"{phase.frame_url}{scan_grp}/{scan_id}/{frame_num}/{filename}"
     res = requests.get(url, timeout=30)
 
@@ -328,7 +401,7 @@ def plot_4band(
     ecolor = [None, "blue", "green", "#ff7700", "red"]
 
     if bands is None:
-        bands = WISE_phase_from_scan(scan_id).bands
+        bands = mission_phase_from_scan(scan_id).bands
 
     plt.figure(dpi=120, figsize=(8, 8), facecolor="w")
     plt.suptitle(f"Scan: {scan_id}  Frame: {frame_num}")
