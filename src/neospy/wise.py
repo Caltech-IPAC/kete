@@ -7,8 +7,8 @@ from collections import namedtuple
 from functools import lru_cache
 import tempfile
 from typing import Optional, Union
-import requests
 import warnings
+import requests
 import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
 
@@ -135,6 +135,21 @@ MissionPhase = namedtuple(
         "source_table",
     ],
 )
+MissionPhase.__doc__ = (
+    "Information about a specific mission phase. The cannonical set of these is stored"
+    " in the :py:class:`MISSION_PHASES` constant."
+)
+MissionPhase.name.__doc__ = "Name of the mission phase."
+MissionPhase.jd_start.__doc__ = "JD date of the start of the mission phase."
+MissionPhase.jd_end.__doc__ = "JD date of the end of the mission phase."
+MissionPhase.bands.__doc__ = "WISE wavelength bands available during the phase."
+MissionPhase.frame_url.__doc__ = "URL of where the frames are stored on IRSA servers."
+MissionPhase.frame_meta_table.__doc__ = (
+    "SQL Table on IRSA where the metadata for the frames are stored."
+)
+MissionPhase.source_table.__doc__ = (
+    "SQL Table on IRSA where source information is stored."
+)
 
 MISSION_PHASES = {
     "Cryo": MissionPhase(
@@ -183,6 +198,7 @@ MISSION_PHASES = {
         source_table="neowiser_p1bs_psd",
     ),
 }
+"""Public released mission phases of WISE."""
 
 for year in range(2015, 2023):
     MISSION_PHASES[f"Reactivation_{year}"] = MissionPhase(
