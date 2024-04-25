@@ -34,8 +34,13 @@ dev = ["black>=23.1.0",
        "autodoc",
        "sphinx-gallery",
        "mypy",
-       "types-requests"]
-docs = ["sphinx", "autodoc", "sphinx-gallery"]
+       "types-requests",
+       ]
+docs = ["sphinx",
+        "autodoc",
+        "sphinx-gallery",
+        "sphinx_rtd_theme",
+        ]
 
 # Options for pytest
 [tool.pytest.ini_options]

@@ -2,9 +2,19 @@ API
 ===
 
 .. toctree::
+   :maxdepth: 1
+
+   constants
+
+.. toctree::
    :maxdepth: 2
 
-   core
-   interface
+   conversion
    flux
+   interface
+   observatory
    population
+   propagation
+   spice
+   time
+   vector

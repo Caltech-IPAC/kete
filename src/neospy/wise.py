@@ -6,7 +6,7 @@ import shutil
 from collections import namedtuple
 from functools import lru_cache
 import tempfile
-from typing import Optional
+from typing import Optional, Union
 import requests
 import warnings
 import matplotlib.pyplot as plt  # type: ignore
@@ -26,6 +26,15 @@ from .irsa import IRSA_URL, query_irsa_tap
 
 # pylint: disable-next=import-error
 from ._rust import WiseCmos, FOVList  # type: ignore
+
+__all__ = [
+    "MISSION_PHASES",
+    "mission_phase_from_jd",
+    "mission_phase_from_scan",
+    "plot_frames",
+    "fetch_WISE_frame",
+    "MissionPhase",
+]
 
 
 # This table contains calibrated flux correction values for the 4 different WISE bands.
@@ -386,22 +395,45 @@ def fetch_WISE_frame(scan_id, frame_num, band=3, im_type="int", cache=True):
     return fit
 
 
-def plot_4band(
+def plot_frames(
     scan_id,
     frame_num,
-    ra=None,
-    dec=None,
-    zoom=True,
-    bands=None,
+    ra: Optional[float | list[float]] = None,
+    dec: Optional[float | list[float]] = None,
+    zoom: Union[bool | float] = True,
+    bands: Optional[list[int]] = None,
 ):
     """
-    Plot a 2x2 grid of images showing the W1, W2, W3, and W4 data for the scan/frame
-    pair, centered on the ra,dec provided
+    Plot up to a 2x2 grid of images showing the W1, W2, W3, and W4 data for the
+    (scan, frame) pair, centered on the ra, dec if provided.
+
+    More than one RA/DEC pair may also be provided, but zooming will not work
+    in that case.
+
+    Parameters
+    ----------
+    scan_id :
+        The scan id of the desired frames.
+    frame_num :
+        The frame number of the desired frames.
+    ra :
+        The RA position of where to zoom/center the frames.
+    dec :
+        The RA position of where to zoom/center the frames.
+    zoom :
+        If the image should be centered and zoomed in on the provided RA/DEC.
+        This can also be a number, which will change the zoom level.
+    band :
+        Bands of WISE to plot, if not provided this will plot all bands for the
+        given mission phase.
     """
     ecolor = [None, "blue", "green", "#ff7700", "red"]
 
     if bands is None:
-        bands = mission_phase_from_scan(scan_id).bands
+        phase = mission_phase_from_scan(scan_id)
+        if phase is None:
+            raise ValueError("Cannot identify the mission phase for this scan id")
+        bands = phase.bands
 
     plt.figure(dpi=120, figsize=(8, 8), facecolor="w")
     plt.suptitle(f"Scan: {scan_id}  Frame: {frame_num}")
@@ -434,10 +466,10 @@ def plot_4band(
 
         if ra is not None and dec is not None:
             loc = SkyCoord(ra=ra * u.degree, dec=dec * u.degree, frame="icrs")
+            pixloc = wcs.world_to_pixel(loc)
             plt.scatter(
-                loc.ra,
-                loc.dec,
-                transform=plt.gca().get_transform("world"),
+                pixloc[0],
+                pixloc[1],
                 edgecolor=ecolor[band],
                 s=100,
                 linewidth=1,
@@ -446,7 +478,6 @@ def plot_4band(
             if zoom and len(np.atleast_1d(ra).ravel()) > 1:
                 warnings.warn("More than one object found in file, cannot zoom.")
             elif zoom:
-                pixloc = wcs.world_to_pixel(loc)
                 if band == 4:
                     # band 4's pixels are twice as big as the other three, so zoom more
                     # to ensure the scene is the same

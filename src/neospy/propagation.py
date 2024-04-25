@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 def propagate_n_body(
     states: list[State],
     jd: float,
-    include_asteroids=False,
+    include_asteroids: bool = False,
     a_terms: Optional[list[Optional[tuple[float, float, float, bool]]]] = None,
-    suppress_errors=True,
+    suppress_errors: bool = True,
 ) -> list[State]:
     """
     Propagate the provided :class:`~neospy.State` using N body mechanics to the

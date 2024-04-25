@@ -63,7 +63,7 @@ class SpiceKernels:
         target: Union[str, int],
         jd: Union[float, Time],
         center: str = "Sun",
-        frame=Frames.Ecliptic,
+        frame: Frames = Frames.Ecliptic,
     ) -> State:
         """
         Calculates the :class:`~neospy.State` of the target object at the
@@ -174,7 +174,7 @@ class SpiceKernels:
         return [(_rust.spk_get_name_from_id(o), o) for o in objects]
 
     @staticmethod
-    def cached_kernel_url_download(url, force_download=False):
+    def cached_kernel_url_download(url, force_download: bool = False):
         """
         Download the target url into the cache folder of spice kernels.
         """
@@ -183,11 +183,11 @@ class SpiceKernels:
     @staticmethod
     def cached_kernel_horizons_download(
         name,
-        jd_start,
-        jd_end,
-        exact_name=False,
-        update_cache=False,
-        apparition_year=None,
+        jd_start: Union[Time, float],
+        jd_end: Union[Time, float],
+        exact_name: bool = False,
+        update_cache: bool = False,
+        apparition_year: Optional[int] = None,
     ):
         """
         Download a SPICE kernel from JPL Horizons and save it directly into the Cache.
@@ -262,12 +262,12 @@ class SpiceKernels:
         if not os.path.isdir(dir_path):
             os.makedirs(dir_path)
 
-        jd_start = jd_start.strftime("%Y-%m-%d")
-        jd_end = jd_end.strftime("%Y-%m-%d")
+        jd_s_str = jd_start.strftime("%Y-%m-%d")
+        jd_e_str = jd_end.strftime("%Y-%m-%d")
         cap = f"CAP<{apparition_year}%3B" if comet else ""
         response = requests.get(
             f"https://ssd.jpl.nasa.gov/api/horizons.api?COMMAND='DES={spk_id}%3B{cap}'"
-            f"&EPHEM_TYPE=SPK&START_TIME='{jd_start}'&STOP_TIME='{jd_end}'&CENTER=0",
+            f"&EPHEM_TYPE=SPK&START_TIME='{jd_s_str}'&STOP_TIME='{jd_e_str}'&CENTER=0",
             timeout=30,
         )
 
