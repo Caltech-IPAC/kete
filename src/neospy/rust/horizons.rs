@@ -42,11 +42,13 @@ impl HorizonsCovariance {
         )
     }
 
+    /// Save the covariance matrix to a file.
     #[pyo3(name = "save")]
     pub fn py_save(&self, filename: String) -> PyResult<usize> {
         Ok(self.save(filename)?)
     }
 
+    /// Load a covariance matrix from a file.
     #[staticmethod]
     #[pyo3(name = "load")]
     pub fn py_load(filename: String) -> PyResult<Self> {
@@ -153,6 +155,7 @@ impl HorizonsProperties {
         }
     }
 
+    /// Cometary orbital elements.
     #[getter]
     pub fn elements(&self) -> PyResult<PyCometElements> {
         Ok(PyCometElements(prelude::CometElements {
@@ -189,6 +192,7 @@ impl HorizonsProperties {
         }))
     }
 
+    /// Convert the orbital elements of the object to a State.
     #[getter]
     pub fn state(&self) -> PyResult<PyState> {
         self.elements()?.as_state()
@@ -231,11 +235,13 @@ impl HorizonsProperties {
         )
     }
 
+    /// Save the horizons query to a file.
     #[pyo3(name = "save")]
     pub fn py_save(&self, filename: String) -> PyResult<usize> {
         Ok(self.save(filename)?)
     }
 
+    /// Load the horizons query from a file.
     #[staticmethod]
     #[pyo3(name = "load")]
     pub fn py_load(filename: String) -> PyResult<Self> {
