@@ -31,7 +31,6 @@ autodoc_default_options = {
 }
 
 autoclass_content = "both"
-templates_path = ["_static"]
 exclude_patterns = []
 
 # Napoleon settings
@@ -50,8 +49,7 @@ napoleon_use_rtype = False
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "alabaster"
-html_static_path = ["_static"]
+html_theme = "sphinx_rtd_theme"
 
 
 # -- Sphinx gallery settings --------------------------------------------------
@@ -86,8 +84,4 @@ nitpick_ignore = [
     ("py:class", "numpy.ma.core.MaskedArray"),
     ("py:class", "numpy.core.records.recarray"),
     ("py:class", "numpy._typing._array_like._ScalarType_co"),
-    # Mypy support is a little flaky still, ignore these internal links:
-    # https://github.com/sphinx-doc/sphinx/issues/10785
-    ("py:class", "VecMultiLike"),
-    ("py:class", "VecLike"),
 ]

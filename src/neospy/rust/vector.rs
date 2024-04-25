@@ -252,16 +252,19 @@ impl Vector {
         Self::new(new_dat.into(), target_frame)
     }
 
+    /// X coordinate in au.
     #[getter]
     pub fn x(&self) -> f64 {
         self.raw[0]
     }
 
+    /// Y coordinate in au.
     #[getter]
     pub fn y(&self) -> f64 {
         self.raw[1]
     }
 
+    /// Z coordinate in au.
     #[getter]
     pub fn z(&self) -> f64 {
         self.raw[2]

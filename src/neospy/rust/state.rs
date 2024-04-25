@@ -54,12 +54,20 @@ impl PyState {
     }
 
     /// Change the coordinate frame of the object to the target frame.
+    ///
+    /// Parameters
+    /// ----------
+    /// frame : Frame
+    ///     New frame to change to.
     pub fn change_frame(&self, frame: PyFrames) -> PyResult<Self> {
         let mut state = self.0.clone();
         state.try_change_frame(frame.into())?;
         Ok(Self(state))
     }
 
+    /// Change the center ID of the state from the current state to the target state.
+    ///
+    /// If the desired state is not a known NAID id this will raise an exception.
     pub fn change_center(&self, naif_id: isize) -> PyResult<Self> {
         let mut state = self.0.clone();
         let spk = neospy_core::prelude::get_spk_singleton()

@@ -1,5 +1,7 @@
 from .data import cached_file_download
 
+__all__ = ["fetch_ZTF_file"]
+
 ZTF_IRSA_TABLES = {
     "ztf.ztf_current_meta_cal": "ZTF Calibration Metadata Table",
     "ztf.ztf_current_meta_deep": "ZTF Deep Reference Images",
