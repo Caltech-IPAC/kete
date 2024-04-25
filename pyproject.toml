@@ -35,6 +35,7 @@ dev = ["black>=23.1.0",
        "sphinx-gallery",
        "mypy",
        "types-requests",
+       "sphinx_rtd_theme",
        ]
 docs = ["sphinx",
         "autodoc",
