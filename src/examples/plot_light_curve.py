@@ -63,3 +63,4 @@ for dt in dts:
 plt.plot(dts, fluxes)
 plt.xlabel("Time (days)")
 plt.ylabel("Flux (Jy)")
+plt.show()
