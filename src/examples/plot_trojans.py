@@ -29,7 +29,7 @@ trailing = longitudes < 0
 # Plot the results
 # %%
 # Histogram of Trojan counts
-# ==========================
+# --------------------------
 plt.figure(figsize=(6, 4), dpi=150)
 bins = np.linspace(-180, 180, 120)
 plt.hist(longitudes[leading], bins=bins, histtype="step", color="C0")
@@ -46,7 +46,7 @@ plt.show()
 
 # %%
 # Top down view of the solar system
-# =================================
+# ---------------------------------
 plt.figure(dpi=150)
 plt.scatter(*positions[:, leading], s=0.2, c="C0")
 plt.scatter(*positions[:, trailing], s=0.2, c="C2")
