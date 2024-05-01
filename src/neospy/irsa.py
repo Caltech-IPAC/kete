@@ -144,11 +144,11 @@ def query_irsa_tap(
     time.sleep(0.15)
     delay = 0.85
     while status.content.decode().upper() in ["QUEUED", "EXECUTING"]:
-        elapsed_min = time.time() - start
+        elapsed = time.time() - start
         # job is not complete
         if verbose:
             logger.info(
-                f"IRSA response ({elapsed_min: 0.1f} sec elapsed): %s",
+                f"IRSA response ({elapsed:0.1f} sec elapsed): %s",
                 status.content.decode(),
             )
         time.sleep(delay)
