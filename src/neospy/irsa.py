@@ -138,7 +138,7 @@ def query_irsa_tap(
     status.raise_for_status()
 
     # Status results can have one of 4 outcomes:
-    # QUEUED, EXECUTING, ERROR, COMPLETE
+    # QUEUED, EXECUTING, ERROR, COMPLETED
 
     start = time.time()
     time.sleep(0.15)
@@ -160,7 +160,7 @@ def query_irsa_tap(
         if delay < 30:
             delay += 1
 
-    if status.content.decode().upper() != "COMPLETE":
+    if status.content.decode().upper() != "COMPLETED":
         raise ValueError("Job Failed: ", status.content.decode())
 
     result = requests.get(url)
