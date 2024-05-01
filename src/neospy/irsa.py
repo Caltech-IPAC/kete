@@ -3,15 +3,21 @@ import warnings
 import io
 from functools import lru_cache
 import requests
+import time
+import logging
 import numpy as np
 import pandas as pd  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
+from xml.etree import ElementTree
 
 
 from astropy.wcs import WCS  # type: ignore
 from astropy.coordinates import SkyCoord  # type: ignore
 
 IRSA_URL = "https://irsa.ipac.caltech.edu"
+
+
+logger = logging.getLogger(__name__)
 
 
 @lru_cache()
@@ -38,7 +44,7 @@ def IRSA_column_data(table_name, base_url=IRSA_URL, auth=None):
 
 
 def query_irsa_tap(
-    query, upload_table=None, base_url=IRSA_URL, auth=None, timeout=None
+    query, upload_table=None, base_url=IRSA_URL, auth=None, timeout=None, verbose=False
 ):
     """
     Query IRSA's TAP service, optionally upload a table which will be included in the
@@ -86,6 +92,10 @@ def query_irsa_tap(
 
         result = neospy.irsa.query_irsa_tap(query, upload_table=data)
 
+    This is a blocking operation using TAP Async queries. This submits the query,
+    receives a response from IRSA containing a URL, then queries that URL for job
+    status. This continues until the job either completes or errors.
+
     Parameters
     ----------
     query :
@@ -96,6 +106,8 @@ def query_irsa_tap(
         The URL of the TAPS service to query, this defaults to IRSA.
     auth :
         An optional (username, password), this may be used to access restricted data.
+    verbose :
+        Print status responses as they are fetched from IRSA.
     """
     data = dict(FORMAT="CSV", QUERY=query)
     files = None
@@ -107,12 +119,53 @@ def query_irsa_tap(
         csv_output.seek(0)
         files = {"table.tbl": csv_output.read().encode()}
 
-    res = requests.post(
-        base_url + "/TAP/sync", data=data, files=files, auth=auth, timeout=timeout
+    submit = requests.post(
+        base_url + "/TAP/async", data=data, files=files, auth=auth, timeout=timeout
     )
-    if res.text[0] == "<":
-        raise ValueError("Query returned non-table results: \n\n" + res.text)
-    return pd.read_csv(io.StringIO(res.text))
+    submit.raise_for_status()
+
+    tree = ElementTree.fromstring(submit.content.decode())
+    element = tree.find("{*}results")
+
+    urls = [v for k, v in element[0].attrib.items() if "href" in k]
+    if len(urls) != 1:
+        raise ValueError("Unexpected results: ", submit.content.decode())
+    url = urls[0]
+
+    phase_url = url.replace("results/result", "phase")
+
+    status = requests.get(phase_url, timeout=timeout)
+    status.raise_for_status()
+
+    # Status results can have one of 4 outcomes:
+    # QUEUED, EXECUTING, ERROR, COMPLETE
+
+    start = time.time()
+    time.sleep(0.15)
+    delay = 0.85
+    while status.content.decode().upper() in ["QUEUED", "EXECUTING"]:
+        elapsed_min = time.time() - start
+        # job is not complete
+        if verbose:
+            logger.info(
+                f"IRSA response ({elapsed_min: 0.1f} sec elapsed): %s",
+                status.content.decode(),
+            )
+        time.sleep(delay)
+        status = requests.get(phase_url, timeout=timeout)
+        status.raise_for_status()
+
+        # Increase time between queries until there is 30 seconds between.
+        # Then continue forever.
+        if delay < 30:
+            delay += 1
+
+    if status.content.decode().upper() != "COMPLETE":
+        raise ValueError("Job Failed: ", status.content.decode())
+
+    result = requests.get(url)
+    result.raise_for_status()
+    return pd.read_csv(io.StringIO(result.text))
 
 
 def plot_fits_image(fit, vmin=-3, vmax=7, cmap="bone_r"):
