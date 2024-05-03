@@ -12,7 +12,7 @@ from .definitions import (
     nearly_neo_complete,
     neo_atira,
 )
-from .diameters import CumulativePowerLaw
+from .power_law import CumulativePowerLaw
 from ..conversion import compute_H
 from ..time import Time
 from ..vector import CometElements, State

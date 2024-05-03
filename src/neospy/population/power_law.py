@@ -147,12 +147,12 @@ class CumulativePowerLaw:
 
         self.partials = []
         self.partials_der = []
-        for i in range(len(self.slope_pairs)):
+        for i, (a, b) in enumerate(self.slope_pairs):
             self.partials.append(
                 partial(
                     _smooth_power_law_segment,
-                    a=self.slope_pairs[i][0],
-                    b=self.slope_pairs[i][1],
+                    a=a,
+                    b=b,
                     x_b=self.cutoffs[i],
                     offset=self.offsets[i],
                     delta=delta,
@@ -162,8 +162,8 @@ class CumulativePowerLaw:
             self.partials_der.append(
                 partial(
                     _smooth_power_law_segment_der,
-                    a=self.slope_pairs[i][0],
-                    b=self.slope_pairs[i][1],
+                    a=a,
+                    b=b,
                     x_b=self.cutoffs[i],
                     offset=self.offsets[i],
                     delta=delta,

@@ -14,10 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Change documentation to clarify that designations are unpacked.
 - Updated MPC Obs codes to include NEO Surveyor with code C58.
 - Updated NAIF ID list to include new designations for about 20-30 comets.
 - Renamed underlying `_rust` binary to `_core`.
 - Moved NAIF ID list to a dedicated CSV file which is read during compilation.
+- Rename `population.diameter` to `population.power_law`.
+
+### Removed
+
+- Removed main belt construction tools, out of scope and not accurate enough.
+- Removed redundant MPC name resolver function.
 
 
 ## [0.2.0]  - 2024-3-16

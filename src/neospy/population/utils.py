@@ -51,7 +51,7 @@ def sample_orbits(filt, n_samples, bandwidth=0.05, seed=42):
     .. testcode::
         :skipif: True
 
-        mpc_filter = neospy.population.definitions.complete_mba_inner_filter
+        mpc_filter = neospy.population.definitions.mba_inner
         new = neospy.population.utils.sample_orbits(mpc_filter, len(mpc_data))
 
     Parameters
