@@ -262,63 +262,6 @@ def which_group(
     return groups
 
 
-def mba_inner_complete(peri_dist, ecc, h_mag):
-    """
-    Observationally complete set of inner main belt objects.
-
-    Returns `True` if the object is in the inner main belt and is a part of what is
-    expected to be observationally complete.
-
-    Parameters
-    ----------
-    peri_dist:
-        Perihelion distance in units of AU.
-    ecc:
-        Eccentricity of the orbit.
-    h_mag:
-        The H magnitude of the object.
-    """
-    return mba_inner(peri_dist, ecc) & (h_mag < 17.75)
-
-
-def mba_middle_complete(peri_dist, ecc, h_mag):
-    """
-    Observationally complete set of middle main belt objects.
-
-    Returns `True` if the object is in the middle main belt and is a part of what is
-    expected to be observationally complete.
-
-    Parameters
-    ----------
-    peri_dist:
-        Perihelion distance in units of AU.
-    ecc:
-        Eccentricity of the orbit.
-    h_mag:
-        The H magnitude of the object.
-    """
-    return mba_middle(peri_dist, ecc) & (h_mag < 17.25)
-
-
-def mba_outer_complete(peri_dist, ecc, h_mag):
-    """
-    Observationally complete set of outer main belt objects.
-
-    Returns `True` if the object is in the outer main belt and is a part of what is
-    expected to be observationally complete.
-
-    Parameters
-    ----------
-    peri_dist:
-        Perihelion distance in units of AU.
-    ecc:
-        Eccentricity of the orbit.
-    h_mag:
-        The H magnitude of the object.
-    """
-    return mba_outer(peri_dist, ecc) & (h_mag < 16.75)
-
-
 def neo_amor_complete(peri_dist, ecc, h_mag):
     """
     Observationally complete set of Amors.

@@ -1,9 +1,8 @@
-from . import utils, main_belt, definitions, neas, diameters
+from . import utils, definitions, neas, power_law
 
 __all__ = [
     "utils",
-    "main_belt",
     "definitions",
     "neas",
-    "diameters",
+    "power_law",
 ]

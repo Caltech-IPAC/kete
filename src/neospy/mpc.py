@@ -468,33 +468,6 @@ def pack_designation(unpacked):
         return pack_provisional_designation(unpacked)
 
 
-@lru_cache
-def fetch_known_packed_principal_designations(force_download=False):
-    """
-    Download the most recent copy of the MPCs orbit catalogue and create a dictionary
-    mapping all packed designations to the MPC's 'Principal Designation' for the object.
-
-    This principal designation is the primary packed provisional designation that the
-    object has. Since all objects have one of these regardless of whether or not they
-    are numbered.
-
-    """
-    url = "https://minorplanetcenter.net/Extended_Files/mpcorb_extended.json.gz"
-    objs = cached_gzip_json_download(url, force_download)
-
-    mapper = {}
-
-    for o in objs:
-        desig = pack_provisional_designation(o["Principal_desig"])
-        for other_desg in o.get("Other_desigs", []):
-            other_desg = pack_provisional_designation(other_desg)
-            mapper[other_desg] = desig
-        if "Number" in o:
-            num = pack_permanent_designation(int(o["Number"][1:-1]))
-            mapper[num] = desig
-    return mapper
-
-
 @lru_cache()
 def fetch_known_packed_designations(force_download=False):
     """

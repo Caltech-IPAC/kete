@@ -61,7 +61,7 @@ impl HorizonsCovariance {
 #[pyclass(frozen, get_all, module = "neospy")]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct HorizonsProperties {
-    /// The MPC packed designation of the object.
+    /// The MPC designation of the object.
     desig: String,
 
     /// An optional group name to associate the object with a group.
