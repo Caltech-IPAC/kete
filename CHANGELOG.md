@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added support for querying SPK kernels of a specific epoch of fit from JPL Horizons.
+- Added support for looking up the MPC preferred unpacked designation for asteroids.
 
 ### Changed
 
