@@ -1232,6 +1232,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
 -2 C55    0.000000  +0.000000      0.000 0.0000000 +0.0000000                  Kepler
 -2 C56    0.000000  +0.000000      0.000 0.0000000 +0.0000000                  LISA-Pathfinder
 -2 C57    0.000000  +0.000000      0.000 0.0000000 +0.0000000                  TESS
+-2 C58    0.000000  +0.000000      0.000 0.0000000 +0.0000000                  NEO Surveyor
 -2 C59    0.000000  +0.000000      0.000 0.0000000 +0.0000000                  Yangwang-1
  3 C60    7.06926  +50.729791     89.682 0.634261  +0.770545    Germany        Argelander Institute for Astronomy Obs., Bonn
  3 C61    2.58202  +48.880216     36.501 0.658892  +0.749723    France         Chelles
