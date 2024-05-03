@@ -557,7 +557,7 @@ def fetch_known_designations(force_download=False):
     'A802 FA': '2',
     ...}
 
-    Ceres has 4 entries, which all map to '00001'.
+    Ceres has 4 entries, which all map to '1'.
     """
     # download the data from the MPC
     known_ids = cached_gzip_json_download(
