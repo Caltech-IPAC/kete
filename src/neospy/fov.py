@@ -1,5 +1,5 @@
 # pylint: disable-next=import-error
-from ._rust import (  # type: ignore
+from ._core import (  # type: ignore
     NeosCmos,
     WiseCmos,
     ZtfCcdQuad,

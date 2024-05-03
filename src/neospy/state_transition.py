@@ -3,7 +3,7 @@ from numpy.typing import NDArray
 from .vector import State
 
 # pylint: disable=no-name-in-module
-from . import _rust
+from . import _core
 
 
 def compute_stm(state: State, jd_end: float) -> NDArray:
@@ -34,7 +34,7 @@ def compute_stm(state: State, jd_end: float) -> NDArray:
     np.ndarray
         Returns the 6x6 state transition matrix.
     """
-    return np.array(_rust.compute_stm(np.array(state).ravel(), state.jd, jd_end)[1])
+    return np.array(_core.compute_stm(np.array(state).ravel(), state.jd, jd_end)[1])
 
 
 def propagate_covariance(state: State, covariance: NDArray, jd_end: float) -> NDArray:

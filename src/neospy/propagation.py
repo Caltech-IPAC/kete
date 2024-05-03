@@ -11,7 +11,7 @@ import numpy as np
 
 from .spice import SpiceKernels
 from .vector import Vector, State
-from . import _rust  # pylint: disable=no-name-in-module
+from . import _core  # pylint: disable=no-name-in-module
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ def propagate_n_body(
     """
     if a_terms is None:
         a_terms = [None for _ in range(len(states))]
-    return _rust.propagate_n_body_spk(
+    return _core.propagate_n_body_spk(
         states, jd, include_asteroids, a_terms, suppress_errors
     )
 
@@ -89,7 +89,7 @@ def propagate_two_body(
     State
         Final state after propagating to the target time.
     """
-    return _rust.propagate_two_body(states, jd, observer_pos)
+    return _core.propagate_two_body(states, jd, observer_pos)
 
 
 def _moid_single(obj0: State, other: State):
@@ -157,7 +157,7 @@ def state_visible(states: list[State], fovs, dt: float = 3) -> list[list[State]]
     dt:
         Length of time in days where 2-body mechanics is a good approximation.
     """
-    return _rust.fov_checks(states, fovs, dt)
+    return _core.fov_checks(states, fovs, dt)
 
 
 def spice_visible(desigs: list[str], fovs) -> list[State]:
@@ -177,4 +177,4 @@ def spice_visible(desigs: list[str], fovs) -> list[State]:
         A list of field of views from which to subselect objects which are visible.
     """
     obj_ids = [SpiceKernels.name_lookup(n)[1] for n in desigs]
-    return _rust.fov_spk_checks(obj_ids, fovs)
+    return _core.fov_spk_checks(obj_ids, fovs)

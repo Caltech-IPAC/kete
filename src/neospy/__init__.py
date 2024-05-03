@@ -33,7 +33,7 @@ from .horizons import HorizonsProperties
 
 
 # pylint: disable-next=import-error
-from ._rust import SimultaneousStates  # type: ignore
+from ._core import SimultaneousStates  # type: ignore
 
 import logging
 

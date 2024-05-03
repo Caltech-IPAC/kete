@@ -1,6 +1,6 @@
 
 [package]
-name = "_rust"
+name = "_core"
 version = "0.2.0"
 edition = "2021"
 
@@ -16,7 +16,7 @@ itertools = "*"
 rayon = "*"
 
 [lib]
-name = "_rust"
+name = "_core"
 path = "src/neospy/rust/lib.rs"
 crate-type = ["cdylib"]
 

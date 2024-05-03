@@ -25,7 +25,7 @@ from .vector import Vector
 from .irsa import IRSA_URL, query_irsa_tap
 
 # pylint: disable-next=import-error
-from ._rust import WiseCmos, FOVList  # type: ignore
+from ._core import WiseCmos, FOVList  # type: ignore
 
 __all__ = [
     "MISSION_PHASES",

@@ -24,7 +24,7 @@ build-backend = "maturin"
 
 [tool.maturin]
 python-source = "src"
-module-name = "neospy._rust"
+module-name = "neospy._core"
 
 [project.optional-dependencies]
 dev = ["black>=23.1.0",

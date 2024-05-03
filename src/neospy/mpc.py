@@ -13,7 +13,7 @@ from .vector import Vector, Frames, CometElements
 from .data import cached_gzip_json_download
 
 # pylint: disable-next=no-name-in-module
-from . import _rust  # type: ignore
+from . import _core  # type: ignore
 
 
 __all__ = ["unpack_designation", "pack_designation", "find_obs_code"]
@@ -25,20 +25,20 @@ logger = logging.getLogger(__name__)
 def find_obs_code(name: str):
     """
     Search known observatory codes, if a single matching observatory is found, this will
-    return the [lat, lon, altitude, obs code, description] in degrees and km as
+    return the [lat, lon, altitude, description, obs code] in degrees and km as
     appropriate.
 
     >>> neospy.mpc.find_obs_code("Palomar Mountain")
-    (33.35412, 243.13746, 1.69615, '675', 'Palomar Mountain')
+    (33.35412, 243.13746, 1.69615, 'Palomar Mountain', '675')
 
     """
-    codes = _rust.observatory_codes()
+    codes = _core.observatory_codes()
     found = []
     name_lower = name.lower().strip()
     for obs in codes:
-        if name_lower in obs[4].lower() or name_lower in obs[3].lower():
+        if name_lower in obs[3].lower() or name_lower in obs[4].lower():
             # If an exact match, return early.
-            if name == obs[4]:
+            if name == obs[3]:
                 return obs
             found.append(obs)
     if len(found) == 1:
