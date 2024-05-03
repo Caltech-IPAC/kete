@@ -113,8 +113,8 @@ pub fn obs_codes() -> Vec<(f64, f64, f64, String, String)> {
             row.lat,
             row.lon,
             row.altitude,
-            row.code.clone(),
             row.name.clone(),
+            row.code.clone(),
         ))
     }
     codes

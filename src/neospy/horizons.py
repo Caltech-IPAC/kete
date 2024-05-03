@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 # pylint: disable=import-error
-from ._rust import HorizonsProperties, HorizonsCovariance  # type: ignore
+from ._core import HorizonsProperties, HorizonsCovariance  # type: ignore
 
 __all__ = ["HorizonsProperties"]
 

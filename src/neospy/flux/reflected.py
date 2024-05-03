@@ -2,7 +2,7 @@ import numpy as np
 from ..vector import Vector
 
 # pylint: disable=no-name-in-module
-from .. import _rust  # type: ignore
+from .. import _core  # type: ignore
 
 
 def hg_phase_curve_correction(G: float, phase: float) -> float:
@@ -81,7 +81,7 @@ def hg_apparent_flux(
     sun2obj = Vector(sun2obj)
     sun2obs = Vector(sun2obs)
     # Jy / steradian per unit freq
-    return _rust.hg_apparent_flux(
+    return _core.hg_apparent_flux(
         sun2obj, sun2obs, H, G, c_hg, diameter, wavelength, geom_albedo
     )
 
@@ -118,4 +118,4 @@ def hg_absolute_to_apparent_mag(
     sun2obj = Vector(sun2obj)
     sun2obs = Vector(sun2obs)
 
-    return _rust.hg_apparent_mag(sun2obj, sun2obs, H, G)
+    return _core.hg_apparent_mag(sun2obj, sun2obs, H, G)

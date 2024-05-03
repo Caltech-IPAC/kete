@@ -7,7 +7,7 @@ import numpy as np
 import logging
 from typing import Union
 from numpy.typing import NDArray
-from . import _rust  # pylint: disable=no-name-in-module
+from . import _core  # pylint: disable=no-name-in-module
 from . import constants
 
 
@@ -138,7 +138,7 @@ def compute_eccentric_anomaly(
     mean_anomaly = np.radians(np.atleast_1d(mean_anomaly))
     peri_dist = np.atleast_1d(peri_dist)
     return np.degrees(
-        _rust.compute_eccentric_anomaly(eccentricity, mean_anomaly, peri_dist),
+        _core.compute_eccentric_anomaly(eccentricity, mean_anomaly, peri_dist),
         dtype=float,
     )
 

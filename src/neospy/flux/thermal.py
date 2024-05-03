@@ -5,10 +5,10 @@ import numpy as np
 from ..vector import Vector
 
 # pylint: disable=no-name-in-module
-from .. import _rust  # type: ignore
+from .. import _core  # type: ignore
 
 # pylint: disable=import-error
-from .._rust import (  # type: ignore
+from .._core import (  # type: ignore
     neatm_facet_temps,
     frm_facet_temps,
     FrmParams,
@@ -58,8 +58,8 @@ def black_body_radiation(temperature: Vector, wavelength: float) -> np.ndarray:
     """
     temperature = np.array(temperature, copy=False)
     if temperature.ndim == 0:
-        return _rust.black_body_flux([temperature], wavelength)[0]
-    return _rust.black_body_flux(list(temperature), wavelength)
+        return _core.black_body_flux([temperature], wavelength)[0]
+    return _core.black_body_flux(list(temperature), wavelength)
 
 
 def subsolar_temp(
@@ -91,7 +91,7 @@ def subsolar_temp(
         Temperature at the sub-solar point on the object in Kelvin.
     """
     obj2sun = Vector(obj2sun)
-    return _rust.sub_solar_temperature(obj2sun, geom_albedo, G, emissivity, beaming)
+    return _core.sub_solar_temperature(obj2sun, geom_albedo, G, emissivity, beaming)
 
 
 def neatm(
@@ -139,7 +139,7 @@ def neatm(
     """
     sun2obj = Vector(sun2obj)
     sun2obs = Vector(sun2obs)
-    return _rust.neatm_thermal(
+    return _core.neatm_thermal(
         sun2obj,
         sun2obs,
         geom_albedo,
@@ -193,7 +193,7 @@ def frm(
     """
     sun2obj = Vector(sun2obj)
     sun2obs = Vector(sun2obs)
-    return _rust.frm_thermal(
+    return _core.frm_thermal(
         sun2obj,
         sun2obs,
         geom_albedo,

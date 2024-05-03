@@ -1,7 +1,7 @@
 from ..vector import Vector
 
 # pylint: disable=no-name-in-module
-from .. import _rust  # type: ignore
+from .. import _core  # type: ignore
 
 
 __all__ = [
@@ -75,4 +75,4 @@ def comet_apparent_mags(
     else:
         mk2 = None
 
-    return _rust.comet_apparent_mags(sun2obj, sun2obs, mk1, mk2, phase_mag_slope)
+    return _core.comet_apparent_mags(sun2obj, sun2obs, mk1, mk2, phase_mag_slope)

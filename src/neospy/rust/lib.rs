@@ -26,7 +26,7 @@ mod vector;
 
 /// Python module which exposes all of the compiled rust functions.
 #[pymodule]
-fn _rust(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<frame::PyFrames>()?;
     m.add_class::<state::PyState>()?;
     m.add_class::<vector::Vector>()?;

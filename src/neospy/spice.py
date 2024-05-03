@@ -7,7 +7,7 @@ import requests
 import numpy as np
 
 from .time import Time
-from . import _rust  # pylint: disable=no-name-in-module
+from . import _core  # pylint: disable=no-name-in-module
 from .constants import AU_KM
 from .data import cached_file_download, cache_path
 from .vector import Frames, State
@@ -97,7 +97,7 @@ class SpiceKernels:
         target, ids = cls.name_lookup(target)
         center, center_id = cls.name_lookup(center)
         jd = _validate_time(jd)
-        return _rust.spk_state(ids, jd, center_id, frame)
+        return _core.spk_state(ids, jd, center_id, frame)
 
     @classmethod
     def name_lookup(cls, name: Union[int, str]) -> tuple[str, int]:
@@ -142,7 +142,7 @@ class SpiceKernels:
             return ("SSB", 0)
 
         try:
-            lookup_name = _rust.spk_get_name_from_id(int(name))
+            lookup_name = _core.spk_get_name_from_id(int(name))
         except ValueError:
             lookup_name = name
         lookup_name = lookup_name.lower()
@@ -170,8 +170,8 @@ class SpiceKernels:
         """
         Return the name of all objects which are currently loaded in the SPICE kernels.
         """
-        objects = _rust.spk_loaded()
-        return [(_rust.spk_get_name_from_id(o), o) for o in objects]
+        objects = _core.spk_loaded()
+        return [(_core.spk_get_name_from_id(o), o) for o in objects]
 
     @staticmethod
     def cached_kernel_url_download(url, force_download: bool = False):
@@ -306,12 +306,12 @@ class SpiceKernels:
         folders into the spice loaded memory.
         """
         cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bsp"))
-        _rust.spk_reset()
-        _rust.spk_load(cache_files)
+        _core.spk_reset()
+        _core.spk_load(cache_files)
 
         cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bpc"))
-        _rust.pck_reset()
-        _rust.pck_load(cache_files)
+        _core.pck_reset()
+        _core.pck_load(cache_files)
 
     @classmethod
     def earth_pos_to_ecliptic(
@@ -357,12 +357,12 @@ class SpiceKernels:
             Returns the equatorial state of the target in AU and AU/days.
         """
         jd = _validate_time(jd)
-        pos = _rust.wgs_lat_lon_to_ecef(
+        pos = _core.wgs_lat_lon_to_ecef(
             geodetic_lat, geodetic_lon, height_above_surface
         )
         pos = np.array(pos) / AU_KM
         _, center_id = cls.name_lookup(center)
-        return _rust.pck_earth_frame_to_ecliptic(pos, jd, center_id, name)
+        return _core.pck_earth_frame_to_ecliptic(pos, jd, center_id, name)
 
     @classmethod
     def moon_illumination_frac(cls, jd: Union[float, Time]):

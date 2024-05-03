@@ -13,7 +13,7 @@ from .vector import Vector, Frames, CometElements
 from .data import cached_gzip_json_download
 
 # pylint: disable-next=no-name-in-module
-from . import _rust  # type: ignore
+from . import _core  # type: ignore
 
 
 __all__ = ["unpack_designation", "pack_designation", "find_obs_code"]
@@ -25,20 +25,20 @@ logger = logging.getLogger(__name__)
 def find_obs_code(name: str):
     """
     Search known observatory codes, if a single matching observatory is found, this will
-    return the [lat, lon, altitude, obs code, description] in degrees and km as
+    return the [lat, lon, altitude, description, obs code] in degrees and km as
     appropriate.
 
     >>> neospy.mpc.find_obs_code("Palomar Mountain")
-    (33.35412, 243.13746, 1.69615, '675', 'Palomar Mountain')
+    (33.35412, 243.13746, 1.69615, 'Palomar Mountain', '675')
 
     """
-    codes = _rust.observatory_codes()
+    codes = _core.observatory_codes()
     found = []
     name_lower = name.lower().strip()
     for obs in codes:
-        if name_lower in obs[4].lower() or name_lower in obs[3].lower():
+        if name_lower in obs[3].lower() or name_lower in obs[4].lower():
             # If an exact match, return early.
-            if name == obs[4]:
+            if name == obs[3]:
                 return obs
             found.append(obs)
     if len(found) == 1:
@@ -536,6 +536,48 @@ def fetch_known_packed_designations(force_download=False):
     return packed_map
 
 
+@lru_cache()
+def fetch_known_designations(force_download=False):
+    """
+    Download the most recent copy of the MPCs known ID mappings in their unpacked
+    format.
+
+    This download only occurs the first time this function is called.
+
+    This then returns a dictionary of all known unpacked IDs to a single ID which is the
+    one that the MPC specifies as their default.
+
+    For example, here are the first two objects which are returned:
+
+    {'1': '1',
+    'A801 AA': '1',
+    'A899 OF': '1',
+    '1943 XB': '1',
+    '2': '2',
+    'A802 FA': '2',
+    ...}
+
+    Ceres has 4 entries, which all map to '1'.
+    """
+    # download the data from the MPC
+    known_ids = cached_gzip_json_download(
+        "https://minorplanetcenter.net/Extended_Files/mpc_ids.json.gz",
+        force_download,
+    )
+
+    # The data which is in the format {'#####"; ['#####', ...], ...}
+    # where the keys of the dictionary are the MPC default name, and the values are the
+    # other possible names.
+    # Reshape the MPC dictionary to be flat, with every possible name mapping to the
+    # MPC default name.
+    desig_map = {}
+    for name, others in known_ids.items():
+        desig_map[name] = name
+        for other in others:
+            desig_map[other] = name
+    return desig_map
+
+
 @lru_cache
 def fetch_known_packed_to_full_names(force_download=False):
     """
@@ -572,7 +614,7 @@ def fetch_known_packed_to_full_names(force_download=False):
     return lookup
 
 
-def normalize_names(dataset, col: str = "MPC_packed_name"):
+def normalize_names(dataset, col: str = "MPC_packed_name", name_lookup=None):
     """
     Given a Pandas Dataframe containing packed MPC names, alter the names to be the up
     to date MPC designation.
@@ -589,16 +631,20 @@ def normalize_names(dataset, col: str = "MPC_packed_name"):
     Parameters
     ----------
     dataset :
-        A pandas datafram which contains a column of packed MPC names.
+        A pandas dataframe which contains a column of packed MPC names.
     col :
         The column of the dataset which contains the packed MPC names.
+    name_lookup :
+        Dictionary mapping old names to current names, if None is provided, this will
+        use :py:func:`fetch_known_packed_designations`.
     """
-    lookup = fetch_known_packed_designations()
+    if name_lookup is None:
+        name_lookup = fetch_known_packed_designations()
     dataset = dataset.copy()
     new_names = []
     for item in dataset[col]:
         item = item.strip()
-        new_names.append(lookup.get(item, item))
+        new_names.append(name_lookup.get(item, item))
     dataset[col] = new_names
     return dataset
 
@@ -650,7 +696,7 @@ def fetch_known_orbit_data(url=None, force_download=False):
             arc_len = (float(t1) - float(t0)) * 365.25
 
         props = dict(
-            desig=pack_designation(desig),
+            desig=desig,
             g_phase=obj.get("G", None),
             h_mag=obj.get("H", None),
             group_name=obj.get("Orbit_type", None),

@@ -6,7 +6,7 @@ from __future__ import annotations
 from . import conversion
 
 # pylint: disable=import-error
-from ._rust import Vector, Frames, State, CometElements  # type: ignore
+from ._core import Vector, Frames, State, CometElements  # type: ignore
 
 
 __all__ = ["Frames", "Vector", "State", "CometElements"]
