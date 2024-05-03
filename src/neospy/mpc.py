@@ -631,7 +631,7 @@ def normalize_names(dataset, col: str = "MPC_packed_name", name_lookup=None):
     Parameters
     ----------
     dataset :
-        A pandas datafram which contains a column of packed MPC names.
+        A pandas dataframe which contains a column of packed MPC names.
     col :
         The column of the dataset which contains the packed MPC names.
     name_lookup :
