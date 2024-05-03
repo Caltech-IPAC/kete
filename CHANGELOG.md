@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Removed main belt construction tools, out of scope and not accurate enough.
+- Removed redundant MPC name resolver function.
 
 
 ## [0.2.0]  - 2024-3-16
