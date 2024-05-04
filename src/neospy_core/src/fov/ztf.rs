@@ -1,10 +1,99 @@
-//! # Definitios of joint field of views
-//! These field of views are made up of multiple contiguous patches of sky, typically full image arrays.
-use super::contiguous_fov::ZtfCcdQuad;
-use super::{closest_inside, Contains, FovLike, FOV};
+//! # ZTF Fov definitions.
+
+use super::{closest_inside, Contains, FovLike, OnSkyRectangle, SkyPatch, FOV};
 use crate::prelude::*;
 use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
+
+/// ZTF frame data, single quad of a single chip
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ZtfCcdQuad {
+    /// State of the observer
+    observer: State,
+
+    /// Patch of sky
+    pub patch: OnSkyRectangle,
+
+    /// Field ID
+    pub field: u32,
+
+    /// File Frac Day
+    /// String representation of the filename for this frame.
+    pub filefracday: u64,
+
+    /// Magnitude limit of this frame
+    pub maglimit: f64,
+
+    /// Filter ID
+    pub fid: usize,
+
+    /// Filter code used for the frame
+    pub filtercode: Box<str>,
+
+    /// Image Type Code
+    pub imgtypecode: Box<str>,
+
+    /// Which CCID was the frame taken with
+    pub ccdid: u8,
+
+    /// Quadrant ID
+    pub qid: u8,
+}
+
+impl ZtfCcdQuad {
+    /// Create a ZTF field of view
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        corners: [Vector3<f64>; 4],
+        observer: State,
+        field: u32,
+        filefracday: u64,
+        ccdid: u8,
+        filtercode: Box<str>,
+        imgtypecode: Box<str>,
+        qid: u8,
+        maglimit: f64,
+        fid: usize,
+    ) -> Self {
+        let patch = OnSkyRectangle::from_corners(corners, observer.frame);
+        Self {
+            patch,
+            observer,
+            field,
+            filefracday,
+            ccdid,
+            filtercode,
+            imgtypecode,
+            qid,
+            maglimit,
+            fid,
+        }
+    }
+}
+
+impl FovLike for ZtfCcdQuad {
+    fn get_fov(&self, index: usize) -> FOV {
+        if index != 0 {
+            panic!("FOV only has a single patch")
+        }
+        FOV::ZtfCcdQuad(self.clone())
+    }
+
+    #[inline]
+    fn observer(&self) -> &State {
+        &self.observer
+    }
+
+    #[inline]
+    fn contains(&self, obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
+        (0, self.patch.contains(obs_to_obj))
+    }
+
+    #[inline]
+    fn n_patches(&self) -> usize {
+        1
+    }
+}
 
 /// ZTF frame data, single quad of a single chip
 #[derive(Debug, Clone, Deserialize, Serialize)]

@@ -1,14 +1,18 @@
 //! # Field of View
 //! On-Sky field of view checks.
-pub mod contiguous_fov;
 pub mod fov_like;
-pub mod joint_fov;
+pub mod generic;
+pub mod neos;
 pub mod patches;
+pub mod wise;
+pub mod ztf;
 
-pub use contiguous_fov::*;
 pub use fov_like::*;
-pub use joint_fov::*;
+pub use generic::*;
+pub use neos::*;
 pub use patches::*;
+pub use wise::*;
+pub use ztf::*;
 
 use serde::{Deserialize, Serialize};
 
@@ -35,6 +39,9 @@ pub enum FOV {
 
     /// Full ZTF field of up to 64 individual files.
     ZtfField(ZtfField),
+
+    /// NEOS Visit.
+    NeosVisit(NeosVisit),
 }
 
 impl FOV {
@@ -47,6 +54,7 @@ impl FOV {
             FOV::GenericCone(fov) => fov.check_visible(states, dt_limit),
             FOV::GenericRectangle(fov) => fov.check_visible(states, dt_limit),
             FOV::ZtfField(fov) => fov.check_visible(states, dt_limit),
+            FOV::NeosVisit(fov) => fov.check_visible(states, dt_limit),
         }
     }
 
@@ -59,6 +67,7 @@ impl FOV {
             FOV::GenericCone(fov) => fov.observer(),
             FOV::GenericRectangle(fov) => fov.observer(),
             FOV::ZtfField(fov) => fov.observer(),
+            FOV::NeosVisit(fov) => fov.observer(),
         }
     }
 
@@ -71,6 +80,7 @@ impl FOV {
             FOV::GenericCone(fov) => fov.check_spks(obj_ids),
             FOV::GenericRectangle(fov) => fov.check_spks(obj_ids),
             FOV::ZtfField(fov) => fov.check_spks(obj_ids),
+            FOV::NeosVisit(fov) => fov.check_spks(obj_ids),
         }
     }
 }
