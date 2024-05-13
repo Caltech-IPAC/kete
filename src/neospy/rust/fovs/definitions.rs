@@ -17,7 +17,14 @@ pub struct PyWiseCmos(pub fov::WiseCmos);
 #[pyclass(module = "neospy", frozen, name = "NeosCmos")]
 #[derive(Clone, Debug)]
 #[allow(clippy::upper_case_acronyms)]
+
 pub struct PyNeosCmos(pub fov::NeosCmos);
+
+/// Field of view of a NEOS Visit.
+#[pyclass(module = "neospy", frozen, name = "NeosVisit")]
+#[derive(Clone, Debug)]
+#[allow(clippy::upper_case_acronyms)]
+pub struct PyNeosVisit(pub fov::NeosVisit);
 
 /// Field of view of a Single ZTF chips/quad combination.
 #[pyclass(module = "neospy", frozen, name = "ZtfCcdQuad")]
@@ -46,6 +53,7 @@ pub enum AllowedFOV {
     Rectangle(PyGenericRectangle),
     ZTF(PyZtfCcdQuad),
     ZTFField(PyZtfField),
+    NEOSVisit(PyNeosVisit),
 }
 
 impl AllowedFOV {
@@ -56,6 +64,7 @@ impl AllowedFOV {
             AllowedFOV::Rectangle(fov) => fov.0.observer().jd,
             AllowedFOV::ZTF(fov) => fov.0.observer().jd,
             AllowedFOV::ZTFField(fov) => fov.0.observer().jd,
+            AllowedFOV::NEOSVisit(fov) => fov.0.observer().jd,
         }
     }
 
@@ -67,6 +76,7 @@ impl AllowedFOV {
             AllowedFOV::NEOS(fov) => fov.0.get_fov(idx),
             AllowedFOV::ZTF(fov) => fov.0.get_fov(idx),
             AllowedFOV::ZTFField(fov) => fov.0.get_fov(idx),
+            AllowedFOV::NEOSVisit(fov) => fov.0.get_fov(idx),
         }
     }
 
@@ -77,6 +87,7 @@ impl AllowedFOV {
             AllowedFOV::NEOS(fov) => fov::FOV::NeosCmos(fov.0),
             AllowedFOV::ZTF(fov) => fov::FOV::ZtfCcdQuad(fov.0),
             AllowedFOV::ZTFField(fov) => fov::FOV::ZtfField(fov.0),
+            AllowedFOV::NEOSVisit(fov) => fov::FOV::NeosVisit(fov.0),
         }
     }
 
@@ -87,6 +98,7 @@ impl AllowedFOV {
             AllowedFOV::NEOS(fov) => fov.__repr__(),
             AllowedFOV::ZTF(fov) => fov.__repr__(),
             AllowedFOV::ZTFField(fov) => fov.__repr__(),
+            AllowedFOV::NEOSVisit(fov) => fov.__repr__(),
         }
     }
 }
@@ -99,6 +111,7 @@ impl IntoPy<PyObject> for AllowedFOV {
             Self::Rectangle(fov) => fov.into_py(py),
             Self::ZTF(fov) => fov.into_py(py),
             Self::ZTFField(fov) => fov.into_py(py),
+            Self::NEOSVisit(fov) => fov.into_py(py),
         }
     }
 }
@@ -111,6 +124,7 @@ impl From<fov::FOV> for AllowedFOV {
             fov::FOV::NeosCmos(fov) => AllowedFOV::NEOS(PyNeosCmos(fov)),
             fov::FOV::GenericRectangle(fov) => AllowedFOV::Rectangle(PyGenericRectangle(fov)),
             fov::FOV::ZtfField(fov) => AllowedFOV::ZTFField(PyZtfField(fov)),
+            fov::FOV::NeosVisit(fov) => AllowedFOV::NEOSVisit(PyNeosVisit(fov)),
             _ => {
                 unimplemented!("Python interface doesn't support this FOV.")
             }
@@ -323,6 +337,103 @@ impl PyNeosCmos {
     fn __repr__(&self) -> String {
         format!(
             "NEOSFOV(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={})",
+            self.pointing().__repr__(),
+            self.rotation(),
+            self.observer().__repr__(),
+            self.side_id(),
+            self.stack_id(),
+            self.quad_id(),
+            self.loop_id(),
+            self.subloop_id(),
+            self.exposure_id()
+        )
+    }
+}
+#[pymethods]
+#[allow(clippy::too_many_arguments)]
+impl PyNeosVisit {
+    #[new]
+    pub fn new(
+        pointing: VectorLike,
+        rotation: f64,
+        observer: PyState,
+        side_id: u16,
+        stack_id: u8,
+        quad_id: u8,
+        loop_id: u8,
+        subloop_id: u8,
+        exposure_id: u8,
+        cmos_id: u8,
+        band: u8,
+    ) -> Self {
+        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+        let pointing = pointing.raw.into();
+        PyNeosVisit(fov::NeosVisit::new(
+            pointing,
+            rotation.to_radians(),
+            observer.0,
+            side_id,
+            stack_id,
+            quad_id,
+            loop_id,
+            subloop_id,
+            exposure_id,
+            cmos_id,
+            band,
+        ))
+    }
+
+    #[getter]
+    pub fn observer(&self) -> PyState {
+        self.0.observer().clone().into()
+    }
+
+    #[getter]
+    pub fn pointing(&self) -> Vector {
+        Vector::new(
+            self.0.patch.pointing().into_inner().into(),
+            self.0.observer().frame.into(),
+        )
+    }
+
+    #[getter]
+    pub fn side_id(&self) -> u16 {
+        self.0.side_id
+    }
+
+    #[getter]
+    pub fn stack_id(&self) -> u8 {
+        self.0.stack_id
+    }
+
+    #[getter]
+    pub fn quad_id(&self) -> u8 {
+        self.0.quad_id
+    }
+
+    #[getter]
+    pub fn loop_id(&self) -> u8 {
+        self.0.loop_id
+    }
+
+    #[getter]
+    pub fn subloop_id(&self) -> u8 {
+        self.0.subloop_id
+    }
+
+    #[getter]
+    pub fn exposure_id(&self) -> u8 {
+        self.0.exposure_id
+    }
+
+    #[getter]
+    pub fn rotation(&self) -> f64 {
+        self.0.rotation
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "NEOSVisit(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={})",
             self.pointing().__repr__(),
             self.rotation(),
             self.observer().__repr__(),

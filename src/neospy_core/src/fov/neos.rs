@@ -1,6 +1,7 @@
 //! # NEOS field of views
 use super::{closest_inside, Contains, FovLike, OnSkyRectangle, SkyPatch, FOV};
 use crate::constants::{NEOS_HEIGHT, NEOS_WIDTH};
+use crate::frames::rotate_around;
 use crate::prelude::*;
 use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
@@ -101,11 +102,11 @@ impl FovLike for NeosCmos {
     }
 }
 
-/// NEOS frame data, all 8 chips of a visit.
+/// NEOS frame data, all 4 chips of a visit.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NeosVisit {
     /// Individual CMOS fields
-    chips: Box<[NeosCmos; 8]>,
+    chips: Box<[NeosCmos; 4]>,
 
     /// Observer position
     observer: State,
@@ -136,12 +137,12 @@ impl NeosVisit {
     /// Construct a new NeosVisit from a list of cmos fovs.
     /// These cmos fovs must be from the same metadata when appropriate.
     pub fn new(chips: Vec<NeosCmos>) -> Result<Self, NEOSpyError> {
-        if chips.len() != 8 {
+        if chips.len() != 4 {
             return Err(NEOSpyError::ValueError(
-                "Visit must contains 8 NeosCmos fovs".into(),
+                "Visit must contains 4 NeosCmos fovs".into(),
             ));
         }
-        let chips: Box<[NeosCmos; 8]> = Box::new(chips.try_into().unwrap());
+        let chips: Box<[NeosCmos; 4]> = Box::new(chips.try_into().unwrap());
 
         let first = chips.first().unwrap();
 
@@ -180,6 +181,62 @@ impl NeosVisit {
             subloop_id,
             exposure_id,
         })
+    }
+
+    /// x_width is the longer dimension in radians
+    pub fn from_pointing(
+        x_width: f64,
+        y_width: f64,
+        gap_fraction: f64,
+        pointing: Vector3<f64>,
+        rotation: f64,
+        observer: State,
+        side_id: u16,
+        stack_id: u8,
+        quad_id: u8,
+        loop_id: u8,
+        subloop_id: u8,
+        exposure_id: u8,
+        cmos_id: u8,
+        band: u8,
+    ) -> Self {
+        let chip_x_width = (1.0 - 3.0 * gap_fraction) * x_width / 4.0;
+
+        // Rotate the Z axis to match the defined rotation angle, this vector is not
+        // orthogonal to the pointing vector, but is in the correct plane of the final
+        // up vector.
+        let up_vec = rotate_around(&Vector3::new(0.0, 0.0, 1.0), pointing, -rotation);
+
+        // construct the vector orthogonal to the pointing and rotate z axis vectors.
+        // left = cross(up, pointing)
+        let left_vec = pointing.cross(&up_vec);
+
+        // Given the new left vector, and the existing orthogonal pointing vector,
+        // construct a new up vector which is in the same plane as it was before, but now
+        // orthogonal to the two existing vectors.
+        // up = cross(pointing, left)
+        let up_vec = pointing.cross(&left_vec);
+
+        // +------+-+------+-+------+-+------+   ^
+        // |  1   |g|  2   |g|  3   |g|  4   |   |
+        // |      |a|      |a|      |a|      |   y
+        // |      |p|      |p|      |p|      |   |
+        // +------+-+------+-+------+-+------+   _
+        // <-cf->    x ->
+        //
+        // pointing vector is in the middle of the 'a' in the central gap.
+
+        let outer: Vector3<f64> = rotate_around(&left_vec, up_vec, -lon_width / 2.0);
+        let n2: Vector3<f64> = rotate_around(&(-left_vec), up_vec, lon_width / 2.0);
+
+        let long_top: Vector3<f64> = rotate_around(&up_vec, left_vec, y_width / 2.0);
+        let long_bottom: Vector3<f64> = rotate_around(&(-up_vec), left_vec, -y_width / 2.0);
+
+        // construct the 4 normal vectors
+        Self {
+            edge_normals: [n1.into(), n2.into(), n3.into(), n4.into()],
+            frame,
+        }
     }
 }
 
