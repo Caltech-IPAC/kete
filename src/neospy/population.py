@@ -4,10 +4,9 @@ Definitions for population groups.
 Group definitions are computed strictly from perihelion distance and eccentricity.
 """
 
-from __future__ import annotations
 import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
-from ..conversion import compute_aphelion, compute_semi_major
+from .conversion import compute_aphelion, compute_semi_major
 from numpy.typing import NDArray
 
 MAX_ECCENTRICITY = 0.995
@@ -262,63 +261,6 @@ def which_group(
     return groups
 
 
-def neo_amor_complete(peri_dist, ecc, h_mag):
-    """
-    Observationally complete set of Amors.
-
-    Returns `True` if the object is in the Amors and is a part of what is expected to
-    be observationally complete.
-
-    Parameters
-    ----------
-    peri_dist:
-        Perihelion distance in units of AU.
-    ecc:
-        Eccentricity of the orbit.
-    h_mag:
-        The H magnitude of the object.
-    """
-    return neo_amor(peri_dist, ecc) & (h_mag < 20.0)
-
-
-def neo_apollo_complete(peri_dist, ecc, h_mag):
-    """
-    Observationally complete set of Apollos.
-
-    Returns `True` if the object is in the Apollos and is a part of what is expected to
-    be observationally complete.
-
-    Parameters
-    ----------
-    peri_dist:
-        Perihelion distance in units of AU.
-    ecc:
-        Eccentricity of the orbit.
-    h_mag:
-        The H magnitude of the object.
-    """
-    return neo_apollo(peri_dist, ecc) & (h_mag < 20.0)
-
-
-def neo_aten_complete(peri_dist, ecc, h_mag):
-    """
-    Observationally complete set of Atens.
-
-    Returns `True` if the object is in the Atens and is a part of what is expected to
-    be observationally complete.
-
-    Parameters
-    ----------
-    peri_dist:
-        Perihelion distance in units of AU.
-    ecc:
-        Eccentricity of the orbit.
-    h_mag:
-        The H magnitude of the object.
-    """
-    return neo_aten(peri_dist, ecc) & (h_mag < 20.0)
-
-
 def mba(peri_dist, ecc, *_):
     """
     Orbital element filter to select all main belt objects.
@@ -358,60 +300,6 @@ def neo(peri_dist, ecc, *_):
         | neo_apollo(peri_dist, ecc)
         | neo_amor(peri_dist, ecc)
     )
-
-
-def neo_complete(peri_dist, ecc, h_mag):
-    """
-    Orbital element filter to select all NEO objects.
-
-    Returns `True` if the object is an NEO and is a part of what is expected to be
-    observationally complete.
-
-    Parameters
-    ----------
-    peri_dist:
-        Perihelion distance in units of AU.
-    ecc:
-        Eccentricity of the orbit.
-    h_mag:
-        The H magnitude of the object.
-    """
-    return (
-        neo_atira(peri_dist, ecc)
-        | neo_aten(peri_dist, ecc)
-        | neo_apollo(peri_dist, ecc)
-        | neo_amor(peri_dist, ecc)
-    ) & (h_mag < 20.0)
-
-
-def nearly_neo_complete(peri_dist, ecc, h_mag):
-    """
-    Orbital element filter to select all objects which are either NEO or nearly NEO.
-
-    Returns `True` if the object is ~NEO and is a part of what is expected to be
-    observationally complete.
-
-    This function exists to solve a KDE orbit sampling problem:
-    A histogram of the perihelion distance of NEOs shows an increase in object count up
-    to the NEO/Mar-crosser boundary, leading to a hard cut at around perihelion of 1.3
-    The KDE estimator has a commonly known issue with dataset with hard cuts like this,
-    and has a tendency to "round" the corners of the histogram near this cutoff. To
-    solve this issue, we sample from a collection of data beyond the limit of our group
-    of interest, and select only the objects which match the properties we want. What
-    this in effect does is over-sample, then subselect, this moves the "rounding" issue
-    to an area where we will always reject the data, thus resulting in clean cuts where
-    we expect.
-
-    Parameters
-    ----------
-    peri_dist:
-        Perihelion distance in units of AU.
-    ecc:
-        Eccentricity of the orbit.
-    h_mag:
-        The H magnitude of the object.
-    """
-    return (peri_dist <= 1.4) & (ecc < MAX_ECCENTRICITY) & (ecc >= 0.0) & (h_mag < 20.0)
 
 
 def plot_groups():
