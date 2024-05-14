@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [Unreleased]
+
+### Changed
+
+- Moved population definitions to the base level and renamed it `population`.
+- Changed references to diameters in the broken power law sampler.
+
+### Removed
+
+- Removed construction of populations entirely.
+- Removed folder for `population`, the remaining contents were moved up to the base
+  level of the package.
+
 ## [0.2.1]  - 2024 - 5 - 13
 
 ### Added
