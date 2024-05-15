@@ -100,6 +100,8 @@ def fetch_ztf_fovs(year: int):
 
     obs_info = find_obs_code("ZTF")
 
+    # ZTF fields are made up of up to 64 individual CCD quads, here we first construct
+    # the individual CCD quad information.
     fovs = []
     for jd, row in zip(jds, irsa_query.itertuples()):
         corners = []
@@ -123,16 +125,20 @@ def fetch_ztf_fovs(year: int):
         )
         fovs.append(fov)
 
+    # Now group the quad information into full 64 size Fields
     grouped = defaultdict(list)
     for fov in fovs:
         key = (fov.filefracday, fov.fid, fov.filtercode)
         grouped[key].append(fov)
 
+    # Sort the quads by ccdid and qid and make ZTF Fields
     final_fovs = []
     for value in grouped.values():
         value = sorted(value, key=lambda x: (x.ccdid, x.qid))
         fov = ZtfField(value)
         final_fovs.append(fov)
+
+    # finally save and return the result
     fov_list = FOVList(final_fovs)
     fov_list.save(filename)
     return fov_list
