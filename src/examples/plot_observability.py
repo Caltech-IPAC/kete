@@ -32,7 +32,7 @@ start_time = neospy.Time.from_ymd(2023, 11, 1).jd
 end_time = neospy.Time.from_ymd(2024, 11, 1).jd
 
 # Observers position:
-site = neospy.mpc.find_obs_code("Palomar Mountain")
+site = "Palomar Mountain"
 
 # Plotting:
 # ---------
@@ -56,10 +56,8 @@ for t in times:
     # For each time, compute the geometry, then compute the mag as well as all of the
     # various angle and distance values.
     state = neospy.propagate_n_body([state], t)[0]
-    sun2obs = neospy.SpiceKernels.earth_pos_to_ecliptic(t, *site[:-1]).pos
-    earth2obs = neospy.SpiceKernels.earth_pos_to_ecliptic(
-        t, *site[:-1], center="399"
-    ).pos
+    sun2obs = neospy.SpiceKernels.mpc_code_to_ecliptic(site, t).pos
+    earth2obs = neospy.SpiceKernels.mpc_code_to_ecliptic(site, t, center="399").pos
 
     sun2obj = state.pos
     obs2obj = -sun2obs + sun2obj

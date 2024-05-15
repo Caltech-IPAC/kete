@@ -314,6 +314,37 @@ class SpiceKernels:
         _core.pck_load(cache_files)
 
     @classmethod
+    def mpc_code_to_ecliptic(
+        cls,
+        obs_code: str,
+        jd: Union[float, Time],
+        center: str = "Sun",
+    ) -> State:
+        """
+        Load an MPC Observatory code as an ecliptic state.
+
+        This only works for ground based observatories.
+
+        Parameters
+        ----------
+        obs_code:
+            MPC observatory code or name of observatory.
+        jd:
+            Julian time (TDB) of the desired state.
+        center:
+            The new center point, this defaults to being heliocentric.
+
+        Returns
+        -------
+        State
+            Returns the equatorial state of the target in AU and AU/days.
+        """
+        from .mpc import find_obs_code
+
+        observatory = find_obs_code(obs_code)
+        return cls.earth_pos_to_ecliptic(jd, *observatory[:-1], center=center)
+
+    @classmethod
     def earth_pos_to_ecliptic(
         cls,
         jd: Union[float, Time],

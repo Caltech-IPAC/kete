@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added support for downloading ZTF full fields FOV information into the neospy cache.
+- Added simple lookup for observatory ecliptic state using MPC observatory codes.
 
 ### Changed
 
