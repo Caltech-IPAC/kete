@@ -311,7 +311,7 @@ def plot_groups():
         :context: close-figs
 
         import neospy
-        neospy.population.definitions.plot_groups();
+        neospy.population.plot_groups();
 
 
     """
