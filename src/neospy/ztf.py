@@ -12,7 +12,7 @@ from .vector import Vector
 from .spice import SpiceKernels
 
 
-__all__ = ["fetch_ZTF_file"]
+__all__ = ["fetch_ZTF_file", "fetch_ZTF_fovs"]
 
 SURVEY_START_JD = Time.from_ymd(2018, 3, 20).jd
 """First image in ZTF dataset."""
@@ -38,7 +38,7 @@ ZTF_IRSA_TABLES = {
 
 
 @lru_cache(maxsize=3)
-def fetch_ztf_fovs(year: int):
+def fetch_ZTF_fovs(year: int):
     """
     Load all FOVs taken during the specified mission year of ZTF.
 
