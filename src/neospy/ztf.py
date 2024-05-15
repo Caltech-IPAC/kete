@@ -174,6 +174,26 @@ def fetch_ZTF_file(
     """
     Fetch a ZTF file directly from the IPAC server, returning the path to where it was
     saved.
+
+    Parameters
+    ----------
+    field :
+        Field identifier number, integer between 1 and ~2200.
+    filefracday :
+        String describing the fraction of a day, a record keeping string based on time.
+    filter_code :
+        Which filter was used for the exposure.
+    ccdid :
+        The CCD identified. (1-16)
+    qid :
+        Which quad of the ccd was used. (1-4)
+    products :
+        Exposure products, "sci" for science images.
+    im_type :
+        Image extension, this must match the products variable.
+    force_download :
+        Optionally force a re-download if the file already exists in the cache.
+
     """
 
     ztf_base = f"https://irsa.ipac.caltech.edu/ibe/data/ztf/products/{products}/"
