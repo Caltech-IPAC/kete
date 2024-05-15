@@ -28,7 +28,7 @@ object_names = ["Vesta", "10p", "Pallas", 734]
 start_time = datetime(2024, 2, 11, 12, tzinfo=timezone)
 
 # Observers position, on the surface of the earth:
-site = neospy.mpc.find_obs_code("Palomar Mountain")
+site = "Palomar Mountain"
 
 # Elevation minimum label
 cutoff = 20
@@ -58,9 +58,9 @@ for subrange in steps:
     # for each time step, calculate the elevation and sun elevation
     jd_step = jd_start + subrange
     approx_state = neospy.propagate_two_body(states, jd_step)
-    sun2obs = neospy.SpiceKernels.earth_pos_to_ecliptic(jd_step, *site[:-1]).pos
-    earth2obs = neospy.SpiceKernels.earth_pos_to_ecliptic(
-        jd_step, *site[:-1], center="399"
+    sun2obs = neospy.SpiceKernels.mpc_code_to_ecliptic(site, jd_step).pos
+    earth2obs = neospy.SpiceKernels.mpc_code_to_ecliptic(
+        site, jd_step, center="399"
     ).pos
     sun_elevation.append(90 - earth2obs.angle_between(-sun2obs))
 

@@ -22,6 +22,7 @@ _mpc_hex = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 logger = logging.getLogger(__name__)
 
 
+@lru_cache
 def find_obs_code(name: str):
     """
     Search known observatory codes, if a single matching observatory is found, this will
