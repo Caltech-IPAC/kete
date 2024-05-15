@@ -95,8 +95,8 @@ def fetch_ztf_fovs(year: int):
     )
 
     # Exposures are 30 seconds, add 15 to select the midpoint of the observations
-    jds = [x.split("+")[0] for x in irsa_query["obsdate"]]
-    jds = np.array(Time(jds, "iso", "utc").jd) + 15 / 60 / 60 / 24
+    jds_str = [x.split("+")[0] for x in irsa_query["obsdate"]]
+    jds = np.array(Time(jds_str, "iso", "utc").jd) + 15 / 60 / 60 / 24
 
     obs_info = find_obs_code("ZTF")
 
