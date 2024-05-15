@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed construction of populations entirely.
 - Removed folder for `population`, the remaining contents were moved up to the base
   level of the package.
+- Removed PDS related tools.
 
 ## [0.2.1]  - 2024 - 5 - 13
 

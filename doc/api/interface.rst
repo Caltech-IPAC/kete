@@ -25,10 +25,3 @@ Horizons
 .. automodule:: neospy.horizons
    :members:
    :inherited-members:
-
-PDS
----
-
-.. automodule:: neospy.pds
-   :members:
-   :inherited-members:
