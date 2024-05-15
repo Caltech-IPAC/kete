@@ -18,9 +18,7 @@ jd_end = neospy.Time.from_ymd(2024, 4, 1).jd
 all_orbits = neospy.mpc.fetch_known_orbit_data()
 
 # Filter to just the neos
-neos = all_orbits[
-    neospy.population.definitions.neo(all_orbits.peri_dist, all_orbits.ecc)
-]
+neos = all_orbits[neospy.population.neo(all_orbits.peri_dist, all_orbits.ecc)]
 
 # convert the catalog to States
 states = neospy.mpc.table_to_states(neos)

@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 # Load orbit data and select just the jupiter trojans
 orbs = neospy.mpc.fetch_known_orbit_data()
-subset = orbs[neospy.population.definitions.jup_trojan(orbs.peri_dist, orbs.ecc)]
+subset = orbs[neospy.population.jup_trojan(orbs.peri_dist, orbs.ecc)]
 
 # Construct the states and propagate them to a common epoch
 states = neospy.mpc.table_to_states(subset)

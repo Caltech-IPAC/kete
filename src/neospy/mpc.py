@@ -733,7 +733,7 @@ def mpc_known_orbit_filtered(filt):
     filt:
         Filter function which defines which group to select. The filter function must
         accept 3 parameters, `peri_dist, eccentricity, h_mag`, and return a bool.
-        See `neospy.population.definitions` for a collection of filter functions which
+        See `neospy.population` for a collection of filter functions which
         are used to generation model populations.
     """
     orbs = fetch_known_orbit_data()
@@ -755,7 +755,7 @@ def table_to_states(orbit_dataframe):
         orbits = neospy.mpc.fetch_known_orbit_data()
 
         # Subset the table to be only NEOs
-        neos = neospy.population.definitions.neo(orbits.peri_dist, orbits.ecc)
+        neos = neospy.population.neo(orbits.peri_dist, orbits.ecc)
         neo_subset = orbits[neos]
 
         # load the state object from this table

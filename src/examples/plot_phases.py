@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 orbits = neospy.mpc.fetch_known_orbit_data()
 
 # Subselect NEO population
-neos = neospy.population.definitions.neo(orbits.peri_dist, orbits.ecc)
+neos = neospy.population.neo(orbits.peri_dist, orbits.ecc)
 neo_subset = orbits[neos]
 
 # Convert the dataframe to States
