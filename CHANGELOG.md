@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added support for downloading ZTF full fields FOV information into the neospy cache.
+
 ### Changed
 
 - Moved population definitions to the base level and renamed it `population`.
