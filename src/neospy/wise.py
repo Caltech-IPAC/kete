@@ -520,9 +520,11 @@ def fetch_WISE_fovs(phase):
     phase :
         A mission phase object.
     """
-    cache_dir = cache_path()
-    filename = os.path.join(cache_dir, f"wise_{phase.name}_fovs.bin")
+    dir_path = os.path.join(cache_path(), "fovs")
+    filename = os.path.join(dir_path, f"wise_{phase.name}_fovs.bin")
 
+    if not os.path.isdir(dir_path):
+        os.makedirs(dir_path)
     if os.path.isfile(filename):
         return FOVList.load(filename)
 
