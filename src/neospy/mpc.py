@@ -592,14 +592,6 @@ def normalize_names(dataset, col: str = "MPC_packed_name", name_lookup=None):
     Given a Pandas Dataframe containing packed MPC names, alter the names to be the up
     to date MPC designation.
 
-    .. testcode::
-        :skipif: True
-
-        from neospy.mpc import normalize_names
-        from neospy.pds import fetch_pds_data
-
-        dataset = normalize_names(fetch_pds_data("data/neowise_neos.xml"))
-
 
     Parameters
     ----------

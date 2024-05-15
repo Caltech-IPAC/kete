@@ -10,8 +10,7 @@ license = {text = "MIT"}
 requires-python = ">=3.9"
 classifiers=["Programming Language :: Python :: 3"]
 dependencies = ["astropy>=5.3.4", "matplotlib", "numpy>=1.24",
-                "pandas", "requests", "scipy", "matplotlib-label-lines",
-                "pds4_tools @ https://github.com/Small-Bodies-Node/pds4_tools/tarball/master"]
+                "pandas", "requests", "scipy", "matplotlib-label-lines"]
 
 [project.urls]
 homepage = "https://github.com/IPAC-SW/neospy"
@@ -53,13 +52,11 @@ markers = [
 
 # Options for the coverage report.
 [tool.coverage.run]
-omit = ["*/neospy/population/*",
-        "*/neospy/mpc.py",
+omit = ["*/neospy/mpc.py",
         "*/neospy/irsa.py",
         "*/neospy/wise.py",
         "*/neospy/ztf.py",
         "*/neospy/horizons.py",
-        "*/neospy/pds.py",
         "*/neospy/data/*",
         "*/examples/*",]
 

@@ -9,7 +9,6 @@ from . import (
     flux,
     mpc,
     irsa,
-    pds,
     ztf,
     fov,
 )
@@ -57,7 +56,6 @@ __all__ = [
     "wise",
     "neos",
     "mpc",
-    "pds",
     "SimultaneousStates",
     "propagate_n_body",
     "propagate_two_body",
