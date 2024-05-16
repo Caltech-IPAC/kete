@@ -82,19 +82,19 @@ pip install sphinx sphinx_gallery autodoc
 After this has been installed, the documentation can be built by running inside the
 neospy directory.
 ``` bash
-(cd doc && make html && open html/index.html&)
+(cd docs && make html && open html/index.html&)
 ```
-Once this has completed running, open the file `neospy/doc/html/index.html` for access
+Once this has completed running, open the file `neospy/docs/html/index.html` for access
 to the HTML documentation.
 
-To clean the previous doc build:
+To clean the previous docs build:
 ``` bash
-(cd doc && make clean)
+(cd docs && make clean)
 ```
 
 Documentation tests may be run with:
 ``` bash
-(cd doc && make doctest)
+(cd docs && make doctest)
 ```
 
 ### Running tests

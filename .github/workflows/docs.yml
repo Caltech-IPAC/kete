@@ -29,10 +29,10 @@ jobs:
         python3 -m pip install '.[dev]' -v
     - name: Build Docs
       run: |
-        (cd doc && make clean && make html && make doctest)
+        (cd docs && make clean && make html && make doctest)
     - name: Fix permissions
       run: |
-        chmod -c -R +rX "doc/" | while read line; do
+        chmod -c -R +rX "docs/" | while read line; do
           echo "::warning title=Invalid file permissions automatically fixed::$line"
         done
     # - name: Archive Docs
@@ -40,13 +40,13 @@ jobs:
     #   with:
     #     name: "github-pages"
     #     path:
-    #       doc/html/*
+    #       docs/html/*
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
       with:
         name: "github-pages"
         path:
-          doc/html/
+          docs/html/
 
   deploy:
     # Add a dependency to the build job
