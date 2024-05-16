@@ -82,7 +82,8 @@ pub struct SphericalPolygon<const N_SIDES: usize> {
     #[serde(with = "serde_const_arr")]
     edge_normals: [[f64; 3]; N_SIDES],
 
-    frame: Frame,
+    /// Coordinate frame where the boundary is defined.
+    pub frame: Frame,
 }
 
 /// A rectangular patch of sky.
@@ -214,11 +215,24 @@ impl<const D: usize> SkyPatch for SphericalPolygon<D> {
         let mut x = 0.0;
         let mut y = 0.0;
         let mut z = 0.0;
-        self.edge_normals.iter().for_each(|row| {
-            x += row[0];
-            y += row[1];
-            z += row[2];
-        });
+
+        for (idx, idy) in (0..D).zip(1..D) {
+            let v = Vector3::from(self.edge_normals[idx])
+                .cross(&Vector3::from(self.edge_normals[idy]))
+                .normalize();
+
+            x += v.x;
+            y += v.y;
+            z += v.z;
+        }
+
+        let v = Vector3::from(self.edge_normals[D - 1])
+            .cross(&Vector3::from(self.edge_normals[0]))
+            .normalize();
+        x += v.x;
+        y += v.y;
+        z += v.z;
+
         UnitVector3::new_normalize([x, y, z].into())
     }
 }

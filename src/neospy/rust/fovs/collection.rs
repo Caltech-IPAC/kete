@@ -22,7 +22,13 @@ impl FOVListLike {
             FOVListLike::FOVList(list) => list.0,
         };
         fovs.sort_by(|a, b| a.jd().total_cmp(&b.jd()));
-        fovs.into_iter().map(|fov| fov.unwrap()).collect()
+        fovs.into_iter()
+            .map(|fov| {
+                let mut f = fov.unwrap();
+                f.try_frame_change_mut(Frame::Ecliptic).unwrap();
+                f
+            })
+            .collect()
     }
 }
 

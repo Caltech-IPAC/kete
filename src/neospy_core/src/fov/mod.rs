@@ -73,4 +73,16 @@ impl FOV {
             FOV::ZtfField(fov) => fov.check_spks(obj_ids),
         }
     }
+
+    /// Change the frame of this FOV
+    pub fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
+        match self {
+            FOV::Wise(fov) => fov.try_frame_change_mut(target_frame),
+            FOV::NeosCmos(fov) => fov.try_frame_change_mut(target_frame),
+            FOV::ZtfCcdQuad(fov) => fov.try_frame_change_mut(target_frame),
+            FOV::GenericCone(fov) => fov.try_frame_change_mut(target_frame),
+            FOV::GenericRectangle(fov) => fov.try_frame_change_mut(target_frame),
+            FOV::ZtfField(fov) => fov.try_frame_change_mut(target_frame),
+        }
+    }
 }

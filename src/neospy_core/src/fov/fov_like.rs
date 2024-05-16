@@ -12,7 +12,7 @@ use crate::prelude::*;
 /// These may contain multiple unique sky patches, so as a result the expected
 /// behavior is to return the index as well as the [`Contains`] for the closest
 /// sky patch.
-pub trait FovLike: Sync {
+pub trait FovLike: Sync + Sized {
     /// Return the FOV of the patch at the specified index.
     /// This will panic if the index is out of allowed bounds.
     fn get_fov(&self, index: usize) -> FOV;
@@ -26,6 +26,9 @@ pub trait FovLike: Sync {
 
     /// Number of sky patches contained within this FOV.
     fn n_patches(&self) -> usize;
+
+    /// Change the target frame to the new frame.
+    fn try_frame_change_mut(&mut self, new_frame: Frame) -> Result<(), NEOSpyError>;
 
     /// Assuming the object undergoes linear motion, check to see if it is within the
     /// field of view.

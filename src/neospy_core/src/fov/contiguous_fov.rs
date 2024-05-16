@@ -74,6 +74,15 @@ impl FovLike for WiseCmos {
     fn n_patches(&self) -> usize {
         1
     }
+
+    fn try_frame_change_mut(
+        &mut self,
+        target_frame: super::Frame,
+    ) -> Result<(), super::NEOSpyError> {
+        self.observer.try_change_frame_mut(target_frame)?;
+        self.patch = self.patch.try_frame_change(target_frame)?;
+        Ok(())
+    }
 }
 
 /// NEOS frame data, a single detector on a single band
@@ -170,6 +179,15 @@ impl FovLike for NeosCmos {
     fn n_patches(&self) -> usize {
         1
     }
+
+    fn try_frame_change_mut(
+        &mut self,
+        target_frame: super::Frame,
+    ) -> Result<(), super::NEOSpyError> {
+        self.observer.try_change_frame_mut(target_frame)?;
+        self.patch = self.patch.try_frame_change(target_frame)?;
+        Ok(())
+    }
 }
 
 /// ZTF frame data, single quad of a single chip
@@ -260,6 +278,15 @@ impl FovLike for ZtfCcdQuad {
     fn n_patches(&self) -> usize {
         1
     }
+
+    fn try_frame_change_mut(
+        &mut self,
+        target_frame: super::Frame,
+    ) -> Result<(), super::NEOSpyError> {
+        self.observer.try_change_frame_mut(target_frame)?;
+        self.patch = self.patch.try_frame_change(target_frame)?;
+        Ok(())
+    }
 }
 
 /// Generic rectangular FOV
@@ -269,9 +296,6 @@ pub struct GenericRectangle {
 
     /// Patch of sky
     pub patch: OnSkyRectangle,
-
-    /// Rotation of the FOV.
-    pub rotation: f64,
 }
 
 impl GenericRectangle {
@@ -284,11 +308,14 @@ impl GenericRectangle {
         observer: State,
     ) -> Self {
         let patch = OnSkyRectangle::new(pointing, rotation, lon_width, lat_width, observer.frame);
-        Self {
-            observer,
-            patch,
-            rotation,
-        }
+        Self { observer, patch }
+    }
+
+    /// Create a Field of view from a collection of corners.
+    #[allow(clippy::too_many_arguments)]
+    pub fn from_corners(corners: [Vector3<f64>; 4], observer: State) -> Self {
+        let patch = OnSkyRectangle::from_corners(corners, observer.frame);
+        Self { patch, observer }
     }
 
     /// Latitudinal width of the FOV.
@@ -326,6 +353,15 @@ impl FovLike for GenericRectangle {
     #[inline]
     fn n_patches(&self) -> usize {
         1
+    }
+
+    fn try_frame_change_mut(
+        &mut self,
+        target_frame: super::Frame,
+    ) -> Result<(), super::NEOSpyError> {
+        self.observer.try_change_frame_mut(target_frame)?;
+        self.patch = self.patch.try_frame_change(target_frame)?;
+        Ok(())
     }
 }
 
@@ -367,6 +403,15 @@ impl FovLike for GenericCone {
     #[inline]
     fn n_patches(&self) -> usize {
         1
+    }
+
+    fn try_frame_change_mut(
+        &mut self,
+        target_frame: super::Frame,
+    ) -> Result<(), super::NEOSpyError> {
+        self.observer.try_change_frame_mut(target_frame)?;
+        self.patch = self.patch.try_frame_change(target_frame)?;
+        Ok(())
     }
 }
 
