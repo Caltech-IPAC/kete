@@ -113,6 +113,17 @@ file. This is a user-friendly website representation of the code coverage.
 pytest --cov-report html --cov=neospy   
 ```
 
+### Running Tutorials
+
+Tutorials are computationally expensive examples which are more indicative of typical
+expected use. Since these examples are so expensive to run, they are not run unless
+manually performed. A convenience python script has been provided to do just this.
+
+``` bash
+cd docs
+python utils.py
+```
+
 ### Running Benchmarks
 
 There are a test suite of micro-benchmarks in the rust backend of NEOSpy. These require

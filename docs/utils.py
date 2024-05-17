@@ -51,15 +51,15 @@ def build(tutorial):
         click.echo(f"\t{file}")
     click.echo("")
     cont = input("Run these files? [Y/n]: ").strip().lower()
-    match cont:
-        case "yes" | "y" | "":
-            pass
-        case "no" | "n":
-            click.echo("Exiting")
-            return
-        case _:
-            click.echo("Command not recognized, exiting.")
-            return
+    if cont in ["yes", "y", ""]:
+        pass
+    elif cont in ["no", "n"]:
+        click.echo("Exiting")
+        return
+    else:
+        click.echo("Command not recognized, exiting.")
+        return
+
     for file in files:
         click.echo(f"Collecting code from : {file}")
         code = collect_code(file)
