@@ -1,10 +1,16 @@
-from .vector import Vector, Frames, State, CometElements
+from .vector import (
+    Vector,
+    Frames,
+    State,
+    CometElements,
+    SimultaneousStates,
+)
 from . import (
     constants,
     covariance,
     wise,
     neos,
-    data,
+    cache,
     population,
     flux,
     mpc,
@@ -30,18 +36,14 @@ from .conversion import (
 )
 from .horizons import HorizonsProperties
 
-
-# pylint: disable-next=import-error
-from ._core import SimultaneousStates  # type: ignore
-
 import logging
 
 
 __all__ = [
+    "cache",
     "constants",
     "CometElements",
     "covariance",
-    "data",
     "irsa",
     "Frames",
     "moid",

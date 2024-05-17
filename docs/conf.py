@@ -22,6 +22,10 @@ extensions = [
     "sphinx_gallery.gen_gallery",
     "matplotlib.sphinxext.plot_directive",
 ]
+
+suppress_warnings = ["config.cache"]
+
+
 autodoc_typehints = "description"
 autodoc_inherit_docstrings = True
 autodoc_warningiserror = True

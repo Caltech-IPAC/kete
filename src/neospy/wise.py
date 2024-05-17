@@ -18,7 +18,7 @@ from astropy import units as u  # type: ignore
 from astropy.coordinates import SkyCoord  # type: ignore
 
 
-from .data import cache_path
+from .cache import cache_path
 from .time import Time
 from .spice import SpiceKernels
 from .vector import Vector

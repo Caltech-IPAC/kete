@@ -9,8 +9,10 @@ API
 .. toctree::
    :maxdepth: 2
 
+   cache
    conversion
    flux
+   fov
    interface
    observatory
    population
