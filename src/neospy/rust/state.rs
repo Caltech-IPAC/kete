@@ -67,7 +67,7 @@ impl PyState {
 
     /// Change the center ID of the state from the current state to the target state.
     ///
-    /// If the desired state is not a known NAID id this will raise an exception.
+    /// If the desired state is not a known NAIF id this will raise an exception.
     pub fn change_center(&self, naif_id: isize) -> PyResult<Self> {
         let mut state = self.0.clone();
         let spk = neospy_core::prelude::get_spk_singleton()
