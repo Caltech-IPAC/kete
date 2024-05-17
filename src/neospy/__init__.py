@@ -4,7 +4,7 @@ from . import (
     covariance,
     wise,
     neos,
-    data,
+    cache,
     population,
     flux,
     mpc,
@@ -38,10 +38,10 @@ import logging
 
 
 __all__ = [
+    "cache",
     "constants",
     "CometElements",
     "covariance",
-    "data",
     "irsa",
     "Frames",
     "moid",

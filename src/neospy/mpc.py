@@ -10,7 +10,7 @@ import astropy  # type: ignore
 from . import conversion, constants
 from .time import float_day_to_d_h_m_s, Time
 from .vector import Vector, Frames, CometElements
-from .data import cached_gzip_json_download
+from .cache import cached_gzip_json_download
 
 # pylint: disable-next=no-name-in-module
 from . import _core  # type: ignore

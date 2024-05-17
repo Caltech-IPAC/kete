@@ -9,7 +9,7 @@ import numpy as np
 from .time import Time
 from . import _core  # pylint: disable=no-name-in-module
 from .constants import AU_KM
-from .data import cached_file_download, cache_path
+from .cache import cached_file_download, cache_path
 from .vector import Frames, State
 
 __all__ = ["SpiceKernels"]

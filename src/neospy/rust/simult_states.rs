@@ -37,6 +37,12 @@ impl SimulStateLike {
     }
 }
 
+/// Representation of a collection of [`State`] at a single point in time.
+///
+/// The main value in this is that also includes an optional Field of View.
+/// If the FOV is provided, it is implied that the states which are present
+/// in this file were objects seen by the FOV.
+///
 #[pyclass(module = "neospy", frozen, sequence, name = "SimultaneousStates")]
 #[derive(Clone, Debug)]
 pub struct PySimultaneousStates(pub Box<simult_states::SimultaneousStates>);
@@ -49,6 +55,16 @@ impl From<simult_states::SimultaneousStates> for PySimultaneousStates {
 
 #[pymethods]
 impl PySimultaneousStates {
+    /// Create a new collection of States at a specific time.
+    ///
+    ///
+    /// Parameters
+    /// ----------
+    /// states :
+    ///     List of States to include.
+    /// fov :
+    ///     An optional FOV, if this is provided it is expected that the states provided
+    ///     are what have been seen by this FOV. This is not checked.
     #[new]
     pub fn new(states: Vec<PyState>, fov: Option<AllowedFOV>) -> PyResult<Self> {
         let states: Vec<_> = states.into_iter().map(|x| x.0).collect();
@@ -57,31 +73,37 @@ impl PySimultaneousStates {
             .map(|x| PySimultaneousStates(Box::new(x)))?)
     }
 
+    /// The FOV if it exists.
     #[getter]
     pub fn fov(&self) -> Option<AllowedFOV> {
         self.0.fov.clone().map(|x| x.into())
     }
 
+    /// States contained within.
     #[getter]
     pub fn states(&self) -> Vec<PyState> {
         self.0.states.iter().map(|x| x.clone().into()).collect()
     }
 
+    /// The time of the simultaneous states.
     #[getter]
     pub fn jd(&self) -> f64 {
         self.0.jd
     }
 
+    /// The reference center NAIF ID for this state.
     #[getter]
     pub fn center_id(&self) -> isize {
         self.0.center_id
     }
 
+    /// Coordinate Frame.
     #[getter]
     pub fn frame(&self) -> PyFrames {
         self.0.frame.into()
     }
 
+    /// Load a single SimultaneousStates from a file.
     #[staticmethod]
     pub fn load(filename: String) -> PyResult<Self> {
         Ok(PySimultaneousStates(Box::new(
@@ -89,6 +111,7 @@ impl PySimultaneousStates {
         )))
     }
 
+    /// Save a single SimultaneousStates to a file.
     pub fn save(&self, filename: String) -> PyResult<()> {
         self.0.save(filename)?;
         Ok(())
@@ -118,6 +141,8 @@ impl PySimultaneousStates {
     }
 
     /// Save a list to a binary file.
+    ///
+    /// Note that this saves a list of SimultaneousStates, meaning it is a list of a list of States.
     #[staticmethod]
     #[pyo3(name = "save_list")]
     pub fn py_save_list(vec: Vec<Self>, filename: String) -> PyResult<()> {
@@ -128,6 +153,8 @@ impl PySimultaneousStates {
     }
 
     /// Load a list from a binary file.
+    ///
+    /// Note that this loads a list of SimultaneousStates, meaning it is a list of a list of States.
     #[staticmethod]
     #[pyo3(name = "load_list")]
     pub fn py_load_list(filename: String) -> PyResult<Vec<Self>> {

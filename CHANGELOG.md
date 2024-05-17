@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved population definitions to the base level and renamed it `population`.
 - Changed references to diameters in the broken power law sampler.
 - FOV propagation tests now return a flatten list of states.
+- Renamed `data` to `cache` to more accurately represent its function.
 
 ### Fixed
 

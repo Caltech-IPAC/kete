@@ -1,9 +1,13 @@
+"""
+ZTF Related Functions and Data.
+"""
+
 from functools import lru_cache
 import os
-import numpy as np
 from collections import defaultdict
+import numpy as np
 
-from .data import cached_file_download, cache_path
+from .cache import cached_file_download, cache_path
 from .fov import ZtfCcdQuad, ZtfField, FOVList
 from .time import Time
 from .irsa import query_irsa_tap
@@ -106,8 +110,8 @@ def fetch_ZTF_fovs(year: int):
     for jd, row in zip(jds, irsa_query.itertuples()):
         corners = []
         for i in range(4):
-            ra = row.__getattribute__(f"ra{i+1}")
-            dec = row.__getattribute__(f"dec{i+1}")
+            ra = getattr(row, f"ra{i + 1}")
+            dec = getattr(row, f"dec{i + 1}")
             corners.append(Vector.from_ra_dec(ra, dec))
         observer = SpiceKernels.earth_pos_to_ecliptic(jd, *obs_info[:-1])
 

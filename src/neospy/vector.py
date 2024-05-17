@@ -1,15 +1,21 @@
 """
-Representation of States and vectors.
+Representation of States, Vectors, and coordinate Frames.
 """
 
 from __future__ import annotations
 from . import conversion
 
 # pylint: disable=import-error
-from ._core import Vector, Frames, State, CometElements  # type: ignore
+from ._core import (
+    Vector,
+    Frames,
+    State,
+    CometElements,
+    SimultaneousStates,
+)  # type: ignore
 
 
-__all__ = ["Frames", "Vector", "State", "CometElements"]
+__all__ = ["Frames", "Vector", "State", "CometElements", "SimultaneousStates"]
 
 Vector.dec_dms = property(
     fget=lambda self: conversion.dec_degrees_to_dms(self.dec),

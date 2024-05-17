@@ -43,6 +43,7 @@ impl FOVList {
         FOVList(list)
     }
 
+    /// Sort the list of FOVs by their JD.
     pub fn sort(&mut self) {
         self.0.sort_by(|a, b| a.jd().total_cmp(&b.jd()))
     }
