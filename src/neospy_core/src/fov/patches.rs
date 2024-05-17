@@ -126,9 +126,10 @@ impl OnSkyRectangle {
         // up = cross(pointing, left)
         let up_vec = pointing.cross(&left_vec);
 
+        // These have to be enumerated in clockwise order for the pointing calculation to be correct.
         let n1: Vector3<f64> = rotate_around(&left_vec, up_vec, -lon_width / 2.0);
-        let n2: Vector3<f64> = rotate_around(&(-left_vec), up_vec, lon_width / 2.0);
-        let n3: Vector3<f64> = rotate_around(&up_vec, left_vec, lat_width / 2.0);
+        let n2: Vector3<f64> = rotate_around(&up_vec, left_vec, lat_width / 2.0);
+        let n3: Vector3<f64> = rotate_around(&(-left_vec), up_vec, lon_width / 2.0);
         let n4: Vector3<f64> = rotate_around(&(-up_vec), left_vec, -lat_width / 2.0);
 
         // construct the 4 normal vectors
@@ -155,7 +156,7 @@ impl OnSkyRectangle {
     /// Latitudinal width of the patch, the assumes the patch is rectangular.
     pub fn lat_width(&self) -> f64 {
         let pointing = self.pointing();
-        2.0 * (FRAC_PI_2 - pointing.angle(&Vector3::from(self.edge_normals[2])))
+        2.0 * (FRAC_PI_2 - pointing.angle(&Vector3::from(self.edge_normals[1])))
     }
 
     /// Longitudinal width of the patch, the assumes the patch is rectangular.
