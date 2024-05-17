@@ -1,4 +1,10 @@
-from .vector import Vector, Frames, State, CometElements
+from .vector import (
+    Vector,
+    Frames,
+    State,
+    CometElements,
+    SimultaneousStates,
+)
 from . import (
     constants,
     covariance,
@@ -29,10 +35,6 @@ from .conversion import (
     flux_to_mag,
 )
 from .horizons import HorizonsProperties
-
-
-# pylint: disable-next=import-error
-from ._core import SimultaneousStates  # type: ignore
 
 import logging
 
