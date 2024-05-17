@@ -31,7 +31,7 @@ calculated from the corners of the frame.
 
 .. code-block:: python
 
-    frame = fits.open("data/01772a127-w3-int-1b.fits")[0]
+    frame = fits.open("data/01772a127-w3-int-1b.fits.gz")[0]
 
     # Here we compute a State of the observer, this could also be constructed
     # using spice kernels using neospy.SpiceKernels.state
