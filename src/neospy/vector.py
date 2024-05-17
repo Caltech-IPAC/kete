@@ -6,13 +6,13 @@ from __future__ import annotations
 from . import conversion
 
 # pylint: disable=import-error
-from ._core import (
+from ._core import (  # type: ignore
     Vector,
     Frames,
     State,
     CometElements,
     SimultaneousStates,
-)  # type: ignore
+)
 
 
 __all__ = ["Frames", "Vector", "State", "CometElements", "SimultaneousStates"]
