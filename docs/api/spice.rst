@@ -2,7 +2,7 @@ spice
 =====
 
 This is a thread-safe, read only re-implementation of a SPICE kernel interpreter.
-Outputs of this exactly match the commont cSPICE interpreter, but can be easily
+Outputs of this exactly match the common cSPICE interpreter, but can be easily
 used among an arbitrary number of cores. SPICE kernel files are loaded directly
 into RAM.
 
