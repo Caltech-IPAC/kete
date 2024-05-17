@@ -17,8 +17,8 @@ Data files which are automatically included:
 
 DE440 - A SPICE file containing the planets within a few hundred years.
 
-BSP files are also automatically included for the 5 largest asteroids, which is used
-for numerical integrations when the correct flags are set.
+BSP files are also automatically included for the 5 largest asteroids, which are
+used for numerical integrations when the correct flags are set.
 
 PCK Files which enable coordinate transformations between Earths surface and the
 common inertial frames.
