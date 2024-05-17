@@ -10,6 +10,7 @@ To run all tutorials:
 >>> python utils.py build *
 
 """
+
 import glob
 import click
 import os
@@ -43,7 +44,7 @@ def build(tutorial):
     """
     files = glob.glob("tutorials/" + tutorial + "*")
     files = [f for f in files if os.path.splitext(f)[1] == ".rst"]
-    files = [f for f in files if 'index.rst' not in f]
+    files = [f for f in files if "index.rst" not in f]
     click.echo("Will build tutorials:")
     click.echo("---------------------")
     for file in files:
@@ -75,7 +76,7 @@ def collect_code(file):
 
     This will join all of the codeblocks together into one text string.
     """
-    with open(file, "r", encoding='UTF8') as f:
+    with open(file, "r", encoding="UTF8") as f:
         contents = f.read()
     doc = publish_doctree(contents)
     text = []

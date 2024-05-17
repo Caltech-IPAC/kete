@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added 'Tutorials' to the documentation, these are larger worked examples which do not
   build at the same time as the standard docs. They are designed to be examples which
   take significant compute, and may run for many minutes.
+- Added Tutorials for 'KONA' and 'WISE Precovery'.
 
 ### Changed
 

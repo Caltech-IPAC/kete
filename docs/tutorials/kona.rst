@@ -108,6 +108,9 @@ one, and then immediately take the single result back out.
 Results
 -------
 
+Plot the first `n_show=20` objects which were found in the field, but note that 181
+known objects have landed in this single FITs frame! That is perhaps unsurprising, as
+this fits frame is on the ecliptic plane.
 
 .. code-block:: python
 
@@ -152,11 +155,13 @@ Results
 Plotting
 --------
 
+Now take the same results from above an plot the fits file with the overlaid positions.
+Note again this is only showing the first 20 of 181.
+
 .. code-block:: python
 
     plt.figure(dpi=300)
     wcs = neospy.irsa.plot_fits_image(frame, cmap='grey')
-    print("-"*45)
     for state in list(visible_obj)[:n_show]:
         vec = (state.pos - visible_obj.fov.observer.pos).as_equatorial
         neospy.irsa.annotate_plot(wcs, vec.ra, vec.dec, state.desig, px_gap=10, length=10)
