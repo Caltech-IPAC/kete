@@ -44,6 +44,7 @@ docs/plot_directive
 docs/doctest
 docs/latex
 docs/sg_execution_times.rst
+docs/**/.ipynb_checkpoints
 *.mod
 
 # Ignored downloaded cached files

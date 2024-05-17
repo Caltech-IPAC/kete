@@ -12,7 +12,7 @@ pub fn fov_checks_py(
     obj_state: SimulStateLike,
     fovs: FOVListLike,
     dt_limit: f64,
-) -> PyResult<Vec<Vec<PySimultaneousStates>>> {
+) -> PyResult<Vec<PySimultaneousStates>> {
     let fovs = fovs.into_sorted_vec_fov();
 
     // This is only here for a check to verify the states are valid
@@ -56,12 +56,12 @@ pub fn fov_checks_py(
 
         py.check_signals()?;
     }
-    Ok(visible)
+    Ok(visible.into_iter().flatten().collect())
 }
 
 #[pyfunction]
 #[pyo3(name = "fov_spk_checks")]
-pub fn fov_spk_checks_py(obj_ids: Vec<isize>, fovs: FOVListLike) -> Vec<Vec<PySimultaneousStates>> {
+pub fn fov_spk_checks_py(obj_ids: Vec<isize>, fovs: FOVListLike) -> Vec<PySimultaneousStates> {
     let fovs = fovs.into_sorted_vec_fov();
 
     fovs.into_par_iter()
@@ -76,5 +76,6 @@ pub fn fov_spk_checks_py(obj_ids: Vec<isize>, fovs: FOVListLike) -> Vec<Vec<PySi
                 false => Some(vis),
             }
         })
+        .flatten()
         .collect()
 }

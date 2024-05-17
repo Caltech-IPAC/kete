@@ -12,11 +12,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added support for downloading ZTF full fields FOV information into the neospy cache.
 - Added simple lookup for observatory ecliptic state using MPC observatory codes.
+- Added 'Tutorials' to the documentation, these are larger worked examples which do not
+  build at the same time as the standard docs. They are designed to be examples which
+  take significant compute, and may run for many minutes.
 
 ### Changed
 
 - Moved population definitions to the base level and renamed it `population`.
 - Changed references to diameters in the broken power law sampler.
+- FOV propagation tests now return a flatten list of states.
+
+### Fixed
+
+- Coordinate frame conversion was resulting in incorrect coordinate positions when
+  passing Equatorial based frames to some FOV related functions. Specifically it was
+  failing to convert the Equatorial frame to Ecliptic frame before performing orbit
+  calculations.
 
 ### Removed
 

@@ -31,7 +31,10 @@ autodoc_default_options = {
 }
 
 autoclass_content = "both"
-exclude_patterns = []
+exclude_patterns = [
+    "**/.ipynb_checkpoints",
+]
+
 
 # Napoleon settings
 napoleon_google_docstring = True

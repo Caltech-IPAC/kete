@@ -70,7 +70,7 @@ pub trait FovLike: Sync + Sized {
 
         // correct for light delay
         let dt = -(Vector3::from(final_state.pos) - obs_pos).norm() * C_AU_PER_DAY_INV;
-        let final_state = propagate_two_body(&final_state, obs.jd + dt).unwrap();
+        let final_state = propagate_two_body(&final_state, obs.jd + dt)?;
         let rel_pos = Vector3::from(final_state.pos) - obs_pos;
 
         let (idx, contains) = self.contains(&rel_pos);
@@ -88,7 +88,7 @@ pub trait FovLike: Sync + Sized {
 
         // correct for light delay
         let dt = -(Vector3::from(exact_state.pos) - obs_pos).norm() * C_AU_PER_DAY_INV;
-        let final_state = propagate_two_body(&exact_state, obs.jd + dt).unwrap();
+        let final_state = propagate_two_body(&exact_state, obs.jd + dt)?;
         let rel_pos = Vector3::from(final_state.pos) - obs_pos;
 
         let (idx, contains) = self.contains(&rel_pos);
