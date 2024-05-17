@@ -40,5 +40,6 @@ move out of frame.
 
    installation
    auto_examples/index
+   tutorials/index
    api/api
 

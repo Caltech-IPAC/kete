@@ -12,7 +12,7 @@ use crate::prelude::*;
 /// These may contain multiple unique sky patches, so as a result the expected
 /// behavior is to return the index as well as the [`Contains`] for the closest
 /// sky patch.
-pub trait FovLike: Sync {
+pub trait FovLike: Sync + Sized {
     /// Return the FOV of the patch at the specified index.
     /// This will panic if the index is out of allowed bounds.
     fn get_fov(&self, index: usize) -> FOV;
@@ -26,6 +26,9 @@ pub trait FovLike: Sync {
 
     /// Number of sky patches contained within this FOV.
     fn n_patches(&self) -> usize;
+
+    /// Change the target frame to the new frame.
+    fn try_frame_change_mut(&mut self, new_frame: Frame) -> Result<(), NEOSpyError>;
 
     /// Assuming the object undergoes linear motion, check to see if it is within the
     /// field of view.
@@ -67,7 +70,7 @@ pub trait FovLike: Sync {
 
         // correct for light delay
         let dt = -(Vector3::from(final_state.pos) - obs_pos).norm() * C_AU_PER_DAY_INV;
-        let final_state = propagate_two_body(&final_state, obs.jd + dt).unwrap();
+        let final_state = propagate_two_body(&final_state, obs.jd + dt)?;
         let rel_pos = Vector3::from(final_state.pos) - obs_pos;
 
         let (idx, contains) = self.contains(&rel_pos);
@@ -85,7 +88,7 @@ pub trait FovLike: Sync {
 
         // correct for light delay
         let dt = -(Vector3::from(exact_state.pos) - obs_pos).norm() * C_AU_PER_DAY_INV;
-        let final_state = propagate_two_body(&exact_state, obs.jd + dt).unwrap();
+        let final_state = propagate_two_body(&exact_state, obs.jd + dt)?;
         let rel_pos = Vector3::from(final_state.pos) - obs_pos;
 
         let (idx, contains) = self.contains(&rel_pos);

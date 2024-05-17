@@ -82,7 +82,8 @@ pub struct SphericalPolygon<const N_SIDES: usize> {
     #[serde(with = "serde_const_arr")]
     edge_normals: [[f64; 3]; N_SIDES],
 
-    frame: Frame,
+    /// Coordinate frame where the boundary is defined.
+    pub frame: Frame,
 }
 
 /// A rectangular patch of sky.
@@ -125,9 +126,10 @@ impl OnSkyRectangle {
         // up = cross(pointing, left)
         let up_vec = pointing.cross(&left_vec);
 
+        // These have to be enumerated in clockwise order for the pointing calculation to be correct.
         let n1: Vector3<f64> = rotate_around(&left_vec, up_vec, -lon_width / 2.0);
-        let n2: Vector3<f64> = rotate_around(&(-left_vec), up_vec, lon_width / 2.0);
-        let n3: Vector3<f64> = rotate_around(&up_vec, left_vec, lat_width / 2.0);
+        let n2: Vector3<f64> = rotate_around(&up_vec, left_vec, lat_width / 2.0);
+        let n3: Vector3<f64> = rotate_around(&(-left_vec), up_vec, lon_width / 2.0);
         let n4: Vector3<f64> = rotate_around(&(-up_vec), left_vec, -lat_width / 2.0);
 
         // construct the 4 normal vectors
@@ -154,7 +156,7 @@ impl OnSkyRectangle {
     /// Latitudinal width of the patch, the assumes the patch is rectangular.
     pub fn lat_width(&self) -> f64 {
         let pointing = self.pointing();
-        2.0 * (FRAC_PI_2 - pointing.angle(&Vector3::from(self.edge_normals[2])))
+        2.0 * (FRAC_PI_2 - pointing.angle(&Vector3::from(self.edge_normals[1])))
     }
 
     /// Longitudinal width of the patch, the assumes the patch is rectangular.
@@ -214,11 +216,24 @@ impl<const D: usize> SkyPatch for SphericalPolygon<D> {
         let mut x = 0.0;
         let mut y = 0.0;
         let mut z = 0.0;
-        self.edge_normals.iter().for_each(|row| {
-            x += row[0];
-            y += row[1];
-            z += row[2];
-        });
+
+        for (idx, idy) in (0..D).zip(1..D) {
+            let v = Vector3::from(self.edge_normals[idx])
+                .cross(&Vector3::from(self.edge_normals[idy]))
+                .normalize();
+
+            x += v.x;
+            y += v.y;
+            z += v.z;
+        }
+
+        let v = Vector3::from(self.edge_normals[D - 1])
+            .cross(&Vector3::from(self.edge_normals[0]))
+            .normalize();
+        x += v.x;
+        y += v.y;
+        z += v.z;
+
         UnitVector3::new_normalize([x, y, z].into())
     }
 }

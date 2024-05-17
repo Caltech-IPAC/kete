@@ -1,3 +1,4 @@
+use nalgebra::Vector3;
 use neospy_core::fov;
 use neospy_core::fov::{FovLike, SkyPatch};
 use pyo3::prelude::*;
@@ -128,7 +129,7 @@ impl PyWiseCmos {
         frame_num: usize,
         scan_id: String,
     ) -> Self {
-        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+        let pointing = pointing.into_vector(observer.frame());
         let pointing = pointing.raw.into();
         let scan_id = scan_id.into();
         PyWiseCmos(fov::WiseCmos::new(
@@ -148,7 +149,7 @@ impl PyWiseCmos {
     #[getter]
     pub fn pointing(&self) -> Vector {
         let pointing = self.0.patch.pointing().into_inner().into();
-        Vector::new(pointing, self.0.observer().frame.into())
+        Vector::new(pointing, self.0.patch.frame.into())
     }
 
     #[getter]
@@ -188,7 +189,7 @@ impl PyGenericRectangle {
         lon_width: f64,
         lat_width: f64,
     ) -> Self {
-        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+        let pointing = pointing.into_vector(observer.frame());
         PyGenericRectangle(fov::GenericRectangle::new(
             pointing.raw.into(),
             rotation.to_radians(),
@@ -196,6 +197,13 @@ impl PyGenericRectangle {
             lat_width.to_radians(),
             observer.0,
         ))
+    }
+
+    /// Construct a new Rectangle FOV from the corners.
+    #[staticmethod]
+    pub fn from_corners(corners: [VectorLike; 4], observer: PyState) -> Self {
+        let corners: [Vector3<f64>; 4] = corners.map(|x| x.into_vec(observer.frame()));
+        PyGenericRectangle(fov::GenericRectangle::from_corners(corners, observer.0))
     }
 
     #[getter]
@@ -212,11 +220,6 @@ impl PyGenericRectangle {
     }
 
     #[getter]
-    pub fn rotation(&self) -> f64 {
-        self.0.rotation.to_degrees()
-    }
-
-    #[getter]
     pub fn lon_width(&self) -> f64 {
         self.0.lon_width().to_degrees()
     }
@@ -228,9 +231,8 @@ impl PyGenericRectangle {
 
     fn __repr__(&self) -> String {
         format!(
-            "RectangleFOV(pointing={}, rotation={}, observer={}, lon_width={}, lat_width={})",
+            "RectangleFOV(pointing={}, observer={}, lon_width={}, lat_width={})",
             self.pointing().__repr__(),
-            self.rotation(),
             self.observer().__repr__(),
             self.lon_width(),
             self.lat_width(),
@@ -255,7 +257,7 @@ impl PyNeosCmos {
         cmos_id: u8,
         band: u8,
     ) -> Self {
-        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+        let pointing = pointing.into_vector(observer.frame());
         let pointing = pointing.raw.into();
         PyNeosCmos(fov::NeosCmos::new(
             pointing,
@@ -354,7 +356,7 @@ impl PyZtfCcdQuad {
     ) -> Self {
         let corners = corners
             .into_iter()
-            .map(|v| v.into_vector(crate::frame::PyFrames::Ecliptic).raw.into())
+            .map(|v| v.into_vector(observer.frame()).raw.into())
             .collect::<Vec<_>>()
             .try_into()
             .unwrap();

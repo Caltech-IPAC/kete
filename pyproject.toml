@@ -9,8 +9,14 @@ authors = [{name = "Dar Dahlen", email = "ddahlen@ipac.caltech.edu"},
 license = {text = "MIT"}
 requires-python = ">=3.9"
 classifiers=["Programming Language :: Python :: 3"]
-dependencies = ["astropy>=5.3.4", "matplotlib", "numpy>=1.24",
-                "pandas", "requests", "scipy", "matplotlib-label-lines"]
+dependencies = ["astropy>=5.3.4",
+                "matplotlib",
+                "matplotlib-label-lines",
+                "numpy>=1.24",
+                "pandas",
+                "requests",
+                "scipy",
+                ]
 
 [project.urls]
 homepage = "https://github.com/IPAC-SW/neospy"
@@ -35,11 +41,13 @@ dev = ["black>=23.1.0",
        "mypy",
        "types-requests",
        "sphinx_rtd_theme",
+        "click",
        ]
 docs = ["sphinx",
         "autodoc",
         "sphinx-gallery",
         "sphinx_rtd_theme",
+        "click",
         ]
 
 # Options for pytest

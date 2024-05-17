@@ -134,7 +134,7 @@ impl State {
     ///
     /// * `target_frame` - Target frame from the [`Frame`] enum.
     #[inline(always)]
-    pub fn try_change_frame(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
+    pub fn try_change_frame_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
         if self.frame == target_frame {
             return Ok(());
         }
@@ -260,7 +260,7 @@ impl State {
         // Now they match, and we know the center id will change, update target frame
         // if necessary.
         if self.frame != state.frame {
-            state.try_change_frame(self.frame)?;
+            state.try_change_frame_mut(self.frame)?;
         }
 
         // Now the state is where it is supposed to be, update as required.

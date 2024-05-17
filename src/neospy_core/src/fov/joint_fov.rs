@@ -79,6 +79,16 @@ impl FovLike for ZtfField {
         &self.observer
     }
 
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
+        let _ = self
+            .ccd_quads
+            .iter_mut()
+            .map(|ccd| ccd.try_frame_change_mut(target_frame))
+            .collect::<Result<Vec<_>, _>>()?;
+        self.observer.try_change_frame_mut(target_frame)?;
+        Ok(())
+    }
+
     fn contains(&self, obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
         closest_inside(
             &self
