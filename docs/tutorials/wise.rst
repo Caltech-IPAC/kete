@@ -94,11 +94,11 @@ observable to NEOWISE during this mission phase.
 
     The outputs of this may be saved using the following:
     
-    >>> neospy.SimultaneousStates.save_list(visible, "visible_wise_2023.bin")
+    ``neospy.SimultaneousStates.save_list(visible, "visible_wise_2023.bin")``
 
     The states may later be loaded using:
 
-    >>> visible = neospy.SimultaneousStates.load_list("visible_wise_2023.bin")
+    ``visible = neospy.SimultaneousStates.load_list("visible_wise_2023.bin")``
 
 
 Computing Positions
