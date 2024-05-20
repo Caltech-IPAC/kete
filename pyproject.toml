@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [{name = "Dar Dahlen", email = "ddahlen@ipac.caltech.edu"},
            {name = "Joe Masiero", email = "jmasiero@ipac.caltech.edu"},
           ]
-license = {text = "MIT"}
+license = {text = "BSD"}
 requires-python = ">=3.9"
 classifiers=["Programming Language :: Python :: 3"]
 dependencies = ["astropy>=5.3.4",

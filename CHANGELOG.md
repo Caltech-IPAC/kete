@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.2.2] - 2024 - 5 - 20
 
 ### Added
 
@@ -72,6 +72,6 @@ Initial Release
   Along with many helpful interfaces to web tools such as JPL Horizons or IPAC's IRSA.
 
 
-[Unreleased]: https://github.com/IPAC-SW/neospy/tree/main
+[0.2.2]: https://github.com/IPAC-SW/neospy/tree/main
 [0.2.1]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.1
 [0.2.0]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.0
