@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "neospy"
-copyright = "2024, Dar Dahlen"
+copyright = "2024, Caltech IPAC"
 author = "Dar Dahlen"
 
 # -- General configuration ---------------------------------------------------
