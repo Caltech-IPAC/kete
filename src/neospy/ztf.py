@@ -12,7 +12,7 @@ from .fov import ZtfCcdQuad, ZtfField, FOVList
 from .time import Time
 from .irsa import query_irsa_tap
 from .mpc import find_obs_code
-from .vector import Vector
+from .vector import Vector, State
 from .spice import SpiceKernels
 
 
@@ -98,9 +98,9 @@ def fetch_ZTF_fovs(year: int):
         verbose=True,
     )
 
-    # Exposures are 30 seconds, add 15 to select the midpoint of the observations
+    # Exposures are 30 seconds
     jds_str = [x.split("+")[0] for x in irsa_query["obsdate"]]
-    jds = np.array(Time(jds_str, "iso", "utc").jd) + 15 / 60 / 60 / 24
+    jds = np.array(Time(jds_str, "iso", "utc").jd)
 
     obs_info = find_obs_code("ZTF")
 
@@ -114,6 +114,7 @@ def fetch_ZTF_fovs(year: int):
             dec = getattr(row, f"dec{i + 1}")
             corners.append(Vector.from_ra_dec(ra, dec))
         observer = SpiceKernels.earth_pos_to_ecliptic(jd, *obs_info[:-1])
+        observer = State("ZTF", observer.jd, observer.pos, observer.vel)
 
         fov = ZtfCcdQuad(
             corners,
