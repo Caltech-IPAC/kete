@@ -1,7 +1,7 @@
 use nalgebra::Vector3;
 use neospy_core::fov;
 use neospy_core::fov::{FovLike, SkyPatch};
-use pyo3::prelude::*;
+use pyo3::{exceptions, prelude::*};
 
 use crate::vector::VectorLike;
 use crate::{state::PyState, vector::Vector};
@@ -28,7 +28,7 @@ pub struct PyZtfCcdQuad(pub fov::ZtfCcdQuad);
 
 /// Field of view of all 64 ZTF chips/quad combinations.
 /// This is a meta collection of individual ZTF CCD Quad FOVs.
-#[pyclass(module = "neospy", frozen, name = "ZtfField")]
+#[pyclass(module = "neospy", frozen, name = "ZtfField", sequence)]
 #[derive(Clone, Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub struct PyZtfField(pub fov::ZtfField);
@@ -174,7 +174,7 @@ impl PyWiseCmos {
 
     fn __repr__(&self) -> String {
         format!(
-            "WISEFOV(pointing={}, rotation={}, observer={}, frame_num={}, scan_id={:?})",
+            "WiseCmos(pointing={}, rotation={}, observer={}, frame_num={}, scan_id={:?})",
             self.pointing().__repr__(),
             self.rotation(),
             self.observer().__repr__(),
@@ -248,7 +248,7 @@ impl PyGenericRectangle {
 
     fn __repr__(&self) -> String {
         format!(
-            "RectangleFOV(pointing={}, observer={}, lon_width={}, lat_width={})",
+            "GenericRectangle(pointing={}, observer={}, lon_width={}, lat_width={})",
             self.pointing().__repr__(),
             self.observer().__repr__(),
             self.lon_width(),
@@ -376,7 +376,7 @@ impl PyNeosCmos {
 
     fn __repr__(&self) -> String {
         format!(
-            "NEOSFOV(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={})",
+            "NeosCmos(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={})",
             self.pointing().__repr__(),
             self.rotation(),
             self.observer().__repr__(),
@@ -515,7 +515,7 @@ impl PyZtfCcdQuad {
 
     fn __repr__(&self) -> String {
         format!(
-            "ZTFFOV(corners=<Unavailable>, observer={}, filefracday={}, ccdid={}, filtercode={}, imgtypecode={}, qid={}, maglimit={}, fid={})",
+            "ZtfCcdQuad(observer={}, filefracday={}, ccdid={}, filtercode={:?}, imgtypecode={:?}, qid={}, maglimit={}, fid={})",
             self.observer().__repr__(),
             self.filefracday(),
             self.ccdid(),
@@ -573,17 +573,34 @@ impl PyZtfField {
         self.0.fid
     }
 
-    /// Retrieve a specific CCD FOV from the contained list of FOVs.
-    pub fn get_ccd(&self, idx: usize) -> PyZtfCcdQuad {
-        PyZtfCcdQuad(match self.0.get_fov(idx) {
+    /// Return all of the individual CCD quads present in this field.
+    #[getter]
+    pub fn ccd_quads(&self) -> Vec<PyZtfCcdQuad> {
+        (0..self.0.n_patches()).map(|idx| PyZtfCcdQuad(match self.0.get_fov(idx) {
             fov::FOV::ZtfCcdQuad(fov) => fov,
-            _ => panic!(),
-        })
+            _ => unreachable!(),
+        })).collect()
+    }
+
+    pub fn __len__(&self) -> usize {
+        self.0.n_patches()
+    }
+
+    /// Retrieve a specific CCD FOV from the contained list of FOVs.
+    pub fn __getitem__(&self, idx: usize) -> PyResult<PyZtfCcdQuad> {
+        if idx >= self.__len__() {
+            return Err(PyErr::new::<exceptions::PyIndexError, _>(""));
+        }
+
+        Ok(PyZtfCcdQuad(match self.0.get_fov(idx) {
+            fov::FOV::ZtfCcdQuad(fov) => fov,
+            _ => unreachable!(),
+        }))
     }
 
     fn __repr__(&self) -> String {
         format!(
-            "ZTFFOV(ccd_quads=<{} frames>, observer={},filtercode={}, imgtypecode={}, fid={})",
+            "ZtfField(ccd_quads=<{} frames>, observer={}, filtercode={:?}, imgtypecode={:?}, fid={})",
             self.0.n_patches(),
             self.observer().__repr__(),
             self.filtercode(),
