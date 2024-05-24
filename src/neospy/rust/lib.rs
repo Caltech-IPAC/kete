@@ -57,6 +57,7 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(fovs::fov_checks_py, m)?)?;
     m.add_function(wrap_pyfunction!(fovs::fov_spk_checks_py, m)?)?;
+    m.add_function(wrap_pyfunction!(fovs::fov_static_checks_py, m)?)?;
 
     m.add_function(wrap_pyfunction!(flux::hg_apparent_flux_py, m)?)?;
     m.add_function(wrap_pyfunction!(flux::hg_apparent_mag_py, m)?)?;

@@ -16,6 +16,7 @@ pub enum FOVListLike {
 
 impl FOVListLike {
     /// Convert to a vector of neospy core fovs.
+    /// Frames will always be ecliptic
     pub fn into_sorted_vec_fov(self) -> Vec<neospy_core::fov::FOV> {
         let mut fovs = match self {
             FOVListLike::Vec(v) => v,

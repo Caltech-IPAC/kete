@@ -9,6 +9,7 @@ pub mod ztf;
 
 pub use fov_like::*;
 pub use generic::*;
+use nalgebra::Vector3;
 pub use neos::*;
 pub use patches::*;
 pub use wise::*;
@@ -81,6 +82,20 @@ impl FOV {
             FOV::GenericRectangle(fov) => fov.check_spks(obj_ids),
             FOV::ZtfField(fov) => fov.check_spks(obj_ids),
             FOV::NeosVisit(fov) => fov.check_spks(obj_ids),
+        }
+    }
+
+    /// Check if static sources are visible in this FOV.
+    /// Position must be in the correct frame!
+    pub fn check_statics(&self, pos: &[Vector3<f64>]) -> Vec<Option<(Vec<Vector3<f64>>, FOV)>>  {
+        match self {
+            FOV::Wise(fov) => fov.check_statics(pos),
+            FOV::NeosCmos(fov) => fov.check_statics(pos),
+            FOV::ZtfCcdQuad(fov) => fov.check_statics(pos),
+            FOV::GenericCone(fov) => fov.check_statics(pos),
+            FOV::GenericRectangle(fov) => fov.check_statics(pos),
+            FOV::ZtfField(fov) => fov.check_statics(pos),
+            FOV::NeosVisit(fov) => fov.check_statics(pos),
         }
     }
 

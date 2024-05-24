@@ -6,6 +6,31 @@ use crate::prelude::*;
 use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
 
+/// NEOS bands
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
+pub enum NeosBand{
+    /// No Band defined.
+    Undefined,
+
+    /// NEOS NC1 Band.
+    NC1,
+
+    /// NEOS NC2 Band.
+    NC2,
+}
+
+/// Convert a NEOS band from u8
+/// 1 is NC1 2 is NC2, everything else is Undefined.
+impl From<u8> for NeosBand{
+    fn from(value: u8) -> Self {
+        match value{
+            1=> NeosBand::NC1,
+            2=> NeosBand::NC2,
+            _=> NeosBand::Undefined
+        }
+    }
+}
+
 /// NEOS frame data, a single detector on a single band
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NeosCmos {
@@ -36,8 +61,8 @@ pub struct NeosCmos {
     /// Exposure ID
     pub exposure_id: u8,
 
-    /// Wavelength band, either 1 or 2 for NC1 or NC2
-    pub band: u8,
+    /// Wavelength band
+    pub band: NeosBand,
 
     /// CMOS ID
     /// ID number of the CMOS chip, 0, 1, 2, or 3
@@ -58,7 +83,7 @@ impl NeosCmos {
         subloop_id: u8,
         exposure_id: u8,
         cmos_id: u8,
-        band: u8,
+        band: NeosBand,
     ) -> Self {
         let patch =
             OnSkyRectangle::new(pointing, rotation, NEOS_WIDTH, NEOS_HEIGHT, observer.frame);
@@ -111,7 +136,7 @@ impl FovLike for NeosCmos {
     }
 }
 
-/// NEOS frame data, all 4 chips of a visit.
+/// NEOS frame data, 4 chips of a visit.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NeosVisit {
     /// Individual CMOS fields
@@ -140,6 +165,9 @@ pub struct NeosVisit {
 
     /// Exposure ID
     pub exposure_id: u8,
+
+    /// Wavelength band
+    pub band: NeosBand,
 }
 
 impl NeosVisit {
@@ -163,6 +191,7 @@ impl NeosVisit {
         let subloop_id = first.subloop_id;
         let exposure_id = first.exposure_id;
         let rotation = first.rotation;
+        let band = first.band;
 
         for ccd in chips.iter() {
             if ccd.side_id != side_id
@@ -173,6 +202,7 @@ impl NeosVisit {
                 || ccd.exposure_id != exposure_id
                 || ccd.rotation != rotation
                 || ccd.observer().jd != observer.jd
+                || ccd.band != band
             {
                 return Err(NEOSpyError::ValueError(
                     "All NeosCmos must have matching values.".into(),
@@ -189,6 +219,7 @@ impl NeosVisit {
             loop_id,
             subloop_id,
             exposure_id,
+            band,
         })
     }
 
@@ -207,7 +238,7 @@ impl NeosVisit {
     //     subloop_id: u8,
     //     exposure_id: u8,
     //     cmos_id: u8,
-    //     band: u8,
+    //     band: NeosBand,
     // ) -> Self {
     //     let chip_x_width = (1.0 - 3.0 * gap_fraction) * x_width / 4.0;
 
@@ -216,7 +247,7 @@ impl NeosVisit {
     //     // up vector.
     //     let up_vec = rotate_around(&Vector3::new(0.0, 0.0, 1.0), pointing, -rotation);
 
-    //     // construct the vector orthogonal to the pointing and rotate z axis vectors.
+    //     // construct the vector orthogonal to the pointing and rotated z axis vectors.
     //     // left = cross(up, pointing)
     //     let left_vec = pointing.cross(&up_vec);
 
@@ -247,6 +278,13 @@ impl NeosVisit {
     //         frame,
     //     }
     // }
+
+    /// Return the central pointing vector.
+    pub fn pointing(&self) -> Vector3<f64>{
+        let mut pointing = Vector3::<f64>::zeros();
+        self.chips.iter().for_each(|chip| pointing += *chip.patch.pointing());
+        pointing.normalize()
+    }
 }
 
 impl FovLike for NeosVisit {

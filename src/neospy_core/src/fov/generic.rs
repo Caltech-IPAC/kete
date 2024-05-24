@@ -38,6 +38,12 @@ impl GenericRectangle {
         }
     }
 
+    /// Create a Field of view from a collection of corners.
+    pub fn from_corners(corners: [Vector3<f64>; 4], observer: State) -> Self {
+        let patch = OnSkyRectangle::from_corners(corners, observer.frame);
+        Self { patch, observer , rotation:f64::NAN}
+    }
+
     /// Latitudinal width of the FOV.
     #[inline]
     pub fn lat_width(&self) -> f64 {

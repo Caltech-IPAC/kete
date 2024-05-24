@@ -327,7 +327,7 @@ impl PyNeosCmos {
             subloop_id,
             exposure_id,
             cmos_id,
-            band,
+            band.into(),
         ))
     }
 
@@ -406,36 +406,36 @@ impl PyNeosCmos {
 #[pymethods]
 #[allow(clippy::too_many_arguments)]
 impl PyNeosVisit {
-    #[new]
-    pub fn new(
-        pointing: VectorLike,
-        rotation: f64,
-        observer: PyState,
-        side_id: u16,
-        stack_id: u8,
-        quad_id: u8,
-        loop_id: u8,
-        subloop_id: u8,
-        exposure_id: u8,
-        cmos_id: u8,
-        band: u8,
-    ) -> Self {
-        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
-        let pointing = pointing.raw.into();
-        PyNeosVisit(fov::NeosVisit::new(
-            pointing,
-            rotation.to_radians(),
-            observer.0,
-            side_id,
-            stack_id,
-            quad_id,
-            loop_id,
-            subloop_id,
-            exposure_id,
-            cmos_id,
-            band,
-        ))
-    }
+    // #[new]
+    // pub fn new(
+    //     pointing: VectorLike,
+    //     rotation: f64,
+    //     observer: PyState,
+    //     side_id: u16,
+    //     stack_id: u8,
+    //     quad_id: u8,
+    //     loop_id: u8,
+    //     subloop_id: u8,
+    //     exposure_id: u8,
+    //     cmos_id: u8,
+    //     band: u8,
+    // ) -> Self {
+    //     let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+    //     let pointing = pointing.raw.into();
+    //     PyNeosVisit(fov::NeosVisit::from_pointing(
+    //         pointing,
+    //         rotation.to_radians(),
+    //         observer.0,
+    //         side_id,
+    //         stack_id,
+    //         quad_id,
+    //         loop_id,
+    //         subloop_id,
+    //         exposure_id,
+    //         cmos_id,
+    //         band.into(),
+    //     ))
+    // }
 
     #[getter]
     pub fn observer(&self) -> PyState {
@@ -445,7 +445,7 @@ impl PyNeosVisit {
     #[getter]
     pub fn pointing(&self) -> Vector {
         Vector::new(
-            self.0.patch.pointing().into_inner().into(),
+            self.0.pointing().into(),
             self.0.observer().frame.into(),
         )
     }

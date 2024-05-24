@@ -30,6 +30,16 @@ pub trait FovLike: Sync + Sized {
     /// Change the target frame to the new frame.
     fn try_frame_change_mut(&mut self, new_frame: Frame) -> Result<(), NEOSpyError>;
 
+
+    /// Check if a static source is visible
+    #[inline]
+    fn check_static(&self, pos: &Vector3<f64> ) -> (usize, Contains) {
+        let obs = self.observer();
+        let obs_pos: Vector3<_> = obs.pos.into();
+        let rel_pos = pos - obs_pos;
+        self.contains(&rel_pos)
+    }
+
     /// Assuming the object undergoes linear motion, check to see if it is within the
     /// field of view.
     #[inline]
@@ -203,6 +213,36 @@ pub trait FovLike: Sync + Sized {
             .enumerate()
             .map(|(idx, states_patch)| {
                 SimultaneousStates::new_exact(states_patch, Some(self.get_fov(idx))).ok()
+            })
+            .collect()
+    }
+
+    /// Given a collection of static positions, return all which are visible.
+    fn check_statics(&self, pos: &[Vector3<f64>]) -> Vec<Option<(Vec<Vector3<f64>>, FOV)>> {
+
+        let mut visible: Vec<Vec<Vector3<f64>>> = vec![Vec::new(); self.n_patches()];
+
+        let vis_pos: Vec<_> = pos
+            .into_par_iter()
+            .filter_map(|p| {
+                match self.check_static(p) {
+                        (idx, Contains::Inside) => Some((idx, p)),
+                        _ => None,
+                    }
+            })
+            .collect();
+
+            vis_pos
+            .into_iter()
+            .for_each(|(patch_idx, p)| visible[patch_idx].push(*p));
+
+            visible.
+            into_iter()
+            .enumerate()
+            .map(|(idx, vis_patch)| {
+                if vis_patch.is_empty(){
+                    None}else{               Some((vis_patch, self.get_fov(idx)))
+                }
             })
             .collect()
     }

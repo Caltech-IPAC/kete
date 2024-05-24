@@ -3,7 +3,7 @@ use neospy_core::propagation::propagate_n_body_spk;
 use pyo3::prelude::*;
 use rayon::prelude::*;
 
-use crate::simult_states::{PySimultaneousStates, SimulStateLike};
+use crate::{simult_states::{PySimultaneousStates, SimulStateLike}, vector::{Vector, VectorLike}};
 
 #[pyfunction]
 #[pyo3(name = "fov_checks")]
@@ -70,6 +70,33 @@ pub fn fov_spk_checks_py(obj_ids: Vec<isize>, fovs: FOVListLike) -> Vec<PySimult
                 .check_spks(&obj_ids)
                 .into_iter()
                 .filter_map(|pop| pop.map(|p| PySimultaneousStates(Box::new(p))))
+                .collect();
+            match vis.is_empty() {
+                true => None,
+                false => Some(vis),
+            }
+        })
+        .flatten()
+        .collect()
+}
+
+#[pyfunction]
+#[pyo3(name = "fov_static_checks")]
+pub fn fov_static_checks_py(pos: Vec<VectorLike>, fovs: FOVListLike) -> Vec<(Vec<Vector>, AllowedFOV)> {
+    let fovs = fovs.into_sorted_vec_fov();
+    let pos:Vec<_> = pos.into_iter().map(|p| p.into_vec(crate::frame::PyFrames::Ecliptic)).collect();
+
+    fovs.into_par_iter()
+        .filter_map(|fov| {
+            let vis: Vec<_> = fov
+                .check_statics(&pos)
+                .into_iter()
+                .filter_map(|pop| {
+                    pop.map(|(p_vec, fov)| {
+                        let p_vec = p_vec.into_iter().map(|p| Vector::new(p.into(), crate::frame::PyFrames::Ecliptic)).collect();
+                        (p_vec, fov.into())
+                    })
+            })
                 .collect();
             match vis.is_empty() {
                 true => None,
