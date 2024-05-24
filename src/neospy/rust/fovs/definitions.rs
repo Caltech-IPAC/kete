@@ -428,6 +428,7 @@ impl PyNeosVisit {
     pub fn new(
         x_width: f64,
         y_width: f64,
+        gap_angle: f64,
         pointing: VectorLike,
         rotation: f64,
         observer: PyState,
@@ -441,7 +442,7 @@ impl PyNeosVisit {
     ) -> Self {
         let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
         let pointing = pointing.raw.into();
-        PyNeosVisit(fov::NeosVisit::from_pointing(x_width.to_radians(), y_width.to_radians(), 0.0,
+        PyNeosVisit(fov::NeosVisit::from_pointing(x_width.to_radians(), y_width.to_radians(), gap_angle.to_radians(),
             pointing,
             rotation.to_radians(),
             observer.0,
