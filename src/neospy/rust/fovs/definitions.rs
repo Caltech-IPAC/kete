@@ -1,6 +1,7 @@
+use nalgebra::Vector3;
 use neospy_core::fov;
 use neospy_core::fov::{FovLike, SkyPatch};
-use pyo3::prelude::*;
+use pyo3::{exceptions, prelude::*};
 
 use crate::vector::VectorLike;
 use crate::{state::PyState, vector::Vector};
@@ -34,7 +35,7 @@ pub struct PyZtfCcdQuad(pub fov::ZtfCcdQuad);
 
 /// Field of view of all 64 ZTF chips/quad combinations.
 /// This is a meta collection of individual ZTF CCD Quad FOVs.
-#[pyclass(module = "neospy", frozen, name = "ZtfField")]
+#[pyclass(module = "neospy", frozen, name = "ZtfField", sequence)]
 #[derive(Clone, Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub struct PyZtfField(pub fov::ZtfField);
@@ -142,7 +143,7 @@ impl PyWiseCmos {
         frame_num: usize,
         scan_id: String,
     ) -> Self {
-        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+        let pointing = pointing.into_vector(observer.frame());
         let pointing = pointing.raw.into();
         let scan_id = scan_id.into();
         PyWiseCmos(fov::WiseCmos::new(
@@ -154,35 +155,40 @@ impl PyWiseCmos {
         ))
     }
 
+    /// Position of the observer in this FOV.
     #[getter]
     pub fn observer(&self) -> PyState {
         self.0.observer().clone().into()
     }
 
+    /// Direction that the observer is looking.
     #[getter]
     pub fn pointing(&self) -> Vector {
         let pointing = self.0.patch.pointing().into_inner().into();
-        Vector::new(pointing, self.0.observer().frame.into())
+        Vector::new(pointing, self.0.patch.frame.into())
     }
 
+    /// WISE Frame number.
     #[getter]
     pub fn frame_num(&self) -> usize {
         self.0.frame_num
     }
 
+    /// WISE Scan ID.
     #[getter]
     pub fn scan_id(&self) -> String {
         self.0.scan_id.to_string()
     }
 
+    /// Rotation angle of the FOV in degrees.
     #[getter]
     pub fn rotation(&self) -> f64 {
-        self.0.rotation
+        self.0.rotation.to_degrees()
     }
 
     fn __repr__(&self) -> String {
         format!(
-            "WISEFOV(pointing={}, rotation={}, observer={}, frame_num={}, scan_id={:?})",
+            "WiseCmos(pointing={}, rotation={}, observer={}, frame_num={}, scan_id={:?})",
             self.pointing().__repr__(),
             self.rotation(),
             self.observer().__repr__(),
@@ -202,7 +208,7 @@ impl PyGenericRectangle {
         lon_width: f64,
         lat_width: f64,
     ) -> Self {
-        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+        let pointing = pointing.into_vector(observer.frame());
         PyGenericRectangle(fov::GenericRectangle::new(
             pointing.raw.into(),
             rotation.to_radians(),
@@ -212,11 +218,28 @@ impl PyGenericRectangle {
         ))
     }
 
+    /// Construct a new Rectangle FOV from the corners.
+    /// The corners must be provided in clockwise order.
+    ///
+    /// Parameters
+    /// ----------
+    /// corners :
+    ///     4 Vectors which represent the corners of the FOV, these must be provided in clockwise order.
+    /// observer :
+    ///     Position of the observer as a State.
+    #[staticmethod]
+    pub fn from_corners(corners: [VectorLike; 4], observer: PyState) -> Self {
+        let corners: [Vector3<f64>; 4] = corners.map(|x| x.into_vec(observer.frame()));
+        PyGenericRectangle(fov::GenericRectangle::from_corners(corners, observer.0))
+    }
+
+    /// The observer State.
     #[getter]
     pub fn observer(&self) -> PyState {
         self.0.observer().clone().into()
     }
 
+    /// Direction that the observer is looking.
     #[getter]
     pub fn pointing(&self) -> Vector {
         Vector::new(
@@ -225,16 +248,13 @@ impl PyGenericRectangle {
         )
     }
 
-    #[getter]
-    pub fn rotation(&self) -> f64 {
-        self.0.rotation.to_degrees()
-    }
-
+    /// The longitudinal width of the FOV.
     #[getter]
     pub fn lon_width(&self) -> f64 {
         self.0.lon_width().to_degrees()
     }
 
+    /// The Latitudinal width of the FOV.
     #[getter]
     pub fn lat_width(&self) -> f64 {
         self.0.lat_width().to_degrees()
@@ -242,9 +262,8 @@ impl PyGenericRectangle {
 
     fn __repr__(&self) -> String {
         format!(
-            "RectangleFOV(pointing={}, rotation={}, observer={}, lon_width={}, lat_width={})",
+            "GenericRectangle(pointing={}, observer={}, lon_width={}, lat_width={})",
             self.pointing().__repr__(),
-            self.rotation(),
             self.observer().__repr__(),
             self.lon_width(),
             self.lat_width(),
@@ -255,6 +274,32 @@ impl PyGenericRectangle {
 #[pymethods]
 #[allow(clippy::too_many_arguments)]
 impl PyNeosCmos {
+    /// Construct a new NEOS FOV.
+    ///
+    /// Parameters
+    /// ----------
+    /// pointing :
+    ///     Vector defining the center of the FOV.
+    /// rotation :
+    ///     Rotation of the FOV in degrees.
+    /// observer :
+    ///     State of the observer.
+    /// side_id :
+    ///     Side ID indicating where we are in the survey.
+    /// stack_id :
+    ///     Stack ID indicating where we are in the survey.
+    /// quad_id :
+    ///     Quad ID indicating where we are in the survey.
+    /// loop_id :
+    ///     Loop ID indicating where we are in the survey.
+    /// subloop_id :
+    ///     Subloop ID indicating where we are in the survey.
+    /// exposure_id :
+    ///     Exposure number indicating where we are in the survey.
+    /// cmos_id :
+    ///     Which chip of the target band this represents.
+    /// band :
+    ///     Band, can be either 1 or 2 to represent NC1/NC2.
     #[new]
     pub fn new(
         pointing: VectorLike,
@@ -269,7 +314,7 @@ impl PyNeosCmos {
         cmos_id: u8,
         band: u8,
     ) -> Self {
-        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+        let pointing = pointing.into_vector(observer.frame());
         let pointing = pointing.raw.into();
         PyNeosCmos(fov::NeosCmos::new(
             pointing,
@@ -286,11 +331,13 @@ impl PyNeosCmos {
         ))
     }
 
+    /// The observer State.
     #[getter]
     pub fn observer(&self) -> PyState {
         self.0.observer().clone().into()
     }
 
+    /// Direction that the observer is looking.
     #[getter]
     pub fn pointing(&self) -> Vector {
         Vector::new(
@@ -299,44 +346,51 @@ impl PyNeosCmos {
         )
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn side_id(&self) -> u16 {
         self.0.side_id
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn stack_id(&self) -> u8 {
         self.0.stack_id
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn quad_id(&self) -> u8 {
         self.0.quad_id
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn loop_id(&self) -> u8 {
         self.0.loop_id
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn subloop_id(&self) -> u8 {
         self.0.subloop_id
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn exposure_id(&self) -> u8 {
         self.0.exposure_id
     }
 
+    /// Rotation angle of the FOV in degrees.
     #[getter]
     pub fn rotation(&self) -> f64 {
-        self.0.rotation
+        self.0.rotation.to_degrees()
     }
 
     fn __repr__(&self) -> String {
         format!(
-            "NEOSFOV(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={})",
+            "NeosCmos(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={})",
             self.pointing().__repr__(),
             self.rotation(),
             self.observer().__repr__(),
@@ -450,6 +504,31 @@ impl PyNeosVisit {
 #[pymethods]
 #[allow(clippy::too_many_arguments)]
 impl PyZtfCcdQuad {
+    /// Construct a new ZTF CCD FOV from the corners.
+    /// The corners must be provided in clockwise order.
+    ///
+    /// Parameters
+    /// ----------
+    /// corners :
+    ///     4 Vectors which represent the corners of the FOV, these must be provided in clockwise order.
+    /// observer :
+    ///     Position of the observer as a State.
+    /// field :
+    ///     Field number of the survey.
+    /// filefracday :
+    ///     Which fraction of a day was this FOV captured.
+    /// ccdid :
+    ///     CCD ID describes which of the 16 CCDs this represents.
+    /// filtercode :
+    ///     Which filter was used for this exposure.
+    /// imgtypecode :
+    ///     Type code describing the data product of this field.
+    /// qid :
+    ///     Which quadrant of the CCD does this FOV represent.
+    /// maglimit :
+    ///     Effective magnitude limit of this exposure.
+    /// fid :
+    ///     The FID of this exposure.
     #[new]
     pub fn new(
         corners: [VectorLike; 4],
@@ -465,7 +544,7 @@ impl PyZtfCcdQuad {
     ) -> Self {
         let corners = corners
             .into_iter()
-            .map(|v| v.into_vector(crate::frame::PyFrames::Ecliptic).raw.into())
+            .map(|v| v.into_vector(observer.frame()).raw.into())
             .collect::<Vec<_>>()
             .try_into()
             .unwrap();
@@ -488,17 +567,13 @@ impl PyZtfCcdQuad {
         self.0.observer().clone().into()
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn field(&self) -> u32 {
         self.0.field
     }
 
-    #[getter]
-    pub fn ra(&self) -> f64 {
-        let pointing = self.pointing();
-        pointing.as_equatorial().ra().unwrap()
-    }
-
+    /// Direction that the observer is looking.
     #[getter]
     pub fn pointing(&self) -> Vector {
         Vector::new(
@@ -507,42 +582,43 @@ impl PyZtfCcdQuad {
         )
     }
 
-    #[getter]
-    pub fn dec(&self) -> f64 {
-        let pointing = self.pointing();
-        pointing.as_equatorial().dec().unwrap()
-    }
-
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn filefracday(&self) -> u64 {
         self.0.filefracday
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn ccdid(&self) -> u8 {
         self.0.ccdid
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn filtercode(&self) -> String {
         self.0.filtercode.to_string()
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn imgtypecode(&self) -> String {
         self.0.imgtypecode.to_string()
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn qid(&self) -> u8 {
         self.0.qid
     }
 
+    /// Magnitude limit of this exposure.
     #[getter]
     pub fn maglimit(&self) -> f64 {
         self.0.maglimit
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn fid(&self) -> usize {
         self.0.fid
@@ -550,9 +626,7 @@ impl PyZtfCcdQuad {
 
     fn __repr__(&self) -> String {
         format!(
-            "ZTFFOV(ra={}, dec={}, observer={}, filefracday={}, ccdid={}, filtercode={}, imgtypecode={}, qid={}, maglimit={}, fid={})",
-            self.ra(),
-            self.dec(),
+            "ZtfCcdQuad(observer={}, filefracday={}, ccdid={}, filtercode={:?}, imgtypecode={:?}, qid={}, maglimit={}, fid={})",
             self.observer().__repr__(),
             self.filefracday(),
             self.ccdid(),
@@ -568,46 +642,76 @@ impl PyZtfCcdQuad {
 #[pymethods]
 #[allow(clippy::too_many_arguments)]
 impl PyZtfField {
+    /// Representation of an entire ZTF Field, made up of up to 64 ZTF CCD FOVs.
+    ///
+    /// Parameters
+    /// ----------
+    /// ztf_ccd_fields :
+    ///     List containing all of the CCD FOVs.
+    ///     These must have matching metadata.
     #[new]
     pub fn new(ztf_ccd_fields: Vec<PyZtfCcdQuad>) -> Self {
         PyZtfField(fov::ZtfField::new(ztf_ccd_fields.into_iter().map(|x| x.0).collect()).unwrap())
     }
 
+    /// State of the observer for this FOV.
     #[getter]
     pub fn observer(&self) -> PyState {
         self.0.observer().clone().into()
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn field(&self) -> u32 {
         self.0.field
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn filtercode(&self) -> String {
         self.0.filtercode.to_string()
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn imgtypecode(&self) -> String {
         self.0.imgtypecode.to_string()
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn fid(&self) -> usize {
         self.0.fid
     }
 
-    pub fn get_ccd(&self, idx: usize) -> PyZtfCcdQuad {
-        PyZtfCcdQuad(match self.0.get_fov(idx) {
+    /// Return all of the individual CCD quads present in this field.
+    #[getter]
+    pub fn ccd_quads(&self) -> Vec<PyZtfCcdQuad> {
+        (0..self.0.n_patches()).map(|idx| PyZtfCcdQuad(match self.0.get_fov(idx) {
             fov::FOV::ZtfCcdQuad(fov) => fov,
-            _ => panic!(),
-        })
+            _ => unreachable!(),
+        })).collect()
+    }
+
+    pub fn __len__(&self) -> usize {
+        self.0.n_patches()
+    }
+
+    /// Retrieve a specific CCD FOV from the contained list of FOVs.
+    pub fn __getitem__(&self, idx: usize) -> PyResult<PyZtfCcdQuad> {
+        if idx >= self.__len__() {
+            return Err(PyErr::new::<exceptions::PyIndexError, _>(""));
+        }
+
+        Ok(PyZtfCcdQuad(match self.0.get_fov(idx) {
+            fov::FOV::ZtfCcdQuad(fov) => fov,
+            _ => unreachable!(),
+        }))
     }
 
     fn __repr__(&self) -> String {
         format!(
-            "ZTFFOV(ccd_quads=<{} frames>, observer={},filtercode={}, imgtypecode={}, fid={})",
+            "ZtfField(ccd_quads=<{} frames>, observer={}, filtercode={:?}, imgtypecode={:?}, fid={})",
             self.0.n_patches(),
             self.observer().__repr__(),
             self.filtercode(),

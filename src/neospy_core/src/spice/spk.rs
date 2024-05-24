@@ -123,7 +123,7 @@ impl SpkSegmentCollection {
     ) -> Result<State, NEOSpyError> {
         let mut state = self.try_get_raw_state(id, jd)?;
         self.try_change_center(&mut state, center)?;
-        state.try_change_frame(frame)?;
+        state.try_change_frame_mut(frame)?;
         Ok(state)
     }
 

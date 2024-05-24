@@ -48,7 +48,7 @@ impl SimultaneousStates {
 
         if !states
             .iter_mut()
-            .map(|state| state.try_change_frame(frame))
+            .map(|state| state.try_change_frame_mut(frame))
             .all(|x| x.is_ok())
         {
             return Err(NEOSpyError::ValueError("Failed to change frames".into()));

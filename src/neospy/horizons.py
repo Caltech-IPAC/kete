@@ -160,7 +160,7 @@ def _fetch_json(
         have fragments, as these objects are difficult to query since there are
         several names which have matches on substrings.
     """
-    from .data import cache_path
+    from .cache import cache_path
     from .mpc import unpack_designation, pack_designation
     import json
 

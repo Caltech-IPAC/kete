@@ -10,7 +10,7 @@ import astropy  # type: ignore
 from . import conversion, constants
 from .time import float_day_to_d_h_m_s, Time
 from .vector import Vector, Frames, CometElements
-from .data import cached_gzip_json_download
+from .cache import cached_gzip_json_download
 
 # pylint: disable-next=no-name-in-module
 from . import _core  # type: ignore
@@ -22,6 +22,7 @@ _mpc_hex = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 logger = logging.getLogger(__name__)
 
 
+@lru_cache
 def find_obs_code(name: str):
     """
     Search known observatory codes, if a single matching observatory is found, this will
@@ -592,14 +593,6 @@ def normalize_names(dataset, col: str = "MPC_packed_name", name_lookup=None):
     Given a Pandas Dataframe containing packed MPC names, alter the names to be the up
     to date MPC designation.
 
-    .. testcode::
-        :skipif: True
-
-        from neospy.mpc import normalize_names
-        from neospy.pds import fetch_pds_data
-
-        dataset = normalize_names(fetch_pds_data("data/neowise_neos.xml"))
-
 
     Parameters
     ----------
@@ -733,7 +726,7 @@ def mpc_known_orbit_filtered(filt):
     filt:
         Filter function which defines which group to select. The filter function must
         accept 3 parameters, `peri_dist, eccentricity, h_mag`, and return a bool.
-        See `neospy.population.definitions` for a collection of filter functions which
+        See `neospy.population` for a collection of filter functions which
         are used to generation model populations.
     """
     orbs = fetch_known_orbit_data()
@@ -755,7 +748,7 @@ def table_to_states(orbit_dataframe):
         orbits = neospy.mpc.fetch_known_orbit_data()
 
         # Subset the table to be only NEOs
-        neos = neospy.population.definitions.neo(orbits.peri_dist, orbits.ecc)
+        neos = neospy.population.neo(orbits.peri_dist, orbits.ecc)
         neo_subset = orbits[neos]
 
         # load the state object from this table

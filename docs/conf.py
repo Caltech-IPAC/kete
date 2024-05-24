@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "neospy"
-copyright = "2024, Dar Dahlen"
+copyright = "2024, Caltech IPAC"
 author = "Dar Dahlen"
 
 # -- General configuration ---------------------------------------------------
@@ -22,6 +22,10 @@ extensions = [
     "sphinx_gallery.gen_gallery",
     "matplotlib.sphinxext.plot_directive",
 ]
+
+suppress_warnings = ["config.cache"]
+
+
 autodoc_typehints = "description"
 autodoc_inherit_docstrings = True
 autodoc_warningiserror = True
@@ -31,7 +35,10 @@ autodoc_default_options = {
 }
 
 autoclass_content = "both"
-exclude_patterns = []
+exclude_patterns = [
+    "**/.ipynb_checkpoints",
+]
+
 
 # Napoleon settings
 napoleon_google_docstring = True

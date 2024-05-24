@@ -93,6 +93,15 @@ impl FovLike for ZtfCcdQuad {
     fn n_patches(&self) -> usize {
         1
     }
+
+    fn try_frame_change_mut(
+        &mut self,
+        target_frame: Frame,
+    ) -> Result<(), NEOSpyError> {
+        self.observer.try_change_frame_mut(target_frame)?;
+        self.patch = self.patch.try_frame_change(target_frame)?;
+        Ok(())
+    }
 }
 
 /// ZTF frame data, single quad of a single chip
@@ -166,6 +175,16 @@ impl FovLike for ZtfField {
 
     fn observer(&self) -> &State {
         &self.observer
+    }
+
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
+        let _ = self
+            .ccd_quads
+            .iter_mut()
+            .map(|ccd| ccd.try_frame_change_mut(target_frame))
+            .collect::<Result<Vec<_>, _>>()?;
+        self.observer.try_change_frame_mut(target_frame)?;
+        Ok(())
     }
 
     fn contains(&self, obs_to_obj: &Vector3<f64>) -> (usize, Contains) {

@@ -1,6 +1,25 @@
-from .data import cached_file_download
+"""
+ZTF Related Functions and Data.
+"""
 
-__all__ = ["fetch_ZTF_file"]
+from functools import lru_cache
+import os
+from collections import defaultdict
+import numpy as np
+
+from .cache import cached_file_download, cache_path
+from .fov import ZtfCcdQuad, ZtfField, FOVList
+from .time import Time
+from .irsa import query_irsa_tap
+from .mpc import find_obs_code
+from .vector import Vector, State
+from .spice import SpiceKernels
+
+
+__all__ = ["fetch_ZTF_file", "fetch_ZTF_fovs"]
+
+SURVEY_START_JD = Time.from_ymd(2018, 3, 20).jd
+"""First image in ZTF dataset."""
 
 ZTF_IRSA_TABLES = {
     "ztf.ztf_current_meta_cal": "ZTF Calibration Metadata Table",
@@ -19,6 +38,114 @@ ZTF_IRSA_TABLES = {
     "ztf_objects_dr19": "ZTF Data Release 19 Objects",
     "ztf_objects_dr20": "ZTF Data Release 20 Objects",
 }
+
+
+@lru_cache(maxsize=3)
+def fetch_ZTF_fovs(year: int):
+    """
+    Load all FOVs taken during the specified mission year of ZTF.
+
+    This will download and cache all FOV information for the given year from IRSA.
+
+    This can take about 20 minutes per year of survey, each year is 2-3 GB of data.
+
+    Parameters
+    ----------
+    year :
+        Which year of ZTF, 2018 through 2024.
+    """
+    year = int(year)
+    if year not in [2018, 2019, 2020, 2021, 2022, 2023, 2024]:
+        raise ValueError("Year must only be in the range 2018-2024")
+    cache_dir = cache_path()
+    dir_path = os.path.join(cache_dir, "fovs")
+    filename = os.path.join(dir_path, f"ztf_fields_{year}.bin")
+
+    if not os.path.isdir(dir_path):
+        os.makedirs(dir_path)
+    if os.path.isfile(filename):
+        return FOVList.load(filename)
+
+    table = "ztf.ztf_current_meta_sci"
+    cols = [
+        "field",
+        "filefracday",
+        "ccdid",
+        "filtercode",
+        "imgtypecode",
+        "qid",
+        "obsdate",
+        "maglimit",
+        "fid",
+        "ra",
+        "dec",
+        "ra1",
+        "dec1",
+        "ra2",
+        "dec2",
+        "ra3",
+        "dec3",
+        "ra4",
+        "dec4",
+    ]
+    jd_start = Time.from_ymd(year, 1, 1).jd
+    jd_end = Time.from_ymd(year + 1, 1, 1).jd
+
+    irsa_query = query_irsa_tap(
+        f"SELECT {', '.join(cols)} FROM {table} "
+        f"WHERE obsjd between {jd_start} and {jd_end}",
+        verbose=True,
+    )
+
+    # Exposures are 30 seconds
+    jds_str = [x.split("+")[0] for x in irsa_query["obsdate"]]
+    jds = np.array(Time(jds_str, "iso", "utc").jd)
+
+    obs_info = find_obs_code("ZTF")
+
+    # ZTF fields are made up of up to 64 individual CCD quads, here we first construct
+    # the individual CCD quad information.
+    fovs = []
+    for jd, row in zip(jds, irsa_query.itertuples()):
+        corners = []
+        for i in range(4):
+            ra = getattr(row, f"ra{i + 1}")
+            dec = getattr(row, f"dec{i + 1}")
+            corners.append(Vector.from_ra_dec(ra, dec))
+        observer = SpiceKernels.earth_pos_to_ecliptic(jd, *obs_info[:-1])
+        observer = State("ZTF", observer.jd, observer.pos, observer.vel)
+
+        fov = ZtfCcdQuad(
+            corners,
+            observer,
+            row.field,
+            row.filefracday,
+            row.ccdid,
+            row.filtercode,
+            row.imgtypecode,
+            row.qid,
+            row.maglimit,
+            row.fid,
+        )
+        fovs.append(fov)
+
+    # Now group the quad information into full 64 size Fields
+    grouped = defaultdict(list)
+    for fov in fovs:
+        key = (fov.filefracday, fov.fid, fov.filtercode)
+        grouped[key].append(fov)
+
+    # Sort the quads by ccdid and qid and make ZTF Fields
+    final_fovs = []
+    for value in grouped.values():
+        value = sorted(value, key=lambda x: (x.ccdid, x.qid))
+        fov = ZtfField(value)
+        final_fovs.append(fov)
+
+    # finally save and return the result
+    fov_list = FOVList(final_fovs)
+    fov_list.save(filename)
+    return fov_list
 
 
 def file_frac_day_split(filefracday):
@@ -51,6 +178,26 @@ def fetch_ZTF_file(
     """
     Fetch a ZTF file directly from the IPAC server, returning the path to where it was
     saved.
+
+    Parameters
+    ----------
+    field :
+        Field identifier number, integer between 1 and ~2200.
+    filefracday :
+        String describing the fraction of a day, a record keeping string based on time.
+    filter_code :
+        Which filter was used for the exposure.
+    ccdid :
+        The CCD identified. (1-16)
+    qid :
+        Which quad of the ccd was used. (1-4)
+    products :
+        Exposure products, "sci" for science images.
+    im_type :
+        Image extension, this must match the products variable.
+    force_download :
+        Optionally force a re-download if the file already exists in the cache.
+
     """
 
     ztf_base = f"https://irsa.ipac.caltech.edu/ibe/data/ztf/products/{products}/"
@@ -69,4 +216,6 @@ def fetch_ZTF_file(
 
     url = ztf_base + path + file
 
-    return cached_file_download(url, force_download=force_download, subfolder="ztf")
+    return cached_file_download(
+        url, force_download=force_download, subfolder="ztf_frames"
+    )

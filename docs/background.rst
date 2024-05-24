@@ -15,14 +15,14 @@ There are several common definitions of coordinate frames in astronomy, here are
 listed in order of general popularity:
 
     - **Equatorial** - The X-Y plane is defined by the celestial equator (Earth's
-        Equator). The x-axis is defined pointing to the Vernal Equinox (IE: where the
-        Sun crosses the equator in the northward direction).
+      Equator). The x-axis is defined pointing to the Vernal Equinox (IE: where the
+      Sun crosses the equator in the northward direction).
     - **Ecliptic** - The X-Y plane is defined by the plane of the Earth around the Sun,
-        where the x-axis is defined as the same vector as the Equatorial frame. This in
-        essence means that conversion between the two is a rotation around the x-axis by
-        some angle (more on that later).
+      where the x-axis is defined as the same vector as the Equatorial frame. This in
+      essence means that conversion between the two is a rotation around the x-axis by
+      some angle (more on that later).
     - **Galactic** - The X-Y plane is defined to be the galactic plane, there is a
-        non-trivial conversion and definition for this frame.
+      non-trivial conversion and definition for this frame.
 
 At first glance these definitions appear relatively precise, however they are not. The
 issue is with the definition of the Vernal Equinox. As the Earth orbits the sun, its

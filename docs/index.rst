@@ -6,15 +6,11 @@ surveys of minor planets. Included here are:
 
    - Orbit propagation code capable of accurately calculating the orbits for many
      thousands of minor planets over decades on a laptop.
-   - Thermal modeling, including NEATM (Near Earth Asteroid Thermal Model) and the FRM (
-     Fast Rotator Model) for asteroids. Including support for non-spherical asteroids.
+   - Thermal modeling, including NEATM (Near Earth Asteroid Thermal Model) and the FRM
+     (Fast Rotator Model) for asteroids. Including support for non-spherical asteroids.
    - Optical modeling.
-   - Statistical models of NEA and MBA asteroid populations, which enable the generation
-     of realistic synthetic populations.
    - Interfaces to IPAC's IRSA, JPL's Horizons, and the Minor Planet Centers web tools.
    - Multi-core support for reading SPICE SPK files (SPICE itself is not used).
-   - A model of ground based observatory performance based upon historical asteroid
-     detections.
    - Geometric calculations to check if an object is visible from an observer's
      position.
 
@@ -40,5 +36,6 @@ move out of frame.
 
    installation
    auto_examples/index
+   tutorials/index
    api/api
 

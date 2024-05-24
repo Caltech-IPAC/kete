@@ -163,7 +163,7 @@ def query_irsa_tap(
     if status.content.decode().upper() != "COMPLETED":
         raise ValueError("Job Failed: ", status.content.decode())
 
-    result = requests.get(url)
+    result = requests.get(url, timeout=timeout)
     result.raise_for_status()
     return pd.read_csv(io.StringIO(result.text))
 

@@ -9,7 +9,7 @@ import numpy as np
 from .time import Time
 from . import _core  # pylint: disable=no-name-in-module
 from .constants import AU_KM
-from .data import cached_file_download, cache_path
+from .cache import cached_file_download, cache_path
 from .vector import Frames, State
 
 __all__ = ["SpiceKernels"]
@@ -311,6 +311,44 @@ class SpiceKernels:
         cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bpc"))
         _core.pck_reset()
         _core.pck_load(cache_files)
+
+    @classmethod
+    def mpc_code_to_ecliptic(
+        cls, obs_code: str, jd: Union[float, Time], center: str = "Sun", full_name=False
+    ) -> State:
+        """
+        Load an MPC Observatory code as an ecliptic state.
+
+        This only works for ground based observatories.
+
+        Parameters
+        ----------
+        obs_code:
+            MPC observatory code or name of observatory.
+        jd:
+            Julian time (TDB) of the desired state.
+        center:
+            The new center point, this defaults to being heliocentric.
+        full_name:
+            Should the final state include the full name of the observatory or just its
+            code.
+
+        Returns
+        -------
+        State
+            Returns the equatorial state of the observatory in AU and AU/days.
+        """
+        from .mpc import find_obs_code
+
+        obs = find_obs_code(obs_code)
+        return cls.earth_pos_to_ecliptic(
+            jd,
+            geodetic_lat=obs[0],
+            geodetic_lon=obs[1],
+            height_above_surface=obs[2],
+            name=obs[3] if full_name else obs[4],
+            center=center,
+        )
 
     @classmethod
     def earth_pos_to_ecliptic(

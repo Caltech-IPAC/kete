@@ -62,7 +62,7 @@ pub fn pck_earth_frame_py(
     let frame = pcks.try_get_orientation(3000, jd)?;
 
     let mut state = State::new(desig, jd, pos.into(), [0.0, 0.0, 0.0].into(), frame, 399);
-    state.try_change_frame(Frame::Ecliptic)?;
+    state.try_change_frame_mut(Frame::Ecliptic)?;
 
     let spks = get_spk_singleton().try_read().unwrap();
     spks.try_change_center(&mut state, new_center)?;
@@ -84,7 +84,7 @@ pub fn pck_state_to_earth(state: PyState) -> PyResult<Vector> {
     let frame = pcks.try_get_orientation(3000, state.jd())?;
     let mut state = state.0;
 
-    state.try_change_frame(frame)?;
+    state.try_change_frame_mut(frame)?;
 
     Ok(Vector::new(state.pos, PyFrames::Undefined))
 }

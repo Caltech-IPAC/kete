@@ -12,7 +12,7 @@ Given the following information:
 This then plot various information about how observable the object is over the date
 range.
 
-The first 5 plots are relatively self explanatory, the final of the 6 plots is more
+The first 3 plots are relatively self explanatory, the final of the plots is more
 complex. It plots the amount of time that the object is visible during the night.
 Specifically, it counts the total number of hours which the object is above the
 specified elevation. The dotted black line corresponds to the total length of the night
@@ -32,7 +32,7 @@ start_time = neospy.Time.from_ymd(2023, 11, 1).jd
 end_time = neospy.Time.from_ymd(2024, 11, 1).jd
 
 # Observers position:
-site = neospy.mpc.find_obs_code("Palomar Mountain")
+site = "Palomar Mountain"
 
 # Plotting:
 # ---------
@@ -56,10 +56,8 @@ for t in times:
     # For each time, compute the geometry, then compute the mag as well as all of the
     # various angle and distance values.
     state = neospy.propagate_n_body([state], t)[0]
-    sun2obs = neospy.SpiceKernels.earth_pos_to_ecliptic(t, *site[:-1]).pos
-    earth2obs = neospy.SpiceKernels.earth_pos_to_ecliptic(
-        t, *site[:-1], center="399"
-    ).pos
+    sun2obs = neospy.SpiceKernels.mpc_code_to_ecliptic(site, t).pos
+    earth2obs = neospy.SpiceKernels.mpc_code_to_ecliptic(site, t, center="399").pos
 
     sun2obj = state.pos
     obs2obj = -sun2obs + sun2obj
@@ -80,43 +78,37 @@ for t in times:
     dist.append(obs2obj.r)
 
 dates = [neospy.Time(t).time.datetime for t in times]
-plt.figure(dpi=150, figsize=(8, 8))
+plt.figure(dpi=150, figsize=(8, 5))
 
 plt.suptitle(f"{obj.desig}")
-plt.subplot(321)
+
+plt.subplot(221)
+
+plt.plot(dates, sun_dist, c="C2", label=r"$r_H$")
+plt.plot(dates, dist, c="C3", label=r"$\Delta$")
+plt.ylabel("Distance (AU)")
+plt.legend()
+plt.xticks([])
+
+plt.subplot(222)
+plt.plot(dates, solar_elon, c="C1", label="Elongation")
+plt.plot(dates, phases, c="C4", label="Phase")
+plt.ylabel("Angle (deg)")
+plt.legend()
+plt.xticks([])
+
+
+plt.subplot(223)
 
 plt.plot(dates, mags)
 plt.gca().invert_yaxis()
 plt.ylabel("Mag")
-plt.xticks([])
-
-plt.subplot(322)
-
-plt.plot(dates, sun_dist, c="C2")
-plt.ylabel("Sun Distance (AU)")
-plt.xticks([])
-
-plt.subplot(323)
-plt.plot(dates, dist, c="C3")
-plt.ylabel("Obs Distance (AU)")
-plt.xticks([])
-
-plt.subplot(324)
-plt.plot(dates, solar_elon, c="C1")
-plt.ylabel("Elongation (deg)")
-plt.xticks([])
-
-
-plt.subplot(325)
-
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y/%m/%d"))
 plt.gcf().autofmt_xdate()
 plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
 plt.gca().xaxis.set_minor_locator(mdates.MonthLocator())
-plt.plot(dates, phases, c="C4")
-plt.ylabel("Phase (deg)")
 
-plt.subplot(326)
+plt.subplot(224)
 
 # Final plot is more complicated, it requires looking at batched intervals of time that
 # are at least 1 full day, preferably several days.
@@ -138,11 +130,9 @@ for t in day_steps:
     nights = []
     for subrange in substeps:
         approx_state = neospy.propagate_two_body([state], t + subrange)[0]
-        sun2obs = neospy.SpiceKernels.earth_pos_to_ecliptic(
-            t + subrange, *site[:-1]
-        ).pos
-        earth2obs = neospy.SpiceKernels.earth_pos_to_ecliptic(
-            t + subrange, *site[:-1], center="399"
+        sun2obs = neospy.SpiceKernels.mpc_code_to_ecliptic(site, t + subrange).pos
+        earth2obs = neospy.SpiceKernels.mpc_code_to_ecliptic(
+            site, t + subrange, center="399"
         ).pos
 
         sun2obj = approx_state.pos

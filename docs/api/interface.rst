@@ -5,30 +5,23 @@ Below are APIs to external organizations and web interfaces. These are provided
 primarily to make it easier to fetch data from these various sources for analysis with
 NEOSpy.
 
-MPC
----
+Minor Planet Center (MPC)
+-------------------------
 
 .. automodule:: neospy.mpc
    :members:
    :inherited-members:
 
-IPAC
-----
+IPAC - IRSA
+-----------
 
 .. automodule:: neospy.irsa
    :members:
    :inherited-members:
 
-Horizons
---------
+JPL Horizons
+------------
 
 .. automodule:: neospy.horizons
-   :members:
-   :inherited-members:
-
-PDS
----
-
-.. automodule:: neospy.pds
    :members:
    :inherited-members:

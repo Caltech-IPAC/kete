@@ -15,6 +15,7 @@ use pyo3::{PyResult, Python};
 #[derive(Clone, Debug)]
 pub struct Vector {
     pub raw: [f64; 3],
+    
     frame: PyFrames,
 }
 

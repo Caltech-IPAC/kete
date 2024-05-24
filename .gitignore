@@ -37,13 +37,14 @@ target/*
 *.lock
 
 # Ignore built documents
-doc/html
-doc/doctrees
-doc/auto_examples
-doc/plot_directive
-doc/doctest
-doc/latex
-doc/sg_execution_times.rst
+docs/html
+docs/doctrees
+docs/auto_examples
+docs/plot_directive
+docs/doctest
+docs/latex
+docs/sg_execution_times.rst
+docs/**/.ipynb_checkpoints
 *.mod
 
 # Ignored downloaded cached files

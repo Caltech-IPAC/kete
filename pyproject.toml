@@ -1,17 +1,22 @@
 [project]
 name = "neospy"
-version = "0.2.0"
+version = "0.2.1"
 description = "NEO Surveyor Simulation Tools"
 readme = "README.md"
 authors = [{name = "Dar Dahlen", email = "ddahlen@ipac.caltech.edu"},
            {name = "Joe Masiero", email = "jmasiero@ipac.caltech.edu"},
           ]
-license = {text = "MIT"}
+license = {text = "BSD"}
 requires-python = ">=3.9"
 classifiers=["Programming Language :: Python :: 3"]
-dependencies = ["astropy>=5.3.4", "matplotlib", "numpy>=1.24",
-                "pandas", "requests", "scipy", "matplotlib-label-lines",
-                "pds4_tools @ https://github.com/Small-Bodies-Node/pds4_tools/tarball/master"]
+dependencies = ["astropy>=5.3.4",
+                "matplotlib",
+                "matplotlib-label-lines",
+                "numpy>=1.24",
+                "pandas",
+                "requests",
+                "scipy",
+                ]
 
 [project.urls]
 homepage = "https://github.com/IPAC-SW/neospy"
@@ -36,11 +41,13 @@ dev = ["black>=23.1.0",
        "mypy",
        "types-requests",
        "sphinx_rtd_theme",
+        "click",
        ]
 docs = ["sphinx",
         "autodoc",
         "sphinx-gallery",
         "sphinx_rtd_theme",
+        "click",
         ]
 
 # Options for pytest
@@ -53,13 +60,11 @@ markers = [
 
 # Options for the coverage report.
 [tool.coverage.run]
-omit = ["*/neospy/population/*",
-        "*/neospy/mpc.py",
+omit = ["*/neospy/mpc.py",
         "*/neospy/irsa.py",
         "*/neospy/wise.py",
         "*/neospy/ztf.py",
         "*/neospy/horizons.py",
-        "*/neospy/pds.py",
         "*/neospy/data/*",
         "*/examples/*",]
 
