@@ -31,13 +31,11 @@ pub trait FovLike: Sync + Sized {
     fn try_frame_change_mut(&mut self, new_frame: Frame) -> Result<(), NEOSpyError>;
 
 
-    /// Check if a static source is visible
+    /// Check if a static source is visible. This assumes the vector passed in is at an
+    /// infinite distance from the observer.
     #[inline]
     fn check_static(&self, pos: &Vector3<f64> ) -> (usize, Contains) {
-        let obs = self.observer();
-        let obs_pos: Vector3<_> = obs.pos.into();
-        let rel_pos = pos - obs_pos;
-        self.contains(&rel_pos)
+        self.contains(pos)
     }
 
     /// Assuming the object undergoes linear motion, check to see if it is within the
@@ -223,7 +221,7 @@ pub trait FovLike: Sync + Sized {
         let mut visible: Vec<Vec<Vector3<f64>>> = vec![Vec::new(); self.n_patches()];
 
         let vis_pos: Vec<_> = pos
-            .into_par_iter()
+            .iter()
             .filter_map(|p| {
                 match self.check_static(p) {
                         (idx, Contains::Inside) => Some((idx, p)),

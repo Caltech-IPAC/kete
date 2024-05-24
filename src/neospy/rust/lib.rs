@@ -34,6 +34,7 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<simult_states::PySimultaneousStates>()?;
 
     m.add_class::<fovs::PyNeosCmos>()?;
+    m.add_class::<fovs::PyNeosVisit>()?;
     m.add_class::<fovs::PyWiseCmos>()?;
     m.add_class::<fovs::PyZtfCcdQuad>()?;
     m.add_class::<fovs::PyZtfField>()?;

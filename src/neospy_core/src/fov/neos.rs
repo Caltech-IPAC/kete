@@ -1,7 +1,7 @@
 //! # NEOS field of views
 use super::{closest_inside, Contains, FovLike, OnSkyRectangle, SkyPatch, FOV};
 use crate::constants::{NEOS_HEIGHT, NEOS_WIDTH};
-// use crate::frames::rotate_around;
+use crate::frames::rotate_around;
 use crate::prelude::*;
 use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
@@ -223,61 +223,80 @@ impl NeosVisit {
         })
     }
 
-    // /// x_width is the longer dimension in radians
-    // pub fn from_pointing(
-    //     x_width: f64,
-    //     y_width: f64,
-    //     gap_fraction: f64,
-    //     pointing: Vector3<f64>,
-    //     rotation: f64,
-    //     observer: State,
-    //     side_id: u16,
-    //     stack_id: u8,
-    //     quad_id: u8,
-    //     loop_id: u8,
-    //     subloop_id: u8,
-    //     exposure_id: u8,
-    //     cmos_id: u8,
-    //     band: NeosBand,
-    // ) -> Self {
-    //     let chip_x_width = (1.0 - 3.0 * gap_fraction) * x_width / 4.0;
+    /// x_width is the longer dimension in radians
+    #[allow(clippy::too_many_arguments)]
+    pub fn from_pointing(
+        x_width: f64,
+        y_width: f64,
+        _gap_fraction: f64,
+        pointing: Vector3<f64>,
+        rotation: f64,
+        observer: State,
+        side_id: u16,
+        stack_id: u8,
+        quad_id: u8,
+        loop_id: u8,
+        subloop_id: u8,
+        exposure_id: u8,
+        band: NeosBand,
+    ) -> Self {
+        // let chip_x_width = (1.0 - 3.0 * gap_fraction) * x_width / 4.0;
 
-    //     // Rotate the Z axis to match the defined rotation angle, this vector is not
-    //     // orthogonal to the pointing vector, but is in the correct plane of the final
-    //     // up vector.
-    //     let up_vec = rotate_around(&Vector3::new(0.0, 0.0, 1.0), pointing, -rotation);
+        // Rotate the Z axis to match the defined rotation angle, this vector is not
+        // orthogonal to the pointing vector, but is in the correct plane of the final
+        // up vector.
+        let up_vec = rotate_around(&Vector3::new(0.0, 0.0, 1.0), pointing, -rotation);
 
-    //     // construct the vector orthogonal to the pointing and rotated z axis vectors.
-    //     // left = cross(up, pointing)
-    //     let left_vec = pointing.cross(&up_vec);
+        // construct the vector orthogonal to the pointing and rotated z axis vectors.
+        let left_vec = pointing.cross(&up_vec);
 
-    //     // Given the new left vector, and the existing orthogonal pointing vector,
-    //     // construct a new up vector which is in the same plane as it was before, but now
-    //     // orthogonal to the two existing vectors.
-    //     // up = cross(pointing, left)
-    //     let up_vec = pointing.cross(&left_vec);
+        // Given the new left vector, and the existing orthogonal pointing vector,
+        // construct a new up vector which is in the same plane as it was before, but now
+        // orthogonal to the two existing vectors.
+        let up_vec = pointing.cross(&left_vec);
 
-    //     // +------+-+------+-+------+-+------+   ^
-    //     // |  1   |g|  2   |g|  3   |g|  4   |   |
-    //     // |      |a|      |a|      |a|      |   y
-    //     // |      |p|      |p|      |p|      |   |
-    //     // +------+-+------+-+------+-+------+   _
-    //     // <-cf->    x ->
-    //     //
-    //     // pointing vector is in the middle of the 'a' in the central gap.
+        // +------+-+------+-+------+-+------+   ^
+        // |  1   |g|  2   |g|  3   |g|  4   |   |
+        // |      |a|      |a|      |a|      |   y
+        // |      |p|      |p|      |p|      |   |
+        // +------+-+------+-+------+-+------+   _
+        // <-cf->    x ->
+        //
+        // pointing vector is in the middle of the 'a' in the central gap.
 
-    //     let outer: Vector3<f64> = rotate_around(&left_vec, up_vec, -lon_width / 2.0);
-    //     let n2: Vector3<f64> = rotate_around(&(-left_vec), up_vec, lon_width / 2.0);
+        // the Y direction is bounded by 2 planes, calculate them one time
+        let y_top: Vector3<f64> = rotate_around(&up_vec, left_vec, y_width / 2.0);
+        let y_bottom: Vector3<f64> = rotate_around(&(-up_vec), left_vec, -y_width / 2.0);
 
-    //     let long_top: Vector3<f64> = rotate_around(&up_vec, left_vec, y_width / 2.0);
-    //     let long_bottom: Vector3<f64> = rotate_around(&(-up_vec), left_vec, -y_width / 2.0);
 
-    //     // construct the 4 normal vectors
-    //     Self {
-    //         edge_normals: [n1.into(), n2.into(), n3.into(), n4.into()],
-    //         frame,
-    //     }
-    // }
+        // for each chip calculate the x bounds
+        let chip_1_a: Vector3<f64> = rotate_around(&left_vec, up_vec, -x_width/2.0);
+        let chip_1_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, -x_width/4.0);
+        let chip_2_a: Vector3<f64> = rotate_around(&left_vec, up_vec, -x_width/4.0);
+        let chip_2_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, 0.0);
+        let chip_3_a: Vector3<f64> = rotate_around(&left_vec, up_vec, 0.0);
+        let chip_3_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, x_width/4.0);
+        let chip_4_a: Vector3<f64> = rotate_around(&left_vec, up_vec, x_width/4.0);
+        let chip_4_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, x_width/2.0);
+
+        // make the patches for each chip
+        let chip_1_patch = OnSkyRectangle::from_normals([chip_1_a.into(), y_top.into(), chip_1_b.into(), y_bottom.into()], observer.frame);
+        let chip_2_patch = OnSkyRectangle::from_normals([chip_2_a.into(), y_top.into(), chip_2_b.into(), y_bottom.into()], observer.frame);
+        let chip_3_patch = OnSkyRectangle::from_normals([chip_3_a.into(), y_top.into(), chip_3_b.into(), y_bottom.into()], observer.frame);
+        let chip_4_patch = OnSkyRectangle::from_normals([chip_4_a.into(), y_top.into(), chip_4_b.into(), y_bottom.into()], observer.frame);
+
+        // make the chips
+        let chip_1 = NeosCmos{observer:observer.clone(), patch:chip_1_patch, rotation, side_id, stack_id, quad_id, loop_id, subloop_id, exposure_id, band, cmos_id:0};
+        let chip_2 = NeosCmos{observer:observer.clone(), patch:chip_2_patch, rotation, side_id, stack_id, quad_id, loop_id, subloop_id, exposure_id, band, cmos_id:1};
+        let chip_3 = NeosCmos{observer:observer.clone(), patch:chip_3_patch, rotation, side_id, stack_id, quad_id, loop_id, subloop_id, exposure_id, band, cmos_id:2};
+        let chip_4 = NeosCmos{observer:observer.clone(), patch:chip_4_patch, rotation, side_id, stack_id, quad_id, loop_id, subloop_id, exposure_id, band, cmos_id:3};
+
+        // Put all the chips in a box for safe-keeping, try not to eat them all at once.
+        let chips = Box::new([chip_1, chip_2, chip_3, chip_4]);
+        Self {
+            chips, observer, rotation, side_id, stack_id, quad_id, loop_id, subloop_id, exposure_id, band
+        }
+    }
 
     /// Return the central pointing vector.
     pub fn pointing(&self) -> Vector3<f64>{

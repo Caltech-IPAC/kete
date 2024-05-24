@@ -1,5 +1,5 @@
 use nalgebra::Vector3;
-use neospy_core::fov;
+use neospy_core::fov::{self, NeosBand};
 use neospy_core::fov::{FovLike, SkyPatch};
 use pyo3::{exceptions, prelude::*};
 
@@ -382,6 +382,22 @@ impl PyNeosCmos {
         self.0.exposure_id
     }
 
+    /// Chip ID number
+    #[getter]
+    pub fn cmos_id(&self) -> u8 {
+        self.0.cmos_id
+    }
+
+    /// Band Number
+    #[getter]
+    pub fn band(&self) -> u8 {
+        match self.0.band {
+            NeosBand::NC1 => 1,
+            NeosBand::NC2 => 2,
+            NeosBand::Undefined => 0,
+        }
+    }
+
     /// Rotation angle of the FOV in degrees.
     #[getter]
     pub fn rotation(&self) -> f64 {
@@ -390,7 +406,7 @@ impl PyNeosCmos {
 
     fn __repr__(&self) -> String {
         format!(
-            "NeosCmos(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={})",
+            "NeosCmos(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={}, cmos_id={}, band={})",
             self.pointing().__repr__(),
             self.rotation(),
             self.observer().__repr__(),
@@ -399,43 +415,45 @@ impl PyNeosCmos {
             self.quad_id(),
             self.loop_id(),
             self.subloop_id(),
-            self.exposure_id()
+            self.exposure_id(),
+            self.cmos_id(),
+            self.band()
         )
     }
 }
 #[pymethods]
 #[allow(clippy::too_many_arguments)]
 impl PyNeosVisit {
-    // #[new]
-    // pub fn new(
-    //     pointing: VectorLike,
-    //     rotation: f64,
-    //     observer: PyState,
-    //     side_id: u16,
-    //     stack_id: u8,
-    //     quad_id: u8,
-    //     loop_id: u8,
-    //     subloop_id: u8,
-    //     exposure_id: u8,
-    //     cmos_id: u8,
-    //     band: u8,
-    // ) -> Self {
-    //     let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
-    //     let pointing = pointing.raw.into();
-    //     PyNeosVisit(fov::NeosVisit::from_pointing(
-    //         pointing,
-    //         rotation.to_radians(),
-    //         observer.0,
-    //         side_id,
-    //         stack_id,
-    //         quad_id,
-    //         loop_id,
-    //         subloop_id,
-    //         exposure_id,
-    //         cmos_id,
-    //         band.into(),
-    //     ))
-    // }
+    #[new]
+    pub fn new(
+        x_width: f64,
+        y_width: f64,
+        pointing: VectorLike,
+        rotation: f64,
+        observer: PyState,
+        side_id: u16,
+        stack_id: u8,
+        quad_id: u8,
+        loop_id: u8,
+        subloop_id: u8,
+        exposure_id: u8,
+        band: u8,
+    ) -> Self {
+        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+        let pointing = pointing.raw.into();
+        PyNeosVisit(fov::NeosVisit::from_pointing(x_width.to_radians(), y_width.to_radians(), 0.0,
+            pointing,
+            rotation.to_radians(),
+            observer.0,
+            side_id,
+            stack_id,
+            quad_id,
+            loop_id,
+            subloop_id,
+            exposure_id,
+            band.into(),
+        ))
+    }
 
     #[getter]
     pub fn observer(&self) -> PyState {

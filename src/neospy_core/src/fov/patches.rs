@@ -92,6 +92,24 @@ pub type OnSkyRectangle = SphericalPolygon<4>;
 impl OnSkyRectangle {
     /// Construct a rectangular spherical polygon.
     ///
+    /// # Arguments
+    ///
+    /// * `edge_normals` - Normal vectors which define the boundary of a polygon.
+    /// * `frame` - Coordinate frame of the rectangle.
+    pub fn from_normals(
+        edge_normals: [[f64; 3]; 4],
+        frame: Frame,
+    ) -> Self {
+
+        // construct the 4 normal vectors
+        Self {
+            edge_normals,
+            frame,
+        }
+    }
+
+    /// Construct a rectangular spherical polygon.
+    ///
     /// This constructs a new SphericalPolygon made up of a rectangular shape on the unit
     /// sphere. Where the edges of the rectangle are great circle arcs.
     ///
