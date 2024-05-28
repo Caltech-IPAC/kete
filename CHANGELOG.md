@@ -13,10 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for NEOS Visit FOVs, which are joint FOVs containing 4 rectangles.
 - Added python interface to WISE Color Correction functions.
 - Added support for querying static sky sources in FOVs.
+- SpiceKernels can now load SPK files directly, without needing the files to be in the
+  cache.
+- SpiceKernels now supports displaying the contents of the headers of SPk/PCK files.
+- SpiceKernels can now return the available loaded SPK segments of an object.
 
 ### Changed
 
 - Restructured the Rust FOVs to be organized by observatory.
+- Renamed `SpiceKernels.cache_kernel_reload` to `kernel_reload` and changed it's args.
 
 ## [0.2.2] - 2024 - 5 - 20
 

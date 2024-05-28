@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Union, Optional
+from collections import namedtuple
 import base64
 import glob
 import os
@@ -13,6 +14,8 @@ from .cache import cached_file_download, cache_path
 from .vector import Frames, State
 
 __all__ = ["SpiceKernels"]
+
+SpkInfo = namedtuple("SpkInfo", "name, jd_start, jd_end, center, frame, spk_type")
 
 
 def _validate_time(time: Union[float, Time]) -> float:
@@ -172,6 +175,19 @@ class SpiceKernels:
         objects = _core.spk_loaded()
         return [(_core.spk_get_name_from_id(o), o) for o in objects]
 
+    @classmethod
+    def loaded_object_info(cls, desig: Union[int, str]) -> list[SpkInfo]:
+        """
+        Return the available SPK information for the target object.
+
+        Parameters
+        ----------
+        name :
+            Name or integer id value of the object.
+        """
+        name, naif = cls.name_lookup(desig)
+        return [SpkInfo(name, *k) for k in _core.spk_available_info(naif)]
+
     @staticmethod
     def cached_kernel_url_download(url, force_download: bool = False):
         """
@@ -297,20 +313,49 @@ class SpiceKernels:
         return glob.glob(path)
 
     @staticmethod
-    def cache_kernel_reload():
+    def kernel_reload(filenames: list[str], include_cache=False):
         """
-        Load all kernels in the cache folder and within the neospy data folder.
+        Load the specified spice kernels into memory, this resets the currently loaded
+        kernels.
 
-        This will load objects found in all `.bsp` and `.bpc` files found in both
-        folders into the spice loaded memory.
+        If `include_cache` is true, this will reload the kernels contained within the
+        neospy cache folder as well.
+
+        Parameters
+        ----------
+        filenames :
+            Paths to the specified files to load, this must be a list of filenames.
+        include_cache:
+            This decides if all of the files contained within the neospy cache should
+            be loaded in addition to the specified files.
         """
-        cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bsp"))
         _core.spk_reset()
-        _core.spk_load(cache_files)
-
-        cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bpc"))
         _core.pck_reset()
-        _core.pck_load(cache_files)
+
+        if include_cache:
+            cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bsp"))
+            _core.spk_load(cache_files)
+
+            cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bpc"))
+            _core.pck_load(cache_files)
+
+        _core.spk_load(filenames)
+
+    @staticmethod
+    def spk_header_info(filename: str):
+        """
+        Return the comments contained within the header of the provided DAF file, this
+        includes SPK and PCK files.
+
+        This does not load the contents of the file into memory, it only prints the
+        header contents.
+
+        Parameters
+        ----------
+        filename :
+            Path to a DAF file.
+        """
+        return _core.daf_header_info(filename).replace("\x04", "\n").strip()
 
     @classmethod
     def mpc_code_to_ecliptic(
