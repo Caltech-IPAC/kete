@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for querying static sky sources in FOVs.
 - SpiceKernels can now load SPK files directly, without needing the files to be in the
   cache.
+- SpiceKernels now supports displaying the contents of the headers of SPk/PCK files.
 
 ### Changed
 

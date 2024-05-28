@@ -325,6 +325,22 @@ class SpiceKernels:
 
         _core.spk_load(filenames)
 
+    @staticmethod
+    def spk_header_info(filename: str):
+        """
+        Return the comments contained within the header of the provided DAF file, this
+        includes SPK and PCK files.
+
+        This does not load the contents of the file into memory, it only prints the
+        header contents.
+
+        Parameters
+        ----------
+        filename :
+            Path to a DAF file.
+        """
+        return _core.daf_header_info(filename).replace("\x04", "\n").strip()
+
     @classmethod
     def mpc_code_to_ecliptic(
         cls, obs_code: str, jd: Union[float, Time], center: str = "Sun", full_name=False
