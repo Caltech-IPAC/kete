@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Union, Optional
+from collections import namedtuple
 import base64
 import glob
 import os
@@ -13,6 +14,8 @@ from .cache import cached_file_download, cache_path
 from .vector import Frames, State
 
 __all__ = ["SpiceKernels"]
+
+SpkInfo = namedtuple("SpkInfo", "name, jd_start, jd_end, center, frame, spk_type")
 
 
 def _validate_time(time: Union[float, Time]) -> float:
@@ -171,6 +174,19 @@ class SpiceKernels:
         """
         objects = _core.spk_loaded()
         return [(_core.spk_get_name_from_id(o), o) for o in objects]
+
+    @classmethod
+    def loaded_object_info(cls, desig: Union[int, str]) -> list[SpkInfo]:
+        """
+        Return the available SPK information for the target object.
+
+        Parameters
+        ----------
+        name :
+            Name or integer id value of the object.
+        """
+        name, naif = cls.name_lookup(desig)
+        return [SpkInfo(name, *k) for k in _core.spk_available_info(naif)]
 
     @staticmethod
     def cached_kernel_url_download(url, force_download: bool = False):
