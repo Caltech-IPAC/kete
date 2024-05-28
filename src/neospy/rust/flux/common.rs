@@ -472,28 +472,32 @@ pub fn wise_frm_flux_py(
         .collect()
 }
 
+/// Calculate the W1 black body color correction for the given temperature in kelvin.
 #[pyfunction]
 #[pyo3(name = "w1_color_correction")]
-pub fn w1_color_correction_py(temps: f64) -> f64 {
-    w1_color_correction(temps)
+pub fn w1_color_correction_py(temp: f64) -> f64 {
+    w1_color_correction(temp)
 }
 
+/// Calculate the W2 black body color correction for the given temperature in kelvin.
 #[pyfunction]
 #[pyo3(name = "w2_color_correction")]
-pub fn w2_color_correction_py(temps: f64) -> f64 {
-    w2_color_correction(temps)
+pub fn w2_color_correction_py(temp: f64) -> f64 {
+    w2_color_correction(temp)
 }
 
+/// Calculate the W3 black body color correction for the given temperature in kelvin.
 #[pyfunction]
 #[pyo3(name = "w3_color_correction")]
-pub fn w3_color_correction_py(temps: f64) -> f64 {
-    w3_color_correction(temps)
+pub fn w3_color_correction_py(temp: f64) -> f64 {
+    w3_color_correction(temp)
 }
 
+/// Calculate the W4 black body color correction for the given temperature in kelvin.
 #[pyfunction]
 #[pyo3(name = "w4_color_correction")]
-pub fn w4_color_correction_py(temps: f64) -> f64 {
-    w4_color_correction(temps)
+pub fn w4_color_correction_py(temp: f64) -> f64 {
+    w4_color_correction(temp)
 }
 
 #[pyfunction]

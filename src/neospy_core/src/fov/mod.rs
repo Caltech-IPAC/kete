@@ -1,14 +1,19 @@
 //! # Field of View
 //! On-Sky field of view checks.
-pub mod contiguous_fov;
 pub mod fov_like;
-pub mod joint_fov;
+pub mod generic;
+pub mod neos;
 pub mod patches;
+pub mod wise;
+pub mod ztf;
 
-pub use contiguous_fov::*;
 pub use fov_like::*;
-pub use joint_fov::*;
+pub use generic::*;
+use nalgebra::Vector3;
+pub use neos::*;
 pub use patches::*;
+pub use wise::*;
+pub use ztf::*;
 
 use serde::{Deserialize, Serialize};
 
@@ -35,6 +40,9 @@ pub enum FOV {
 
     /// Full ZTF field of up to 64 individual files.
     ZtfField(ZtfField),
+
+    /// NEOS Visit.
+    NeosVisit(NeosVisit),
 }
 
 impl FOV {
@@ -47,6 +55,7 @@ impl FOV {
             FOV::GenericCone(fov) => fov.check_visible(states, dt_limit),
             FOV::GenericRectangle(fov) => fov.check_visible(states, dt_limit),
             FOV::ZtfField(fov) => fov.check_visible(states, dt_limit),
+            FOV::NeosVisit(fov) => fov.check_visible(states, dt_limit),
         }
     }
 
@@ -59,6 +68,7 @@ impl FOV {
             FOV::GenericCone(fov) => fov.observer(),
             FOV::GenericRectangle(fov) => fov.observer(),
             FOV::ZtfField(fov) => fov.observer(),
+            FOV::NeosVisit(fov) => fov.observer(),
         }
     }
 
@@ -71,6 +81,21 @@ impl FOV {
             FOV::GenericCone(fov) => fov.check_spks(obj_ids),
             FOV::GenericRectangle(fov) => fov.check_spks(obj_ids),
             FOV::ZtfField(fov) => fov.check_spks(obj_ids),
+            FOV::NeosVisit(fov) => fov.check_spks(obj_ids),
+        }
+    }
+
+    /// Check if static sources are visible in this FOV.
+    /// Position must be in the correct frame!
+    pub fn check_statics(&self, pos: &[Vector3<f64>]) -> Vec<Option<(Vec<Vector3<f64>>, FOV)>>  {
+        match self {
+            FOV::Wise(fov) => fov.check_statics(pos),
+            FOV::NeosCmos(fov) => fov.check_statics(pos),
+            FOV::ZtfCcdQuad(fov) => fov.check_statics(pos),
+            FOV::GenericCone(fov) => fov.check_statics(pos),
+            FOV::GenericRectangle(fov) => fov.check_statics(pos),
+            FOV::ZtfField(fov) => fov.check_statics(pos),
+            FOV::NeosVisit(fov) => fov.check_statics(pos),
         }
     }
 
@@ -79,6 +104,7 @@ impl FOV {
         match self {
             FOV::Wise(fov) => fov.try_frame_change_mut(target_frame),
             FOV::NeosCmos(fov) => fov.try_frame_change_mut(target_frame),
+            FOV::NeosVisit(fov) => fov.try_frame_change_mut(target_frame),
             FOV::ZtfCcdQuad(fov) => fov.try_frame_change_mut(target_frame),
             FOV::GenericCone(fov) => fov.try_frame_change_mut(target_frame),
             FOV::GenericRectangle(fov) => fov.try_frame_change_mut(target_frame),

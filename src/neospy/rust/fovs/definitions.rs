@@ -1,5 +1,5 @@
 use nalgebra::Vector3;
-use neospy_core::fov;
+use neospy_core::fov::{self, NeosBand};
 use neospy_core::fov::{FovLike, SkyPatch};
 use pyo3::{exceptions, prelude::*};
 
@@ -18,7 +18,14 @@ pub struct PyWiseCmos(pub fov::WiseCmos);
 #[pyclass(module = "neospy", frozen, name = "NeosCmos")]
 #[derive(Clone, Debug)]
 #[allow(clippy::upper_case_acronyms)]
+
 pub struct PyNeosCmos(pub fov::NeosCmos);
+
+/// Field of view of a NEOS Visit.
+#[pyclass(module = "neospy", frozen, name = "NeosVisit")]
+#[derive(Clone, Debug)]
+#[allow(clippy::upper_case_acronyms)]
+pub struct PyNeosVisit(pub fov::NeosVisit);
 
 /// Field of view of a Single ZTF chips/quad combination.
 #[pyclass(module = "neospy", frozen, name = "ZtfCcdQuad")]
@@ -47,6 +54,7 @@ pub enum AllowedFOV {
     Rectangle(PyGenericRectangle),
     ZTF(PyZtfCcdQuad),
     ZTFField(PyZtfField),
+    NEOSVisit(PyNeosVisit),
 }
 
 impl AllowedFOV {
@@ -57,6 +65,7 @@ impl AllowedFOV {
             AllowedFOV::Rectangle(fov) => fov.0.observer().jd,
             AllowedFOV::ZTF(fov) => fov.0.observer().jd,
             AllowedFOV::ZTFField(fov) => fov.0.observer().jd,
+            AllowedFOV::NEOSVisit(fov) => fov.0.observer().jd,
         }
     }
 
@@ -68,6 +77,7 @@ impl AllowedFOV {
             AllowedFOV::NEOS(fov) => fov.0.get_fov(idx),
             AllowedFOV::ZTF(fov) => fov.0.get_fov(idx),
             AllowedFOV::ZTFField(fov) => fov.0.get_fov(idx),
+            AllowedFOV::NEOSVisit(fov) => fov.0.get_fov(idx),
         }
     }
 
@@ -78,6 +88,7 @@ impl AllowedFOV {
             AllowedFOV::NEOS(fov) => fov::FOV::NeosCmos(fov.0),
             AllowedFOV::ZTF(fov) => fov::FOV::ZtfCcdQuad(fov.0),
             AllowedFOV::ZTFField(fov) => fov::FOV::ZtfField(fov.0),
+            AllowedFOV::NEOSVisit(fov) => fov::FOV::NeosVisit(fov.0),
         }
     }
 
@@ -88,6 +99,7 @@ impl AllowedFOV {
             AllowedFOV::NEOS(fov) => fov.__repr__(),
             AllowedFOV::ZTF(fov) => fov.__repr__(),
             AllowedFOV::ZTFField(fov) => fov.__repr__(),
+            AllowedFOV::NEOSVisit(fov) => fov.__repr__(),
         }
     }
 }
@@ -100,6 +112,7 @@ impl IntoPy<PyObject> for AllowedFOV {
             Self::Rectangle(fov) => fov.into_py(py),
             Self::ZTF(fov) => fov.into_py(py),
             Self::ZTFField(fov) => fov.into_py(py),
+            Self::NEOSVisit(fov) => fov.into_py(py),
         }
     }
 }
@@ -112,6 +125,7 @@ impl From<fov::FOV> for AllowedFOV {
             fov::FOV::NeosCmos(fov) => AllowedFOV::NEOS(PyNeosCmos(fov)),
             fov::FOV::GenericRectangle(fov) => AllowedFOV::Rectangle(PyGenericRectangle(fov)),
             fov::FOV::ZtfField(fov) => AllowedFOV::ZTFField(PyZtfField(fov)),
+            fov::FOV::NeosVisit(fov) => AllowedFOV::NEOSVisit(PyNeosVisit(fov)),
             _ => {
                 unimplemented!("Python interface doesn't support this FOV.")
             }
@@ -313,7 +327,7 @@ impl PyNeosCmos {
             subloop_id,
             exposure_id,
             cmos_id,
-            band,
+            band.into(),
         ))
     }
 
@@ -368,6 +382,22 @@ impl PyNeosCmos {
         self.0.exposure_id
     }
 
+    /// Chip ID number
+    #[getter]
+    pub fn cmos_id(&self) -> u8 {
+        self.0.cmos_id
+    }
+
+    /// Band Number
+    #[getter]
+    pub fn band(&self) -> u8 {
+        match self.0.band {
+            NeosBand::NC1 => 1,
+            NeosBand::NC2 => 2,
+            NeosBand::Undefined => 0,
+        }
+    }
+
     /// Rotation angle of the FOV in degrees.
     #[getter]
     pub fn rotation(&self) -> f64 {
@@ -376,7 +406,158 @@ impl PyNeosCmos {
 
     fn __repr__(&self) -> String {
         format!(
-            "NeosCmos(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={})",
+            "NeosCmos(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={}, cmos_id={}, band={})",
+            self.pointing().__repr__(),
+            self.rotation(),
+            self.observer().__repr__(),
+            self.side_id(),
+            self.stack_id(),
+            self.quad_id(),
+            self.loop_id(),
+            self.subloop_id(),
+            self.exposure_id(),
+            self.cmos_id(),
+            self.band()
+        )
+    }
+}
+#[pymethods]
+#[allow(clippy::too_many_arguments)]
+impl PyNeosVisit {
+    /// Construct a new NEOS Visit.
+    /// 
+    /// This is a collection of 4 NeosCmos fields of view, representing the
+    /// 4 chips of each band.
+    ///         
+    /// +------+-+------+-+------+-+------+   ^
+    /// |  1   |g|  2   |g|  3   |g|  4   |   |
+    /// |      |a|      |a|      |a|      |   y
+    /// |      |p|      |p|      |p|      |   |
+    /// +======+=+======+=+======+=+======+   _
+    /// |- x ->
+    /// 
+    /// Where the bottom is the sun shield.
+    ///
+    /// Parameters
+    /// ----------
+    /// x_width :
+    ///     Width of the long axis of the Visit in degrees.
+    /// y_width :
+    ///     Width of the short axis of the Visit in degrees.
+    /// gap_angle :
+    ///     Width of the gap between chips in degrees.
+    /// pointing :
+    ///     Vector defining the center of the FOV.
+    /// rotation :
+    ///     Rotation of the FOV in degrees.
+    /// observer :
+    ///     State of the observer.
+    /// side_id :
+    ///     Side ID indicating where we are in the survey.
+    /// stack_id :
+    ///     Stack ID indicating where we are in the survey.
+    /// quad_id :
+    ///     Quad ID indicating where we are in the survey.
+    /// loop_id :
+    ///     Loop ID indicating where we are in the survey.
+    /// subloop_id :
+    ///     Subloop ID indicating where we are in the survey.
+    /// exposure_id :
+    ///     Exposure number indicating where we are in the survey.
+    /// band :
+    ///     Band, can be either 1 or 2 to represent NC1/NC2.
+    #[new]
+    pub fn new(
+        x_width: f64,
+        y_width: f64,
+        gap_angle: f64,
+        pointing: VectorLike,
+        rotation: f64,
+        observer: PyState,
+        side_id: u16,
+        stack_id: u8,
+        quad_id: u8,
+        loop_id: u8,
+        subloop_id: u8,
+        exposure_id: u8,
+        band: u8,
+    ) -> Self {
+        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+        let pointing = pointing.raw.into();
+        PyNeosVisit(fov::NeosVisit::from_pointing(x_width.to_radians(), y_width.to_radians(), gap_angle.to_radians(),
+            pointing,
+            rotation.to_radians(),
+            observer.0,
+            side_id,
+            stack_id,
+            quad_id,
+            loop_id,
+            subloop_id,
+            exposure_id,
+            band.into(),
+        ))
+    }
+
+    /// Observer State.
+    #[getter]
+    pub fn observer(&self) -> PyState {
+        self.0.observer().clone().into()
+    }
+
+    /// Direction that the observer is looking.
+    #[getter]
+    pub fn pointing(&self) -> Vector {
+        Vector::new(
+            self.0.pointing().into(),
+            self.0.observer().frame.into(),
+        )
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn side_id(&self) -> u16 {
+        self.0.side_id
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn stack_id(&self) -> u8 {
+        self.0.stack_id
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn quad_id(&self) -> u8 {
+        self.0.quad_id
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn loop_id(&self) -> u8 {
+        self.0.loop_id
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn subloop_id(&self) -> u8 {
+        self.0.subloop_id
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn exposure_id(&self) -> u8 {
+        self.0.exposure_id
+    }
+
+    /// Rotation angle of the FOV in degrees.
+    #[getter]
+    pub fn rotation(&self) -> f64 {
+        self.0.rotation
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "NEOSVisit(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={})",
             self.pointing().__repr__(),
             self.rotation(),
             self.observer().__repr__(),

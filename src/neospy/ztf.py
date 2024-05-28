@@ -32,7 +32,6 @@ ZTF_IRSA_TABLES = {
     "ztf.ztf_current_path_raw": "ZTF Raw Product Paths",
     "ztf.ztf_current_path_ref": "ZTF Reference Product Paths",
     "ztf.ztf_current_path_sci": "ZTF Science Product Paths",
-    "ztf_objects": "ZTF Objects",
     "ztf_objects_dr16": "ZTF Data Release 16 Objects",
     "ztf_objects_dr17": "ZTF Data Release 17 Objects",
     "ztf_objects_dr18": "ZTF Data Release 18 Objects",

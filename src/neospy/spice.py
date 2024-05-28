@@ -54,7 +54,6 @@ class SpiceKernels:
     This allows for the loading of additional spice kernels along with querying.
     """
 
-    _constants: Optional[dict[str, float]] = None
     _name_cache: dict = {}
 
     @classmethod

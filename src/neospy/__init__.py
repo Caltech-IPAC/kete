@@ -23,6 +23,8 @@ from .propagation import (
     propagate_n_body,
     propagate_two_body,
     moid,
+    spice_visible,
+    state_visible,
 )
 from .time import Time
 from .conversion import (
@@ -66,6 +68,8 @@ __all__ = [
     "compute_diameter",
     "compute_semi_major",
     "compute_aphelion",
+    "spice_visible",
+    "state_visible",
     "mag_to_flux",
     "flux_to_mag",
     "Vector",
