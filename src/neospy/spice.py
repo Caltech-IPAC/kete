@@ -297,20 +297,33 @@ class SpiceKernels:
         return glob.glob(path)
 
     @staticmethod
-    def cache_kernel_reload():
+    def kernel_reload(filenames: list[str], include_cache=False):
         """
-        Load all kernels in the cache folder and within the neospy data folder.
+        Load the specified spice kernels into memory, this resets the currently loaded
+        kernels.
 
-        This will load objects found in all `.bsp` and `.bpc` files found in both
-        folders into the spice loaded memory.
+        If `include_cache` is true, this will reload the kernels contained within the
+        neospy cache folder as well.
+
+        Parameters
+        ----------
+        filenames :
+            Paths to the specified files to load, this must be a list of filenames.
+        include_cache:
+            This decides if all of the files contained within the neospy cache should
+            be loaded in addition to the specified files.
         """
-        cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bsp"))
         _core.spk_reset()
-        _core.spk_load(cache_files)
-
-        cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bpc"))
         _core.pck_reset()
-        _core.pck_load(cache_files)
+
+        if include_cache:
+            cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bsp"))
+            _core.spk_load(cache_files)
+
+            cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bpc"))
+            _core.pck_load(cache_files)
+
+        _core.spk_load(filenames)
 
     @classmethod
     def mpc_code_to_ecliptic(

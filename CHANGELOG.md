@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for NEOS Visit FOVs, which are joint FOVs containing 4 rectangles.
 - Added python interface to WISE Color Correction functions.
 - Added support for querying static sky sources in FOVs.
+- SpiceKernels can now load SPK files directly, without needing the files to be in the
+  cache.
 
 ### Changed
 
