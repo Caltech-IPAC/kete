@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for NEOS Visit FOVs, which are joint FOVs containing 4 rectangles.
 - Added python interface to WISE Color Correction functions.
 
+### Changed
+
+- Restructured the Rust FOVs to be organized by observatory.
+
 ## [0.2.2] - 2024 - 5 - 20
 
 ### Added
