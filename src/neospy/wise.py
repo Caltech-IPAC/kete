@@ -25,7 +25,14 @@ from .vector import Vector
 from .irsa import IRSA_URL, query_irsa_tap
 
 # pylint: disable-next=import-error
-from ._core import WiseCmos, FOVList  # type: ignore
+from ._core import (  # type: ignore
+    WiseCmos,
+    FOVList,
+    w1_color_correction,
+    w2_color_correction,
+    w3_color_correction,
+    w4_color_correction,
+)
 
 __all__ = [
     "MISSION_PHASES",
@@ -34,11 +41,15 @@ __all__ = [
     "plot_frames",
     "fetch_WISE_frame",
     "MissionPhase",
+    "w1_color_correction",
+    "w2_color_correction",
+    "w3_color_correction",
+    "w4_color_correction",
 ]
 
+# All constants below are indexed as follows W1 = [0], W2 = [1]. W3 = [2], W4 = [3]
 
-# This table contains calibrated flux correction values for the 4 different WISE bands.
-COLOR_CORR = np.array(
+_COLOR_CORR = np.array(
     [  # Tbb  K_W1     K_W2    K_W3     K_W4
         [100, 17.2062, 3.9096, 2.6588, 1.0032],
         [110, 9.3213, 3.1120, 2.1424, 0.9955],
@@ -73,54 +84,75 @@ COLOR_CORR = np.array(
         [400, 1.1316, 1.0229, 0.8622, 0.9903],
     ]
 )
-# All lists below are indexed as follows W1 = [0], W2 = [1]. W3 = [2], W4 = [3]
+"""
+This table contains calibrated flux correction values for the 4 different WISE bands.
 
-# Flux in the reflection model should be scaled by these values.
+This is provided as reference, however neospy has built in interpolation methods for
+these black-body correction terms. See :func:`w1_color_correction` or similarly named
+functions for other bands.
+"""
+# The data in the color correction table above is relatively well fit to a 1 / f(x)
+# where f is a 4th order polynomial. It is the least accurate for the final band, but
+# W4 is almost a constant.
+# These fits perform much better than linear interpolation except near 100k.
+#
+# The values above were fit to polynomial equations as defined below, the results of
+# which were hard-coded into the rust backend to allow for fast computation.
+# These functions should not be referenced directly, as they also exist in the rust
+# code and are only left here for reference to how the rust was constructed.
+#
+# from numpy.polynomial import Polynomial
+# _COLOR_FITS = [
+#     Polynomial.fit(_COLOR_CORR[:, 0], 1 / _COLOR_CORR[:, 1], 4),
+#     Polynomial.fit(_COLOR_CORR[:, 0], 1 / _COLOR_CORR[:, 2], 4),
+#     Polynomial.fit(_COLOR_CORR[:, 0], 1 / _COLOR_CORR[:, 3], 4),
+#     Polynomial.fit(_COLOR_CORR[:, 0], 1 / _COLOR_CORR[:, 4], 4),
+# ]
+
+
 SUN_COLOR_CORRECTION: list[float] = [1.0049, 1.0193, 1.0024, 1.0012]
+"""
+Flux in the reflected light model should be scaled by these values.
+"""
 
-# Non-color corrected values for zero mag corrections in Janskys.
-# magnitude can then be computed via -2.5 log10(flux Jy / zero_point)
 ZERO_MAGS: list[float] = [306.681, 170.663, 29.0448, 8.2839]
+"""
+Non-color corrected values for zero mag corrections in Janskys.
+Magnitude can then be computed via -2.5 log10(flux Jy / zero_point)
+"""
 
-# Color Corrected Zero Mags in units of Jy
 ZERO_MAGS_COLOR_CORRECTED: list[float] = [
     ZERO_MAGS[0],
     ZERO_MAGS[1],
     1.08 * ZERO_MAGS[2],
     0.96 * ZERO_MAGS[3],
 ]
+"""Color Corrected Zero Mags in units of Jy"""
 
-# Non-color corrected values for the effective central wavelength of the bands (nm)
 BAND_WAVELENGTHS: list[float] = [3352.6, 4602.8, 11560.8, 22088.3]
+"""Non-color corrected values for the effective central wavelength of the bands (nm)"""
 
-# Color Corrected Band Wavelengths in units of nm
 BAND_WAVELENGTHS_COLOR_CORRECTED: list[float] = [
     BAND_WAVELENGTHS[0],
     BAND_WAVELENGTHS[1],
     0.96 * BAND_WAVELENGTHS[2],
     1.025 * BAND_WAVELENGTHS[3],
 ]
+"""Color Corrected Band Wavelengths in units of nm"""
 
-# The data in the color correction table above is relatively well fit to a 1 / f(x)
-# where f is a 4th order polynomial. It is the least accurate for the final band, but
-# W4 is almost a constant. These fits perform much better than linear except near 100k.
-# These functions should not be referenced directly, as they also exist in the rust
-# code and are only left here for reference to how the rust was constructed.
-
-# from numpy.polynomial import Polynomial
-# _COLOR_FITS = [
-#     Polynomial.fit(WISE_COLOR_CORR[:, 0], 1 / WISE_COLOR_CORR[:, 1], 4),
-#     Polynomial.fit(WISE_COLOR_CORR[:, 0], 1 / WISE_COLOR_CORR[:, 2], 4),
-#     Polynomial.fit(WISE_COLOR_CORR[:, 0], 1 / WISE_COLOR_CORR[:, 3], 4),
-#     Polynomial.fit(WISE_COLOR_CORR[:, 0], 1 / WISE_COLOR_CORR[:, 4], 4),
-# ]
-
-# WISE Field of view is ~47 arc-minutes square.
 FOV_WIDTH: float = 47 / 60
+"""
+Approximate width of a WISE chip FOV, this slightly over-estimates the true FOV.
+This is 47 arc-minutes.
+"""
 
-# Convert directly from DN to Jy using this Jy/DN conversion factor
-# from https://wise2.ipac.caltech.edu/docs/release/prelim/expsup/sec2_3f.html
 DN_TO_JY = [1.9350e-06, 2.7048e-06, 2.9045e-06, 5.2269e-05]
+"""
+Convert directly from DN to Jy using this Jy/DN conversion factor.
+
+These values came from:
+https://wise2.ipac.caltech.edu/docs/release/prelim/expsup/sec2_3f.html
+"""
 
 
 MissionPhase = namedtuple(
