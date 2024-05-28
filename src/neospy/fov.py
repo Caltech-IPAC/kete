@@ -7,6 +7,7 @@ from ._core import (  # type: ignore
     ZtfField,
     RectangleFOV,
     FOVList,
+    fov_static_check,
 )
 
 
@@ -18,4 +19,5 @@ __all__ = [
     "ZtfField",
     "RectangleFOV",
     "FOVList",
+    "fov_static_check",
 ]

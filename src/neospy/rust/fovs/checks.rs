@@ -80,6 +80,20 @@ pub fn fov_spk_checks_py(obj_ids: Vec<isize>, fovs: FOVListLike) -> Vec<PySimult
         .collect()
 }
 
+
+/// Check if a list of static sky positions are present in the given Field of View list.
+/// 
+/// This returns a list of tuples, where the first entry in the tuple is the vector of
+/// all of the points in the provided FOV, and the second entry is the original FOV.
+/// 
+/// Parameters
+/// ----------
+/// pos :
+///     Collection of Vectors defining sky positions from the point of view of the observer.
+///     These vectors are automatically converted to the Ecliptic frame, results will be
+///     returned in that frame as well.
+/// fovs :
+///     Collection of Field of Views to check.
 #[pyfunction]
 #[pyo3(name = "fov_static_checks")]
 pub fn fov_static_checks_py(pos: Vec<VectorLike>, fovs: FOVListLike) -> Vec<(Vec<Vector>, AllowedFOV)> {
