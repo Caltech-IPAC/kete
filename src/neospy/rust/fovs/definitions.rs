@@ -424,6 +424,48 @@ impl PyNeosCmos {
 #[pymethods]
 #[allow(clippy::too_many_arguments)]
 impl PyNeosVisit {
+    /// Construct a new NEOS Visit.
+    /// 
+    /// This is a collection of 4 NeosCmos fields of view, representing the
+    /// 4 chips of each band.
+    ///         
+    /// +------+-+------+-+------+-+------+   ^
+    /// |  1   |g|  2   |g|  3   |g|  4   |   |
+    /// |      |a|      |a|      |a|      |   y
+    /// |      |p|      |p|      |p|      |   |
+    /// +======+=+======+=+======+=+======+   _
+    /// |- x ->
+    /// 
+    /// Where the bottom is the sun shield.
+    ///
+    /// Parameters
+    /// ----------
+    /// x_width :
+    ///     Width of the long axis of the Visit in degrees.
+    /// y_width :
+    ///     Width of the short axis of the Visit in degrees.
+    /// gap_angle :
+    ///     Width of the gap between chips in degrees.
+    /// pointing :
+    ///     Vector defining the center of the FOV.
+    /// rotation :
+    ///     Rotation of the FOV in degrees.
+    /// observer :
+    ///     State of the observer.
+    /// side_id :
+    ///     Side ID indicating where we are in the survey.
+    /// stack_id :
+    ///     Stack ID indicating where we are in the survey.
+    /// quad_id :
+    ///     Quad ID indicating where we are in the survey.
+    /// loop_id :
+    ///     Loop ID indicating where we are in the survey.
+    /// subloop_id :
+    ///     Subloop ID indicating where we are in the survey.
+    /// exposure_id :
+    ///     Exposure number indicating where we are in the survey.
+    /// band :
+    ///     Band, can be either 1 or 2 to represent NC1/NC2.
     #[new]
     pub fn new(
         x_width: f64,
@@ -456,11 +498,13 @@ impl PyNeosVisit {
         ))
     }
 
+    /// Observer State.
     #[getter]
     pub fn observer(&self) -> PyState {
         self.0.observer().clone().into()
     }
 
+    /// Direction that the observer is looking.
     #[getter]
     pub fn pointing(&self) -> Vector {
         Vector::new(
@@ -469,36 +513,43 @@ impl PyNeosVisit {
         )
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn side_id(&self) -> u16 {
         self.0.side_id
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn stack_id(&self) -> u8 {
         self.0.stack_id
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn quad_id(&self) -> u8 {
         self.0.quad_id
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn loop_id(&self) -> u8 {
         self.0.loop_id
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn subloop_id(&self) -> u8 {
         self.0.subloop_id
     }
 
+    /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn exposure_id(&self) -> u8 {
         self.0.exposure_id
     }
 
+    /// Rotation angle of the FOV in degrees.
     #[getter]
     pub fn rotation(&self) -> f64 {
         self.0.rotation
