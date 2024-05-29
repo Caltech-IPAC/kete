@@ -555,6 +555,22 @@ impl PyNeosVisit {
         self.0.rotation
     }
 
+    pub fn __len__(&self) -> usize {
+        4
+    }
+
+    /// Retrieve a specific CMOS FOV..
+    pub fn __getitem__(&self, idx: usize) -> PyResult<PyNeosCmos> {
+        if idx >= self.__len__() {
+            return Err(PyErr::new::<exceptions::PyIndexError, _>(""));
+        }
+
+        Ok(PyNeosCmos(match self.0.get_fov(idx) {
+            fov::FOV::NeosCmos(fov) => fov,
+            _ => unreachable!(),
+        }))
+    }
+
     fn __repr__(&self) -> String {
         format!(
             "NEOSVisit(pointing={}, rotation={}, observer={}, side_id={}, stack_id={}, quad_id={}, loop_id={}, subloop_id={}, exposure_id={})",
