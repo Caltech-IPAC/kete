@@ -1,5 +1,4 @@
 from __future__ import annotations
-import warnings
 import io
 from functools import lru_cache
 import requests
@@ -174,12 +173,10 @@ def plot_fits_image(fit, vmin=-3, vmax=7, cmap="bone_r"):
     correctly onto the current image.
     """
     data = np.nan_to_num(fit.data)
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore")
-        wcs = WCS(fit.header)
-        if not plt.get_fignums():
-            plt.figure(dpi=120, figsize=(6, 6), facecolor="w")
-        ax = plt.subplot(projection=wcs)
+    wcs = WCS(fit.header, relax=True)
+    if not plt.get_fignums():
+        plt.figure(dpi=120, figsize=(6, 6), facecolor="w")
+    ax = plt.subplot(projection=wcs)
 
     data_no_bkg = data - np.median(data)
     # np.std below is doing a full frame std, which grabs the flux

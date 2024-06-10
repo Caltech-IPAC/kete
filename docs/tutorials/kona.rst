@@ -55,7 +55,7 @@ calculated from the corners of the frame.
     # Build the corner position of the FOV in RA/DEC, and build those into vectors
     # The WCS will raise a warning because the FITs files produced by WISE use an
     # old format.
-    frame_wcs = WCS(frame.header)
+    frame_wcs = WCS(frame.header, relax=True)
     corners = []
     dx, dy = frame_wcs.pixel_shape
     for x, y in zip([0, 0, dx, dx], [0, dy, dy, 0]):
