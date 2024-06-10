@@ -104,6 +104,11 @@ where
 
     cur_b: OMatrix<f64, D, U7>,
     g_scratch: OMatrix<f64, D, U7>,
+
+    state_scratch: OVector<f64, D>,
+    state_der_scratch: OVector<f64, D>,
+    b_scratch: OVector<f64, D>,
+    eval_scratch: OVector<f64, D>,
 }
 
 impl<'a, MType, D: Dim> RadauIntegrator<'a, MType, D>
@@ -134,6 +139,10 @@ where
             cur_state_der_der: Matrix::zeros_generic(dim, U1),
             cur_b: Matrix::zeros_generic(dim, U7),
             g_scratch: Matrix::zeros_generic(dim, U7),
+            b_scratch: Matrix::zeros_generic(dim, U1),
+            state_scratch: Matrix::zeros_generic(dim, U1),
+            state_der_scratch: Matrix::zeros_generic(dim, U1),
+            eval_scratch: Matrix::zeros_generic(dim, U1),
         };
 
         res.cur_state_der_der = (res.func)(
@@ -215,15 +224,14 @@ where
     /// step guess provided.
     ///
     fn step(&mut self, step_size: f64) -> Result<f64, NEOSpyError> {
-        let (dim, _) = self.cur_state.shape_generic();
-        let mut func_eval_tmp = self.cur_state_der_der.clone();
-        self.g_scratch.fill(0.0);
 
-        let mut tmp_state = Matrix::zeros_generic(dim, U1);
-        let mut tmp_state_der = Matrix::zeros_generic(dim, U1);
+        self.g_scratch.fill(0.0);
+        self.state_scratch.fill(0.0);
+        self.state_der_scratch.fill(0.0);
+        self.eval_scratch.set_column(0, &self.cur_state_der_der);
 
         for _ in 0..10 {
-            let last_b = self.cur_b.column(6).clone_owned();
+            self.b_scratch.set_column(0, &self.cur_b.column(6));
             // Calculate b and g
             for (idj, gauss_radau_frac) in GAUSS_RADAU_SPACINGS.iter().enumerate().skip(1) {
                 // the sample point at the Guass-Radau spacings.
@@ -244,7 +252,7 @@ where
                 );
 
                 izip!(
-                    tmp_state.iter_mut(),
+                    self.state_scratch.iter_mut(),
                     self.cur_state.iter(),
                     self.cur_state_der.iter(),
                     self.cur_state_der_der.iter(),
@@ -259,7 +267,7 @@ where
                 });
 
                 izip!(
-                    tmp_state_der.iter_mut(),
+                    self.state_der_scratch.iter_mut(),
                     self.cur_state_der.iter(),
                     self.cur_state_der_der.iter(),
                     self.cur_b.row_iter(),
@@ -272,15 +280,15 @@ where
                 });
 
                 // Evaluate the function at this new intermediate state.
-                func_eval_tmp = (self.func)(
+                self.eval_scratch.set_column(0, &(self.func)(
                     self.cur_time + gauss_radau_frac * step_size,
-                    &tmp_state,
-                    &tmp_state_der,
+                    &self.state_scratch,
+                    &self.state_der_scratch,
                     &mut self.metadata,
                     false,
-                )?;
+                )?);
 
-                let diff = &func_eval_tmp - &self.cur_state_der_der;
+                let diff = &self.eval_scratch - &self.cur_state_der_der;
 
                 // Use the result of that evaluation to update the current G and B
                 // matrices for the next gauss spacing.
@@ -302,8 +310,8 @@ where
             // Compute the largest b value and compare it to the last b value.
             // convergence is decided if B stops changing.
             self.g_scratch.mul_to(&C_MAT, &mut self.cur_b);
-            let b_diff = (self.cur_b.column(6) - last_b).abs();
-            let func_eval_max = func_eval_tmp.abs().add_scalar(1e-6);
+            let b_diff = (self.cur_b.column(6) - &self.b_scratch).abs();
+            let func_eval_max = self.eval_scratch.abs().add_scalar(1e-6);
 
             // This is using the convergence criterion as defined in
             // https://arxiv.org/pdf/1409.4779.pdf  equation (8)
