@@ -498,10 +498,8 @@ def plot_frames(
         except OSError:
             continue
         data = np.nan_to_num(fit.data)
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
-            wcs = WCS(fit.header)
-            ax = plt.subplot(2, 2, band, projection=wcs)
+        wcs = WCS(fit.header, relax=True)
+        ax = plt.subplot(2, 2, band, projection=wcs)
 
         data_no_bkg = data - np.median(data)
         # np.std below is doing a full frame std, which grabs the flux
