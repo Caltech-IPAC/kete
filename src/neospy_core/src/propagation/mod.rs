@@ -75,7 +75,7 @@ pub fn propagate_n_body_spk(
     let frame = state.frame;
     let spk = get_spk_singleton().try_read().unwrap();
     spk.try_change_center(&mut state, 0)?;
-    state.try_change_frame_mut(Frame::Ecliptic)?;
+    state.try_change_frame_mut(Frame::Equatorial)?;
 
     let mass_list = {
         if include_extended {
@@ -107,7 +107,7 @@ pub fn propagate_n_body_spk(
         jd_final,
         pos,
         vel,
-        Frame::Ecliptic,
+        Frame::Equatorial,
         0,
     );
     spk.try_change_center(&mut new_state, center)?;
