@@ -356,13 +356,14 @@ impl SpkSegmentType2 {
     ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
         let record_index = ((jd - segment.jd_start) / self.jd_step).floor() as usize;
         let record = unsafe { self.records.get_unchecked(record_index) };
-        let t_mid = record[0];
-        let t_step = record[1];
-        let t = (jd - t_mid) / t_step;
 
         let x_coef = unsafe { record.get_unchecked(2..(self.n_coef + 2)) };
         let y_coef = unsafe { record.get_unchecked((self.n_coef + 2)..(2 * self.n_coef + 2)) };
         let z_coef = unsafe { record.get_unchecked((2 * self.n_coef + 2)..(3 * self.n_coef + 2)) };
+
+        let t_mid = unsafe{record.get_unchecked(0)};
+        let t_step = unsafe{record.get_unchecked(1)};
+        let t = (jd - t_mid) / t_step;
 
         let (x, vx) = chebyshev_evaluate_both(t, x_coef)?;
         let (y, vy) = chebyshev_evaluate_both(t, y_coef)?;

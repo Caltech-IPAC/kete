@@ -238,7 +238,7 @@ pub fn spk_accel(
     let spk = get_spk_singleton().try_read().unwrap();
 
     for (id, mass, radius) in meta.massive_obj.iter() {
-        let state = spk.try_get_state(*id, time, 0, Frame::Ecliptic)?;
+        let state = spk.try_get_state(*id, time, 0, Frame::Equatorial)?;
         let rel_pos: Vector3<f64> = pos - Vector3::from(state.pos);
         let rel_pos_norm = rel_pos.normalize();
         let r = rel_pos.norm();
@@ -449,7 +449,7 @@ mod tests {
         let mut vel: Vec<f64> = Vec::new();
 
         for (id, _mass, _radius) in MASSIVE_OBJECTS.iter() {
-            let planet = spk.try_get_state(*id, jd, 0, Frame::Ecliptic).unwrap();
+            let planet = spk.try_get_state(*id, jd, 0, Frame::Equatorial).unwrap();
             pos.append(&mut planet.pos.into());
             vel.append(&mut planet.vel.into());
         }
