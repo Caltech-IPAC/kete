@@ -449,7 +449,7 @@ mod tests {
         let mut vel: Vec<f64> = Vec::new();
 
         for (id, _mass, _radius) in MASSIVE_OBJECTS.iter() {
-            let planet = spk.try_get_state(*id, jd, 0, Frame::Ecliptic).unwrap();
+            let planet = spk.try_get_state(*id, jd, 0, Frame::Equatorial).unwrap();
             pos.append(&mut planet.pos.into());
             vel.append(&mut planet.vel.into());
         }
