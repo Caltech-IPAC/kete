@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Renamed "HorizonsCovariance" to "Covariance" and generalized it to support both
+  cometary and cartesian representations.
+- Made api more consistent for conversion to State objects by renaming all instances of
+  `.as_state` to `.state`.
 - Improved performance of integration and propagation by about 10%.
 - Restructured the Rust FOVs to be organized by observatory.
 - Renamed `SpiceKernels.cache_kernel_reload` to `kernel_reload` and changed it's args.

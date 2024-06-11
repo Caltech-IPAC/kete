@@ -2,59 +2,11 @@ use std::fmt::Debug;
 
 use crate::elements::PyCometElements;
 use crate::state::PyState;
-use neospy_core::{io::FileIO, prelude};
+use crate::covariance::Covariance;
+use neospy_core::{ io::FileIO, prelude};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-/// Horizons object properties
-/// Physical, orbital, and observational properties of a solar system object as recorded in JPL Horizons.
-#[pyclass(frozen, get_all, module = "neospy")]
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct HorizonsCovariance {
-    /// Epoch of the covariance matrix fit.
-    epoch: f64,
-
-    /// Name and best estimate of the parameters in the fit.
-    params: Vec<(String, f64)>,
-
-    /// The covariance matrix, where the order of the array corresponds to the parameters.
-    cov_matrix: Vec<Vec<f64>>,
-}
-
-impl neospy_core::io::FileIO for HorizonsCovariance {}
-
-#[pymethods]
-impl HorizonsCovariance {
-    #[new]
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(epoch: f64, params: Vec<(String, f64)>, cov_matrix: Vec<Vec<f64>>) -> Self {
-        Self {
-            epoch,
-            params,
-            cov_matrix,
-        }
-    }
-
-    fn __repr__(&self) -> String {
-        format!(
-            "HorizonsCovariance(epoch={:?}, params={:?}, cov_matrix={:?})",
-            self.epoch, self.params, self.cov_matrix,
-        )
-    }
-
-    /// Save the covariance matrix to a file.
-    #[pyo3(name = "save")]
-    pub fn py_save(&self, filename: String) -> PyResult<usize> {
-        Ok(self.save(filename)?)
-    }
-
-    /// Load a covariance matrix from a file.
-    #[staticmethod]
-    #[pyo3(name = "load")]
-    pub fn py_load(filename: String) -> PyResult<Self> {
-        Ok(Self::load(filename)?)
-    }
-}
 
 /// Horizons object properties
 /// Physical, orbital, and observational properties of a solar system object as recorded in JPL Horizons.
@@ -108,7 +60,7 @@ pub struct HorizonsProperties {
     arc_len: Option<f64>,
 
     /// Covariance values in the orbit fit.
-    covariance: Option<HorizonsCovariance>,
+    covariance: Option<Covariance>,
 }
 
 impl neospy_core::io::FileIO for HorizonsProperties {}
@@ -133,7 +85,7 @@ impl HorizonsProperties {
         moid: Option<f64>,
         g_phase: Option<f64>,
         arc_len: Option<f64>,
-        covariance: Option<HorizonsCovariance>,
+        covariance: Option<Covariance>,
     ) -> Self {
         Self {
             desig,
@@ -162,31 +114,31 @@ impl HorizonsProperties {
             desig: prelude::Desig::Name(self.desig.clone()),
             epoch: self
                 .epoch
-                .ok_or_else(|| prelude::NEOSpyError::ValueError("No Epoch defined".into()))?,
-            eccentricity: self.eccentricity.ok_or_else(|| {
+                .ok_or(prelude::NEOSpyError::ValueError("No Epoch defined".into()))?,
+            eccentricity: self.eccentricity.ok_or( 
                 prelude::NEOSpyError::ValueError("No Eccentricity defined".into())
-            })?,
+            )?,
             inclination: self
                 .inclination
-                .ok_or_else(|| prelude::NEOSpyError::ValueError("No Inclination defined".into()))?
+                .ok_or(prelude::NEOSpyError::ValueError("No Inclination defined".into()))?
                 .to_radians(),
             peri_arg: self
                 .peri_arg
-                .ok_or_else(|| prelude::NEOSpyError::ValueError("No peri_arg defined".into()))?
+                .ok_or(prelude::NEOSpyError::ValueError("No peri_arg defined".into()))?
                 .to_radians(),
             peri_dist: self
                 .peri_dist
-                .ok_or_else(|| prelude::NEOSpyError::ValueError("No peri_dist defined".into()))?,
+                .ok_or(prelude::NEOSpyError::ValueError("No peri_dist defined".into()))?,
             peri_time: self
                 .peri_time
-                .ok_or_else(|| prelude::NEOSpyError::ValueError("No peri_time defined".into()))?,
+                .ok_or(prelude::NEOSpyError::ValueError("No peri_time defined".into()))?,
             lon_of_ascending: self
                 .lon_of_ascending
-                .ok_or_else(|| {
+                .ok_or( 
                     prelude::NEOSpyError::ValueError(
                         "No longitude of ascending node defined".into(),
                     )
-                })?
+                )?
                 .to_radians(),
             frame: prelude::Frame::Ecliptic,
         }))
@@ -195,7 +147,7 @@ impl HorizonsProperties {
     /// Convert the orbital elements of the object to a State.
     #[getter]
     pub fn state(&self) -> PyResult<PyState> {
-        self.elements()?.as_state()
+        self.elements()?.state()
     }
 
     fn __repr__(&self) -> String {

@@ -26,7 +26,7 @@ class TestlState:
             peri_arg=0,
             lon_of_ascending=0,
             peri_time=123456,
-        ).as_state
+        ).state
         assert vs.jd == 123456
         elem = vs.elements
         assert np.isclose(elem.eccentricity, 0.1)
@@ -53,7 +53,7 @@ class TestlState:
             peri_arg=peri_arg,
             lon_of_ascending=lon,
             peri_time=123456 + time,
-        ).as_state
+        ).state
         assert state.jd == 123456
         elements = state.elements
         assert np.isclose(elements.eccentricity, ecc)

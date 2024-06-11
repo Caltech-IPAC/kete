@@ -1,5 +1,6 @@
 use pyo3::prelude::{pymodule, wrap_pyfunction, Bound, PyModule, PyResult, Python};
 
+mod covariance;
 mod elements;
 mod fitting;
 mod flux;
@@ -46,7 +47,8 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<flux::PyModelResults>()?;
 
     m.add_class::<horizons::HorizonsProperties>()?;
-    m.add_class::<horizons::HorizonsCovariance>()?;
+    
+    m.add_class::<covariance::Covariance>()?;
 
     m.add_function(wrap_pyfunction!(frame::frame_change_py, m)?)?;
     m.add_function(wrap_pyfunction!(frame::wgs_lat_lon_to_ecef, m)?)?;

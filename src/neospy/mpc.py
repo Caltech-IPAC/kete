@@ -771,7 +771,7 @@ def table_to_states(orbit_dataframe):
                 item.peri_arg,
                 item.peri_time,
                 item.lon_node,
-            ).as_state
+            ).state
         )
     return states
 

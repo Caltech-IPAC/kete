@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 # pylint: disable=import-error
-from ._core import HorizonsProperties, HorizonsCovariance  # type: ignore
+from ._core import HorizonsProperties, Covariance  # type: ignore
 
 __all__ = ["HorizonsProperties"]
 
@@ -107,7 +107,7 @@ def fetch(name, update_name=True, cache=True, update_cache=False, exact_name=Fal
                     lab: phys[lookup_rev[lab]] for lab in labels if lab in lookup_rev
                 }
             params = [(lookup_rev.get(x, x), elements.get(x, np.nan)) for x in labels]
-            phys["covariance"] = HorizonsCovariance(cov_epoch, params, mat)
+            phys["covariance"] = Covariance(name, cov_epoch, params, mat)
     else:
         raise ValueError(
             "Horizons did not return orbit information for this object:" f"\n{props}"
