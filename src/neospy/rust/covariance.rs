@@ -108,4 +108,24 @@ impl Covariance {
     pub fn py_load(filename: String) -> PyResult<Self> {
         Ok(Self::load(filename)?)
     }
+
+    /// Save a list to a binary file.
+    ///
+    /// Note that this saves a list of Covariances.
+    #[staticmethod]
+    #[pyo3(name = "save_list")]
+    pub fn py_save_list(vec: Vec<Self>, filename: String) -> PyResult<()> {
+        Ok(Self::save_vec(
+            &vec, filename,
+        )?)
+    }
+
+    /// Load a list from a binary file.
+    ///
+    /// Note that this loads a list of Covariances.
+    #[staticmethod]
+    #[pyo3(name = "load_list")]
+    pub fn py_load_list(filename: String) -> PyResult<Vec<Self>> {
+        Ok(Self::load_vec(filename)?)
+    }
 }
