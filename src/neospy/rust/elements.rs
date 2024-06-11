@@ -166,7 +166,7 @@ impl PyCometElements {
 
     /// Convert the orbital elements into a cartesian State.
     #[getter]
-    pub fn as_state(&self) -> PyResult<PyState> {
+    pub fn state(&self) -> PyResult<PyState> {
         Ok(self.0.try_to_state()?.into())
     }
 

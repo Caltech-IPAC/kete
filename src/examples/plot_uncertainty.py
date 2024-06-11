@@ -44,9 +44,7 @@ states = [obj.state]
 for sample in samples:
     sample = sample + values
     params = dict(zip(labels, sample))
-    states.append(
-        neospy.CometElements(obj.desig, obj.covariance.epoch, **params).as_state
-    )
+    states.append(neospy.CometElements(obj.desig, obj.covariance.epoch, **params).state)
 
 # Propagate the position of all states to all time steps, recording the V mags
 mags = []

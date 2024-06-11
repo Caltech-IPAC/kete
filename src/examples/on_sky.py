@@ -21,7 +21,7 @@ elements = neospy.CometElements(
 )
 
 # These can be converted to cartesian coordinates
-state = elements.as_state
+state = elements.state
 
 # States for objects may also be queried from JPL Horizons
 # state = neospy.HorizonsProperties.fetch("Ceres").state
