@@ -18,6 +18,12 @@ __all__ = ["SpiceKernels", "SpkInfo"]
 
 SpkInfo = namedtuple("SpkInfo", "name, jd_start, jd_end, center, frame, spk_type")
 """Information contained within a Spice Kernel."""
+SpkInfo.name.__doc__ = "Name of the object."
+SpkInfo.jd_start.__doc__ = "JD date of the start of the spice segment."
+SpkInfo.jd_end.__doc__ = "JD date of the end of the spice segment."
+SpkInfo.center.__doc__ = "Reference Center NAIF ID."
+SpkInfo.frame.__doc__ = "Frame of reference."
+SpkInfo.spk_type.__doc__ = "SPK Segment Type ID."
 
 
 def _validate_time(time: Union[float, Time]) -> float:
@@ -184,7 +190,7 @@ class SpiceKernels:
 
         Parameters
         ----------
-        name :
+        desig :
             Name or integer id value of the object.
         """
         name, naif = cls.name_lookup(desig)
