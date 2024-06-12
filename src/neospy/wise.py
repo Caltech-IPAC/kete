@@ -471,7 +471,7 @@ def plot_frames(
     zoom :
         If the image should be centered and zoomed in on the provided RA/DEC.
         This can also be a number, which will change the zoom level.
-    band :
+    bands :
         Bands of WISE to plot, if not provided this will plot all bands for the
         given mission phase.
     """

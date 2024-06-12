@@ -11,6 +11,7 @@ import numpy as np
 
 from .spice import SpiceKernels
 from .vector import Vector, State
+from .fov import FOVList
 from . import _core  # pylint: disable=no-name-in-module
 
 logger = logging.getLogger(__name__)
@@ -75,7 +76,7 @@ def propagate_two_body(
 
     Parameters
     ----------
-    vec_state:
+    states:
         The input vector state to propagate.
     jd:
         The desired time at which to estimate the objects' state.
@@ -128,8 +129,8 @@ def moid(state: State, other: Optional[State] = None):
 
     Parameters
     ----------
-    states:
-        The state describing a number of objects.
+    state:
+        The state describing an object.
     other:
         The state of the object to calculate the MOID for, if this is not provided, then
         Earth is fetched from :class:`~neospy.spice.SpiceKernels` and is used in
@@ -140,9 +141,11 @@ def moid(state: State, other: Optional[State] = None):
     return _moid_single(state, other)
 
 
-def state_visible(states: list[State], fovs, dt: float = 3) -> list[list[State]]:
+def state_visible(
+    states: list[State], fovs: FOVList, dt: float = 3
+) -> list[list[State]]:
     """
-    Given a state and field of view, return only the objects which are visible to the
+    Given states and field of view, return only the objects which are visible to the
     observer, adding a correction for optical light delay.
 
     Objects are propagated using 2 body physics to the time of the FOV if time steps are
@@ -150,8 +153,8 @@ def state_visible(states: list[State], fovs, dt: float = 3) -> list[list[State]]
 
     parameters
     ----------
-    state:
-        A state which does not already have a specified FOV.
+    states:
+        States which do not already have a specified FOV.
     fov:
         A field of view from which to subselect objects which are visible.
     dt:

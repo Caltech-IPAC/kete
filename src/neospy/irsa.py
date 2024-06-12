@@ -105,6 +105,9 @@ def query_irsa_tap(
         The URL of the TAPS service to query, this defaults to IRSA.
     auth :
         An optional (username, password), this may be used to access restricted data.
+    timeout :
+        Timeout for web queries. This will raise an exception if the servers to not
+        respond within this time.
     verbose :
         Print status responses as they are fetched from IRSA.
     """
@@ -171,6 +174,24 @@ def plot_fits_image(fit, vmin=-3, vmax=7, cmap="bone_r"):
     """
     Plot a FITS image, returning a WCS object which may be used to plot future points
     correctly onto the current image.
+
+    This estimates the standard deviation, subtracts the median, and scales the
+    displayed image by number of standard deviations from the median value.
+
+    This returns the WCS which is constructed during the plotting process.
+
+    This will use the existing matplotlib plotting axis if available.
+
+    Parameters
+    ----------
+    fit:
+        Fits file from Astropy.
+    vmin :
+        Minimum number of standard deviations below the median to plot.
+    vmax :
+        Maximum number of standard deviations above the median to plot.
+    cmap :
+        Color map to use for the plot.
     """
     data = np.nan_to_num(fit.data)
     wcs = WCS(fit.header, relax=True)
@@ -195,6 +216,27 @@ def annotate_plot(
     """
     Add an annotation for a point in a FITS plot, this requires a world coordinate
     system (wcs) as returned by the plotting function above.
+
+    Parameters
+    ----------
+    wcs :
+        An Astropy World Coordinate system from the image.
+    ra :
+        The RA in degrees.
+    dec :
+        The DEC in degrees.
+    text :
+        Optional text to display.
+    px_gap :
+        How many pixels should the annotation be offset from the specified RA/DEC.
+    length :
+        Length of the bars in pixels.
+    lw :
+        Line width of the bars.
+    c :
+        Color of the bars, uses matplotlib colors.
+    text_color :
+        If text is provided, this defines the text color.
     """
     x, y = wcs.world_to_pixel(SkyCoord(ra, dec, unit="deg"))
     total = length + px_gap

@@ -32,6 +32,10 @@ def find_obs_code(name: str):
     >>> neospy.mpc.find_obs_code("Palomar Mountain")
     (33.35412, 243.13746, 1.69615, 'Palomar Mountain', '675')
 
+    Parameters
+    ----------
+    name :
+        Name of the observatory, this can be a partial name, or obs code.
     """
     codes = _core.observatory_codes()
     found = []
@@ -184,7 +188,7 @@ def pack_permanent_designation(unpacked):
     return pack_comet_designation(unpacked)
 
 
-def unpack_provisional_designation(packed):
+def unpack_provisional_designation(packed: str):
     """
     Accepts a packed MPC provisional designation and returns an unpacked provisional
     designation.
@@ -196,7 +200,7 @@ def unpack_provisional_designation(packed):
 
     Parameters
     ----------
-    packed : str
+    packed :
         A packed 7 character provisional MPC designation of an object.
     """
     if len(packed) == 12:
@@ -211,15 +215,15 @@ def unpack_provisional_designation(packed):
     if int(year) < 1925:
         year = "A" + year[1:]
     loop = _mpc_hex.index(packed[4]) * 10 + int(packed[5])
-    loop = "" if loop == 0 else str(loop)
+    loop_str = "" if loop == 0 else str(loop)
     order = packed[6]
     if order.isnumeric() or order.islower():
         # it's a comet
         return unpack_comet_designation(packed)
-    return year + " " + packed[3] + order + loop
+    return year + " " + packed[3] + order + loop_str
 
 
-def pack_provisional_designation(unpacked):
+def pack_provisional_designation(unpacked: str):
     """
     Accepts an unpacked MPC provisional designation and returns a packed provisional
     designation.
@@ -231,7 +235,7 @@ def pack_provisional_designation(unpacked):
 
     Parameters
     ----------
-    unpacked : str
+    unpacked :
         An unpacked provisional MPC designation of an object.
     """
     year, designation = unpacked.split()
@@ -253,7 +257,7 @@ def pack_provisional_designation(unpacked):
     return century + decade + half_month + loop + subloop + order
 
 
-def pack_satellite_designation(unpacked):
+def pack_satellite_designation(unpacked: str):
     """
     Accepts an unpacked MPC planetary satellite designation and returns a packed
     designation.
@@ -265,7 +269,7 @@ def pack_satellite_designation(unpacked):
 
     Parameters
     ----------
-    unpacked : str
+    unpacked :
         An unpacked satellite MPC designation of an object.
     """
     planet, satnum = unpacked.split()
@@ -279,7 +283,7 @@ def pack_satellite_designation(unpacked):
     return f"{pout:1s}{digout:03d}S"
 
 
-def unpack_satellite_designation(packed):
+def unpack_satellite_designation(packed: str):
     """
     Accepts a packed MPC satellite designation and returns an unpacked
     designation.
@@ -291,7 +295,7 @@ def unpack_satellite_designation(packed):
 
     Parameters
     ----------
-    packed : str
+    packed :
         A packed 5 character satellite MPC designation of an object.
     """
 
@@ -313,7 +317,7 @@ def unpack_satellite_designation(packed):
     return planets[packed[0]] + " " + int_to_roman(int(packed[1:4]))
 
 
-def pack_comet_designation(unpacked):
+def pack_comet_designation(unpacked: str):
     """
     Accepts an unpacked MPC provisional designation and returns a packed provisional
     designation.
@@ -328,7 +332,7 @@ def pack_comet_designation(unpacked):
 
     Parameters
     ----------
-    unpacked : str
+    unpacked :
         An unpacked MPC comet designation of an object.
     """
 
@@ -383,7 +387,7 @@ def pack_comet_designation(unpacked):
                 return comet_type + pack_provisional_designation(unpacked)
 
 
-def unpack_comet_designation(packed):
+def unpack_comet_designation(packed: str):
     """
     Accepts a packed MPC comet designation and returns an unpacked provisional
     designation.
@@ -395,7 +399,7 @@ def unpack_comet_designation(packed):
 
     Parameters
     ----------
-    packed : str
+    packed :
         A packed 5,7, or 8 character provisional MPC designation of an object.
     """
     if len(packed) == 5:
@@ -418,7 +422,7 @@ def unpack_comet_designation(packed):
         return comet_add + unpack_provisional_designation(packed)
 
 
-def unpack_designation(packed):
+def unpack_designation(packed: str):
     """
     Accepts either a packed provisional designation or permanent designation and returns
     the unpacked representation.
@@ -431,7 +435,7 @@ def unpack_designation(packed):
 
     Parameters
     ----------
-    packed : str
+    packed :
         A packed 5, 7, or 8 character MPC designation of an object.
     """
     packed = packed.strip()
@@ -445,7 +449,7 @@ def unpack_designation(packed):
     raise SyntaxError(f"This designation could not be unpacked '{packed}'")
 
 
-def pack_designation(unpacked):
+def pack_designation(unpacked: str):
     """
     Accepts either a unpacked provisional designation or permanent designation and
     returns the packed representation.
@@ -458,7 +462,7 @@ def pack_designation(unpacked):
 
     Parameters
     ----------
-    unpacked : str
+    unpacked :
         An unpacked designation to be packed into either a permanent or provisional
         designation.
     """
@@ -776,7 +780,7 @@ def table_to_states(orbit_dataframe):
     return states
 
 
-def int_to_roman(num):
+def int_to_roman(num: int):
     """Convert an integer to a Roman numeral."""
     if not isinstance(num, int):
         raise TypeError("Input needs to be an integer")
@@ -793,7 +797,7 @@ def int_to_roman(num):
     return "".join(result)
 
 
-def roman_to_int(num):
+def roman_to_int(num: str):
     """Convert a Roman numeral to an integer."""
 
     if not isinstance(num, str):

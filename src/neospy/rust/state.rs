@@ -57,7 +57,7 @@ impl PyState {
     ///
     /// Parameters
     /// ----------
-    /// frame : Frame
+    /// frame : Frames
     ///     New frame to change to.
     pub fn change_frame(&self, frame: PyFrames) -> PyResult<Self> {
         let mut state = self.0.clone();
