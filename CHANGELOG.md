@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added computation for Tisserand's Parameter.
 - Added support for NEOS Visit FOVs, which are joint FOVs containing 4 rectangles.
 - Added python interface to WISE Color Correction functions.
 - Added support for querying static sky sources in FOVs.

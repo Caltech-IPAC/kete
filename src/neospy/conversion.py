@@ -143,6 +143,40 @@ def compute_eccentric_anomaly(
     )
 
 
+def compute_tisserand(
+    semi_major: float,
+    ecc: float,
+    inclination: float,
+    perturbing_semi_major: float = 5.2038,
+):
+    """
+    Compute Tisserand's Parameter, the default perturbing body is set to Jupiter.
+
+    See: https://en.wikipedia.org/wiki/Tisserand%27s_parameter
+
+    Note that if the inclination is not computed with respect to the perturbing body
+    that this computation will not be correct. However, Jupiter only has an inclination
+    of 1.3 degrees with respect to the Ecliptic plane, which will only introduce a very
+    small error if the input inclination is w.r.t. the Ecliptic plane.
+
+    Parameters
+    ----------
+    semi_major:
+        Semi Major axis of small body, in units of AU.
+    ecc:
+        Eccentricity of the small body.
+    inclination:
+        Inclination of the small body with respect to the perturbing body, in units of
+        Degrees.
+    preturbing_semi_major:
+        Semi major axis of the parent body, in units of AU.
+    """
+    cos_incl = np.cos(np.radians(inclination))
+    return perturbing_semi_major / semi_major + 2 * cos_incl * np.sqrt(
+        semi_major / perturbing_semi_major * (1 - ecc**2)
+    )
+
+
 def dec_degrees_to_dms(dec: NDArray) -> Union[str, list[str]]:
     """
     Convert a declination in degrees to a "degrees arcminutes arcseconds" string.
