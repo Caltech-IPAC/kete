@@ -113,3 +113,6 @@ def test_earth_radius():
 def test_tisserand():
     val = compute_tisserand(2, 0.1, 15)
     assert np.isclose(val, 3.793542737489037)
+
+    val = compute_tisserand(2, 0, 0, 2)
+    assert np.isclose(val, 3)
