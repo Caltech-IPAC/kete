@@ -7,6 +7,7 @@ from neospy.conversion import (
     compute_earth_radius,
     compute_H,
     compute_eccentric_anomaly,
+    compute_tisserand,
     ra_degrees_to_hms,
     ra_hms_to_degrees,
     dec_degrees_to_dms,
@@ -107,3 +108,8 @@ def test_earth_radius():
     assert np.isclose(
         constants.EARTH_MAJOR_AXIS_M / constants.AU_M, compute_earth_radius(0)
     )
+
+
+def test_tisserand():
+    val = compute_tisserand(2, 0.1, 15)
+    assert np.isclose(val, 3.793542737489037)
