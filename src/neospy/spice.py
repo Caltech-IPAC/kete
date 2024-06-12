@@ -15,7 +15,9 @@ from .vector import Frames, State
 
 __all__ = ["SpiceKernels"]
 
+
 SpkInfo = namedtuple("SpkInfo", "name, jd_start, jd_end, center, frame, spk_type")
+"""Information contained within a Spice Kernel."""
 
 
 def _validate_time(time: Union[float, Time]) -> float:

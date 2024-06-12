@@ -10,7 +10,6 @@ use pyo3::prelude::*;
 use pyo3::{PyResult, Python};
 
 /// Vector class which is a vector along with a reference frame.
-///
 #[pyclass(sequence, frozen, module = "neospy")]
 #[derive(Clone, Debug)]
 pub struct Vector {
@@ -79,10 +78,14 @@ impl Vector {
     ///
     /// Parameters
     /// ----------
-    /// el : Elevation above the X-Y plane of the frame. (Degrees)
-    /// az : Azimuthal angle on the X-Y plane for the frame. (Degrees)
-    /// frame : Frame of reference which define the coordinate axis.
-    /// r : Optional length of the vector, defaults to 1.
+    /// el : float
+    ///     Elevation above the X-Y plane of the frame. (Degrees)
+    /// az : float
+    ///     Azimuthal angle on the X-Y plane for the frame. (Degrees)
+    /// frame : Frames
+    ///     Frame of reference which define the coordinate axis.
+    /// r : 
+    ///     Optional length of the vector, defaults to 1.
     #[staticmethod]
     pub fn from_el_az(el: f64, az: f64, r: f64, frame: PyFrames) -> Self {
         let (el_sin, el_cos) = (FRAC_PI_2 - el.to_radians()).sin_cos();
@@ -97,9 +100,12 @@ impl Vector {
     ///
     /// Parameters
     /// ----------
-    /// lat : Latitude in the ecliptic frame. (Degrees)
-    /// lon : Longitude in the ecliptic frame. (Degrees)
-    /// r : Optional length of the vector, defaults to 1.
+    /// lat : float
+    ///     Latitude in the ecliptic frame. (Degrees)
+    /// lon : float
+    ///     Longitude in the ecliptic frame. (Degrees)
+    /// r :
+    ///     Optional length of the vector, defaults to 1.
     #[staticmethod]
     pub fn from_lat_lon(lat: f64, lon: f64, r: Option<f64>) -> Self {
         Self::from_el_az(lat, lon, r.unwrap_or(1.0), PyFrames::Ecliptic)
@@ -109,9 +115,12 @@ impl Vector {
     ///
     /// Parameters
     /// ----------
-    /// ra : Right Ascension in the equatorial frame. (Degrees)
-    /// dec : Declination in the equatorial frame. (Degrees)
-    /// r : Optional length of the vector, defaults to 1.
+    /// ra : float
+    ///     Right Ascension in the equatorial frame. (Degrees)
+    /// dec : float
+    ///     Declination in the equatorial frame. (Degrees)
+    /// r :
+    ///     Optional length of the vector, defaults to 1.
     #[staticmethod]
     pub fn from_ra_dec(ra: f64, dec: f64, r: Option<f64>) -> Self {
         Self::from_el_az(dec, ra, r.unwrap_or(1.0), PyFrames::Equatorial)

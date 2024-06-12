@@ -15,12 +15,18 @@ use crate::{frame::PyFrames, vector::VectorLike};
 ///
 /// Parameters
 /// ----------
-/// fluxes : Total fluxes per band in units of Jy / Steradian.
-/// thermal_fluxes : Black body specific fluxes per band in units of Jy / Steradian.
-/// hg_fluxes : Reflected light specific fluxes per band in units of Jy / Steradian.
-/// v_band_magnitude : Expected magnitude in the V-band using the HG model.
-/// v_band_flux : Expected flux in the V-band using the HG model.
-/// magnitudes : Magnitudes in the different bands if zero mags were available.
+/// fluxes :
+///     Total fluxes per band in units of Jy / Steradian.
+/// thermal_fluxes :
+///     Black body specific fluxes per band in units of Jy / Steradian.
+/// hg_fluxes :
+///     Reflected light specific fluxes per band in units of Jy / Steradian.
+/// v_band_magnitude :
+///     Expected magnitude in the V-band using the HG model.
+/// v_band_flux :
+///     Expected flux in the V-band using the HG model.
+/// magnitudes :
+///     Magnitudes in the different bands if zero mags were available.
 #[pyclass(frozen, module = "neospy.flux", name = "ModelResults")]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PyModelResults(pub neospy_core::flux::ModelResults);

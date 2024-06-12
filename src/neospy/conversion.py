@@ -168,7 +168,7 @@ def compute_tisserand(
     inclination:
         Inclination of the small body with respect to the perturbing body, in units of
         Degrees.
-    preturbing_semi_major:
+    perturbing_semi_major:
         Semi major axis of the parent body, in units of AU.
     """
     cos_incl = np.cos(np.radians(inclination))
@@ -303,8 +303,8 @@ def mag_to_flux(mag: float, zero_point=3631) -> float:
 
     Parameters
     ----------
-    flux:
-        Flux in Jy.
+    mag:
+        AB Magnitude.
     zero_point:
         Flux in Jy where the magnitude is zero.
     """
