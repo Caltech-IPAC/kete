@@ -13,7 +13,7 @@ from .constants import AU_KM
 from .cache import cached_file_download, cache_path
 from .vector import Frames, State
 
-__all__ = ["SpiceKernels"]
+__all__ = ["SpiceKernels", "SpkInfo"]
 
 
 SpkInfo = namedtuple("SpkInfo", "name, jd_start, jd_end, center, frame, spk_type")
