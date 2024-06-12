@@ -215,12 +215,12 @@ def unpack_provisional_designation(packed: str):
     if int(year) < 1925:
         year = "A" + year[1:]
     loop = _mpc_hex.index(packed[4]) * 10 + int(packed[5])
-    loop = "" if loop == 0 else str(loop)
+    loop_str = "" if loop == 0 else str(loop)
     order = packed[6]
     if order.isnumeric() or order.islower():
         # it's a comet
         return unpack_comet_designation(packed)
-    return year + " " + packed[3] + order + loop
+    return year + " " + packed[3] + order + loop_str
 
 
 def pack_provisional_designation(unpacked: str):
