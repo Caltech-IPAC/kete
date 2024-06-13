@@ -33,6 +33,22 @@ enum SPKSegmentType {
     Type21(SpkSegmentType21),
 }
 
+impl SPKSegmentType{
+    pub fn try_load<T: Read + Seek>(segment_type:usize, file: &mut T, array_start: usize, array_end:usize )-> Result<Self, NEOSpyError>{
+        match segment_type {
+        1 => SpkSegmentType1::try_load(file, array_start, array_end),
+        2 => SpkSegmentType2::try_load(file, array_start, array_end),
+        3 => SpkSegmentType3::try_load(file, array_start, array_end),
+        13 => SpkSegmentType13::try_load(file, array_start, array_end),
+        21 => SpkSegmentType21::try_load(file, array_start, array_end),
+        v => Err(NEOSpyError::IOError(format!(
+                "SPK Segment type {:?} not supported.",
+                v
+            )))
+        
+    }}
+}
+
 #[derive(Debug)]
 pub struct SpkSegment {
     /// The NAIF ID of the object recorded in this Segment.
@@ -87,19 +103,7 @@ impl SpkSegment {
             _ => Frame::Unknown(frame_num as usize),
         };
 
-        let segment = match segment_type {
-            1 => SpkSegmentType1::try_load(file, array_start, array_end)?,
-            2 => SpkSegmentType2::try_load(file, array_start, array_end)?,
-            3 => SpkSegmentType3::try_load(file, array_start, array_end)?,
-            13 => SpkSegmentType13::try_load(file, array_start, array_end)?,
-            21 => SpkSegmentType21::try_load(file, array_start, array_end)?,
-            v => {
-                return Err(NEOSpyError::IOError(format!(
-                    "SPK Segment type {:?} not supported.",
-                    v
-                )));
-            }
-        };
+        let segment = SPKSegmentType::try_load(segment_type, file, array_start, array_end)?;
 
         Ok(SpkSegment {
             obj_id,
