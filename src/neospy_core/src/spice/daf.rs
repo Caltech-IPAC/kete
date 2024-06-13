@@ -9,10 +9,10 @@
 /// These summary records contain the location information for all the contents
 /// of the DAF file.
 ///
-use super::binary::{
+use super::{binary::{
     bytes_to_f64, bytes_to_f64_vec, bytes_to_i32, bytes_to_i32_vec, bytes_to_str, read_bytes_exact,
     read_str,
-};
+}, records::DafRecords};
 use crate::errors::NEOSpyError;
 use std::io::{Read, Seek};
 
@@ -39,6 +39,9 @@ pub struct DafHeader {
 
     /// Number of i32s in each array.
     pub n_ints: i32,
+
+    /// Number of chars in the descriptor string of each array.
+    pub n_chars: i32,
 
     /// Is the file little endian.
     pub little_endian: bool,
@@ -69,7 +72,7 @@ pub struct DafHeader {
     pub comments: String,
 }
 
-type Summary = (Box<[f64]>, Box<[i32]>);
+type DafSummary = (Box<[f64]>, Box<[i32]>);
 
 impl DafHeader {
     /// Try to load a single record from the DAF.
@@ -98,6 +101,7 @@ impl DafHeader {
 
         let n_doubles = bytes_to_i32(&bytes[8..12], little_endian)?;
         let n_ints = bytes_to_i32(&bytes[12..16], little_endian)?;
+        let n_chars= 8 * (n_doubles + (n_ints + 1) / 2);
 
         // record index of the first summary record in the file
         // records are 1024 long, and 1 indexed because fortran.
@@ -125,6 +129,7 @@ impl DafHeader {
             daf_type,
             n_doubles,
             n_ints,
+            n_chars,
             little_endian,
             internal_desc,
             init_summary_record_index,
@@ -142,11 +147,11 @@ impl DafHeader {
     pub fn try_load_summaries<T: Read + Seek>(
         &self,
         file: &mut T,
-    ) -> Result<Vec<Summary>, NEOSpyError> {
+    ) -> Result<Vec<DafSummary>, NEOSpyError> {
         let summary_size = self.n_doubles + (self.n_ints + 1) / 2;
 
         let mut next_idx = self.init_summary_record_index;
-        let mut summaries: Vec<Summary> = Vec::new();
+        let mut summaries: Vec<DafSummary> = Vec::new();
         loop {
             if next_idx == 0 {
                 break;
@@ -184,5 +189,59 @@ impl DafHeader {
                 magic
             ))),
         }
+    }
+}
+
+
+/// Contents of an DAF file.
+#[derive(Debug)]
+#[allow(dead_code)]
+pub struct DafFile{
+    header: Box<DafHeader>,
+
+    summaries: Vec<DafSummary>,
+
+    records: Box<DafRecords>,
+}
+
+impl  DafFile {
+    
+    /// Load all summary records from the DAF file.
+    /// These are tuples containing a series of f64s and i32s.
+    /// The meaning of these values depends on the particular implementation of the DAF,
+    /// IE: SPK files have 2 floats and 6 ints.
+    pub fn try_load_summaries<T: Read + Seek>(
+        &self,
+        file: &mut T,
+    ) -> Result<Vec<DafSummary>, NEOSpyError> {
+        let summary_size = self.header.n_doubles + (self.header.n_ints + 1) / 2;
+
+        let mut next_idx = self.header.init_summary_record_index;
+        let mut summaries: Vec<DafSummary> = Vec::new();
+        loop {
+            if next_idx == 0 {
+                break;
+            }
+            let bytes = DafHeader::try_load_record(file, next_idx as u64)?;
+
+            next_idx = bytes_to_f64(&bytes[0..8], self.header.little_endian)? as i32;
+            // let prev_idx = bytes_to_f64(&bytes[8..16], daf.little_endian)? as i32;
+            let n_summaries = bytes_to_f64(&bytes[16..24], self.header.little_endian)? as i32;
+
+            for idy in 0..n_summaries {
+                let sum_start = (3 * 8 + idy * summary_size * 8) as usize;
+                let floats = bytes_to_f64_vec(
+                    &bytes[sum_start..sum_start + 8 * self.header.n_doubles as usize],
+                    self.header.little_endian,
+                )?;
+                let ints = bytes_to_i32_vec(
+                    &bytes[sum_start + 8 * self.header.n_doubles as usize
+                        ..sum_start + (8 * self.header.n_doubles + 4 * self.header.n_ints) as usize],
+                        self.header.little_endian,
+                )?;
+                summaries.push((floats, ints));
+            }
+        }
+        Ok(summaries)
     }
 }

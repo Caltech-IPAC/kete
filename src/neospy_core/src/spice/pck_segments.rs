@@ -14,7 +14,7 @@
 /// similar internal structures.
 ///
 use super::binary::read_f64_vec;
-use super::interpolation::*;
+use super::{interpolation::*, jd_to_spice_jd};
 use super::records::DafRecords;
 use super::spice_jds_to_jd;
 use crate::errors::NEOSpyError;
@@ -115,9 +115,9 @@ impl PckSegment {
 ///
 #[derive(Debug)]
 pub struct PckSegmentType2 {
-    pub jd_step: f64,
-    pub n_coef: usize,
-    pub records: DafRecords,
+    records: DafRecords,
+    jd_step: f64,
+    n_coef: usize,
 }
 
 impl PckSegmentType2 {
@@ -132,26 +132,12 @@ impl PckSegmentType2 {
 
         let n_rec = bin_segment[array_len - 1] as usize;
         let rec_len = bin_segment[array_len - 2] as usize;
-        let jd_step = bin_segment[array_len - 3] / 86400.0;
+        let jd_step = bin_segment[array_len - 3];
         let n_coef = (rec_len - 2) / 3;
 
-        let mut idy = 0;
         let mut records = DafRecords::with_capacity(n_rec, rec_len);
-        for _ in 0..n_rec {
-            let mut record = Vec::<f64>::with_capacity(rec_len);
-            for idx in 0..rec_len {
-                record.push({
-                    if idx == 0 {
-                        spice_jds_to_jd(bin_segment[idy])
-                    } else if idx == 1 {
-                        bin_segment[idy] / 86400.0
-                    } else {
-                        bin_segment[idy]
-                    }
-                });
-                idy += 1;
-            }
-            records.try_push(record)?;
+        for idx in  0..n_rec {
+            records.try_push(&bin_segment[(idx * rec_len) .. (idx * rec_len + rec_len)])?;
         }
 
         Ok(PCKSegmentType::Type2(PckSegmentType2 {
@@ -176,7 +162,9 @@ impl PckSegmentType2 {
         //
         // Rate of change for each of these values can be calculated by using the
         // derivative of chebyshev of the first kind, which is done below.
-        let record_index = ((jd - segment.jd_start) / self.jd_step).floor() as usize;
+        let jd = jd_to_spice_jd(jd);
+        let jd_start = jd_to_spice_jd(segment.jd_start);
+        let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
         let record = &self.records[record_index];
         let t_mid = record[0];
         let t_step = record[1];
@@ -199,9 +187,9 @@ impl PckSegmentType2 {
                 ra,
                 dec,
                 w,
-                ra_der / t_step,
-                dec_der / t_step,
-                w_der / t_step,
+                ra_der / t_step * 86400.0,
+                dec_der / t_step* 86400.0,
+                w_der / t_step* 86400.0,
             ],
         ))
     }

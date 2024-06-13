@@ -1,6 +1,9 @@
 use std::ops::Index;
+// use std::io::{Read, Seek};
 
 use crate::errors::NEOSpyError;
+
+// use super::binary::read_f64_vec;
 
 #[derive(Debug)]
 pub struct DafRecords {
@@ -18,16 +21,24 @@ impl DafRecords {
         }
     }
 
-    pub fn try_push(&mut self, mut record: Vec<f64>) -> Result<(), NEOSpyError> {
+    pub fn try_push(&mut self, record: &[f64]) -> Result<(), NEOSpyError> {
         if record.len() != self.record_len {
             return Err(NEOSpyError::DAFLimits(
                 "Record length does not match expected.".into(),
             ));
         }
         self.n_records += 1;
-        self.data.append(&mut record);
+        self.data.extend(record);
         Ok(())
     }
+
+    // pub fn try_load_record<T: Read + Seek>(&mut self, file: &mut T, idx:u64, little_endian: bool)-> Result<(), NEOSpyError> {
+    //     let _ = file.seek(std::io::SeekFrom::Start(1024 * (idx - 1)))?;
+    //     let record = read_f64_vec(file, self.record_len, little_endian)?;
+    //     self.n_records += 1;
+    //     self.data.extend(record.iter());
+    //     Ok(())
+    // }
 
     pub unsafe fn get_unchecked(&self, idx: usize) -> &[f64] {
         self.data

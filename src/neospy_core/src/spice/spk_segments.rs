@@ -15,7 +15,7 @@
 use super::binary::read_f64_vec;
 use super::interpolation::*;
 use super::records::DafRecords;
-use super::spice_jds_to_jd;
+use super::{spice_jds_to_jd, jd_to_spice_jd};
 use crate::constants::AU_KM;
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
@@ -146,8 +146,8 @@ impl SpkSegment {
 ///
 #[derive(Debug)]
 struct SpkSegmentType1 {
-    pub records: DafRecords,
-    pub times: Box<[f64]>,
+    records: DafRecords,
+    times: Box<[f64]>,
 }
 
 impl SpkSegmentType1 {
@@ -161,28 +161,17 @@ impl SpkSegmentType1 {
         let bin_segment = read_f64_vec(file, array_len, true)?;
 
         let n_records = bin_segment[array_len - 1] as usize;
+        let record_len = 71;
 
-        let mut idy = 0;
-
-        let mut records = DafRecords::with_capacity(n_records, 71);
-        for _ in 0..n_records {
-            let mut record = [0.0; 71];
-            for (idx, elem) in record.iter_mut().enumerate() {
-                if idx == 0 {
-                    *elem = spice_jds_to_jd(bin_segment[idy]);
-                } else {
-                    *elem = bin_segment[idy];
-                }
-                idy += 1
-            }
-            records.try_push(record.into())?;
+        let mut records = DafRecords::with_capacity(n_records, record_len);
+        for idx in 0..n_records {
+            records.try_push(&bin_segment[idx * record_len..(idx + 1) * record_len])?;
         }
 
         let times = {
             let mut tmp = Vec::<f64>::with_capacity(n_records);
-            for _ in 0..n_records {
-                tmp.push(spice_jds_to_jd(bin_segment[idy]));
-                idy += 1
+            for idy in (record_len * n_records)..(record_len * n_records + n_records) {
+                tmp.push(bin_segment[idy]);
             }
             tmp
         };
@@ -210,6 +199,8 @@ impl SpkSegmentType1 {
         // total: 11 + 4*n_coef
         // we need to find the first record which has a time greater than or equal
         // to the target jd.
+
+        let jd = jd_to_spice_jd(jd);
         let start_idx = self
             .times
             .binary_search_by(|probe| probe.total_cmp(&jd))
@@ -228,9 +219,8 @@ impl SpkSegmentType1 {
         let kq_max1 = record[67] as usize;
         let kq = &record[68..71];
 
-        // in the spice code ref_time is in seconds from j2000, during the load for the records
-        // in this implementation, the time is auto converted to JD in days.
-        let dt = (jd - ref_time) * 86400.0;
+        // in the spice code ref_time is in seconds from j2000
+        let dt = jd - ref_time;
 
         let mut fc = [0.0; 15];
         let mut wc = [0.0; 15];
@@ -298,9 +288,9 @@ impl SpkSegmentType1 {
 ///
 #[derive(Debug)]
 pub struct SpkSegmentType2 {
-    pub jd_step: f64,
-    pub n_coef: usize,
-    pub records: DafRecords,
+    records: DafRecords,
+    jd_step: f64,
+    n_coef: usize,
 }
 
 impl SpkSegmentType2 {
@@ -315,7 +305,7 @@ impl SpkSegmentType2 {
 
         let n_records = bin_segment[array_len - 1] as usize;
         let record_len = bin_segment[array_len - 2] as usize;
-        let jd_step = bin_segment[array_len - 3] / 86400.0;
+        let jd_step = bin_segment[array_len - 3];
 
         let n_coef = (record_len - 2) / 3;
 
@@ -323,23 +313,9 @@ impl SpkSegmentType2 {
             return Err(NEOSpyError::DAFLimits("File incorrectly formatted, found number of Chebyshev coefficients doesn't match expected".into()));
         }
 
-        let mut idy = 0;
         let mut records = DafRecords::with_capacity(n_records, record_len);
-        for _ in 0..n_records {
-            let mut record = Vec::<f64>::with_capacity(record_len);
-            for idx in 0..record_len {
-                record.push({
-                    if idx == 0 {
-                        spice_jds_to_jd(bin_segment[idy])
-                    } else if idx == 1 {
-                        bin_segment[idy] / 86400.0
-                    } else {
-                        bin_segment[idy] / AU_KM
-                    }
-                });
-                idy += 1;
-            }
-            records.try_push(record)?;
+        for idy in 0..n_records {
+            records.try_push(&bin_segment[idy * record_len .. (1 + idy) * record_len])?;
         }
 
         Ok(SPKSegmentType::Type2(SpkSegmentType2 {
@@ -354,7 +330,9 @@ impl SpkSegmentType2 {
         segment: &SpkSegment,
         jd: f64,
     ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
-        let record_index = ((jd - segment.jd_start) / self.jd_step).floor() as usize;
+        let jd = jd_to_spice_jd(jd);
+        let jd_start = jd_to_spice_jd(segment.jd_start);
+        let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
         let record = unsafe { self.records.get_unchecked(record_index) };
 
         let x_coef = unsafe { record.get_unchecked(2..(self.n_coef + 2)) };
@@ -365,10 +343,12 @@ impl SpkSegmentType2 {
         let t_step = unsafe{record.get_unchecked(1)};
         let t = (jd - t_mid) / t_step;
 
+        let t_step_scaled = 86400.0 / t_step / AU_KM;
+
         let (x, vx) = chebyshev_evaluate_both(t, x_coef)?;
         let (y, vy) = chebyshev_evaluate_both(t, y_coef)?;
         let (z, vz) = chebyshev_evaluate_both(t, z_coef)?;
-        Ok(([x, y, z], [vx / t_step, vy / t_step, vz / t_step]))
+        Ok(([x / AU_KM, y / AU_KM, z / AU_KM], [vx * t_step_scaled, vy * t_step_scaled, vz * t_step_scaled]))
     }
 }
 
@@ -378,9 +358,9 @@ impl SpkSegmentType2 {
 ///
 #[derive(Debug)]
 pub struct SpkSegmentType3 {
-    pub jd_step: f64,
-    pub n_coef: usize,
-    pub records: DafRecords,
+    records: DafRecords,
+    jd_step: f64,
+    n_coef: usize,
 }
 
 impl SpkSegmentType3 {
@@ -399,23 +379,9 @@ impl SpkSegmentType3 {
 
         let n_coef = (record_len - 2) / 6;
 
-        let mut idy = 0;
         let mut records = DafRecords::with_capacity(n_records, record_len);
-        for _ in 0..n_records {
-            let mut record = Vec::<f64>::with_capacity(record_len);
-            for idx in 0..record_len {
-                record.push({
-                    if idx == 0 {
-                        spice_jds_to_jd(bin_segment[idy])
-                    } else if idx == 1 {
-                        bin_segment[idy] / 86400.0
-                    } else {
-                        bin_segment[idy] / AU_KM
-                    }
-                });
-                idy += 1;
-            }
-            records.try_push(record)?;
+        for idy in 0..n_records {
+            records.try_push(&bin_segment[idy * record_len .. (1 + idy) * record_len])?;
         }
 
         Ok(SPKSegmentType::Type3(SpkSegmentType3 {
@@ -430,11 +396,15 @@ impl SpkSegmentType3 {
         segment: &SpkSegment,
         jd: f64,
     ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
-        let record_index = ((jd - segment.jd_start) / self.jd_step).floor() as usize;
+        let jd = jd_to_spice_jd(jd);
+        let jd_start = jd_to_spice_jd(segment.jd_start);
+        let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
         let record = unsafe { self.records.get_unchecked(record_index) };
         let t_mid = record[0];
         let t_step = record[1];
         let t = (jd - t_mid) / t_step;
+
+        let t_step_scaled = 86400.0 / t_step / AU_KM;
 
         let x_coef = &record[2..(self.n_coef + 2)];
         let y_coef = &record[(self.n_coef + 2)..(2 * self.n_coef + 2)];
@@ -452,7 +422,7 @@ impl SpkSegmentType3 {
         let vy = chebyshev_evaluate_type1(t, vy_coef)?;
         let vz = chebyshev_evaluate_type1(t, vz_coef)?;
 
-        Ok(([x, y, z], [vx / t_step, vy / t_step, vz / t_step]))
+        Ok(([x / AU_KM, y / AU_KM, z / AU_KM], [vx * t_step_scaled, vy * t_step_scaled, vz * t_step_scaled]))
     }
 }
 
@@ -466,9 +436,9 @@ impl SpkSegmentType3 {
 /// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/spk.html#Type%2013:%20Hermite%20Interpolation%20---%20Unequal%20Time%20Steps>
 #[derive(Debug)]
 pub struct SpkSegmentType13 {
-    pub states: DafRecords,
-    pub times: Box<[f64]>,
-    pub window_size: usize,
+    records: DafRecords,
+    times: Box<[f64]>,
+    window_size: usize,
 }
 impl SpkSegmentType13 {
     fn try_load<T: Read + Seek>(
@@ -480,34 +450,23 @@ impl SpkSegmentType13 {
         let array_len = array_end - array_start + 1;
         let bin_segment = read_f64_vec(file, array_len, true)?;
 
-        let n_states = bin_segment[array_len - 1] as usize;
+        let n_records = bin_segment[array_len - 1] as usize;
         let window_size = bin_segment[array_len - 2] as usize;
+        let record_len = 6;
 
-        let mut idy = 0;
-        let mut states = DafRecords::with_capacity(n_states, 6);
-        for _ in 0..n_states {
+        let mut states = DafRecords::with_capacity(n_records, record_len);
+        for idx in 0..n_records {
             states.try_push(
-                [
-                    bin_segment[idy] / AU_KM,
-                    bin_segment[idy + 1] / AU_KM,
-                    bin_segment[idy + 2] / AU_KM,
-                    bin_segment[idy + 3] / AU_KM * 86400.,
-                    bin_segment[idy + 4] / AU_KM * 86400.,
-                    bin_segment[idy + 5] / AU_KM * 86400.,
-                ]
-                .into(),
-            )?;
-            idy += 6;
+                & bin_segment[idx * 6..(idx + 1) * record_len])?;
         }
 
-        let mut times = Vec::with_capacity(n_states);
-        for _ in 0..n_states {
-            times.push(spice_jds_to_jd(bin_segment[idy]));
-            idy += 1;
+        let mut times = Vec::with_capacity(n_records);
+        for idx in (n_records * record_len)..(n_records * record_len + record_len) {
+            times.push(bin_segment[idx]);
         }
 
         Ok(SPKSegmentType::Type13(SpkSegmentType13 {
-            states,
+            records: states,
             times: times.into(),
             window_size,
         }))
@@ -518,6 +477,7 @@ impl SpkSegmentType13 {
         _: &SpkSegment,
         jd: f64,
     ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
+        let jd = jd_to_spice_jd(jd);
         let start_idx: isize = match self.times.binary_search_by(|probe| probe.total_cmp(&jd)) {
             Ok(c) => c as isize - (self.window_size as isize) / 2,
             Err(c) => {
@@ -529,7 +489,7 @@ impl SpkSegmentType13 {
             }
         };
         let start_idx =
-            start_idx.clamp(0, self.states.len() as isize - self.window_size as isize) as usize;
+            start_idx.clamp(0, self.records.len() as isize - self.window_size as isize) as usize;
 
         let mut pos = [0.0; 3];
         let mut vel = [0.0; 3];
@@ -541,14 +501,14 @@ impl SpkSegmentType13 {
             .collect();
         for idx in 0..3 {
             let p: Box<[f64]> = (0..self.window_size)
-                .map(|i| self.states[i + start_idx][idx])
+                .map(|i| self.records[i + start_idx][idx])
                 .collect();
             let dp: Box<[f64]> = (0..self.window_size)
-                .map(|i| self.states[i + start_idx][idx + 3])
+                .map(|i| self.records[i + start_idx][idx + 3])
                 .collect();
             let (p, v) = hermite_interpolation(&times, &p, &dp, jd);
-            pos[idx] = p;
-            vel[idx] = v;
+            pos[idx] = p/ AU_KM;
+            vel[idx] = v/ AU_KM * 86400.;
         }
 
         Ok((pos, vel))
@@ -561,9 +521,9 @@ impl SpkSegmentType13 {
 ///
 #[derive(Debug)]
 pub struct SpkSegmentType21 {
-    pub records: DafRecords,
-    pub times: Box<[f64]>,
-    pub n_coef: usize,
+    records: DafRecords,
+    times: Box<[f64]>,
+    n_coef: usize,
 }
 impl SpkSegmentType21 {
     fn try_load<T: Read + Seek>(
@@ -580,29 +540,16 @@ impl SpkSegmentType21 {
 
         let record_len = 4 * n_coef + 11;
 
-        let mut idy = 0;
         let mut records = DafRecords::with_capacity(n_records, record_len);
-
-        for _ in 0..n_records {
-            let mut record = Vec::<f64>::with_capacity(record_len);
-            for idx in 0..record_len {
-                record.push({
-                    if idx == 0 {
-                        spice_jds_to_jd(bin_segment[idy])
-                    } else {
-                        bin_segment[idy]
-                    }
-                });
-                idy += 1;
-            }
-            records.try_push(record)?;
+        for idx in 0..n_records {
+            records.try_push(
+                & bin_segment[idx * record_len..(idx + 1) * record_len])?;
         }
 
         let times = {
             let mut tmp = Vec::<f64>::with_capacity(n_records);
-            for _ in 0..n_records {
-                tmp.push(spice_jds_to_jd(bin_segment[idy]));
-                idy += 1
+            for idy in (record_len * n_records)..(record_len * n_records + n_records) {
+                tmp.push(bin_segment[idy]);
             }
             tmp
         };
@@ -633,6 +580,8 @@ impl SpkSegmentType21 {
 
         // we need to find the first record which has a time greater than or equal
         // to the target jd.
+
+        let jd = jd_to_spice_jd(jd);
         let start_idx = self
             .times
             .binary_search_by(|probe| probe.total_cmp(&jd))
@@ -650,9 +599,8 @@ impl SpkSegmentType21 {
         let kq_max1 = record[4 * self.n_coef + 7] as usize;
         let kq = &record[4 * self.n_coef + 8..4 * self.n_coef + 11];
 
-        // in the spice code ref_time is in seconds from j2000, during the load for the records
-        // in this implementation, the time is auto converted to JD in days.
-        let dt = (jd - ref_time) * 86400.0;
+        // in the spice code ref_time is in seconds from j2000
+        let dt = jd - ref_time;
 
         let mut fc = Vec::<f64>::with_capacity(self.n_coef);
         let mut wc = Vec::<f64>::with_capacity(self.n_coef);
