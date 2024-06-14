@@ -59,6 +59,28 @@ pub enum DafSegments {
     Pck(PckSegment),
 }
 
+impl DafSegments {
+    /// Return the contained SPK segment.
+    /// Panic if not SPK.
+    pub fn spk(self) -> SpkSegment {
+        if let Self::Spk(seg) = self {
+            seg
+        } else {
+            panic!("Not an SPK segment.")
+        }
+    }
+
+    /// Return the contained PCK segment.
+    /// Panic if not PCK.
+    pub fn pck(self) -> PckSegment {
+        if let Self::Pck(seg) = self {
+            seg
+        } else {
+            panic!("Not an PCK segment.")
+        }
+    }
+}
+
 /// DAF files header information.
 /// This contains
 #[derive(Debug)]

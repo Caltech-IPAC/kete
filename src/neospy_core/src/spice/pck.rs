@@ -8,7 +8,7 @@
 ///
 ///
 use super::daf::{DAFType, DafFile};
-use super::DafSegments;
+use super::pck_segments::PckSegment;
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
 
@@ -25,7 +25,7 @@ const PRELOAD_PCK: &[&[u8]] = &[
 #[derive(Debug)]
 pub struct PckCollection {
     /// Collection of PCK file information
-    pub files: Vec<DafFile>,
+    pub segments: Vec<PckSegment>,
 }
 
 /// Define the PCK singleton structure.
@@ -42,20 +42,17 @@ impl PckCollection {
                 filename
             )));
         }
-        self.files.push(file);
+        self.segments
+            .extend(file.segments.into_iter().map(|x| x.pck()));
         Ok(())
     }
 
     /// Get the raw orientation from the loaded PCK files.
     /// This orientation will have the frame of what was originally present in the file.
     pub fn try_get_orientation(&self, id: isize, jd: f64) -> Result<Frame, NEOSpyError> {
-        for file in self.files.iter() {
-            for segment in file.segments.iter() {
-                if let DafSegments::Pck(segment) = segment {
-                    if id == segment.center_id && segment.contains(jd) {
-                        return segment.try_get_orientation(jd);
-                    }
-                }
+        for segment in self.segments.iter() {
+            if id == segment.center_id && segment.contains(jd) {
+                return segment.try_get_orientation(jd);
             }
         }
 
@@ -67,14 +64,17 @@ impl PckCollection {
 
     /// Delete all segments in the PCK singleton, equivalent to unloading all files.
     pub fn reset(&mut self) {
-        let files = PckCollection { files: Vec::new() };
+        let files = PckCollection {
+            segments: Vec::new(),
+        };
 
         *self = files;
 
         for preload in PRELOAD_PCK {
-            let mut precise = Cursor::new(preload);
-            let file = DafFile::from_buffer(&mut precise).unwrap();
-            self.files.push(file)
+            let mut buffer = Cursor::new(preload);
+            let file = DafFile::from_buffer(&mut buffer).unwrap();
+            self.segments
+                .extend(file.segments.into_iter().map(|x| x.pck()))
         }
     }
 }
@@ -89,7 +89,9 @@ pub fn get_pck_singleton() -> &'static PckSingleton {
 
     unsafe {
         ONCE.call_once(|| {
-            let mut files = PckCollection { files: Vec::new() };
+            let mut files = PckCollection {
+                segments: Vec::new(),
+            };
             files.reset();
             let singleton: PckSingleton = RwLock::new(files);
             // Store it to the static var, i.e. initialize it
