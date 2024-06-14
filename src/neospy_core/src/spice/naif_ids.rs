@@ -12,7 +12,7 @@ use std::str::FromStr;
 #[derive(Debug, Deserialize)]
 pub struct NaifId {
     /// NAIF id
-    pub id: isize,
+    pub id: i32,
 
     /// name of the object
     pub name: String,
@@ -23,7 +23,7 @@ impl FromStr for NaifId {
 
     /// Load an NaifId from a single string.
     fn from_str(row: &str) -> Result<Self, Self::Err> {
-        let id = isize::from_str(row[0..10].trim()).unwrap();
+        let id = i32::from_str(row[0..10].trim()).unwrap();
         let name = row[11..].trim().to_string();
         Ok(NaifId { id, name })
     }
@@ -44,7 +44,7 @@ lazy_static! {
 }
 
 /// Return the string name of the desired ID if possible.
-pub fn try_name_from_id(id: isize) -> Option<String> {
+pub fn try_name_from_id(id: i32) -> Option<String> {
     for naif_id in NAIF_IDS.iter() {
         if naif_id.id == id {
             return Some(naif_id.name.clone());

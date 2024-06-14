@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 /// NEOS bands
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
-pub enum NeosBand{
+pub enum NeosBand {
     /// No Band defined.
     Undefined,
 
@@ -21,12 +21,12 @@ pub enum NeosBand{
 
 /// Convert a NEOS band from u8
 /// 1 is NC1 2 is NC2, everything else is Undefined.
-impl From<u8> for NeosBand{
+impl From<u8> for NeosBand {
     fn from(value: u8) -> Self {
-        match value{
-            1=> NeosBand::NC1,
-            2=> NeosBand::NC2,
-            _=> NeosBand::Undefined
+        match value {
+            1 => NeosBand::NC1,
+            2 => NeosBand::NC2,
+            _ => NeosBand::Undefined,
         }
     }
 }
@@ -126,10 +126,7 @@ impl FovLike for NeosCmos {
         1
     }
 
-    fn try_frame_change_mut(
-        &mut self,
-        target_frame: Frame,
-    ) -> Result<(), NEOSpyError> {
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
         self.observer.try_change_frame_mut(target_frame)?;
         self.patch = self.patch.try_frame_change(target_frame)?;
         Ok(())
@@ -269,38 +266,129 @@ impl NeosVisit {
         let half_gap = gap_angle / 2.0;
 
         // for each chip calculate the x bounds
-        let chip_1_a: Vector3<f64> = rotate_around(&left_vec, up_vec, -x_width/2.0);
-        let chip_1_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, -x_width/4.0 - half_gap);
-        let chip_2_a: Vector3<f64> = rotate_around(&left_vec, up_vec, -x_width/4.0 + half_gap);
+        let chip_1_a: Vector3<f64> = rotate_around(&left_vec, up_vec, -x_width / 2.0);
+        let chip_1_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, -x_width / 4.0 - half_gap);
+        let chip_2_a: Vector3<f64> = rotate_around(&left_vec, up_vec, -x_width / 4.0 + half_gap);
         let chip_2_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, -half_gap);
         let chip_3_a: Vector3<f64> = rotate_around(&left_vec, up_vec, half_gap);
-        let chip_3_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, x_width/4.0 - half_gap);
-        let chip_4_a: Vector3<f64> = rotate_around(&left_vec, up_vec, x_width/4.0 + half_gap);
-        let chip_4_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, x_width/2.0);
+        let chip_3_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, x_width / 4.0 - half_gap);
+        let chip_4_a: Vector3<f64> = rotate_around(&left_vec, up_vec, x_width / 4.0 + half_gap);
+        let chip_4_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, x_width / 2.0);
 
         // make the patches for each chip
-        let chip_1_patch = OnSkyRectangle::from_normals([chip_1_a.into(), y_top.into(), chip_1_b.into(), y_bottom.into()], observer.frame);
-        let chip_2_patch = OnSkyRectangle::from_normals([chip_2_a.into(), y_top.into(), chip_2_b.into(), y_bottom.into()], observer.frame);
-        let chip_3_patch = OnSkyRectangle::from_normals([chip_3_a.into(), y_top.into(), chip_3_b.into(), y_bottom.into()], observer.frame);
-        let chip_4_patch = OnSkyRectangle::from_normals([chip_4_a.into(), y_top.into(), chip_4_b.into(), y_bottom.into()], observer.frame);
+        let chip_1_patch = OnSkyRectangle::from_normals(
+            [
+                chip_1_a.into(),
+                y_top.into(),
+                chip_1_b.into(),
+                y_bottom.into(),
+            ],
+            observer.frame,
+        );
+        let chip_2_patch = OnSkyRectangle::from_normals(
+            [
+                chip_2_a.into(),
+                y_top.into(),
+                chip_2_b.into(),
+                y_bottom.into(),
+            ],
+            observer.frame,
+        );
+        let chip_3_patch = OnSkyRectangle::from_normals(
+            [
+                chip_3_a.into(),
+                y_top.into(),
+                chip_3_b.into(),
+                y_bottom.into(),
+            ],
+            observer.frame,
+        );
+        let chip_4_patch = OnSkyRectangle::from_normals(
+            [
+                chip_4_a.into(),
+                y_top.into(),
+                chip_4_b.into(),
+                y_bottom.into(),
+            ],
+            observer.frame,
+        );
 
         // make the chips
-        let chip_1 = NeosCmos{observer:observer.clone(), patch:chip_1_patch, rotation, side_id, stack_id, quad_id, loop_id, subloop_id, exposure_id, band, cmos_id:0};
-        let chip_2 = NeosCmos{observer:observer.clone(), patch:chip_2_patch, rotation, side_id, stack_id, quad_id, loop_id, subloop_id, exposure_id, band, cmos_id:1};
-        let chip_3 = NeosCmos{observer:observer.clone(), patch:chip_3_patch, rotation, side_id, stack_id, quad_id, loop_id, subloop_id, exposure_id, band, cmos_id:2};
-        let chip_4 = NeosCmos{observer:observer.clone(), patch:chip_4_patch, rotation, side_id, stack_id, quad_id, loop_id, subloop_id, exposure_id, band, cmos_id:3};
+        let chip_1 = NeosCmos {
+            observer: observer.clone(),
+            patch: chip_1_patch,
+            rotation,
+            side_id,
+            stack_id,
+            quad_id,
+            loop_id,
+            subloop_id,
+            exposure_id,
+            band,
+            cmos_id: 0,
+        };
+        let chip_2 = NeosCmos {
+            observer: observer.clone(),
+            patch: chip_2_patch,
+            rotation,
+            side_id,
+            stack_id,
+            quad_id,
+            loop_id,
+            subloop_id,
+            exposure_id,
+            band,
+            cmos_id: 1,
+        };
+        let chip_3 = NeosCmos {
+            observer: observer.clone(),
+            patch: chip_3_patch,
+            rotation,
+            side_id,
+            stack_id,
+            quad_id,
+            loop_id,
+            subloop_id,
+            exposure_id,
+            band,
+            cmos_id: 2,
+        };
+        let chip_4 = NeosCmos {
+            observer: observer.clone(),
+            patch: chip_4_patch,
+            rotation,
+            side_id,
+            stack_id,
+            quad_id,
+            loop_id,
+            subloop_id,
+            exposure_id,
+            band,
+            cmos_id: 3,
+        };
 
         // Put all the chips in a box for safe-keeping, try not to eat them all at once.
         let chips = Box::new([chip_1, chip_2, chip_3, chip_4]);
         Self {
-            chips, observer, rotation, side_id, stack_id, quad_id, loop_id, subloop_id, exposure_id, band
+            chips,
+            observer,
+            rotation,
+            side_id,
+            stack_id,
+            quad_id,
+            loop_id,
+            subloop_id,
+            exposure_id,
+            band,
         }
     }
 
     /// Return the central pointing vector.
-    pub fn pointing(&self) -> Vector3<f64>{
+    pub fn pointing(&self) -> Vector3<f64> {
         let mut pointing = Vector3::<f64>::zeros();
-        self.chips.iter().for_each(|chip| pointing += *chip.patch.pointing());
+        self.chips
+            .iter()
+            .for_each(|chip| pointing += *chip.patch.pointing());
         pointing.normalize()
     }
 }

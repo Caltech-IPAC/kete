@@ -30,11 +30,10 @@ pub trait FovLike: Sync + Sized {
     /// Change the target frame to the new frame.
     fn try_frame_change_mut(&mut self, new_frame: Frame) -> Result<(), NEOSpyError>;
 
-
     /// Check if a static source is visible. This assumes the vector passed in is at an
     /// infinite distance from the observer.
     #[inline]
-    fn check_static(&self, pos: &Vector3<f64> ) -> (usize, Contains) {
+    fn check_static(&self, pos: &Vector3<f64>) -> (usize, Contains) {
         self.contains(pos)
     }
 
@@ -183,7 +182,7 @@ pub trait FovLike: Sync + Sized {
 
     /// Given an object ID, attempt to load the object from the SPKs.
     /// This will fail silently if the object is not found.
-    fn check_spks(&self, obj_ids: &[isize]) -> Vec<Option<SimultaneousStates>> {
+    fn check_spks(&self, obj_ids: &[i32]) -> Vec<Option<SimultaneousStates>> {
         let obs = self.observer();
         let spk = get_spk_singleton().try_read().unwrap();
 
@@ -217,29 +216,28 @@ pub trait FovLike: Sync + Sized {
 
     /// Given a collection of static positions, return all which are visible.
     fn check_statics(&self, pos: &[Vector3<f64>]) -> Vec<Option<(Vec<Vector3<f64>>, FOV)>> {
-
         let mut visible: Vec<Vec<Vector3<f64>>> = vec![Vec::new(); self.n_patches()];
 
         let vis_pos: Vec<_> = pos
             .iter()
-            .filter_map(|p| {
-                match self.check_static(p) {
-                        (idx, Contains::Inside) => Some((idx, p)),
-                        _ => None,
-                    }
+            .filter_map(|p| match self.check_static(p) {
+                (idx, Contains::Inside) => Some((idx, p)),
+                _ => None,
             })
             .collect();
 
-            vis_pos
+        vis_pos
             .into_iter()
             .for_each(|(patch_idx, p)| visible[patch_idx].push(*p));
 
-            visible.
-            into_iter()
+        visible
+            .into_iter()
             .enumerate()
             .map(|(idx, vis_patch)| {
-                if vis_patch.is_empty(){
-                    None}else{               Some((vis_patch, self.get_fov(idx)))
+                if vis_patch.is_empty() {
+                    None
+                } else {
+                    Some((vis_patch, self.get_fov(idx)))
                 }
             })
             .collect()

@@ -24,7 +24,7 @@ pub enum NEOSpyError {
     IOError(String),
 
     /// Propagator detected an impact.
-    Impact(isize, f64),
+    Impact(i32, f64),
 }
 
 impl Error for NEOSpyError {}

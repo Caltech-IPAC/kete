@@ -93,7 +93,7 @@ impl PySimultaneousStates {
 
     /// The reference center NAIF ID for this state.
     #[getter]
-    pub fn center_id(&self) -> isize {
+    pub fn center_id(&self) -> i32 {
         self.0.center_id
     }
 

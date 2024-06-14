@@ -425,7 +425,7 @@ impl PyNeosCmos {
 #[allow(clippy::too_many_arguments)]
 impl PyNeosVisit {
     /// Construct a new NEOS Visit.
-    /// 
+    ///
     /// This is a collection of 4 NeosCmos fields of view, representing the
     /// 4 chips of each band.
     ///         
@@ -435,7 +435,7 @@ impl PyNeosVisit {
     /// |      |p|      |p|      |p|      |   |
     /// +======+=+======+=+======+=+======+   _
     /// |- x ->
-    /// 
+    ///
     /// Where the bottom is the sun shield.
     ///
     /// Parameters
@@ -484,7 +484,10 @@ impl PyNeosVisit {
     ) -> Self {
         let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
         let pointing = pointing.raw.into();
-        PyNeosVisit(fov::NeosVisit::from_pointing(x_width.to_radians(), y_width.to_radians(), gap_angle.to_radians(),
+        PyNeosVisit(fov::NeosVisit::from_pointing(
+            x_width.to_radians(),
+            y_width.to_radians(),
+            gap_angle.to_radians(),
             pointing,
             rotation.to_radians(),
             observer.0,
@@ -507,10 +510,7 @@ impl PyNeosVisit {
     /// Direction that the observer is looking.
     #[getter]
     pub fn pointing(&self) -> Vector {
-        Vector::new(
-            self.0.pointing().into(),
-            self.0.observer().frame.into(),
-        )
+        Vector::new(self.0.pointing().into(), self.0.observer().frame.into())
     }
 
     /// Metadata about where this FOV is in the Survey.
@@ -773,10 +773,14 @@ impl PyZtfField {
     /// Return all of the individual CCD quads present in this field.
     #[getter]
     pub fn ccd_quads(&self) -> Vec<PyZtfCcdQuad> {
-        (0..self.0.n_patches()).map(|idx| PyZtfCcdQuad(match self.0.get_fov(idx) {
-            fov::FOV::ZtfCcdQuad(fov) => fov,
-            _ => unreachable!(),
-        })).collect()
+        (0..self.0.n_patches())
+            .map(|idx| {
+                PyZtfCcdQuad(match self.0.get_fov(idx) {
+                    fov::FOV::ZtfCcdQuad(fov) => fov,
+                    _ => unreachable!(),
+                })
+            })
+            .collect()
     }
 
     pub fn __len__(&self) -> usize {

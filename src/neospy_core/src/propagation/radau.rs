@@ -224,7 +224,6 @@ where
     /// step guess provided.
     ///
     fn step(&mut self, step_size: f64) -> Result<f64, NEOSpyError> {
-
         self.g_scratch.fill(0.0);
         self.state_scratch.fill(0.0);
         self.state_der_scratch.fill(0.0);
@@ -280,13 +279,16 @@ where
                 });
 
                 // Evaluate the function at this new intermediate state.
-                self.eval_scratch.set_column(0, &(self.func)(
-                    self.cur_time + gauss_radau_frac * step_size,
-                    &self.state_scratch,
-                    &self.state_der_scratch,
-                    &mut self.metadata,
-                    false,
-                )?);
+                self.eval_scratch.set_column(
+                    0,
+                    &(self.func)(
+                        self.cur_time + gauss_radau_frac * step_size,
+                        &self.state_scratch,
+                        &self.state_der_scratch,
+                        &mut self.metadata,
+                        false,
+                    )?,
+                );
 
                 let diff = &self.eval_scratch - &self.cur_state_der_der;
 

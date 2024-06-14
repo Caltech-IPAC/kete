@@ -73,7 +73,7 @@ impl FOV {
     }
 
     /// Check if any loaded SPK objects are visible to this FOV
-    pub fn check_spks(&self, obj_ids: &[isize]) -> Vec<Option<SimultaneousStates>> {
+    pub fn check_spks(&self, obj_ids: &[i32]) -> Vec<Option<SimultaneousStates>> {
         match self {
             FOV::Wise(fov) => fov.check_spks(obj_ids),
             FOV::NeosCmos(fov) => fov.check_spks(obj_ids),
@@ -87,7 +87,7 @@ impl FOV {
 
     /// Check if static sources are visible in this FOV.
     /// Position must be in the correct frame!
-    pub fn check_statics(&self, pos: &[Vector3<f64>]) -> Vec<Option<(Vec<Vector3<f64>>, FOV)>>  {
+    pub fn check_statics(&self, pos: &[Vector3<f64>]) -> Vec<Option<(Vec<Vector3<f64>>, FOV)>> {
         match self {
             FOV::Wise(fov) => fov.check_statics(pos),
             FOV::NeosCmos(fov) => fov.check_statics(pos),

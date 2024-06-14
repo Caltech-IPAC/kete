@@ -6,7 +6,6 @@ mod interpolation;
 mod naif_ids;
 mod pck;
 mod pck_segments;
-mod records;
 mod spk;
 mod spk_segments;
 
@@ -20,4 +19,10 @@ pub use spk::*;
 fn spice_jds_to_jd(jd_sec: f64) -> f64 {
     // 86400.0 = 60 * 60 * 24
     jd_sec / 86400.0 + 2451545.0
+}
+
+/// Convert JD to seconds from J2000.
+fn jd_to_spice_jd(jd: f64) -> f64 {
+    // 86400.0 = 60 * 60 * 24
+    (jd - 2451545.0) * 86400.0
 }

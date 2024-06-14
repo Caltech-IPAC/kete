@@ -1,3 +1,4 @@
+use super::daf::DafArray;
 /// Most users should interface with `pck.rs`, not this module.
 ///
 /// PCK Files are collections of `Segments`, which are ranges of times where the state
@@ -13,18 +14,36 @@
 /// There is a lot of repetition in this file, as many of the segment types have very
 /// similar internal structures.
 ///
-use super::binary::read_f64_vec;
 use super::interpolation::*;
-use super::records::DafRecords;
-use super::spice_jds_to_jd;
+use super::{jd_to_spice_jd, spice_jds_to_jd};
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
 use std::fmt::Debug;
-use std::io::{Read, Seek};
 
 #[derive(Debug)]
-enum PCKSegmentType {
+pub enum PckSegmentType {
     Type2(PckSegmentType2),
+}
+
+impl PckSegmentType {
+    /// Load PCK Segment data from an array.
+    pub fn from_array(segment_type: i32, array: DafArray) -> Result<Self, NEOSpyError> {
+        match segment_type {
+            2 => Ok(PckSegmentType::Type2(array.into())),
+            v => Err(NEOSpyError::IOError(format!(
+                "SPK Segment type {:?} not supported.",
+                v
+            ))),
+        }
+    }
+}
+
+impl From<PckSegmentType> for DafArray {
+    fn from(value: PckSegmentType) -> Self {
+        match value {
+            PckSegmentType::Type2(seg) => seg.array,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -42,31 +61,24 @@ pub struct PckSegment {
     pub jd_end: f64,
 
     /// Type of the segment
-    pub segment_type: usize,
+    pub segment_type: i32,
 
     /// Internal data representation.
-    segment: PCKSegmentType,
+    segment: PckSegmentType,
 }
 
-impl PckSegment {
-    pub fn contains(&self, jd: f64) -> bool {
-        (jd >= self.jd_start) && (jd <= self.jd_end)
-    }
+impl TryFrom<DafArray> for PckSegment {
+    type Error = NEOSpyError;
 
-    /// Load this segment from the provided file and summary.
-    pub fn from_summary<T: Read + Seek>(
-        file: &mut T,
-        summary: (Box<[f64]>, Box<[i32]>),
-    ) -> Result<PckSegment, NEOSpyError> {
-        let (floats, ints) = summary;
-        let jd_start = spice_jds_to_jd(floats[0]);
-        let jd_end = spice_jds_to_jd(floats[1]);
+    fn try_from(array: DafArray) -> Result<PckSegment, Self::Error> {
+        let summary_floats = &array.summary_floats;
+        let summary_ints = &array.summary_ints;
+        let jd_start = spice_jds_to_jd(summary_floats[0]);
+        let jd_end = spice_jds_to_jd(summary_floats[1]);
 
-        let center_id = ints[0] as isize;
-        let frame_id = ints[1];
-        let segment_type = ints[2] as usize;
-        let array_start = ints[3] as usize;
-        let array_end = ints[4] as usize;
+        let center_id = summary_ints[0] as isize;
+        let frame_id = summary_ints[1];
+        let segment_type = summary_ints[2];
 
         let ref_frame = match frame_id {
             1 => Frame::Equatorial, // J2000
@@ -74,15 +86,7 @@ impl PckSegment {
             _ => Frame::Unknown(frame_id as usize),
         };
 
-        let segment = match segment_type {
-            2 => PckSegmentType2::try_load(file, array_start, array_end)?,
-            v => {
-                return Err(NEOSpyError::IOError(format!(
-                    "SPK Segment type {:?} not supported.",
-                    v
-                )));
-            }
-        };
+        let segment = PckSegmentType::from_array(segment_type, array)?;
 
         Ok(PckSegment {
             jd_start,
@@ -92,6 +96,12 @@ impl PckSegment {
             segment_type,
             segment,
         })
+    }
+}
+
+impl PckSegment {
+    pub fn contains(&self, jd: f64) -> bool {
+        (jd >= self.jd_start) && (jd <= self.jd_end)
     }
 
     /// Return the [`Frame`] at the specified JD. If the requested time is not within
@@ -104,8 +114,14 @@ impl PckSegment {
         }
 
         match &self.segment {
-            PCKSegmentType::Type2(v) => v.try_get_orientation(self, jd),
+            PckSegmentType::Type2(v) => v.try_get_orientation(self, jd),
         }
+    }
+}
+
+impl From<PckSegment> for DafArray {
+    fn from(value: PckSegment) -> Self {
+        value.segment.into()
     }
 }
 
@@ -115,50 +131,19 @@ impl PckSegment {
 ///
 #[derive(Debug)]
 pub struct PckSegmentType2 {
-    pub jd_step: f64,
-    pub n_coef: usize,
-    pub records: DafRecords,
+    array: DafArray,
+    jd_step: f64,
+    n_coef: usize,
+    record_len: usize,
 }
 
 impl PckSegmentType2 {
-    fn try_load<T: Read + Seek>(
-        file: &mut T,
-        array_start: usize,
-        array_end: usize,
-    ) -> Result<PCKSegmentType, NEOSpyError> {
-        let _ = file.seek(std::io::SeekFrom::Start(8 * (array_start as u64 - 1)))?;
-        let array_len = array_end - array_start + 1;
-        let bin_segment = read_f64_vec(file, array_len, true)?;
-
-        let n_rec = bin_segment[array_len - 1] as usize;
-        let rec_len = bin_segment[array_len - 2] as usize;
-        let jd_step = bin_segment[array_len - 3] / 86400.0;
-        let n_coef = (rec_len - 2) / 3;
-
-        let mut idy = 0;
-        let mut records = DafRecords::with_capacity(n_rec, rec_len);
-        for _ in 0..n_rec {
-            let mut record = Vec::<f64>::with_capacity(rec_len);
-            for idx in 0..rec_len {
-                record.push({
-                    if idx == 0 {
-                        spice_jds_to_jd(bin_segment[idy])
-                    } else if idx == 1 {
-                        bin_segment[idy] / 86400.0
-                    } else {
-                        bin_segment[idy]
-                    }
-                });
-                idy += 1;
-            }
-            records.try_push(record)?;
+    fn get_record(&self, idx: usize) -> &[f64] {
+        unsafe {
+            self.array
+                .data
+                .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len)
         }
-
-        Ok(PCKSegmentType::Type2(PckSegmentType2 {
-            jd_step,
-            n_coef,
-            records,
-        }))
     }
 
     /// Return the stored orientation, along with the rate of change of the orientation.
@@ -176,8 +161,10 @@ impl PckSegmentType2 {
         //
         // Rate of change for each of these values can be calculated by using the
         // derivative of chebyshev of the first kind, which is done below.
-        let record_index = ((jd - segment.jd_start) / self.jd_step).floor() as usize;
-        let record = &self.records[record_index];
+        let jd = jd_to_spice_jd(jd);
+        let jd_start = jd_to_spice_jd(segment.jd_start);
+        let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
+        let record = self.get_record(record_index);
         let t_mid = record[0];
         let t_step = record[1];
         let t = (jd - t_mid) / t_step;
@@ -199,10 +186,31 @@ impl PckSegmentType2 {
                 ra,
                 dec,
                 w,
-                ra_der / t_step,
-                dec_der / t_step,
-                w_der / t_step,
+                ra_der / t_step * 86400.0,
+                dec_der / t_step * 86400.0,
+                w_der / t_step * 86400.0,
             ],
         ))
+    }
+}
+
+impl From<DafArray> for PckSegmentType2 {
+    fn from(array: DafArray) -> Self {
+        let n_records = array[array.len() - 1] as usize;
+        let record_len = array[array.len() - 2] as usize;
+        let jd_step = array[array.len() - 3];
+
+        let n_coef = (record_len - 2) / 3;
+
+        if n_records * record_len + 4 != array.len() {
+            panic!("PCK File not formatted correctly.")
+        }
+
+        PckSegmentType2 {
+            array,
+            jd_step,
+            n_coef,
+            record_len,
+        }
     }
 }

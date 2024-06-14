@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Renamed "HorizonsCovariance" to "Covariance" and generalized it to support both
   cometary and cartesian representations.
+- Significant rewrite of the SPICE kernel file management, this rewrite is required
+  so that future work can enable writing SPICE kernel files.
 - Made api more consistent for conversion to State objects by renaming all instances of
   `.as_state` to `.state`.
 - Improved performance of integration and propagation by about 10%.
@@ -32,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Astropy will no longer warning about deprecated WCS header values for NEOWISE images.
+
+### Removed
+
+- Removed support for SPK Files of type 3, these should be a trivial change from type 2
+  however I do not have access to a file of type 3 for testing. Because it cannot be
+  validated at the moment, the code has been removed.
 
 ## [0.2.2] - 2024 - 5 - 20
 
