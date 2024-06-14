@@ -81,6 +81,15 @@ impl DafSegments {
     }
 }
 
+impl From<DafSegments> for DafArray {
+    fn from(value: DafSegments) -> DafArray {
+        match value {
+            DafSegments::Pck(seg) => seg.into(),
+            DafSegments::Spk(seg) => seg.into(),
+        }
+    }
+}
+
 /// DAF files header information.
 /// This contains
 #[derive(Debug)]
@@ -128,8 +137,6 @@ pub struct DafFile {
     /// DAF segments
     pub segments: Vec<DafSegments>,
 }
-
-type DafSummary = (Box<[f64]>, Box<[i32]>);
 
 impl DafFile {
     /// Try to load a single record from the DAF.
@@ -214,14 +221,10 @@ impl DafFile {
     /// These are tuples containing a series of f64s and i32s.
     /// The meaning of these values depends on the particular implementation of the DAF,
     /// IE: SPK files have 2 floats and 6 ints.
-    pub fn try_load_summaries<T: Read + Seek>(
-        &self,
-        file: &mut T,
-    ) -> Result<Vec<DafSummary>, NEOSpyError> {
+    pub fn try_load_segments<T: Read + Seek>(&mut self, file: &mut T) -> Result<(), NEOSpyError> {
         let summary_size = self.n_doubles + (self.n_ints + 1) / 2;
 
         let mut next_idx = self.init_summary_record_index;
-        let mut summaries: Vec<DafSummary> = Vec::new();
         loop {
             if next_idx == 0 {
                 break;
@@ -243,30 +246,24 @@ impl DafFile {
                         ..sum_start + (8 * self.n_doubles + 4 * self.n_ints) as usize],
                     self.little_endian,
                 )?;
-                summaries.push((floats, ints));
+
+                match self.daf_type {
+                    DAFType::Spk => {
+                        let array =
+                            DafArray::try_load_spk_array(file, floats, ints, self.little_endian)?;
+                        let seg = DafSegments::Spk(array.try_into()?);
+                        self.segments.push(seg);
+                    }
+                    DAFType::Pck => {
+                        let array =
+                            DafArray::try_load_pck_array(file, floats, ints, self.little_endian)?;
+                        let seg = DafSegments::Pck(array.try_into()?);
+                        self.segments.push(seg);
+                    }
+                    _ => panic!(),
+                }
             }
         }
-        Ok(summaries)
-    }
-
-    /// Attempt to load all arrays
-    pub fn try_load_segments<T: Read + Seek>(&mut self, file: &mut T) -> Result<(), NEOSpyError> {
-        let summaries = self.try_load_summaries(file)?;
-
-        for (floats, ints) in summaries {
-            match self.daf_type {
-                DAFType::Spk => {
-                    let seg = DafSegments::Spk(SpkSegment::from_summary(file, &floats, &ints)?);
-                    self.segments.push(seg);
-                }
-                DAFType::Pck => {
-                    let seg = DafSegments::Pck(PckSegment::from_summary(file, &floats, &ints)?);
-                    self.segments.push(seg);
-                }
-                _ => panic!(),
-            }
-        }
-
         Ok(())
     }
 }
@@ -276,12 +273,71 @@ impl DafFile {
 /// Contents of the structure depends on specific file formats, however they are all
 /// made up of floats.
 #[derive(Debug)]
-pub struct DafArray(pub Box<[f64]>);
+pub struct DafArray {
+    /// DafArray segment summary float information.
+    pub summary_floats: Box<[f64]>,
+
+    /// DafArray segment summary int information.
+    pub summary_ints: Box<[i32]>,
+
+    /// Data contained within the array.
+    pub data: Box<[f64]>,
+}
 
 impl DafArray {
+    /// Try to load an SPK array from summary data
+    pub fn try_load_spk_array<T: Read + Seek>(
+        file: &mut T,
+        summary_floats: Box<[f64]>,
+        summary_ints: Box<[i32]>,
+        little_endian: bool,
+    ) -> Result<Self, NEOSpyError> {
+        if summary_floats.len() != 2 || summary_ints.len() != 6 {
+            return Err(NEOSpyError::IOError(
+                "SPK File incorrectly Formatted.".into(),
+            ));
+        }
+        let array_start = summary_ints[4] as u64;
+        let array_end = summary_ints[5] as u64;
+        Self::try_load_array(
+            file,
+            summary_floats,
+            summary_ints,
+            array_start,
+            array_end,
+            little_endian,
+        )
+    }
+
+    /// Try to load an PCK array from summary data
+    pub fn try_load_pck_array<T: Read + Seek>(
+        file: &mut T,
+        summary_floats: Box<[f64]>,
+        summary_ints: Box<[i32]>,
+        little_endian: bool,
+    ) -> Result<Self, NEOSpyError> {
+        if summary_floats.len() != 2 || summary_ints.len() != 5 {
+            return Err(NEOSpyError::IOError(
+                "PCK File incorrectly Formatted.".into(),
+            ));
+        }
+        let array_start = summary_ints[3] as u64;
+        let array_end = summary_ints[4] as u64;
+        Self::try_load_array(
+            file,
+            summary_floats,
+            summary_ints,
+            array_start,
+            array_end,
+            little_endian,
+        )
+    }
+
     /// Load array from file
     pub fn try_load_array<T: Read + Seek>(
         file: &mut T,
+        summary_floats: Box<[f64]>,
+        summary_ints: Box<[i32]>,
         array_start: u64,
         array_end: u64,
         little_endian: bool,
@@ -292,17 +348,21 @@ impl DafArray {
 
         let data = read_f64_vec(file, n_floats, little_endian)?;
 
-        Ok(Self(data))
+        Ok(Self {
+            data,
+            summary_floats,
+            summary_ints,
+        })
     }
 
     /// Total length of the array.
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.data.len()
     }
 
     /// Test if array is empty.
     pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.data.is_empty()
     }
 }
 
@@ -313,6 +373,6 @@ where
     type Output = f64;
 
     fn index(&self, idx: Idx) -> &Self::Output {
-        self.0.index(idx)
+        self.data.index(idx)
     }
 }

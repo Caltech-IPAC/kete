@@ -20,7 +20,6 @@ use crate::frames::Frame;
 use crate::prelude::Desig;
 use crate::state::State;
 use std::fmt::Debug;
-use std::io::{Read, Seek};
 
 #[derive(Debug)]
 pub enum SpkSegmentType {
@@ -84,34 +83,24 @@ pub struct SpkSegment {
     segment: SpkSegmentType,
 }
 
-impl SpkSegment {
-    pub fn jd_range(&self) -> (f64, f64) {
-        (self.jd_start, self.jd_end)
+impl From<SpkSegment> for DafArray {
+    fn from(value: SpkSegment) -> Self {
+        value.segment.into()
     }
+}
 
-    pub fn contains(&self, jd: f64) -> bool {
-        (jd >= self.jd_start) && (jd <= self.jd_end)
-    }
+impl TryFrom<DafArray> for SpkSegment {
+    type Error = NEOSpyError;
 
-    /// Load this segment from the provided file and summary.
-    pub fn from_summary<T: Read + Seek>(
-        file: &mut T,
-        floats: &[f64],
-        ints: &[i32],
-    ) -> Result<SpkSegment, NEOSpyError> {
-        if floats.len() != 2 || ints.len() != 6 {
-            return Err(NEOSpyError::IOError(
-                "SPK File incorrectly Formatted.".into(),
-            ));
-        }
-        let jd_start = spice_jds_to_jd(floats[0]);
-        let jd_end = spice_jds_to_jd(floats[1]);
-        let obj_id = ints[0] as isize;
-        let center_id = ints[1] as isize;
-        let frame_num = ints[2];
-        let segment_type = ints[3];
-        let array_start = ints[4] as u64;
-        let array_end = ints[5] as u64;
+    fn try_from(value: DafArray) -> Result<SpkSegment, Self::Error> {
+        let summary_floats = &value.summary_floats;
+        let summary_ints = &value.summary_ints;
+        let jd_start = spice_jds_to_jd(summary_floats[0]);
+        let jd_end = spice_jds_to_jd(summary_floats[1]);
+        let obj_id = summary_ints[0] as isize;
+        let center_id = summary_ints[1] as isize;
+        let frame_num = summary_ints[2];
+        let segment_type = summary_ints[3];
 
         let ref_frame = match frame_num {
             1 => Frame::Equatorial, // J2000
@@ -119,9 +108,7 @@ impl SpkSegment {
             _ => Frame::Unknown(frame_num as usize),
         };
 
-        let array = DafArray::try_load_array(file, array_start, array_end, true)?;
-
-        let segment = SpkSegmentType::from_array(segment_type, array)?;
+        let segment = SpkSegmentType::from_array(segment_type, value)?;
 
         Ok(SpkSegment {
             obj_id,
@@ -132,6 +119,16 @@ impl SpkSegment {
             segment_type,
             segment,
         })
+    }
+}
+
+impl SpkSegment {
+    pub fn jd_range(&self) -> (f64, f64) {
+        (self.jd_start, self.jd_end)
+    }
+
+    pub fn contains(&self, jd: f64) -> bool {
+        (jd >= self.jd_start) && (jd <= self.jd_end)
     }
 
     /// Return the [`State`] object at the specified JD. If the requested time is
@@ -175,13 +172,13 @@ pub struct SpkSegmentType1 {
 
 impl SpkSegmentType1 {
     fn get_record(&self, idx: usize) -> &[f64] {
-        unsafe { self.array.0.get_unchecked(idx * 71..(idx + 1) * 71) }
+        unsafe { self.array.data.get_unchecked(idx * 71..(idx + 1) * 71) }
     }
 
     fn get_times(&self) -> &[f64] {
         unsafe {
             self.array
-                .0
+                .data
                 .get_unchecked(self.n_records * 71..(self.n_records * 72))
         }
     }
@@ -310,7 +307,7 @@ impl SpkSegmentType2 {
     fn get_record(&self, idx: usize) -> &[f64] {
         unsafe {
             self.array
-                .0
+                .data
                 .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len)
         }
     }
@@ -382,7 +379,7 @@ impl SpkSegmentType3 {
     fn get_record(&self, idx: usize) -> &[f64] {
         unsafe {
             self.array
-                .0
+                .data
                 .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len)
         }
     }
@@ -472,11 +469,11 @@ impl From<DafArray> for SpkSegmentType13 {
 
 impl SpkSegmentType13 {
     fn get_record(&self, idx: usize) -> &[f64] {
-        unsafe { self.array.0.get_unchecked(idx * 6..(idx + 1) * 6) }
+        unsafe { self.array.data.get_unchecked(idx * 6..(idx + 1) * 6) }
     }
 
     fn get_times(&self) -> &[f64] {
-        unsafe { self.array.0.get_unchecked(self.n_records * 6..) }
+        unsafe { self.array.data.get_unchecked(self.n_records * 6..) }
     }
 
     fn try_get_pos_vel(
@@ -554,13 +551,13 @@ impl SpkSegmentType21 {
     fn get_record(&self, idx: usize) -> &[f64] {
         unsafe {
             self.array
-                .0
+                .data
                 .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len)
         }
     }
 
     fn get_times(&self) -> &[f64] {
-        unsafe { self.array.0.get_unchecked(self.n_records * 6..) }
+        unsafe { self.array.data.get_unchecked(self.n_records * 6..) }
     }
 
     fn try_get_pos_vel(

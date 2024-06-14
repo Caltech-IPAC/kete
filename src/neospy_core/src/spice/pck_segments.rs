@@ -19,7 +19,6 @@ use super::{interpolation::*, jd_to_spice_jd};
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
 use std::fmt::Debug;
-use std::io::{Read, Seek};
 
 #[derive(Debug)]
 pub enum PckSegmentType {
@@ -68,31 +67,18 @@ pub struct PckSegment {
     segment: PckSegmentType,
 }
 
-impl PckSegment {
-    pub fn contains(&self, jd: f64) -> bool {
-        (jd >= self.jd_start) && (jd <= self.jd_end)
-    }
+impl TryFrom<DafArray> for PckSegment {
+    type Error = NEOSpyError;
 
-    /// Load this segment from the provided file and summary.
-    pub fn from_summary<T: Read + Seek>(
-        file: &mut T,
-        floats: &[f64],
-        ints: &[i32],
-    ) -> Result<PckSegment, NEOSpyError> {
-        if floats.len() != 2 || ints.len() != 5 {
-            return Err(NEOSpyError::IOError(
-                "PCK File incorrectly Formatted.".into(),
-            ));
-        }
-        let jd_start = spice_jds_to_jd(floats[0]);
-        let jd_end = spice_jds_to_jd(floats[1]);
+    fn try_from(array: DafArray) -> Result<PckSegment, Self::Error> {
+        let summary_floats = &array.summary_floats;
+        let summary_ints = &array.summary_ints;
+        let jd_start = spice_jds_to_jd(summary_floats[0]);
+        let jd_end = spice_jds_to_jd(summary_floats[1]);
 
-        let center_id = ints[0] as isize;
-        let frame_id = ints[1];
-        let segment_type = ints[2];
-        let array_start = ints[3] as u64;
-        let array_end = ints[4] as u64;
-        let array = DafArray::try_load_array(file, array_start, array_end, true)?;
+        let center_id = summary_ints[0] as isize;
+        let frame_id = summary_ints[1];
+        let segment_type = summary_ints[2];
 
         let ref_frame = match frame_id {
             1 => Frame::Equatorial, // J2000
@@ -111,6 +97,12 @@ impl PckSegment {
             segment,
         })
     }
+}
+
+impl PckSegment {
+    pub fn contains(&self, jd: f64) -> bool {
+        (jd >= self.jd_start) && (jd <= self.jd_end)
+    }
 
     /// Return the [`Frame`] at the specified JD. If the requested time is not within
     /// the available range, this will fail.
@@ -124,6 +116,12 @@ impl PckSegment {
         match &self.segment {
             PckSegmentType::Type2(v) => v.try_get_orientation(self, jd),
         }
+    }
+}
+
+impl From<PckSegment> for DafArray {
+    fn from(value: PckSegment) -> Self {
+        value.segment.into()
     }
 }
 
@@ -143,7 +141,7 @@ impl PckSegmentType2 {
     fn get_record(&self, idx: usize) -> &[f64] {
         unsafe {
             self.array
-                .0
+                .data
                 .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len)
         }
     }
