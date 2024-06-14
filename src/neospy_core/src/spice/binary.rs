@@ -65,7 +65,7 @@ pub fn bytes_to_i32(bytes: &[u8], little_endian: bool) -> Result<i32, NEOSpyErro
 }
 
 /// Change a collection of bytes into a String.
-pub fn bytes_to_str(bytes: &[u8]) -> String {
+pub fn bytes_to_string(bytes: &[u8]) -> String {
     let mut bytes = bytes.to_vec();
     bytes.iter_mut().for_each(|x| {
         if x == &0x00 {
@@ -90,5 +90,5 @@ pub fn read_f64_vec<T: Read>(
 /// string.
 pub fn read_str<T: Read>(buffer: T, length: usize) -> Result<String, NEOSpyError> {
     let bytes = read_bytes_exact(buffer, length)?;
-    Ok(bytes_to_str(&bytes))
+    Ok(bytes_to_string(&bytes))
 }

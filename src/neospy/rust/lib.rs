@@ -47,7 +47,7 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<flux::PyModelResults>()?;
 
     m.add_class::<horizons::HorizonsProperties>()?;
-    
+
     m.add_class::<covariance::Covariance>()?;
 
     m.add_function(wrap_pyfunction!(frame::frame_change_py, m)?)?;

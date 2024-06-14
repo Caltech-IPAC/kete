@@ -14,7 +14,7 @@ use pyo3::{PyResult, Python};
 #[derive(Clone, Debug)]
 pub struct Vector {
     pub raw: [f64; 3],
-    
+
     frame: PyFrames,
 }
 
@@ -84,7 +84,7 @@ impl Vector {
     ///     Azimuthal angle on the X-Y plane for the frame. (Degrees)
     /// frame : Frames
     ///     Frame of reference which define the coordinate axis.
-    /// r : 
+    /// r :
     ///     Optional length of the vector, defaults to 1.
     #[staticmethod]
     pub fn from_el_az(el: f64, az: f64, r: f64, frame: PyFrames) -> Self {

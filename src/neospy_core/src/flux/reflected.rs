@@ -1,5 +1,8 @@
 use super::sun::solar_flux_black_body;
-use crate::{constants::{AU_KM, C_V}, prelude::NEOSpyError};
+use crate::{
+    constants::{AU_KM, C_V},
+    prelude::NEOSpyError,
+};
 
 use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
@@ -73,12 +76,12 @@ impl HGParams {
     /// * `h_mag` - The H parameter of the object in the HG system.
     /// * `c_hg` - The relationship constant of the H-D-pV conversion in km.
     pub fn new(desig: String, g_param: f64, h_mag: f64, c_hg: Option<f64>) -> Self {
-    	let c_hg = c_hg.unwrap_or(C_V);
+        let c_hg = c_hg.unwrap_or(C_V);
         Self {
             desig,
             g_param,
             h_mag,
-	    c_hg,
+            c_hg,
             vis_albedo: None,
             diam: None,
         }
@@ -147,7 +150,7 @@ impl HGParams {
         h_mag: Option<f64>,
         vis_albedo: Option<f64>,
         diam: Option<f64>,
-	c_hg: Option<f64>,
+        c_hg: Option<f64>,
     ) -> Result<(f64, Option<f64>, Option<f64>, f64), NEOSpyError> {
         if h_mag.is_none() && (vis_albedo.is_none() || diam.is_none()) {
             return Err(NEOSpyError::ValueError(
@@ -156,8 +159,8 @@ impl HGParams {
         }
         // H mag is either defined, or computable.
 
-	// first check if c_hg is given, otherwise use default assumed value
-	let c_hg = c_hg.unwrap_or(C_V);
+        // first check if c_hg is given, otherwise use default assumed value
+        let c_hg = c_hg.unwrap_or(C_V);
 
         if vis_albedo.is_none() && diam.is_none() {
             if let Some(h) = h_mag {

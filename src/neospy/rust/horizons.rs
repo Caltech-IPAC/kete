@@ -1,12 +1,11 @@
 use std::fmt::Debug;
 
+use crate::covariance::Covariance;
 use crate::elements::PyCometElements;
 use crate::state::PyState;
-use crate::covariance::Covariance;
-use neospy_core::{ io::FileIO, prelude};
+use neospy_core::{io::FileIO, prelude};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-
 
 /// Horizons object properties
 /// Physical, orbital, and observational properties of a solar system object as recorded in JPL Horizons.
@@ -115,30 +114,32 @@ impl HorizonsProperties {
             epoch: self
                 .epoch
                 .ok_or(prelude::NEOSpyError::ValueError("No Epoch defined".into()))?,
-            eccentricity: self.eccentricity.ok_or( 
-                prelude::NEOSpyError::ValueError("No Eccentricity defined".into())
-            )?,
+            eccentricity: self.eccentricity.ok_or(prelude::NEOSpyError::ValueError(
+                "No Eccentricity defined".into(),
+            ))?,
             inclination: self
                 .inclination
-                .ok_or(prelude::NEOSpyError::ValueError("No Inclination defined".into()))?
+                .ok_or(prelude::NEOSpyError::ValueError(
+                    "No Inclination defined".into(),
+                ))?
                 .to_radians(),
             peri_arg: self
                 .peri_arg
-                .ok_or(prelude::NEOSpyError::ValueError("No peri_arg defined".into()))?
+                .ok_or(prelude::NEOSpyError::ValueError(
+                    "No peri_arg defined".into(),
+                ))?
                 .to_radians(),
-            peri_dist: self
-                .peri_dist
-                .ok_or(prelude::NEOSpyError::ValueError("No peri_dist defined".into()))?,
-            peri_time: self
-                .peri_time
-                .ok_or(prelude::NEOSpyError::ValueError("No peri_time defined".into()))?,
+            peri_dist: self.peri_dist.ok_or(prelude::NEOSpyError::ValueError(
+                "No peri_dist defined".into(),
+            ))?,
+            peri_time: self.peri_time.ok_or(prelude::NEOSpyError::ValueError(
+                "No peri_time defined".into(),
+            ))?,
             lon_of_ascending: self
                 .lon_of_ascending
-                .ok_or( 
-                    prelude::NEOSpyError::ValueError(
-                        "No longitude of ascending node defined".into(),
-                    )
-                )?
+                .ok_or(prelude::NEOSpyError::ValueError(
+                    "No longitude of ascending node defined".into(),
+                ))?
                 .to_radians(),
             frame: prelude::Frame::Ecliptic,
         }))

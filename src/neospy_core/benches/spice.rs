@@ -30,8 +30,8 @@ fn spice_get_state(jd: f64) {
 pub fn spice_benchmark(c: &mut Criterion) {
     let spice = get_spk_singleton().try_read().unwrap();
     let state = spice
-    .try_get_state(5, 2451545.0, 10, neospy_core::frames::Frame::Ecliptic)
-    .unwrap();
+        .try_get_state(5, 2451545.0, 10, neospy_core::frames::Frame::Ecliptic)
+        .unwrap();
     c.bench_function("spice_get_raw_state", |b| {
         b.iter(|| spice_get_raw_state(black_box(2451545.0)))
     });

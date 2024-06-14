@@ -1,3 +1,5 @@
+use super::daf::DafArray;
+use super::spice_jds_to_jd;
 /// Most users should interface with `pck.rs`, not this module.
 ///
 /// PCK Files are collections of `Segments`, which are ranges of times where the state
@@ -14,16 +16,27 @@
 /// similar internal structures.
 ///
 use super::{interpolation::*, jd_to_spice_jd};
-use super::daf::DafArray;
-use super::spice_jds_to_jd;
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
 use std::fmt::Debug;
 use std::io::{Read, Seek};
 
 #[derive(Debug)]
-enum PCKSegmentType {
+pub enum PCKSegmentType {
     Type2(PckSegmentType2),
+}
+
+impl PCKSegmentType {
+    /// Load PCK Segment data from an array.
+    pub fn from_array(segment_type: i32, array: DafArray) -> Result<Self, NEOSpyError> {
+        match segment_type {
+            2 => Ok(PCKSegmentType::Type2(array.into())),
+            v => Err(NEOSpyError::IOError(format!(
+                "SPK Segment type {:?} not supported.",
+                v
+            ))),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -41,7 +54,7 @@ pub struct PckSegment {
     pub jd_end: f64,
 
     /// Type of the segment
-    pub segment_type: usize,
+    pub segment_type: i32,
 
     /// Internal data representation.
     segment: PCKSegmentType,
@@ -55,15 +68,20 @@ impl PckSegment {
     /// Load this segment from the provided file and summary.
     pub fn from_summary<T: Read + Seek>(
         file: &mut T,
-        summary: (Box<[f64]>, Box<[i32]>),
+        floats: &[f64],
+        ints: &[i32],
     ) -> Result<PckSegment, NEOSpyError> {
-        let (floats, ints) = summary;
+        if floats.len() != 2 || ints.len() != 5 {
+            return Err(NEOSpyError::IOError(
+                "PCK File incorrectly Formatted.".into(),
+            ));
+        }
         let jd_start = spice_jds_to_jd(floats[0]);
         let jd_end = spice_jds_to_jd(floats[1]);
 
         let center_id = ints[0] as isize;
         let frame_id = ints[1];
-        let segment_type = ints[2] as usize;
+        let segment_type = ints[2];
         let array_start = ints[3] as u64;
         let array_end = ints[4] as u64;
         let array = DafArray::try_load_array(file, array_start, array_end, true)?;
@@ -74,15 +92,7 @@ impl PckSegment {
             _ => Frame::Unknown(frame_id as usize),
         };
 
-        let segment = match segment_type {
-            2 => PCKSegmentType::Type2(array.into()),
-            v => {
-                return Err(NEOSpyError::IOError(format!(
-                    "SPK Segment type {:?} not supported.",
-                    v
-                )));
-            }
-        };
+        let segment = PCKSegmentType::from_array(segment_type, array)?;
 
         Ok(PckSegment {
             jd_start,
@@ -121,11 +131,13 @@ pub struct PckSegmentType2 {
     record_len: usize,
 }
 
-
 impl PckSegmentType2 {
-    fn get_record(&self, idx:usize) -> &[f64]
-    {
-        unsafe{self.array.0.get_unchecked(idx*self.record_len..(idx + 1) * self.record_len)}
+    fn get_record(&self, idx: usize) -> &[f64] {
+        unsafe {
+            self.array
+                .0
+                .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len)
+        }
     }
 
     /// Return the stored orientation, along with the rate of change of the orientation.
@@ -169,25 +181,22 @@ impl PckSegmentType2 {
                 dec,
                 w,
                 ra_der / t_step * 86400.0,
-                dec_der / t_step* 86400.0,
-                w_der / t_step* 86400.0,
+                dec_der / t_step * 86400.0,
+                w_der / t_step * 86400.0,
             ],
         ))
     }
 }
 
-
-impl From<DafArray> for PckSegmentType2{
+impl From<DafArray> for PckSegmentType2 {
     fn from(array: DafArray) -> Self {
-        
-
         let n_records = array[array.len() - 1] as usize;
         let record_len = array[array.len() - 2] as usize;
         let jd_step = array[array.len() - 3];
 
         let n_coef = (record_len - 2) / 3;
 
-        if n_records * record_len + 4 != array.len(){
+        if n_records * record_len + 4 != array.len() {
             panic!("PCK File not formatted correctly.")
         }
 

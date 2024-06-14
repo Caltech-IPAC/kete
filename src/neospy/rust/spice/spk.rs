@@ -1,9 +1,8 @@
-use neospy_core::spice::{ get_spk_singleton, try_name_from_id};
+use neospy_core::spice::{get_spk_singleton, try_name_from_id};
 use pyo3::{pyfunction, PyResult};
 
 use crate::frame::PyFrames;
 use crate::state::PyState;
-
 
 /// Load all specified files into the SPK shared memory singleton.
 #[pyfunction]
@@ -23,28 +22,18 @@ pub fn spk_load_py(filenames: Vec<String>) -> PyResult<()> {
     Ok(())
 }
 
-
 /// Return all loaded SPK info on the specified NAIF ID.
 /// Loaded info contains:
 /// (JD_start, JD_end, Center Naif ID, Frame, SPK Segment type ID)
 #[pyfunction]
 #[pyo3(name = "spk_available_info")]
-pub fn spk_available_info_py(naif_id: isize) -> Vec<(f64, f64, isize, String, usize)> {
+pub fn spk_available_info_py(naif_id: isize) -> Vec<(f64, f64, isize, PyFrames, i32)> {
     let singleton = get_spk_singleton().try_read().unwrap();
-
-    let mut info = Vec::new();
-    for file in singleton.files.iter() {
-        let file_info = file.available_info(naif_id);
-
-        info.extend(
-            file_info
-                .iter()
-                .map(|(t0, t1, center, frame, segment_type)| {
-                    (*t0, *t1, *center, frame.to_string(), *segment_type)
-                }),
-        )
-    }
-    info
+    singleton
+        .available_info(naif_id)
+        .into_iter()
+        .map(|(s, e, c, frame, ty)| (s, e, c, frame.into(), ty))
+        .collect()
 }
 
 /// Return a list of all NAIF IDs currently loaded in the SPK shared memory singleton.
@@ -74,9 +63,9 @@ pub fn spk_reset_py() {
 }
 
 /// Calculate the state of a given object in the target frame.
-/// 
+///
 /// This will automatically replace the name of the object if possible.
-/// 
+///
 /// Parameters
 /// ----------
 /// id : int
@@ -97,9 +86,9 @@ pub fn spk_state_py(id: isize, jd: f64, center: isize, frame: PyFrames) -> PyRes
 }
 
 /// Return the raw state of an object as encoded in the SPK Kernels.
-/// 
+///
 /// This does not change frames or center points.
-/// 
+///
 /// Parameters
 /// ----------
 /// id : int

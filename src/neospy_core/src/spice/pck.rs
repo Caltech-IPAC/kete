@@ -7,12 +7,12 @@
 /// ```
 ///
 ///
-use super::daf::{DAFType, DafHeader};
-use super::pck_segments::*;
+use super::daf::{DAFType, DafFile};
+use super::DafSegments;
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
 
-use std::io::{Cursor, Read, Seek};
+use std::io::Cursor;
 use std::mem::MaybeUninit;
 use std::sync::{Once, RwLock};
 
@@ -23,52 +23,42 @@ const PRELOAD_PCK: &[&[u8]] = &[
 
 /// A collection of segments.
 #[derive(Debug)]
-pub struct PckSegmentCollection {
-    segments: Vec<PckSegment>,
+pub struct PckCollection {
+    /// Collection of PCK file information
+    pub files: Vec<DafFile>,
 }
 
 /// Define the PCK singleton structure.
-pub type PckSingleton = RwLock<PckSegmentCollection>;
+pub type PckSingleton = RwLock<PckCollection>;
 
-impl PckSegmentCollection {
+impl PckCollection {
     /// Given an PCK filename, load all the segments present inside of it.
     /// These segments are added to the PCK singleton in memory.
     pub fn load_file(&mut self, filename: &str) -> Result<(), NEOSpyError> {
-        let mut file = std::fs::File::open(filename)?;
-        let mut buffer = Vec::new();
-        let _ = file.read_to_end(&mut buffer)?;
-        let mut buffer = Cursor::new(&buffer);
-        self.load_segments(&mut buffer)
-    }
-
-    /// Given an PCK buffer, load all the segments present inside of it.
-    /// These segments are added to the PCK singleton in memory.
-    pub fn load_segments<T: Read + Seek>(&mut self, mut buffer: T) -> Result<(), NEOSpyError> {
-        let daf = DafHeader::try_load_header(&mut buffer)?;
-        if daf.daf_type != DAFType::Pck {
-            return Err(NEOSpyError::IOError(
-                "Attempted to load a DAF file which is not an PCK as an PCK.".into(),
-            ));
+        let file = DafFile::from_file(filename)?;
+        if !matches!(file.daf_type, DAFType::Pck) {
+            return Err(NEOSpyError::IOError(format!(
+                "File {:?} is not a PCK formatted file.",
+                filename
+            )));
         }
-
-        let summaries = daf.try_load_summaries(&mut buffer)?;
-
-        for summary in summaries {
-            self.segments
-                .push(PckSegment::from_summary(&mut buffer, summary)?)
-        }
-
+        self.files.push(file);
         Ok(())
     }
 
     /// Get the raw orientation from the loaded PCK files.
     /// This orientation will have the frame of what was originally present in the file.
     pub fn try_get_orientation(&self, id: isize, jd: f64) -> Result<Frame, NEOSpyError> {
-        for segment in self.segments.iter() {
-            if id == segment.center_id && segment.contains(jd) {
-                return segment.try_get_orientation(jd);
+        for file in self.files.iter() {
+            for segment in file.segments.iter() {
+                if let DafSegments::Pck(segment) = segment {
+                    if id == segment.center_id && segment.contains(jd) {
+                        return segment.try_get_orientation(jd);
+                    }
+                }
             }
         }
+
         Err(NEOSpyError::DAFLimits(format!(
             "Object ({}) does not have an PCK record for the target JD.",
             id
@@ -77,15 +67,14 @@ impl PckSegmentCollection {
 
     /// Delete all segments in the PCK singleton, equivalent to unloading all files.
     pub fn reset(&mut self) {
-        let segments: PckSegmentCollection = PckSegmentCollection {
-            segments: Vec::new(),
-        };
+        let files = PckCollection { files: Vec::new() };
 
-        *self = segments;
+        *self = files;
 
         for preload in PRELOAD_PCK {
             let mut precise = Cursor::new(preload);
-            self.load_segments(&mut precise).unwrap();
+            let file = DafFile::from_buffer(&mut precise).unwrap();
+            self.files.push(file)
         }
     }
 }
@@ -100,11 +89,9 @@ pub fn get_pck_singleton() -> &'static PckSingleton {
 
     unsafe {
         ONCE.call_once(|| {
-            let mut segments: PckSegmentCollection = PckSegmentCollection {
-                segments: Vec::new(),
-            };
-            segments.reset();
-            let singleton: PckSingleton = RwLock::new(segments);
+            let mut files = PckCollection { files: Vec::new() };
+            files.reset();
+            let singleton: PckSingleton = RwLock::new(files);
             // Store it to the static var, i.e. initialize it
             let _ = SINGLETON.write(singleton);
         });

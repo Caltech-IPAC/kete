@@ -13,7 +13,7 @@
 /// There is a lot of repetition in this file, as many of the segment types have very
 /// similar internal structures.
 use super::interpolation::*;
-use super::{spice_jds_to_jd, jd_to_spice_jd, DafArray};
+use super::{jd_to_spice_jd, spice_jds_to_jd, DafArray};
 use crate::constants::AU_KM;
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
@@ -23,7 +23,7 @@ use std::fmt::Debug;
 use std::io::{Read, Seek};
 
 #[derive(Debug)]
-enum SPKSegmentType {
+pub enum SPKSegmentType {
     Type1(SpkSegmentType1),
     Type2(SpkSegmentType2),
     Type3(SpkSegmentType3),
@@ -31,23 +31,21 @@ enum SPKSegmentType {
     Type21(SpkSegmentType21),
 }
 
-impl SPKSegmentType{
-    pub fn from_array(segment_type:usize, array: DafArray)-> Result<Self, NEOSpyError>{
+impl SPKSegmentType {
+    pub fn from_array(segment_type: i32, array: DafArray) -> Result<Self, NEOSpyError> {
         match segment_type {
-        1 => Ok(SPKSegmentType::Type1(array.into())),
-        2 => Ok(SPKSegmentType::Type2(array.into())),
-        3 => Ok(SPKSegmentType::Type3(array.into())),
-        13 => Ok(SPKSegmentType::Type13(array.into())),
-        21 => Ok(SPKSegmentType::Type21(array.into())),
-        v => Err(NEOSpyError::IOError(format!(
+            1 => Ok(SPKSegmentType::Type1(array.into())),
+            2 => Ok(SPKSegmentType::Type2(array.into())),
+            3 => Ok(SPKSegmentType::Type3(array.into())),
+            13 => Ok(SPKSegmentType::Type13(array.into())),
+            21 => Ok(SPKSegmentType::Type21(array.into())),
+            v => Err(NEOSpyError::IOError(format!(
                 "SPK Segment type {:?} not supported.",
                 v
-            )))
-        
-    }}
+            ))),
+        }
+    }
 }
-
-
 
 #[derive(Debug)]
 pub struct SpkSegment {
@@ -67,7 +65,7 @@ pub struct SpkSegment {
     pub ref_frame: Frame,
 
     /// Number which defines the segment type as defined by the DAF standard.
-    pub segment_type: usize,
+    pub segment_type: i32,
 
     /// Internal data representation.
     segment: SPKSegmentType,
@@ -85,15 +83,20 @@ impl SpkSegment {
     /// Load this segment from the provided file and summary.
     pub fn from_summary<T: Read + Seek>(
         file: &mut T,
-        summary: (Box<[f64]>, Box<[i32]>),
+        floats: &[f64],
+        ints: &[i32],
     ) -> Result<SpkSegment, NEOSpyError> {
-        let (floats, ints) = summary;
+        if floats.len() != 2 || ints.len() != 6 {
+            return Err(NEOSpyError::IOError(
+                "SPK File incorrectly Formatted.".into(),
+            ));
+        }
         let jd_start = spice_jds_to_jd(floats[0]);
         let jd_end = spice_jds_to_jd(floats[1]);
         let obj_id = ints[0] as isize;
         let center_id = ints[1] as isize;
         let frame_num = ints[2];
-        let segment_type = ints[3] as usize;
+        let segment_type = ints[3];
         let array_start = ints[4] as u64;
         let array_end = ints[5] as u64;
 
@@ -151,21 +154,23 @@ impl SpkSegment {
 /// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/spk.html#Type%201:%20Modified%20Difference%20Arrays>
 ///
 #[derive(Debug)]
-struct SpkSegmentType1 {
+pub struct SpkSegmentType1 {
     array: DafArray,
 
     n_records: usize,
 }
 
-impl SpkSegmentType1{
-    fn get_record(&self, idx:usize) -> &[f64]
-    {
-        unsafe{self.array.0.get_unchecked(idx*71..(idx + 1) * 71)}
+impl SpkSegmentType1 {
+    fn get_record(&self, idx: usize) -> &[f64] {
+        unsafe { self.array.0.get_unchecked(idx * 71..(idx + 1) * 71) }
     }
 
-    fn get_times(&self) -> &[f64]
-    {
-        unsafe{self.array.0.get_unchecked(self.n_records * 71..(self.n_records * 72))}
+    fn get_times(&self) -> &[f64] {
+        unsafe {
+            self.array
+                .0
+                .get_unchecked(self.n_records * 71..(self.n_records * 72))
+        }
     }
 
     fn try_get_pos_vel(
@@ -268,17 +273,13 @@ impl SpkSegmentType1{
     }
 }
 
-impl From<DafArray> for SpkSegmentType1{
+impl From<DafArray> for SpkSegmentType1 {
     fn from(array: DafArray) -> Self {
         let n_records = array[array.len() - 1] as usize;
 
-        SpkSegmentType1 {
-            array,
-            n_records,
-        }
+        SpkSegmentType1 { array, n_records }
     }
 }
-
 
 /// Chebyshev Polynomials (Position Only)
 ///
@@ -292,12 +293,13 @@ pub struct SpkSegmentType2 {
     record_len: usize,
 }
 
-
 impl SpkSegmentType2 {
-
-    fn get_record(&self, idx:usize) -> &[f64]
-    {
-        unsafe{self.array.0.get_unchecked(idx*self.record_len..(idx + 1) * self.record_len)}
+    fn get_record(&self, idx: usize) -> &[f64] {
+        unsafe {
+            self.array
+                .0
+                .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len)
+        }
     }
 
     fn try_get_pos_vel(
@@ -314,8 +316,8 @@ impl SpkSegmentType2 {
         let y_coef = unsafe { record.get_unchecked((self.n_coef + 2)..(2 * self.n_coef + 2)) };
         let z_coef = unsafe { record.get_unchecked((2 * self.n_coef + 2)..(3 * self.n_coef + 2)) };
 
-        let t_mid = unsafe{record.get_unchecked(0)};
-        let t_step = unsafe{record.get_unchecked(1)};
+        let t_mid = unsafe { record.get_unchecked(0) };
+        let t_step = unsafe { record.get_unchecked(1) };
         let t = (jd - t_mid) / t_step;
 
         let t_step_scaled = 86400.0 / t_step / AU_KM;
@@ -323,14 +325,15 @@ impl SpkSegmentType2 {
         let (x, vx) = chebyshev_evaluate_both(t, x_coef)?;
         let (y, vy) = chebyshev_evaluate_both(t, y_coef)?;
         let (z, vz) = chebyshev_evaluate_both(t, z_coef)?;
-        Ok(([x / AU_KM, y / AU_KM, z / AU_KM], [vx * t_step_scaled, vy * t_step_scaled, vz * t_step_scaled]))
+        Ok((
+            [x / AU_KM, y / AU_KM, z / AU_KM],
+            [vx * t_step_scaled, vy * t_step_scaled, vz * t_step_scaled],
+        ))
     }
 }
 
-
-impl From<DafArray> for SpkSegmentType2{
+impl From<DafArray> for SpkSegmentType2 {
     fn from(array: DafArray) -> Self {
-
         // let n_records = array[array.len() - 1] as usize;
         let record_len = array[array.len() - 2] as usize;
         let jd_step = array[array.len() - 3];
@@ -338,18 +341,17 @@ impl From<DafArray> for SpkSegmentType2{
         let n_coef = (record_len - 2) / 3;
 
         if 3 * n_coef + 2 != record_len {
-             panic!("File incorrectly formatted, found number of Chebyshev coefficients doesn't match expected");
+            panic!("File incorrectly formatted, found number of Chebyshev coefficients doesn't match expected");
         }
 
         SpkSegmentType2 {
             array,
             n_coef,
             record_len,
-            jd_step
+            jd_step,
         }
     }
 }
-
 
 /// Chebyshev Polynomials (Position and Velocity)
 ///
@@ -364,9 +366,12 @@ pub struct SpkSegmentType3 {
 }
 
 impl SpkSegmentType3 {
-    fn get_record(&self, idx:usize) -> &[f64]
-    {
-        unsafe{self.array.0.get_unchecked(idx*self.record_len..(idx + 1) * self.record_len)}
+    fn get_record(&self, idx: usize) -> &[f64] {
+        unsafe {
+            self.array
+                .0
+                .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len)
+        }
     }
 
     fn try_get_pos_vel(
@@ -377,7 +382,7 @@ impl SpkSegmentType3 {
         let jd = jd_to_spice_jd(jd);
         let jd_start = jd_to_spice_jd(segment.jd_start);
         let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
-        let record =self.get_record(record_index) ;
+        let record = self.get_record(record_index);
         let t_mid = record[0];
         let t_step = record[1];
         let t = (jd - t_mid) / t_step;
@@ -400,14 +405,15 @@ impl SpkSegmentType3 {
         let vy = chebyshev_evaluate_type1(t, vy_coef)?;
         let vz = chebyshev_evaluate_type1(t, vz_coef)?;
 
-        Ok(([x / AU_KM, y / AU_KM, z / AU_KM], [vx * t_step_scaled, vy * t_step_scaled, vz * t_step_scaled]))
+        Ok((
+            [x / AU_KM, y / AU_KM, z / AU_KM],
+            [vx * t_step_scaled, vy * t_step_scaled, vz * t_step_scaled],
+        ))
     }
 }
 
-impl From<DafArray> for SpkSegmentType3{
-
+impl From<DafArray> for SpkSegmentType3 {
     fn from(array: DafArray) -> Self {
-
         // let n_records = array[array.len() - 1] as usize;
         let record_len = array[array.len() - 2] as usize;
         let jd_step = array[array.len() - 3];
@@ -438,13 +444,12 @@ pub struct SpkSegmentType13 {
     n_records: usize,
 }
 
-impl From<DafArray> for SpkSegmentType13{
-
+impl From<DafArray> for SpkSegmentType13 {
     fn from(array: DafArray) -> Self {
         let n_records = array[array.len() - 1] as usize;
         let window_size = array[array.len() - 2] as usize;
 
-        Self{
+        Self {
             array,
             window_size,
             n_records,
@@ -452,15 +457,13 @@ impl From<DafArray> for SpkSegmentType13{
     }
 }
 
-
 impl SpkSegmentType13 {
-    fn get_record(&self, idx:usize) -> &[f64]
-    {
-        unsafe{self.array.0.get_unchecked(idx*6..(idx + 1) * 6)}
+    fn get_record(&self, idx: usize) -> &[f64] {
+        unsafe { self.array.0.get_unchecked(idx * 6..(idx + 1) * 6) }
     }
 
-    fn get_times(&self) -> &[f64]{
-        unsafe{self.array.0.get_unchecked(self.n_records * 6..)}
+    fn get_times(&self) -> &[f64] {
+        unsafe { self.array.0.get_unchecked(self.n_records * 6..) }
     }
 
     fn try_get_pos_vel(
@@ -488,7 +491,8 @@ impl SpkSegmentType13 {
         let times: Box<[&f64]> = times
             .iter()
             .skip(start_idx)
-            .take(self.window_size).collect();
+            .take(self.window_size)
+            .collect();
         for idx in 0..3 {
             let p: Box<[f64]> = (0..self.window_size)
                 .map(|i| self.get_record(i + start_idx)[idx])
@@ -497,8 +501,8 @@ impl SpkSegmentType13 {
                 .map(|i| self.get_record(i + start_idx)[idx + 3])
                 .collect();
             let (p, v) = hermite_interpolation(&times, &p, &dp, jd);
-            pos[idx] = p/ AU_KM;
-            vel[idx] = v/ AU_KM * 86400.;
+            pos[idx] = p / AU_KM;
+            vel[idx] = v / AU_KM * 86400.;
         }
 
         Ok((pos, vel))
@@ -517,17 +521,14 @@ pub struct SpkSegmentType21 {
     record_len: usize,
 }
 
-
-impl From<DafArray> for SpkSegmentType21{
-
+impl From<DafArray> for SpkSegmentType21 {
     fn from(array: DafArray) -> Self {
-
         let n_records = array[array.len() - 1] as usize;
         let n_coef = array[array.len() - 2] as usize;
 
         let record_len = 4 * n_coef + 11;
 
-        Self{
+        Self {
             array,
             n_coef,
             n_records,
@@ -537,13 +538,16 @@ impl From<DafArray> for SpkSegmentType21{
 }
 
 impl SpkSegmentType21 {
-    fn get_record(&self, idx:usize) -> &[f64]
-    {
-        unsafe{self.array.0.get_unchecked(idx*self.record_len..(idx + 1) * self.record_len)}
+    fn get_record(&self, idx: usize) -> &[f64] {
+        unsafe {
+            self.array
+                .0
+                .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len)
+        }
     }
 
-    fn get_times(&self) -> &[f64]{
-        unsafe{self.array.0.get_unchecked(self.n_records * 6..)}
+    fn get_times(&self) -> &[f64] {
+        unsafe { self.array.0.get_unchecked(self.n_records * 6..) }
     }
 
     fn try_get_pos_vel(

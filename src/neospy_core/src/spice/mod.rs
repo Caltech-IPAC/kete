@@ -24,5 +24,5 @@ fn spice_jds_to_jd(jd_sec: f64) -> f64 {
 /// Convert JD to seconds from J2000.
 fn jd_to_spice_jd(jd: f64) -> f64 {
     // 86400.0 = 60 * 60 * 24
-    (jd -2451545.0) * 86400.0
+    (jd - 2451545.0) * 86400.0
 }

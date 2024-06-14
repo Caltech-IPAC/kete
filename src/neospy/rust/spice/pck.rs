@@ -6,7 +6,6 @@ use crate::frame::PyFrames;
 use crate::state::PyState;
 use crate::vector::Vector;
 
-
 /// Load all specified files into the PCK shared memory singleton.
 #[pyfunction]
 #[pyo3(name = "pck_load")]
@@ -29,7 +28,7 @@ pub fn pck_load_py(filenames: Vec<String>) -> PyResult<()> {
 /// around 2000 to early 2024. New files may be downloaded from the NAIF website for
 /// additional precision or years of epoch. The current file is accurate to ~5 cm
 /// precision.
-/// 
+///
 /// parameters
 /// ----------
 /// pos : list[float]
@@ -72,7 +71,7 @@ pub fn pck_earth_frame_py(
 /// around 2000 to early 2024. New files may be downloaded from the NAIF website for
 /// additional precision or years of epoch. The current file is accurate to ~5 cm
 /// precision.
-/// 
+///
 /// Parameters
 /// ----------
 /// state: State
@@ -89,7 +88,6 @@ pub fn pck_state_to_earth(state: PyState) -> PyResult<Vector> {
 
     Ok(Vector::new(state.pos, PyFrames::Undefined))
 }
-
 
 /// Reset the contents of the PCK shared memory to the default set of PCK kernels.
 #[pyfunction]

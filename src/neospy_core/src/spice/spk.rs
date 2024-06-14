@@ -18,8 +18,8 @@
 /// ```
 ///
 ///
-use super::daf::{DAFType, DafHeader};
-use super::spk_segments::*;
+use super::daf::DafFile;
+use super::{spk_segments::*, DAFType, DafSegments};
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
 use crate::state::State;
@@ -27,7 +27,7 @@ use pathfinding::prelude::dijkstra;
 use std::collections::{HashMap, HashSet};
 
 use crossbeam::sync::ShardedLock;
-use std::io::{Cursor, Read, Seek};
+use std::io::Cursor;
 use std::mem::MaybeUninit;
 use std::sync::Once;
 
@@ -41,100 +41,11 @@ const PRELOAD_SPKS: &[&[u8]] = &[
     include_bytes!("../../data/20000704.bsp"),
 ];
 
-/// Contents of an SPK file.
-#[derive(Debug)]
-pub struct SPKFile {
-    header: Box<DafHeader>,
-
-    segments: Vec<SpkSegment>,
-}
-
-impl SPKFile {
-    /// Given an SPK filename, load all the segments present inside of it.
-    /// These segments are added to the SPK singleton in memory.
-    pub fn from_file(filename: &str) -> Result<Self, NEOSpyError> {
-        let mut file = std::fs::File::open(filename)?;
-        let mut buffer = Vec::new();
-        let _ = file.read_to_end(&mut buffer)?;
-        let mut buffer = Cursor::new(&buffer);
-
-        Self::from_buffer(&mut buffer)
-    }
-
-    /// Given a reference to a buffer, load all the segments present inside of it.
-    /// These segments are added to the SPK singleton in memory.
-    pub fn from_buffer<T: Read + Seek>(mut buffer: T) -> Result<Self, NEOSpyError> {
-        let header = DafHeader::try_load_header(&mut buffer)?;
-        if header.daf_type != DAFType::Spk {
-            return Err(NEOSpyError::IOError(
-                "Attempted to load a DAF file which is not an SPK as an SPK.".into(),
-            ));
-        }
-
-        let summaries = header.try_load_summaries(&mut buffer)?;
-
-        let mut segments = Vec::new();
-
-        for summary in summaries {
-            segments.push(SpkSegment::from_summary(&mut buffer, summary)?);
-        }
-
-        Ok(Self {
-            header: Box::new(header),
-            segments,
-        })
-    }
-
-    /// For a given NAIF ID, return all increments of time which are currently loaded.
-    pub fn available_info(&self, id: isize) -> Vec<(f64, f64, isize, Frame, usize)> {
-        let mut segment_info = Vec::<(f64, f64, isize, Frame, usize)>::new();
-        for segment in self.segments.iter() {
-            if id == segment.obj_id {
-                let jd_range = segment.jd_range();
-                segment_info.push((
-                    jd_range.0,
-                    jd_range.1,
-                    segment.center_id,
-                    segment.ref_frame,
-                    segment.segment_type,
-                ))
-            }
-        }
-        if segment_info.is_empty() {
-            return segment_info;
-        }
-
-        segment_info.sort_by(|a, b| (a.0).total_cmp(&b.0));
-
-        let mut avail_times = Vec::<(f64, f64, isize, Frame, usize)>::new();
-
-        let mut cur_segment = segment_info[0];
-        for segment in segment_info.iter().skip(1) {
-            // if the segments are overlapped or nearly overlapped, join them together
-            // 1e-8 is approximately a millisecond
-            if cur_segment.1 <= (segment.0 - 1e-8) {
-                avail_times.push(cur_segment);
-                cur_segment = *segment;
-            } else {
-                cur_segment.1 = segment.1.max(cur_segment.1)
-            }
-        }
-        avail_times.push(cur_segment);
-
-        avail_times
-    }
-
-    /// Return the comments in the SPK file.
-    pub fn get_comments(&self) -> &String {
-        &self.header.comments
-    }
-}
-
 /// A collection of segments.
 #[derive(Debug)]
 pub struct SpkCollection {
     /// Collection of SPK file information
-    pub files: Vec<SPKFile>,
+    pub files: Vec<DafFile>,
 
     map_cache: HashMap<(isize, isize), Vec<isize>>,
 
@@ -152,8 +63,10 @@ impl SpkCollection {
     pub fn try_get_raw_state(&self, id: isize, jd: f64) -> Result<State, NEOSpyError> {
         for file in self.files.iter() {
             for segment in file.segments.iter() {
-                if id == segment.obj_id && segment.contains(jd) {
-                    return segment.try_get_state(jd);
+                if let DafSegments::Spk(segment) = segment {
+                    if id == segment.obj_id && segment.contains(jd) {
+                        return segment.try_get_state(jd);
+                    }
                 }
             }
         }
@@ -200,6 +113,49 @@ impl SpkCollection {
         Ok(())
     }
 
+    /// For a given NAIF ID, return all increments of time which are currently loaded.
+    pub fn available_info(&self, id: isize) -> Vec<(f64, f64, isize, Frame, i32)> {
+        let mut segment_info = Vec::<(f64, f64, isize, Frame, i32)>::new();
+        for file in self.files.iter() {
+            for segment in file.segments.iter() {
+                if let DafSegments::Spk(segment) = segment {
+                    if id == segment.obj_id {
+                        let jd_range = segment.jd_range();
+                        segment_info.push((
+                            jd_range.0,
+                            jd_range.1,
+                            segment.center_id,
+                            segment.ref_frame,
+                            segment.segment_type,
+                        ))
+                    }
+                }
+            }
+        }
+        if segment_info.is_empty() {
+            return segment_info;
+        }
+
+        segment_info.sort_by(|a, b| (a.0).total_cmp(&b.0));
+
+        let mut avail_times = Vec::<(f64, f64, isize, Frame, i32)>::new();
+
+        let mut cur_segment = segment_info[0];
+        for segment in segment_info.iter().skip(1) {
+            // if the segments are overlapped or nearly overlapped, join them together
+            // 1e-8 is approximately a millisecond
+            if cur_segment.1 <= (segment.0 - 1e-8) {
+                avail_times.push(cur_segment);
+                cur_segment = *segment;
+            } else {
+                cur_segment.1 = segment.1.max(cur_segment.1)
+            }
+        }
+        avail_times.push(cur_segment);
+
+        avail_times
+    }
+
     /// Return a hash set of all unique identifies loaded in the SPKs.
     /// If include centers is true, then this additionally includes the IDs for the
     /// center IDs. For example, if include_centers is false, then `0` will never be
@@ -211,9 +167,11 @@ impl SpkCollection {
 
         for file in self.files.iter() {
             for segment in file.segments.iter() {
-                let _ = found.insert(segment.obj_id);
-                if include_centers {
-                    let _ = found.insert(segment.center_id);
+                if let DafSegments::Spk(segment) = segment {
+                    let _ = found.insert(segment.obj_id);
+                    if include_centers {
+                        let _ = found.insert(segment.center_id);
+                    }
                 }
             }
         }
@@ -239,7 +197,6 @@ impl SpkCollection {
             },
             |&p| p.0 == goal,
         );
-
         if let Some((v, _)) = result {
             Ok(v.iter().skip(1).map(|x| x.1).collect())
         } else {
@@ -284,7 +241,9 @@ impl SpkCollection {
 
         for file in self.files.iter() {
             for segment in file.segments.iter() {
-                update_nodes(segment, &mut nodes);
+                if let DafSegments::Spk(segment) = segment {
+                    update_nodes(segment, &mut nodes);
+                }
             }
         }
 
@@ -320,7 +279,14 @@ impl SpkCollection {
     /// Given an SPK filename, load all the segments present inside of it.
     /// These segments are added to the SPK singleton in memory.
     pub fn load_file(&mut self, filename: &str) -> Result<(), NEOSpyError> {
-        let file = SPKFile::from_file(filename)?;
+        let file = DafFile::from_file(filename)?;
+
+        if !matches!(file.daf_type, DAFType::Spk) {
+            return Err(NEOSpyError::IOError(format!(
+                "File {:?} is not a PCK formatted file.",
+                filename
+            )));
+        }
         self.files.push(file);
         Ok(())
     }
@@ -336,8 +302,8 @@ impl SpkCollection {
         *self = spk_files;
 
         for preload in PRELOAD_SPKS {
-            let mut de440 = Cursor::new(preload);
-            let file = SPKFile::from_buffer(&mut de440).unwrap();
+            let mut curse = Cursor::new(preload);
+            let file = DafFile::from_buffer(&mut curse).unwrap();
             self.files.push(file);
         }
         self.build_cache();

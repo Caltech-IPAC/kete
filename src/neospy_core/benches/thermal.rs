@@ -18,7 +18,15 @@ fn frm_bench(params: &FrmParams) {
 pub fn neatm_benchmark(c: &mut Criterion) {
     let mut neatm_group = c.benchmark_group("NEATM");
 
-    let hg_params = HGParams::try_fill("test".into(), 0.15, Some(15.0), Some(1329.0), Some(0.2), None).unwrap();
+    let hg_params = HGParams::try_fill(
+        "test".into(),
+        0.15,
+        Some(15.0),
+        Some(1329.0),
+        Some(0.2),
+        None,
+    )
+    .unwrap();
     let wise_params = NeatmParams {
         obs_bands: neospy_core::flux::ObserverBands::Wise,
         band_albedos: vec![0.2; 4],
@@ -49,7 +57,15 @@ pub fn neatm_benchmark(c: &mut Criterion) {
 pub fn frm_benchmark(c: &mut Criterion) {
     let mut frm_group = c.benchmark_group("FRM");
 
-    let hg_params = HGParams::try_fill("test".into(), 0.15, Some(15.0), Some(1329.0), Some(0.2), None).unwrap();
+    let hg_params = HGParams::try_fill(
+        "test".into(),
+        0.15,
+        Some(15.0),
+        Some(1329.0),
+        Some(0.2),
+        None,
+    )
+    .unwrap();
     let wise_params = FrmParams {
         obs_bands: neospy_core::flux::ObserverBands::Wise,
         band_albedos: vec![0.2; 4],

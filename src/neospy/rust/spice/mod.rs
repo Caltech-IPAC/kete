@@ -1,13 +1,12 @@
 mod daf;
-mod spk;
 mod pck;
+mod spk;
 
 pub use daf::*;
-pub use spk::*;
 pub use pck::*;
+pub use spk::*;
 
 use pyo3::pyfunction;
-
 
 /// Return a list of MPC observatory codes, along with the latitude, longitude (deg),
 /// altitude (m above the WGS84 surface), and name.
