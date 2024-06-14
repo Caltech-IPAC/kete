@@ -14,7 +14,7 @@
 /// similar internal structures.
 ///
 use super::{interpolation::*, jd_to_spice_jd};
-use super::records::DafArray;
+use super::daf::DafArray;
 use super::spice_jds_to_jd;
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;

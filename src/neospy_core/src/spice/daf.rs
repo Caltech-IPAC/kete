@@ -9,12 +9,14 @@
 /// These summary records contain the location information for all the contents
 /// of the DAF file.
 ///
-use super::{binary::{
+use super::binary::{
     bytes_to_f64, bytes_to_f64_vec, bytes_to_i32, bytes_to_i32_vec, bytes_to_str, read_bytes_exact,
     read_str,
-}, records::DafArray};
+};
+use super::binary::read_f64_vec;
+
 use crate::errors::NEOSpyError;
-use std::io::{Read, Seek};
+use std::{io::{Read, Seek}, ops::Index, slice::SliceIndex};
 
 /// DAF Files can contain multiple different types of data.
 /// This list contains the supported formats.
@@ -243,5 +245,49 @@ impl  DafFile {
             }
         }
         Ok(summaries)
+    }
+}
+
+
+
+/// DAF Arrays are f64 arrays of structured data.
+/// 
+/// Contents of the structure depends on specific file formats, however they are all
+/// made up of floats.
+#[derive(Debug)]
+pub struct DafArray (pub Box<[f64]>);
+
+impl DafArray {
+    /// Load array from file
+    pub fn try_load_array<T: Read + Seek>(file: &mut T, array_start:u64, array_end: u64, little_endian: bool)-> Result<Self, NEOSpyError> {
+        let _ = file.seek(std::io::SeekFrom::Start(8 * (array_start - 1)))?;
+        
+        let n_floats = (array_end - array_start + 1) as usize;
+
+        let data = read_f64_vec(file, n_floats, little_endian)?;
+
+        Ok(Self(data))
+    }
+
+
+    /// Total length of the array.
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Test if array is empty.
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+
+impl< Idx> Index<Idx> for DafArray where
+Idx: SliceIndex<[f64], Output = f64>
+{
+    type Output = f64;
+
+    fn index(&self, idx: Idx) -> &Self::Output {
+        self.0.index(idx)
     }
 }

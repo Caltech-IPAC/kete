@@ -6,7 +6,6 @@ mod interpolation;
 mod naif_ids;
 mod pck;
 mod pck_segments;
-mod records;
 mod spk;
 mod spk_segments;
 

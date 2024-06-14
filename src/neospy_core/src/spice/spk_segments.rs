@@ -13,8 +13,7 @@
 /// There is a lot of repetition in this file, as many of the segment types have very
 /// similar internal structures.
 use super::interpolation::*;
-use super::records::DafArray;
-use super::{spice_jds_to_jd, jd_to_spice_jd};
+use super::{spice_jds_to_jd, jd_to_spice_jd, DafArray};
 use crate::constants::AU_KM;
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
