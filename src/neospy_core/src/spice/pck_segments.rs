@@ -13,9 +13,8 @@
 /// There is a lot of repetition in this file, as many of the segment types have very
 /// similar internal structures.
 ///
-use super::binary::read_f64_vec;
 use super::{interpolation::*, jd_to_spice_jd};
-use super::records::DafRecords;
+use super::records::DafArray;
 use super::spice_jds_to_jd;
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
@@ -65,8 +64,8 @@ impl PckSegment {
         let center_id = ints[0] as isize;
         let frame_id = ints[1];
         let segment_type = ints[2] as usize;
-        let array_start = ints[3] as usize;
-        let array_end = ints[4] as usize;
+        let array_start = ints[3] as u64;
+        let array_end = ints[4] as u64;
 
         let ref_frame = match frame_id {
             1 => Frame::Equatorial, // J2000
@@ -115,36 +114,42 @@ impl PckSegment {
 ///
 #[derive(Debug)]
 pub struct PckSegmentType2 {
-    records: DafRecords,
+    array: DafArray,
     jd_step: f64,
     n_coef: usize,
+    record_len: usize,
 }
 
 impl PckSegmentType2 {
     fn try_load<T: Read + Seek>(
         file: &mut T,
-        array_start: usize,
-        array_end: usize,
+        array_start: u64,
+        array_end: u64,
     ) -> Result<PCKSegmentType, NEOSpyError> {
-        let _ = file.seek(std::io::SeekFrom::Start(8 * (array_start as u64 - 1)))?;
-        let array_len = array_end - array_start + 1;
-        let bin_segment = read_f64_vec(file, array_len, true)?;
+        let array = DafArray::try_load_array(file, array_start, array_end, true)?;
 
-        let n_rec = bin_segment[array_len - 1] as usize;
-        let rec_len = bin_segment[array_len - 2] as usize;
-        let jd_step = bin_segment[array_len - 3];
-        let n_coef = (rec_len - 2) / 3;
 
-        let mut records = DafRecords::with_capacity(n_rec, rec_len);
-        for idx in  0..n_rec {
-            records.try_push(&bin_segment[(idx * rec_len) .. (idx * rec_len + rec_len)])?;
+        let n_records = array[array.len() - 1] as usize;
+        let record_len = array[array.len() - 2] as usize;
+        let jd_step = array[array.len() - 3];
+
+        let n_coef = (record_len - 2) / 3;
+
+        if n_records * record_len + 4 != array.len(){
+            return Err(NEOSpyError::IOError("PCK File not formatted correctly.".into()))
         }
 
         Ok(PCKSegmentType::Type2(PckSegmentType2 {
+            array,
             jd_step,
             n_coef,
-            records,
+            record_len,
         }))
+    }
+
+    fn get_record(&self, idx:usize) -> &[f64]
+    {
+        unsafe{self.array.0.get_unchecked(idx*self.record_len..(idx + 1) * self.record_len)}
     }
 
     /// Return the stored orientation, along with the rate of change of the orientation.
@@ -165,7 +170,7 @@ impl PckSegmentType2 {
         let jd = jd_to_spice_jd(jd);
         let jd_start = jd_to_spice_jd(segment.jd_start);
         let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
-        let record = &self.records[record_index];
+        let record = self.get_record(record_index);
         let t_mid = record[0];
         let t_step = record[1];
         let t = (jd - t_mid) / t_step;

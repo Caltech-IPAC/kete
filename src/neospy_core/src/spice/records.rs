@@ -1,59 +1,41 @@
 use std::ops::Index;
-// use std::io::{Read, Seek};
+use std::io::{Read, Seek};
+use std::slice::SliceIndex;
 
 use crate::errors::NEOSpyError;
 
-// use super::binary::read_f64_vec;
+use super::binary::read_f64_vec;
 
+
+/// DAF Arrays are commonly formatted with a set of some metadata, then repeated sets of records of the same format.
+/// All arrays are made up of f64s.
 #[derive(Debug)]
-pub struct DafRecords {
-    data: Vec<f64>,
-    n_records: usize,
-    record_len: usize,
-}
+pub struct DafArray (pub Box<[f64]>);
 
-impl DafRecords {
-    pub fn with_capacity(n_records: usize, record_len: usize) -> DafRecords {
-        DafRecords {
-            data: Vec::with_capacity(n_records * record_len),
-            n_records: 0,
-            record_len,
-        }
+impl DafArray {
+    pub fn try_load_array<T: Read + Seek>(file: &mut T, array_start:u64, array_end: u64, little_endian: bool)-> Result<Self, NEOSpyError> {
+        let _ = file.seek(std::io::SeekFrom::Start(8 * (array_start - 1)))?;
+        
+        let n_floats = (array_end - array_start + 1) as usize;
+
+        let data = read_f64_vec(file, n_floats, little_endian)?;
+
+        Ok(Self(data))
     }
 
-    pub fn try_push(&mut self, record: &[f64]) -> Result<(), NEOSpyError> {
-        if record.len() != self.record_len {
-            return Err(NEOSpyError::DAFLimits(
-                "Record length does not match expected.".into(),
-            ));
-        }
-        self.n_records += 1;
-        self.data.extend(record);
-        Ok(())
-    }
-
-    // pub fn try_load_record<T: Read + Seek>(&mut self, file: &mut T, idx:u64, little_endian: bool)-> Result<(), NEOSpyError> {
-    //     let _ = file.seek(std::io::SeekFrom::Start(1024 * (idx - 1)))?;
-    //     let record = read_f64_vec(file, self.record_len, little_endian)?;
-    //     self.n_records += 1;
-    //     self.data.extend(record.iter());
-    //     Ok(())
-    // }
-
-    pub unsafe fn get_unchecked(&self, idx: usize) -> &[f64] {
-        self.data
-            .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len)
-    }
 
     pub fn len(&self) -> usize {
-        self.n_records
+        self.0.len()
     }
 }
 
-impl Index<usize> for DafRecords {
-    type Output = [f64];
 
-    fn index(&self, idx: usize) -> &Self::Output {
-        &self.data[idx * self.record_len..(idx + 1) * self.record_len]
+impl< Idx> Index<Idx> for DafArray where
+Idx: SliceIndex<[f64], Output = f64>
+{
+    type Output = f64;
+
+    fn index(&self, idx: Idx) -> &Self::Output {
+        self.0.index(idx)
     }
 }

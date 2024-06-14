@@ -12,7 +12,7 @@
 use super::{binary::{
     bytes_to_f64, bytes_to_f64_vec, bytes_to_i32, bytes_to_i32_vec, bytes_to_str, read_bytes_exact,
     read_str,
-}, records::DafRecords};
+}, records::DafArray};
 use crate::errors::NEOSpyError;
 use std::io::{Read, Seek};
 
@@ -201,7 +201,7 @@ pub struct DafFile{
 
     summaries: Vec<DafSummary>,
 
-    records: Box<DafRecords>,
+    records: Box<DafArray>,
 }
 
 impl  DafFile {
