@@ -23,7 +23,7 @@ use std::fmt::Debug;
 use std::io::{Read, Seek};
 
 #[derive(Debug)]
-pub enum SPKSegmentType {
+pub enum SpkSegmentType {
     Type1(SpkSegmentType1),
     Type2(SpkSegmentType2),
     Type3(SpkSegmentType3),
@@ -31,18 +31,31 @@ pub enum SPKSegmentType {
     Type21(SpkSegmentType21),
 }
 
-impl SPKSegmentType {
+impl SpkSegmentType {
+    /// Create a Segment from a DafArray, the segment type must be specified.
     pub fn from_array(segment_type: i32, array: DafArray) -> Result<Self, NEOSpyError> {
         match segment_type {
-            1 => Ok(SPKSegmentType::Type1(array.into())),
-            2 => Ok(SPKSegmentType::Type2(array.into())),
-            3 => Ok(SPKSegmentType::Type3(array.into())),
-            13 => Ok(SPKSegmentType::Type13(array.into())),
-            21 => Ok(SPKSegmentType::Type21(array.into())),
+            1 => Ok(SpkSegmentType::Type1(array.into())),
+            2 => Ok(SpkSegmentType::Type2(array.into())),
+            3 => Ok(SpkSegmentType::Type3(array.into())),
+            13 => Ok(SpkSegmentType::Type13(array.into())),
+            21 => Ok(SpkSegmentType::Type21(array.into())),
             v => Err(NEOSpyError::IOError(format!(
                 "SPK Segment type {:?} not supported.",
                 v
             ))),
+        }
+    }
+}
+
+impl From<SpkSegmentType> for DafArray {
+    fn from(value: SpkSegmentType) -> Self {
+        match value {
+            SpkSegmentType::Type1(seg) => seg.array,
+            SpkSegmentType::Type2(seg) => seg.array,
+            SpkSegmentType::Type3(seg) => seg.array,
+            SpkSegmentType::Type13(seg) => seg.array,
+            SpkSegmentType::Type21(seg) => seg.array,
         }
     }
 }
@@ -68,7 +81,7 @@ pub struct SpkSegment {
     pub segment_type: i32,
 
     /// Internal data representation.
-    segment: SPKSegmentType,
+    segment: SpkSegmentType,
 }
 
 impl SpkSegment {
@@ -108,7 +121,7 @@ impl SpkSegment {
 
         let array = DafArray::try_load_array(file, array_start, array_end, true)?;
 
-        let segment = SPKSegmentType::from_array(segment_type, array)?;
+        let segment = SpkSegmentType::from_array(segment_type, array)?;
 
         Ok(SpkSegment {
             obj_id,
@@ -131,11 +144,11 @@ impl SpkSegment {
         }
 
         let (pos, vel) = match &self.segment {
-            SPKSegmentType::Type1(v) => v.try_get_pos_vel(self, jd)?,
-            SPKSegmentType::Type2(v) => v.try_get_pos_vel(self, jd)?,
-            SPKSegmentType::Type3(v) => v.try_get_pos_vel(self, jd)?,
-            SPKSegmentType::Type13(v) => v.try_get_pos_vel(self, jd)?,
-            SPKSegmentType::Type21(v) => v.try_get_pos_vel(self, jd)?,
+            SpkSegmentType::Type1(v) => v.try_get_pos_vel(self, jd)?,
+            SpkSegmentType::Type2(v) => v.try_get_pos_vel(self, jd)?,
+            SpkSegmentType::Type3(v) => v.try_get_pos_vel(self, jd)?,
+            SpkSegmentType::Type13(v) => v.try_get_pos_vel(self, jd)?,
+            SpkSegmentType::Type21(v) => v.try_get_pos_vel(self, jd)?,
         };
 
         Ok(State::new(

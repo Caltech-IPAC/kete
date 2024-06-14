@@ -22,19 +22,27 @@ use std::fmt::Debug;
 use std::io::{Read, Seek};
 
 #[derive(Debug)]
-pub enum PCKSegmentType {
+pub enum PckSegmentType {
     Type2(PckSegmentType2),
 }
 
-impl PCKSegmentType {
+impl PckSegmentType {
     /// Load PCK Segment data from an array.
     pub fn from_array(segment_type: i32, array: DafArray) -> Result<Self, NEOSpyError> {
         match segment_type {
-            2 => Ok(PCKSegmentType::Type2(array.into())),
+            2 => Ok(PckSegmentType::Type2(array.into())),
             v => Err(NEOSpyError::IOError(format!(
                 "SPK Segment type {:?} not supported.",
                 v
             ))),
+        }
+    }
+}
+
+impl From<PckSegmentType> for DafArray {
+    fn from(value: PckSegmentType) -> Self {
+        match value {
+            PckSegmentType::Type2(seg) => seg.array,
         }
     }
 }
@@ -57,7 +65,7 @@ pub struct PckSegment {
     pub segment_type: i32,
 
     /// Internal data representation.
-    segment: PCKSegmentType,
+    segment: PckSegmentType,
 }
 
 impl PckSegment {
@@ -92,7 +100,7 @@ impl PckSegment {
             _ => Frame::Unknown(frame_id as usize),
         };
 
-        let segment = PCKSegmentType::from_array(segment_type, array)?;
+        let segment = PckSegmentType::from_array(segment_type, array)?;
 
         Ok(PckSegment {
             jd_start,
@@ -114,7 +122,7 @@ impl PckSegment {
         }
 
         match &self.segment {
-            PCKSegmentType::Type2(v) => v.try_get_orientation(self, jd),
+            PckSegmentType::Type2(v) => v.try_get_orientation(self, jd),
         }
     }
 }
