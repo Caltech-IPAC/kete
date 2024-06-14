@@ -1,6 +1,5 @@
-use super::binary::read_f64_vec;
 /// Support for arbitrary DAF files
-/// DAF is a superset which includes SPK files.
+/// DAF is a superset which includes SPK and PCK files.
 ///
 /// DAF files are laid out in 1024 Byte "Records"
 /// - The first record is header information about the contents of the file.
@@ -12,18 +11,15 @@ use super::binary::read_f64_vec;
 ///
 use super::binary::{
     bytes_to_f64, bytes_to_f64_vec, bytes_to_i32, bytes_to_i32_vec, bytes_to_string,
-    read_bytes_exact, read_str,
+    read_bytes_exact, read_f64_vec, read_str,
 };
 use super::pck_segments::PckSegment;
 use super::spk_segments::SpkSegment;
 
 use crate::errors::NEOSpyError;
-use std::io::Cursor;
-use std::{
-    io::{Read, Seek},
-    ops::Index,
-    slice::SliceIndex,
-};
+use std::io::{Cursor, Read, Seek};
+use std::ops::Index;
+use std::slice::SliceIndex;
 
 /// DAF Files can contain multiple different types of data.
 /// This list contains the supported formats.
@@ -217,10 +213,10 @@ impl DafFile {
         Self::from_buffer(&mut buffer)
     }
 
-    /// Load all summary records from the DAF file.
-    /// These are tuples containing a series of f64s and i32s.
-    /// The meaning of these values depends on the particular implementation of the DAF,
-    /// IE: SPK files have 2 floats and 6 ints.
+    /// Load all DafArray segments from the DAF file.
+    /// These are tuples containing a series of f64s and i32s along with arrays of data.
+    /// The meaning of these values depends on the particular implementation of the DAF.
+    ///
     pub fn try_load_segments<T: Read + Seek>(&mut self, file: &mut T) -> Result<(), NEOSpyError> {
         let summary_size = self.n_doubles + (self.n_ints + 1) / 2;
 
@@ -287,7 +283,7 @@ pub struct DafArray {
 impl DafArray {
     /// Try to load an SPK array from summary data
     pub fn try_load_spk_array<T: Read + Seek>(
-        file: &mut T,
+        buffer: &mut T,
         summary_floats: Box<[f64]>,
         summary_ints: Box<[i32]>,
         little_endian: bool,
@@ -300,7 +296,7 @@ impl DafArray {
         let array_start = summary_ints[4] as u64;
         let array_end = summary_ints[5] as u64;
         Self::try_load_array(
-            file,
+            buffer,
             summary_floats,
             summary_ints,
             array_start,
@@ -311,7 +307,7 @@ impl DafArray {
 
     /// Try to load an PCK array from summary data
     pub fn try_load_pck_array<T: Read + Seek>(
-        file: &mut T,
+        buffer: &mut T,
         summary_floats: Box<[f64]>,
         summary_ints: Box<[i32]>,
         little_endian: bool,
@@ -324,7 +320,7 @@ impl DafArray {
         let array_start = summary_ints[3] as u64;
         let array_end = summary_ints[4] as u64;
         Self::try_load_array(
-            file,
+            buffer,
             summary_floats,
             summary_ints,
             array_start,
@@ -335,18 +331,18 @@ impl DafArray {
 
     /// Load array from file
     pub fn try_load_array<T: Read + Seek>(
-        file: &mut T,
+        buffer: &mut T,
         summary_floats: Box<[f64]>,
         summary_ints: Box<[i32]>,
         array_start: u64,
         array_end: u64,
         little_endian: bool,
     ) -> Result<Self, NEOSpyError> {
-        let _ = file.seek(std::io::SeekFrom::Start(8 * (array_start - 1)))?;
+        let _ = buffer.seek(std::io::SeekFrom::Start(8 * (array_start - 1)))?;
 
         let n_floats = (array_end - array_start + 1) as usize;
 
-        let data = read_f64_vec(file, n_floats, little_endian)?;
+        let data = read_f64_vec(buffer, n_floats, little_endian)?;
 
         Ok(Self {
             data,

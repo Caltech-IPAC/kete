@@ -73,7 +73,7 @@ impl FOV {
     }
 
     /// Check if any loaded SPK objects are visible to this FOV
-    pub fn check_spks(&self, obj_ids: &[isize]) -> Vec<Option<SimultaneousStates>> {
+    pub fn check_spks(&self, obj_ids: &[i32]) -> Vec<Option<SimultaneousStates>> {
         match self {
             FOV::Wise(fov) => fov.check_spks(obj_ids),
             FOV::NeosCmos(fov) => fov.check_spks(obj_ids),

@@ -59,10 +59,20 @@ impl From<SpkSegmentType> for DafArray {
     }
 }
 
+impl From<i32> for Frame {
+    fn from(value: i32) -> Self {
+        match value {
+            1 => Frame::Equatorial, // J2000
+            17 => Frame::Ecliptic,  // ECLIPJ2000
+            _ => Frame::Unknown(value as usize),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct SpkSegment {
     /// The NAIF ID of the object recorded in this Segment.
-    pub obj_id: isize,
+    pub obj_id: i32,
 
     /// Start time of the segment.
     pub jd_start: f64,
@@ -71,7 +81,7 @@ pub struct SpkSegment {
     pub jd_end: f64,
 
     /// The reference center NAIF ID for the position/velocity in this Segment.
-    pub center_id: isize,
+    pub center_id: i32,
 
     /// [`Frame`] of reference for this Segment.
     pub ref_frame: Frame,
@@ -97,16 +107,12 @@ impl TryFrom<DafArray> for SpkSegment {
         let summary_ints = &value.summary_ints;
         let jd_start = spice_jds_to_jd(summary_floats[0]);
         let jd_end = spice_jds_to_jd(summary_floats[1]);
-        let obj_id = summary_ints[0] as isize;
-        let center_id = summary_ints[1] as isize;
+        let obj_id = summary_ints[0];
+        let center_id = summary_ints[1];
         let frame_num = summary_ints[2];
         let segment_type = summary_ints[3];
 
-        let ref_frame = match frame_num {
-            1 => Frame::Equatorial, // J2000
-            17 => Frame::Ecliptic,  // ECLIPJ2000
-            _ => Frame::Unknown(frame_num as usize),
-        };
+        let ref_frame = frame_num.into();
 
         let segment = SpkSegmentType::from_array(segment_type, value)?;
 
@@ -134,6 +140,7 @@ impl SpkSegment {
     /// Return the [`State`] object at the specified JD. If the requested time is
     /// not within the available range, this will fail.
     pub fn try_get_state(&self, jd: f64) -> Result<State, NEOSpyError> {
+        // this is faster than calling contains, probably because the || instead of &&
         if jd < self.jd_start || jd > self.jd_end {
             return Err(NEOSpyError::DAFLimits(
                 "JD is not present in this record.".to_string(),

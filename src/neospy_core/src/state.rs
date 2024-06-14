@@ -41,7 +41,7 @@ pub enum Desig {
 
     /// NAIF id for the object.
     /// These are used by SPICE kernels for identification.
-    Naif(isize),
+    Naif(i32),
 
     /// No id assigned.
     Empty,
@@ -59,8 +59,8 @@ impl From<usize> for Desig {
     }
 }
 
-impl From<isize> for Desig {
-    fn from(value: isize) -> Self {
+impl From<i32> for Desig {
+    fn from(value: i32) -> Self {
         Desig::Naif(value)
     }
 }
@@ -90,7 +90,7 @@ pub struct State {
 
     /// Position and velocity are given with respect to the specified center_id.
     /// The only privileged center ID is the Solar System Barycenter 0.
-    pub center_id: isize,
+    pub center_id: i32,
 }
 
 impl State {
@@ -102,7 +102,7 @@ impl State {
         pos: Vector3<f64>,
         vel: Vector3<f64>,
         frame: Frame,
-        center_id: isize,
+        center_id: i32,
     ) -> Self {
         State {
             desig,
@@ -117,7 +117,7 @@ impl State {
     /// Construct a new state made of NAN pos and vel vectors but containing the
     /// remaining data. This is primarily useful as a place holder when propagation
     /// has failed and the object needs to be recorded still.
-    pub fn new_nan(desig: Desig, jd: f64, frame: Frame, center_id: isize) -> Self {
+    pub fn new_nan(desig: Desig, jd: f64, frame: Frame, center_id: i32) -> Self {
         Self::new(
             desig,
             jd,
@@ -311,7 +311,7 @@ mod tests {
     #[test]
     fn flip_center() {
         let mut a = State::new(
-            1isize.into(),
+            1i32.into(),
             0.0,
             [1.0, 0.0, 0.0].into(),
             [0.0, 1.0, 0.0].into(),
@@ -328,7 +328,7 @@ mod tests {
     #[test]
     fn change_center() {
         let mut a = State::new(
-            1isize.into(),
+            1i32.into(),
             0.0,
             [1.0, 0.0, 0.0].into(),
             [1.0, 0.0, 0.0].into(),
@@ -336,7 +336,7 @@ mod tests {
             0,
         );
         let b = State::new(
-            3isize.into(),
+            3i32.into(),
             0.0,
             [0.0, 1.0, 0.0].into(),
             [0.0, 1.0, 0.0].into(),

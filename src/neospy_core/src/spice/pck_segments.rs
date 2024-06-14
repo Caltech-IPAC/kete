@@ -1,5 +1,4 @@
 use super::daf::DafArray;
-use super::spice_jds_to_jd;
 /// Most users should interface with `pck.rs`, not this module.
 ///
 /// PCK Files are collections of `Segments`, which are ranges of times where the state
@@ -15,7 +14,8 @@ use super::spice_jds_to_jd;
 /// There is a lot of repetition in this file, as many of the segment types have very
 /// similar internal structures.
 ///
-use super::{interpolation::*, jd_to_spice_jd};
+use super::interpolation::*;
+use super::{jd_to_spice_jd, spice_jds_to_jd};
 use crate::errors::NEOSpyError;
 use crate::frames::Frame;
 use std::fmt::Debug;

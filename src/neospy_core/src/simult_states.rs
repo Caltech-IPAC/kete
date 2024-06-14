@@ -16,7 +16,7 @@ pub struct SimultaneousStates {
     pub jd: f64,
 
     /// Center ID of all states.
-    pub center_id: isize,
+    pub center_id: i32,
 
     /// Frame of reference for all states.
     pub frame: Frame,

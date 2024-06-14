@@ -182,7 +182,7 @@ pub trait FovLike: Sync + Sized {
 
     /// Given an object ID, attempt to load the object from the SPKs.
     /// This will fail silently if the object is not found.
-    fn check_spks(&self, obj_ids: &[isize]) -> Vec<Option<SimultaneousStates>> {
+    fn check_spks(&self, obj_ids: &[i32]) -> Vec<Option<SimultaneousStates>> {
         let obs = self.observer();
         let spk = get_spk_singleton().try_read().unwrap();
 
