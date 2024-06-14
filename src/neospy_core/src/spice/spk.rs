@@ -42,10 +42,12 @@ const PRELOAD_SPKS: &[&[u8]] = &[
 ];
 
 /// A collection of segments.
+/// This does not contain the full SPK file information, it is just a vector containing
+/// all of the segments within the SPK files.
 #[derive(Debug)]
 pub struct SpkCollection {
     /// Collection of SPK Segment information
-    pub segments: Vec<SpkSegment>,
+    segments: Vec<SpkSegment>,
 
     map_cache: HashMap<(i32, i32), Vec<i32>>,
 

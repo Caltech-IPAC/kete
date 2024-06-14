@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Renamed "HorizonsCovariance" to "Covariance" and generalized it to support both
   cometary and cartesian representations.
+- Significant rewrite of the SPICE kernel file management, this rewrite is required
+  so that future work can enable writing SPICE kernel files.
 - Made api more consistent for conversion to State objects by renaming all instances of
   `.as_state` to `.state`.
 - Improved performance of integration and propagation by about 10%.
