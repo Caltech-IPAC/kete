@@ -366,7 +366,6 @@ impl From<DafArray> for SpkSegmentType2 {
     }
 }
 
-
 // TODO: SPK Segment type 12 should be a minor variation on type 13. This was not
 // implemented here due to missing a valid SPK file to test against.
 
@@ -401,7 +400,11 @@ impl SpkSegmentType13 {
     }
 
     fn get_times(&self) -> &[f64] {
-        unsafe { self.array.data.get_unchecked(self.n_records * 6..self.n_records * 7) }
+        unsafe {
+            self.array
+                .data
+                .get_unchecked(self.n_records * 6..self.n_records * 7)
+        }
     }
 
     fn try_get_pos_vel(
@@ -485,7 +488,11 @@ impl SpkSegmentType21 {
     }
 
     fn get_times(&self) -> &[f64] {
-        unsafe { self.array.data.get_unchecked(self.n_records * self.record_len..self.n_records * (self.record_len + 1))}
+        unsafe {
+            self.array.data.get_unchecked(
+                self.n_records * self.record_len..self.n_records * (self.record_len + 1),
+            )
+        }
     }
 
     fn try_get_pos_vel(

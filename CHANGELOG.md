@@ -35,6 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Astropy will no longer warning about deprecated WCS header values for NEOWISE images.
 
+### Removed
+
+- Removed support for SPK Files of type 3, these should be a trivial change from type 2
+  however I do not have access to a file of type 3 for testing. Because it cannot be
+  validated at the moment, the code has been removed.
+
 ## [0.2.2] - 2024 - 5 - 20
 
 ### Added
