@@ -62,53 +62,6 @@ pub fn chebyshev_evaluate_both(x: f64, coef: &[f64]) -> Result<(f64, f64), NEOSp
     Ok((val, der_vel))
 }
 
-/// Given a list of chebyshev polynomial coefficients, compute the value of the function
-/// using chebyshev polynomials of the first type.
-///
-/// This is useful for reading values out of JPL SPK format, be aware though that time
-/// scaling is also important for that particular use case.
-///
-/// # Arguments
-///
-/// * `t`       - Time at which to evaluate the chebyshev polynomials.
-/// * `coef`    - List of coefficients of the chebyshev polynomials.
-///
-#[inline(always)]
-pub fn chebyshev_evaluate_type1(t: f64, coef: &[f64]) -> Result<f64, NEOSpyError> {
-    let mut val = 0.0;
-
-    let mut second_t = 1.0;
-    let mut last_t = t;
-
-    let n_coef = coef.len();
-
-    if n_coef == 0 {
-        return Err(NEOSpyError::IOError(
-            "File not formatted correctly. Chebyshev polynomial cannot be order 0.".into(),
-        ));
-    }
-
-    val += coef[0] * second_t;
-
-    if n_coef == 1 {
-        return Ok(val);
-    }
-
-    val += coef[1] * last_t;
-
-    let mut next_t;
-
-    for &c in coef.iter().skip(2) {
-        next_t = 2.0 * t * last_t - second_t;
-        val += c * next_t;
-
-        second_t = last_t;
-        last_t = next_t;
-    }
-
-    Ok(val)
-}
-
 /// Interpolate using Hermite interpolation.
 ///
 /// # Arguments

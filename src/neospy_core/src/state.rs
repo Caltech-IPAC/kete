@@ -31,7 +31,7 @@ use nalgebra::{Vector3, Vector6};
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Hash, Eq)]
 pub enum Desig {
     /// Permanent ID, an integer.
-    Perm(usize),
+    Perm(u32),
 
     /// Provisional Designation
     Prov(String),
@@ -53,8 +53,8 @@ impl Display for Desig {
     }
 }
 
-impl From<usize> for Desig {
-    fn from(value: usize) -> Self {
+impl From<u32> for Desig {
+    fn from(value: u32) -> Self {
         Desig::Perm(value)
     }
 }
