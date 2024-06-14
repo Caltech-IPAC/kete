@@ -32,13 +32,13 @@ enum SPKSegmentType {
 }
 
 impl SPKSegmentType{
-    pub fn try_load<T: Read + Seek>(segment_type:usize, file: &mut T, array_start: u64, array_end:u64 )-> Result<Self, NEOSpyError>{
+    pub fn from_array(segment_type:usize, array: DafArray)-> Result<Self, NEOSpyError>{
         match segment_type {
-        1 => SpkSegmentType1::try_load(file, array_start, array_end),
-        2 => SpkSegmentType2::try_load(file, array_start, array_end),
-        3 => SpkSegmentType3::try_load(file, array_start, array_end),
-        13 => SpkSegmentType13::try_load(file, array_start, array_end),
-        21 => SpkSegmentType21::try_load(file, array_start, array_end),
+        1 => Ok(SPKSegmentType::Type1(array.into())),
+        2 => Ok(SPKSegmentType::Type2(array.into())),
+        3 => Ok(SPKSegmentType::Type3(array.into())),
+        13 => Ok(SPKSegmentType::Type13(array.into())),
+        21 => Ok(SPKSegmentType::Type21(array.into())),
         v => Err(NEOSpyError::IOError(format!(
                 "SPK Segment type {:?} not supported.",
                 v
@@ -46,6 +46,8 @@ impl SPKSegmentType{
         
     }}
 }
+
+
 
 #[derive(Debug)]
 pub struct SpkSegment {
@@ -101,7 +103,9 @@ impl SpkSegment {
             _ => Frame::Unknown(frame_num as usize),
         };
 
-        let segment = SPKSegmentType::try_load(segment_type, file, array_start, array_end)?;
+        let array = DafArray::try_load_array(file, array_start, array_end, true)?;
+
+        let segment = SPKSegmentType::from_array(segment_type, array)?;
 
         Ok(SpkSegment {
             obj_id,
@@ -154,22 +158,6 @@ struct SpkSegmentType1 {
 }
 
 impl SpkSegmentType1{
-    fn try_load<T: Read + Seek>(
-        file: &mut T,
-        array_start: u64,
-        array_end: u64,
-    ) -> Result<SPKSegmentType, NEOSpyError> {
-
-        let array = DafArray::try_load_array(file, array_start, array_end, true)?;
-
-        let n_records = array[array.len() - 1] as usize;
-
-        Ok(SPKSegmentType::Type1(SpkSegmentType1 {
-            array,
-            n_records,
-        }))
-    }
-
     fn get_record(&self, idx:usize) -> &[f64]
     {
         unsafe{self.array.0.get_unchecked(idx*71..(idx + 1) * 71)}
@@ -280,6 +268,18 @@ impl SpkSegmentType1{
     }
 }
 
+impl From<DafArray> for SpkSegmentType1{
+    fn from(array: DafArray) -> Self {
+        let n_records = array[array.len() - 1] as usize;
+
+        SpkSegmentType1 {
+            array,
+            n_records,
+        }
+    }
+}
+
+
 /// Chebyshev Polynomials (Position Only)
 ///
 /// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/spk.html#Type%202:%20Chebyshev%20position%20only>
@@ -292,32 +292,8 @@ pub struct SpkSegmentType2 {
     record_len: usize,
 }
 
+
 impl SpkSegmentType2 {
-    fn try_load<T: Read + Seek>(
-        file: &mut T,
-        array_start: u64,
-        array_end: u64,
-    ) -> Result<SPKSegmentType, NEOSpyError> {
-
-        let array = DafArray::try_load_array(file, array_start, array_end, true)?;
-
-        // let n_records = array[array.len() - 1] as usize;
-        let record_len = array[array.len() - 2] as usize;
-        let jd_step = array[array.len() - 3];
-
-        let n_coef = (record_len - 2) / 3;
-
-        if 3 * n_coef + 2 != record_len {
-            return Err(NEOSpyError::DAFLimits("File incorrectly formatted, found number of Chebyshev coefficients doesn't match expected".into()));
-        }
-
-        Ok(SPKSegmentType::Type2(SpkSegmentType2 {
-            array,
-            n_coef,
-            record_len,
-            jd_step
-        }))
-    }
 
     fn get_record(&self, idx:usize) -> &[f64]
     {
@@ -351,6 +327,30 @@ impl SpkSegmentType2 {
     }
 }
 
+
+impl From<DafArray> for SpkSegmentType2{
+    fn from(array: DafArray) -> Self {
+
+        // let n_records = array[array.len() - 1] as usize;
+        let record_len = array[array.len() - 2] as usize;
+        let jd_step = array[array.len() - 3];
+
+        let n_coef = (record_len - 2) / 3;
+
+        if 3 * n_coef + 2 != record_len {
+             panic!("File incorrectly formatted, found number of Chebyshev coefficients doesn't match expected");
+        }
+
+        SpkSegmentType2 {
+            array,
+            n_coef,
+            record_len,
+            jd_step
+        }
+    }
+}
+
+
 /// Chebyshev Polynomials (Position and Velocity)
 ///
 /// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/spk.html#Type%203:%20Chebyshev%20position%20and%20velocity>
@@ -364,27 +364,6 @@ pub struct SpkSegmentType3 {
 }
 
 impl SpkSegmentType3 {
-    fn try_load<T: Read + Seek>(
-        file: &mut T,
-        array_start: u64,
-        array_end: u64,
-    ) -> Result<SPKSegmentType, NEOSpyError> {
-        let array = DafArray::try_load_array(file, array_start, array_end, true)?;
-
-        // let n_records = array[array.len() - 1] as usize;
-        let record_len = array[array.len() - 2] as usize;
-        let jd_step = array[array.len() - 3];
-
-        let n_coef = (record_len - 2) / 6;
-
-        Ok(SPKSegmentType::Type3(SpkSegmentType3 {
-            array,
-            jd_step,
-            n_coef,
-            record_len,
-        }))
-    }
-
     fn get_record(&self, idx:usize) -> &[f64]
     {
         unsafe{self.array.0.get_unchecked(idx*self.record_len..(idx + 1) * self.record_len)}
@@ -425,6 +404,25 @@ impl SpkSegmentType3 {
     }
 }
 
+impl From<DafArray> for SpkSegmentType3{
+
+    fn from(array: DafArray) -> Self {
+
+        // let n_records = array[array.len() - 1] as usize;
+        let record_len = array[array.len() - 2] as usize;
+        let jd_step = array[array.len() - 3];
+
+        let n_coef = (record_len - 2) / 6;
+
+        Self {
+            array,
+            jd_step,
+            n_coef,
+            record_len,
+        }
+    }
+}
+
 // TODO: SPK Segment type 12 should be a minor variation on type 13. This was not
 // implemented here due to missing a valid SPK file to test against.
 
@@ -439,25 +437,23 @@ pub struct SpkSegmentType13 {
     window_size: usize,
     n_records: usize,
 }
-impl SpkSegmentType13 {
-    fn try_load<T: Read + Seek>(
-        file: &mut T,
-        array_start: u64,
-        array_end: u64,
-    ) -> Result<SPKSegmentType, NEOSpyError> {
 
-        let array = DafArray::try_load_array(file, array_start, array_end, true)?;
+impl From<DafArray> for SpkSegmentType13{
 
+    fn from(array: DafArray) -> Self {
         let n_records = array[array.len() - 1] as usize;
         let window_size = array[array.len() - 2] as usize;
 
-        Ok(SPKSegmentType::Type13(SpkSegmentType13 {
+        Self{
             array,
             window_size,
             n_records,
-        }))
+        }
     }
+}
 
+
+impl SpkSegmentType13 {
     fn get_record(&self, idx:usize) -> &[f64]
     {
         unsafe{self.array.0.get_unchecked(idx*6..(idx + 1) * 6)}
@@ -520,28 +516,27 @@ pub struct SpkSegmentType21 {
     n_records: usize,
     record_len: usize,
 }
-impl SpkSegmentType21 {
-    fn try_load<T: Read + Seek>(
-        file: &mut T,
-        array_start: u64,
-        array_end: u64,
-    ) -> Result<SPKSegmentType, NEOSpyError> {
 
-        let array = DafArray::try_load_array(file, array_start, array_end, true)?;
+
+impl From<DafArray> for SpkSegmentType21{
+
+    fn from(array: DafArray) -> Self {
 
         let n_records = array[array.len() - 1] as usize;
         let n_coef = array[array.len() - 2] as usize;
 
         let record_len = 4 * n_coef + 11;
 
-        Ok(SPKSegmentType::Type21(SpkSegmentType21 {
+        Self{
             array,
             n_coef,
             n_records,
             record_len,
-        }))
+        }
     }
+}
 
+impl SpkSegmentType21 {
     fn get_record(&self, idx:usize) -> &[f64]
     {
         unsafe{self.array.0.get_unchecked(idx*self.record_len..(idx + 1) * self.record_len)}

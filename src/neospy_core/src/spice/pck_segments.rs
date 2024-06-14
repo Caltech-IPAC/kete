@@ -66,6 +66,7 @@ impl PckSegment {
         let segment_type = ints[2] as usize;
         let array_start = ints[3] as u64;
         let array_end = ints[4] as u64;
+        let array = DafArray::try_load_array(file, array_start, array_end, true)?;
 
         let ref_frame = match frame_id {
             1 => Frame::Equatorial, // J2000
@@ -74,7 +75,7 @@ impl PckSegment {
         };
 
         let segment = match segment_type {
-            2 => PckSegmentType2::try_load(file, array_start, array_end)?,
+            2 => PCKSegmentType::Type2(array.into()),
             v => {
                 return Err(NEOSpyError::IOError(format!(
                     "SPK Segment type {:?} not supported.",
@@ -120,33 +121,8 @@ pub struct PckSegmentType2 {
     record_len: usize,
 }
 
+
 impl PckSegmentType2 {
-    fn try_load<T: Read + Seek>(
-        file: &mut T,
-        array_start: u64,
-        array_end: u64,
-    ) -> Result<PCKSegmentType, NEOSpyError> {
-        let array = DafArray::try_load_array(file, array_start, array_end, true)?;
-
-
-        let n_records = array[array.len() - 1] as usize;
-        let record_len = array[array.len() - 2] as usize;
-        let jd_step = array[array.len() - 3];
-
-        let n_coef = (record_len - 2) / 3;
-
-        if n_records * record_len + 4 != array.len(){
-            return Err(NEOSpyError::IOError("PCK File not formatted correctly.".into()))
-        }
-
-        Ok(PCKSegmentType::Type2(PckSegmentType2 {
-            array,
-            jd_step,
-            n_coef,
-            record_len,
-        }))
-    }
-
     fn get_record(&self, idx:usize) -> &[f64]
     {
         unsafe{self.array.0.get_unchecked(idx*self.record_len..(idx + 1) * self.record_len)}
@@ -197,5 +173,29 @@ impl PckSegmentType2 {
                 w_der / t_step* 86400.0,
             ],
         ))
+    }
+}
+
+
+impl From<DafArray> for PckSegmentType2{
+    fn from(array: DafArray) -> Self {
+        
+
+        let n_records = array[array.len() - 1] as usize;
+        let record_len = array[array.len() - 2] as usize;
+        let jd_step = array[array.len() - 3];
+
+        let n_coef = (record_len - 2) / 3;
+
+        if n_records * record_len + 4 != array.len(){
+            panic!("PCK File not formatted correctly.")
+        }
+
+        PckSegmentType2 {
+            array,
+            jd_step,
+            n_coef,
+            record_len,
+        }
     }
 }
