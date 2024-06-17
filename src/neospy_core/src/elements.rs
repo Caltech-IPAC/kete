@@ -2,7 +2,7 @@
 //! This allows conversion to and from cometary orbital elements to [`ExactState`].
 use crate::constants::GMS_SQRT;
 use crate::prelude::{Desig, Frame, NEOSpyError, State};
-use crate::propagation::compute_eccentric_anomaly;
+use crate::propagation::{compute_eccentric_anomaly, compute_true_anomaly};
 
 use nalgebra::Vector3;
 use std::f64::consts::TAU;
@@ -259,7 +259,7 @@ impl CometElements {
     }
 
     /// Compute the semi major axis in AU.
-    /// NAN is returned if not the orbit is parabolic.
+    /// NAN is returned if the orbit is parabolic.
     pub fn semi_major(&self) -> f64 {
         match self.eccentricity {
             ecc if ((ecc - 1.0).abs() <= 1e-5) => f64::NAN,
@@ -268,47 +268,34 @@ impl CometElements {
     }
 
     /// Compute the orbital period in days.
-    /// NAN is returned if not the orbit is not elliptical.
+    /// Infinity is returned if the orbit is parabolic or hyperbolic.
     pub fn orbital_period(&self) -> f64 {
         let semi_major = self.semi_major();
         match semi_major {
-            a if a <= 1e-8 => f64::NAN,
+            a if a <= 1e-8 => f64::INFINITY,
             a => TAU * a.powf(1.5) / GMS_SQRT,
         }
     }
 
     /// Compute the mean motion in radians per day.
-    /// NAN is returned if not the orbit is not elliptical.
     pub fn mean_motion(&self) -> f64 {
-        let period = self.orbital_period();
-        match period {
-            p if p.is_nan() => p,
-            p => TAU / p,
+        match self.eccentricity {
+            ecc if ((ecc - 1.0).abs() <= 1e-5) => GMS_SQRT,
+            _ => GMS_SQRT / self.semi_major().abs().powf(1.5),
         }
     }
 
     /// Compute the mean anomaly in radians.
-    /// NAN is returned if not the orbit is not elliptical.
     pub fn mean_anomaly(&self) -> f64 {
-        match self.mean_motion() {
-            mm if mm.is_nan() => mm,
-            mm => ((self.epoch - self.peri_time) * mm).rem_euclid(TAU),
-        }
+        let mm = self.mean_motion();
+        ((self.epoch - self.peri_time) * mm + 1e-6).rem_euclid(TAU) - 1e-6
     }
 
     /// Compute the True Anomaly
     /// The angular distance between perihelion and the current position as seen
     /// from the origin.
     pub fn true_anomaly(&self) -> Result<f64, NEOSpyError> {
-        let ecc_anom = self.eccentric_anomaly()?;
-        let ecc_cos = ecc_anom.cos();
-        let mut true_anom = ((ecc_cos - self.eccentricity) / (1.0 - self.eccentricity * ecc_cos))
-            .clamp(-1.0, 1.0)
-            .acos();
-        if (ecc_anom - true_anom).abs() >= (ecc_anom - (TAU - true_anom)).abs() {
-            true_anom = -true_anom + TAU;
-        }
-        Ok(true_anom)
+        compute_true_anomaly(self.eccentricity, self.mean_anomaly(), self.peri_dist)
     }
 }
 
@@ -330,6 +317,21 @@ mod tests {
             peri_arg: 4.229481513899533,
             peri_dist: 0.5613867506855604,
         };
+        assert!(elem.to_pos_vel().is_ok());
+
+        // This was previously a failed instance.
+        let elem = CometElements {
+            desig: Desig::Empty,
+            frame: Frame::Ecliptic,
+            epoch: 2455341.243793971,
+            eccentricity: 1.001148327267,
+            inclination: 2.433767,
+            lon_of_ascending: -1.24321,
+            peri_time: 2454482.5825015577,
+            peri_arg: 0.823935226897,
+            peri_dist: 5.594792535298549,
+        };
+        assert!((elem.true_anomaly().unwrap() - 1.198554792).abs() < 1e-6);
         assert!(elem.to_pos_vel().is_ok());
     }
 
@@ -400,8 +402,23 @@ mod tests {
                                         &vel.into(),
                                         Frame::Ecliptic,
                                     );
-
                                     let [new_pos, new_vel] = new_elem.to_pos_vel().unwrap();
+
+                                    let t_anom = ((elem.true_anomaly().unwrap()
+                                        - new_elem.true_anomaly().unwrap())
+                                        * 2.0)
+                                        .sin()
+                                        .abs();
+
+                                    let t_ecc = ((elem.eccentric_anomaly().unwrap()
+                                        - new_elem.eccentric_anomaly().unwrap())
+                                        * 2.0)
+                                        .sin()
+                                        .abs();
+
+                                    assert!(t_anom < 1e-7);
+                                    assert!(t_ecc < 1e-7);
+
                                     for idx in 0..3 {
                                         assert!(
                                             (new_pos[idx] - pos[idx]).abs() < 1e-7,

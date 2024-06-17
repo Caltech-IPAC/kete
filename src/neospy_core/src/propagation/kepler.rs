@@ -49,6 +49,29 @@ pub fn compute_eccentric_anomaly(
     }
 }
 
+/// Compute the true anomaly for all orbital classes.
+///
+/// # Arguments
+///
+/// * `ecc` - The eccentricity, must be non-negative.
+/// * `mean_anomaly` - Mean anomaly, between 0 and 2 pi.
+/// * `peri_dist` - Perihelion Distance in AU, only used for parabolic orbits.
+///
+pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> Result<f64, NEOSpyError> {
+    let ecc_anom = compute_eccentric_anomaly(ecc, mean_anom, peri_dist)?;
+
+    let anom = match ecc {
+        e if (e - 1.0).abs() < 1e-6 => (ecc_anom / (2.0 * peri_dist).sqrt()).atan() * 2.0,
+        e if e < 1.0 => (((1.0 + ecc) / (1.0 - ecc)).sqrt() * (ecc_anom / 2.0).tan()).atan() * 2.0,
+        e if e > 1.0 => {
+            ((-(1.0 + ecc) / (1.0 - ecc)).sqrt() * (ecc_anom / 2.0).tanh()).atan() * 2.0
+        }
+        _ => unreachable!(),
+    };
+
+    Ok(anom.rem_euclid(TAU))
+}
+
 /// This function is used by the kepler universal solver below.
 /// They are defined by the referenced paper.
 ///
@@ -304,5 +327,16 @@ mod tests {
         let vel_exp = Vector3::new(-0.013061655543084886, -0.005508140023183166, 0.0);
         assert!((res.0 - pos_exp).norm() < 1e-8);
         assert!((res.1 - vel_exp).norm() < 1e-8);
+    }
+
+    #[test]
+    fn test_true_anomaly() {
+        let a = compute_true_anomaly(0.5, 3.211, 0.1).unwrap();
+        let b = compute_true_anomaly(0.5, 3.211 + TAU, 0.1).unwrap();
+        assert!((a - b).abs() < 1e-11);
+
+        let a = compute_true_anomaly(0.0, 3.211, 0.1).unwrap();
+        let b = compute_true_anomaly(0.0, 3.211 + TAU, 0.1).unwrap();
+        assert!((a - b).abs() < 1e-11);
     }
 }
