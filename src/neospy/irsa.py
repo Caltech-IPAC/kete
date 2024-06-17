@@ -5,6 +5,7 @@ import requests
 import time
 import logging
 import numpy as np
+import warnings
 import pandas as pd  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 from xml.etree import ElementTree
@@ -194,7 +195,11 @@ def plot_fits_image(fit, vmin=-3, vmax=7, cmap="bone_r"):
         Color map to use for the plot.
     """
     data = np.nan_to_num(fit.data)
-    wcs = WCS(fit.header, relax=True)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore")
+        wcs = WCS(fit.header)
+
     if not plt.get_fignums():
         plt.figure(dpi=120, figsize=(6, 6), facecolor="w")
     ax = plt.subplot(projection=wcs)

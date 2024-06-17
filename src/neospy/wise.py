@@ -498,7 +498,10 @@ def plot_frames(
         except OSError:
             continue
         data = np.nan_to_num(fit.data)
-        wcs = WCS(fit.header, relax=True)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+            wcs = WCS(fit.header)
+
         ax = plt.subplot(2, 2, band, projection=wcs)
 
         data_no_bkg = data - np.median(data)
