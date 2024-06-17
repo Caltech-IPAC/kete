@@ -318,6 +318,21 @@ mod tests {
             peri_dist: 0.5613867506855604,
         };
         assert!(elem.to_pos_vel().is_ok());
+
+        // This was previously a failed instance.
+        let elem = CometElements {
+            desig: Desig::Empty,
+            frame: Frame::Ecliptic,
+            epoch: 2455341.243793971,
+            eccentricity: 1.001148327267,
+            inclination: 2.433767,
+            lon_of_ascending: -1.24321,
+            peri_time: 2454482.5825015577,
+            peri_arg: 0.823935226897,
+            peri_dist: 5.594792535298549,
+        };
+        assert!((elem.true_anomaly().unwrap() - 1.198554792).abs() < 1e-6);
+        assert!(elem.to_pos_vel().is_ok());
     }
 
     #[test]
