@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Orbital Elements now correctly computes `true_anomaly`, `mean_anomaly`,
+  `eccentric_anomaly`, `semi_major_axis`, and `mean_motion` for parabolic and
+  hyperbolic orbits.
 - Typo in Observability example was leading to an incorrect Magnitude value.
 - Astropy WCS warnings are now suppressed.
 
