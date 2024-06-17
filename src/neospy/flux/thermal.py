@@ -56,7 +56,7 @@ def black_body_radiation(temperature: Vector, wavelength: float) -> np.ndarray:
     Iterable
         Janskys per steradian
     """
-    temperature = np.array(temperature, copy=False)
+    temperature = np.asarray(temperature)
     if temperature.ndim == 0:
         return _core.black_body_flux([temperature], wavelength)[0]
     return _core.black_body_flux(list(temperature), wavelength)
