@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Significant rewrite of the SPICE kernel file management, this rewrite is required
   so that future work can enable writing SPICE kernel files.
 
+### Fixed
+
+- Typo in Observability example was leading to an incorrect Magnitude value.
+
 ### Removed
 
 - Removed support for SPK Files of type 3, these should be a trivial change from type 2
