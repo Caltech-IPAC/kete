@@ -1,18 +1,18 @@
 from __future__ import annotations
 import calendar
 import datetime
-from astropy.time import Time as AstroTime  # type: ignore
 import warnings
+from astropy.time import Time as AstroTime  # type: ignore
 
-__all__ = ["Time", "float_day_to_d_h_m_s", "d_h_m_s_to_float_days"]
+__all__ = ["Time", "float_day_to_d_h_m_s", "d_h_m_s_to_float_days", "days_in_year"]
 
 
 class Time:
     """
     A representation of time, always in JD with TDB scaling.
 
-    A wrapper around the `astopy.time.Time` class which enables some convenient
-    conversions. Specifically days may be represented by floats, where astopy requires
+    A wrapper around the `astropy.time.Time` class which enables some convenient
+    conversions. Specifically days may be represented by floats, where Astropy requires
     ints.
 
     This also suppresses a number of warnings related to datetime conversion in the
@@ -25,7 +25,7 @@ class Time:
     ----------
     in_time:
         Accepts multiple formats of input, including floats, strings, datetime objects,
-        see `astopy.time.Time` for more details.
+        see `astropy.time.Time` for more details.
     format:
         Accepts all formats specified by astropy.
     scale:
@@ -123,7 +123,10 @@ class Time:
             t.year,
             t.month,
             d_h_m_s_to_float_days(
-                d=t.day, h=t.hour, m=t.minute, s=t.second + t.microsecond * 1e-6
+                days=t.day,
+                hours=t.hour,
+                minutes=t.minute,
+                seconds=t.second + t.microsecond * 1e-6,
             ),
         )
 
@@ -141,6 +144,7 @@ class Time:
         2017.0
 
         2016 was a leap year, so 366 days instead of 365.
+
         >>> neospy.Time(2457754.5 - 366, scale='utc').year_float
         2016.0
 
@@ -220,6 +224,10 @@ class Time:
 def float_day_to_d_h_m_s(day: float) -> tuple[int, int, int, float]:
     """
     Convert a float of days into ints of (days, hours, minutes, seconds).
+
+    >>> neospy.time.float_day_to_d_h_m_s(1.5)
+    (1, 12, 0, 0.0)
+
     """
     seconds = datetime.timedelta(days=float(day)).total_seconds()
     days = seconds // (24 * 60 * 60)
@@ -231,13 +239,19 @@ def float_day_to_d_h_m_s(day: float) -> tuple[int, int, int, float]:
 
 
 def d_h_m_s_to_float_days(
-    d: float = 0, h: float = 0, m: float = 0, s: float = 0
+    days: float = 0, hours: float = 0, minutes: float = 0, seconds: float = 0
 ) -> float:
     """
     Convert floats of days, hours, minutes, and seconds into a single float in units of
     days.
+
+    >>> neospy.time.d_h_m_s_to_float_days(1, 11, 59, 60)
+    1.5
+
     """
-    dt = datetime.timedelta(days=d, hours=h, minutes=m, seconds=s).total_seconds()
+    dt = datetime.timedelta(
+        days=days, hours=hours, minutes=minutes, seconds=seconds
+    ).total_seconds()
     return dt / 60 / 60 / 24
 
 

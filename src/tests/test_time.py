@@ -18,5 +18,5 @@ class TestTime:
         assert Time.from_strptime(Time.J2000().strftime(s), s).jd == Time.J2000().jd
 
     def test_d_h_m_s_to_float(self):
-        t = d_h_m_s_to_float_days(d=1, h=2, m=3, s=4.5)
+        t = d_h_m_s_to_float_days(days=1, hours=2, minutes=3, seconds=4.5)
         assert float_day_to_d_h_m_s(t) == (1, 2, 3, 4.5)
