@@ -25,7 +25,7 @@ def compute_H(diameter: NDArray, albedo: NDArray, c_hg=constants.C_V) -> np.ndar
     albedo:
         The albedo of the object.
     """
-    diameter = np.array(diameter, dtype=float, copy=False)
+    diameter = np.asarray(diameter, dtype=float)
     return -5.0 * np.log10(diameter * np.sqrt(albedo) / c_hg)
 
 
