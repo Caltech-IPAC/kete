@@ -1,14 +1,14 @@
 from __future__ import annotations
 import io
 from functools import lru_cache
-import requests
 import time
 import logging
-import numpy as np
 import warnings
-import pandas as pd  # type: ignore
-import matplotlib.pyplot as plt  # type: ignore
 from xml.etree import ElementTree
+import matplotlib.pyplot as plt  # type: ignore
+import requests
+import numpy as np
+import pandas as pd  # type: ignore
 
 
 from astropy.wcs import WCS  # type: ignore
