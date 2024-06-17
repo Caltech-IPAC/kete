@@ -1,4 +1,5 @@
 from __future__ import annotations
+import calendar
 import datetime
 from astropy.time import Time as AstroTime  # type: ignore
 import warnings
@@ -70,7 +71,7 @@ class Time:
             immediately.
         """
         # The input format should be (year, month, day)
-        day, hour, min, sec = float_day_to_d_h_m_s(day)
+        day, hour, minute, sec = float_day_to_d_h_m_s(day)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
             return cls(
@@ -80,7 +81,7 @@ class Time:
                         month=int(month),
                         day=day,
                         hour=hour,
-                        minute=min,
+                        minute=minute,
                         second=sec,
                     ),
                     scale=scale,
@@ -111,7 +112,12 @@ class Time:
 
     @property
     def ymd(self) -> tuple:
-        """Return (year, month, day), where day is a float."""
+        """
+        Return (year, month, day), where day is a float.
+
+        >>> neospy.Time.from_ymd(2010, 1, 1).ymd
+        (2010, 1, 1.0)
+        """
         t = self.time.datetime
         return (
             t.year,
@@ -120,6 +126,30 @@ class Time:
                 d=t.day, h=t.hour, m=t.minute, s=t.second + t.microsecond * 1e-6
             ),
         )
+
+    @property
+    def year_float(self) -> float:
+        """
+        Time as the UTC year in float form, IE: 2024.54321.
+
+        Note that Time is TDB Scaled, causing UTC to be a few seconds different.
+
+        >>> neospy.Time.from_ymd(2010, 1, 1).year_float
+        2009.999997875444
+
+        >>> neospy.Time(2457754.5, scale='utc').year_float
+        2017.0
+
+        2016 was a leap year, so 366 days instead of 365.
+        >>> neospy.Time(2457754.5 - 366, scale='utc').year_float
+        2016.0
+
+        """
+        tup = self.utc.datetime.timetuple()
+        frac = d_h_m_s_to_float_days(
+            tup.tm_yday - 1, tup.tm_hour, tup.tm_min, tup.tm_sec
+        )
+        return tup.tm_year + frac / days_in_year(tup.tm_year)
 
     @property
     def iso(self) -> str:
@@ -209,3 +239,21 @@ def d_h_m_s_to_float_days(
     """
     dt = datetime.timedelta(days=d, hours=h, minutes=m, seconds=s).total_seconds()
     return dt / 60 / 60 / 24
+
+
+def days_in_year(year: int) -> int:
+    """
+    Return the number of days in the specified year, specifically for leap years.
+
+    >>> neospy.time.days_in_year(2016)
+    366
+
+    >>> neospy.time.days_in_year(2017)
+    365
+
+    Parameters
+    ----------
+    year :
+        Year as an int.
+    """
+    return 365 + calendar.isleap(year)
