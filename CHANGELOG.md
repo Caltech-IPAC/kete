@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `Time.year_float` which converts the `Time` object to the Year as a float.
+
 ### Changed
 
 - Significant rewrite of the SPICE kernel file management, this rewrite is required
