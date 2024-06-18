@@ -90,7 +90,7 @@ pub struct State {
 
     /// Position and velocity are given with respect to the specified center_id.
     /// The only privileged center ID is the Solar System Barycenter 0.
-    pub center_id: i32,
+    pub center_id: isize,
 }
 
 impl State {
@@ -102,7 +102,7 @@ impl State {
         pos: Vector3<f64>,
         vel: Vector3<f64>,
         frame: Frame,
-        center_id: i32,
+        center_id: isize,
     ) -> Self {
         State {
             desig,
@@ -117,7 +117,7 @@ impl State {
     /// Construct a new state made of NAN pos and vel vectors but containing the
     /// remaining data. This is primarily useful as a place holder when propagation
     /// has failed and the object needs to be recorded still.
-    pub fn new_nan(desig: Desig, jd: f64, frame: Frame, center_id: i32) -> Self {
+    pub fn new_nan(desig: Desig, jd: f64, frame: Frame, center_id: isize) -> Self {
         Self::new(
             desig,
             jd,
@@ -203,13 +203,14 @@ impl State {
     /// Trade the center ID and ID values, and flip the direction of the position and
     /// velocity vectors.
     pub fn try_flip_center_id(&mut self) -> Result<(), NEOSpyError> {
-        if let Desig::Naif(mut id) = self.desig {
+        if let Desig::Naif(id) = self.desig {
+            let mut id = id as isize;
             (id, self.center_id) = (self.center_id, id);
             for i in 0..3 {
                 self.pos[i] = -self.pos[i];
                 self.vel[i] = -self.vel[i];
             }
-            self.desig = Desig::Naif(id);
+            self.desig = Desig::Naif(id as i32);
             return Ok(());
         }
         Err(NEOSpyError::ValueError(
@@ -246,7 +247,7 @@ impl State {
         };
 
         // target state does not match at all, error
-        if self.center_id != state.center_id && self.center_id != state_id {
+        if self.center_id != state.center_id && self.center_id != state_id as isize {
             return Err(NEOSpyError::ValueError(
                 "States do not reference one another at all, cannot change center.".into(),
             ));

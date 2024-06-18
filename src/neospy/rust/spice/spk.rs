@@ -78,7 +78,7 @@ pub fn spk_reset_py() {
 ///     Frame of reference for the state.
 #[pyfunction]
 #[pyo3(name = "spk_state")]
-pub fn spk_state_py(id: i32, jd: f64, center: i32, frame: PyFrames) -> PyResult<PyState> {
+pub fn spk_state_py(id: i32, jd: f64, center: isize, frame: PyFrames) -> PyResult<PyState> {
     let spk = get_spk_singleton().try_read().unwrap();
     let mut state = spk.try_get_state(id, jd, center, frame.into())?;
     state.try_naif_id_to_name();

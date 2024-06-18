@@ -157,7 +157,7 @@ impl SpkSegment {
             pos.into(),
             vel.into(),
             self.ref_frame,
-            self.center_id,
+            self.center_id as isize,
         ))
     }
 }

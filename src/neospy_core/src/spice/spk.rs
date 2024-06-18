@@ -83,7 +83,7 @@ impl SpkCollection {
         &self,
         id: i32,
         jd: f64,
-        center: i32,
+        center: isize,
         frame: Frame,
     ) -> Result<State, NEOSpyError> {
         let mut state = self.try_get_raw_state(id, jd)?;
@@ -93,12 +93,12 @@ impl SpkCollection {
     }
 
     /// Use the data loaded in the SPKs to change the center ID of the provided state.
-    pub fn try_change_center(&self, state: &mut State, new_center: i32) -> Result<(), NEOSpyError> {
+    pub fn try_change_center(&self, state: &mut State, new_center: isize) -> Result<(), NEOSpyError> {
         if state.center_id == new_center {
             return Ok(());
         }
 
-        let path = self.find_path(state.center_id, new_center)?;
+        let path = self.find_path(state.center_id as i32, new_center as i32)?;
 
         for intermediate in path {
             let next = self.try_get_raw_state(intermediate, state.jd)?;

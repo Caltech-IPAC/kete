@@ -26,7 +26,7 @@ impl PyState {
         pos: VectorLike,
         vel: VectorLike,
         frame: Option<PyFrames>,
-        center_id: Option<i32>,
+        center_id: Option<isize>,
     ) -> Self {
         let desig = match desig {
             Some(name) => prelude::Desig::Name(name),
@@ -68,7 +68,7 @@ impl PyState {
     /// Change the center ID of the state from the current state to the target state.
     ///
     /// If the desired state is not a known NAIF id this will raise an exception.
-    pub fn change_center(&self, naif_id: i32) -> PyResult<Self> {
+    pub fn change_center(&self, naif_id: isize) -> PyResult<Self> {
         let mut state = self.0.clone();
         let spk = neospy_core::prelude::get_spk_singleton()
             .try_read()
@@ -129,7 +129,7 @@ impl PyState {
 
     /// Central ID of the object used as reference for the coordinate frame.
     #[getter]
-    pub fn center_id(&self) -> i32 {
+    pub fn center_id(&self) -> isize {
         self.0.center_id
     }
 
