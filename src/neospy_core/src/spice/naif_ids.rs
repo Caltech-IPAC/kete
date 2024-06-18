@@ -44,7 +44,8 @@ lazy_static! {
 }
 
 /// Return the string name of the desired ID if possible.
-pub fn try_name_from_id(id: i32) -> Option<String> {
+pub fn try_name_from_id(id: i64) -> Option<String> {
+    let id = id as i32;
     for naif_id in NAIF_IDS.iter() {
         if naif_id.id == id {
             return Some(naif_id.name.clone());

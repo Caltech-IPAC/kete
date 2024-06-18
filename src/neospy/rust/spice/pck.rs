@@ -44,7 +44,7 @@ pub fn pck_load_py(filenames: Vec<String>) -> PyResult<()> {
 pub fn pck_earth_frame_py(
     pos: [f64; 3],
     jd: f64,
-    new_center: isize,
+    new_center: i64,
     name: Option<String>,
 ) -> PyResult<PyState> {
     let desig = {

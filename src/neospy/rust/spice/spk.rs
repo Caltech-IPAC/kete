@@ -27,7 +27,7 @@ pub fn spk_load_py(filenames: Vec<String>) -> PyResult<()> {
 /// (JD_start, JD_end, Center Naif ID, Frame, SPK Segment type ID)
 #[pyfunction]
 #[pyo3(name = "spk_available_info")]
-pub fn spk_available_info_py(naif_id: i32) -> Vec<(f64, f64, i32, PyFrames, i32)> {
+pub fn spk_available_info_py(naif_id: i64) -> Vec<(f64, f64, i64, PyFrames, i32)> {
     let singleton = get_spk_singleton().try_read().unwrap();
     singleton
         .available_info(naif_id)
@@ -39,10 +39,10 @@ pub fn spk_available_info_py(naif_id: i32) -> Vec<(f64, f64, i32, PyFrames, i32)
 /// Return a list of all NAIF IDs currently loaded in the SPK shared memory singleton.
 #[pyfunction]
 #[pyo3(name = "spk_loaded")]
-pub fn spk_loaded_objects_py() -> Vec<i32> {
+pub fn spk_loaded_objects_py() -> Vec<i64> {
     let spk = get_spk_singleton().try_read().unwrap();
     let loaded = spk.loaded_objects(false);
-    let mut loaded: Vec<i32> = loaded.into_iter().collect();
+    let mut loaded: Vec<i64> = loaded.into_iter().collect();
     loaded.sort();
     loaded
 }
@@ -51,7 +51,7 @@ pub fn spk_loaded_objects_py() -> Vec<i32> {
 /// If the name is not found, this just returns a string the the NAIF ID.
 #[pyfunction]
 #[pyo3(name = "spk_get_name_from_id")]
-pub fn spk_get_name_from_id_py(id: i32) -> String {
+pub fn spk_get_name_from_id_py(id: i64) -> String {
     try_name_from_id(id).unwrap_or(id.to_string())
 }
 
@@ -78,7 +78,7 @@ pub fn spk_reset_py() {
 ///     Frame of reference for the state.
 #[pyfunction]
 #[pyo3(name = "spk_state")]
-pub fn spk_state_py(id: i32, jd: f64, center: isize, frame: PyFrames) -> PyResult<PyState> {
+pub fn spk_state_py(id: i64, jd: f64, center: i64, frame: PyFrames) -> PyResult<PyState> {
     let spk = get_spk_singleton().try_read().unwrap();
     let mut state = spk.try_get_state(id, jd, center, frame.into())?;
     state.try_naif_id_to_name();
@@ -97,7 +97,7 @@ pub fn spk_state_py(id: i32, jd: f64, center: isize, frame: PyFrames) -> PyResul
 ///     Time (JD) in TDB scaled time.
 #[pyfunction]
 #[pyo3(name = "spk_raw_state")]
-pub fn spk_raw_state_py(id: i32, jd: f64) -> PyResult<PyState> {
+pub fn spk_raw_state_py(id: i64, jd: f64) -> PyResult<PyState> {
     let spk = get_spk_singleton().try_read().unwrap();
     Ok(PyState(spk.try_get_raw_state(id, jd)?))
 }

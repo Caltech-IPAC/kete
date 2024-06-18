@@ -57,7 +57,7 @@ pub const V_MAG_ZERO: f64 = 3597.28;
 ///
 /// Recorded values are:
 /// (ID, GM of the object in solar masses, Radius of the object in AU)
-pub const MASSIVE_OBJECTS: &[(i32, f64, f64)] = &[
+pub const MASSIVE_OBJECTS: &[(i64, f64, f64)] = &[
     (10, 1.0, 0.004654758765894654),                    // Sun
     (1, 1.66012082548908e-07, 1.63139354095098e-05),    // Mercury Barycenter
     (2, 2.44783828779694e-06, 4.04537843465442e-05),    // Venus Barycenter
@@ -72,7 +72,7 @@ pub const MASSIVE_OBJECTS: &[(i32, f64, f64)] = &[
 
 /// Recorded values are:
 /// (ID, GM of the object in solar masses, Radius of the object in AU)
-pub const MASSIVE_OBJECTS_EXTENDED: &[(i32, f64, f64)] = &[
+pub const MASSIVE_OBJECTS_EXTENDED: &[(i64, f64, f64)] = &[
     (10, 1.0, 0.004654758765894654),                    // Sun
     (1, 1.66012082548908e-07, 1.63139354095098e-05),    // Mercury Barycenter
     (2, 2.44783828779694e-06, 4.04537843465442e-05),    // Venus Barycenter

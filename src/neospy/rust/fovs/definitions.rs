@@ -140,7 +140,7 @@ impl PyWiseCmos {
         pointing: VectorLike,
         rotation: f64,
         observer: PyState,
-        frame_num: usize,
+        frame_num: u64,
         scan_id: String,
     ) -> Self {
         let pointing = pointing.into_vector(observer.frame());
@@ -170,7 +170,7 @@ impl PyWiseCmos {
 
     /// WISE Frame number.
     #[getter]
-    pub fn frame_num(&self) -> usize {
+    pub fn frame_num(&self) -> u64 {
         self.0.frame_num
     }
 
@@ -626,7 +626,7 @@ impl PyZtfCcdQuad {
         imgtypecode: String,
         qid: u8,
         maglimit: f64,
-        fid: usize,
+        fid: u64,
     ) -> Self {
         let corners = corners
             .into_iter()
@@ -706,7 +706,7 @@ impl PyZtfCcdQuad {
 
     /// Metadata about where this FOV is in the Survey.
     #[getter]
-    pub fn fid(&self) -> usize {
+    pub fn fid(&self) -> u64 {
         self.0.fid
     }
 
@@ -766,7 +766,7 @@ impl PyZtfField {
 
     /// Metadata about where this FOV is in the Survey.
     #[getter]
-    pub fn fid(&self) -> usize {
+    pub fn fid(&self) -> u64 {
         self.0.fid
     }
 

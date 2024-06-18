@@ -49,10 +49,10 @@ pub struct SpkCollection {
     /// Collection of SPK Segment information
     segments: Vec<SpkSegment>,
 
-    map_cache: HashMap<(i32, i32), Vec<i32>>,
+    map_cache: HashMap<(i64, i64), Vec<i64>>,
 
     /// Map from object id to all connected pairs.
-    nodes: HashMap<i32, HashSet<(i32, i32)>>,
+    nodes: HashMap<i64, HashSet<(i64, i64)>>,
 }
 
 /// Define the SPK singleton structure.
@@ -62,7 +62,7 @@ impl SpkCollection {
     /// Get the raw state from the loaded SPK files.
     /// This state will have the center and frame of whatever was originally loaded
     /// into the file.
-    pub fn try_get_raw_state(&self, id: i32, jd: f64) -> Result<State, NEOSpyError> {
+    pub fn try_get_raw_state(&self, id: i64, jd: f64) -> Result<State, NEOSpyError> {
         for segment in self.segments.iter() {
             if id == segment.obj_id && segment.contains(jd) {
                 return segment.try_get_state(jd);
@@ -81,9 +81,9 @@ impl SpkCollection {
     /// specified.
     pub fn try_get_state(
         &self,
-        id: i32,
+        id: i64,
         jd: f64,
-        center: isize,
+        center: i64,
         frame: Frame,
     ) -> Result<State, NEOSpyError> {
         let mut state = self.try_get_raw_state(id, jd)?;
@@ -93,12 +93,12 @@ impl SpkCollection {
     }
 
     /// Use the data loaded in the SPKs to change the center ID of the provided state.
-    pub fn try_change_center(&self, state: &mut State, new_center: isize) -> Result<(), NEOSpyError> {
+    pub fn try_change_center(&self, state: &mut State, new_center: i64) -> Result<(), NEOSpyError> {
         if state.center_id == new_center {
             return Ok(());
         }
 
-        let path = self.find_path(state.center_id as i32, new_center as i32)?;
+        let path = self.find_path(state.center_id, new_center)?;
 
         for intermediate in path {
             let next = self.try_get_raw_state(intermediate, state.jd)?;
@@ -108,8 +108,8 @@ impl SpkCollection {
     }
 
     /// For a given NAIF ID, return all increments of time which are currently loaded.
-    pub fn available_info(&self, id: i32) -> Vec<(f64, f64, i32, Frame, i32)> {
-        let mut segment_info = Vec::<(f64, f64, i32, Frame, i32)>::new();
+    pub fn available_info(&self, id: i64) -> Vec<(f64, f64, i64, Frame, i32)> {
+        let mut segment_info = Vec::<(f64, f64, i64, Frame, i32)>::new();
         for segment in self.segments.iter() {
             if id == segment.obj_id {
                 let jd_range = segment.jd_range();
@@ -128,7 +128,7 @@ impl SpkCollection {
 
         segment_info.sort_by(|a, b| (a.0).total_cmp(&b.0));
 
-        let mut avail_times = Vec::<(f64, f64, i32, Frame, i32)>::new();
+        let mut avail_times = Vec::<(f64, f64, i64, Frame, i32)>::new();
 
         let mut cur_segment = segment_info[0];
         for segment in segment_info.iter().skip(1) {
@@ -152,7 +152,7 @@ impl SpkCollection {
     /// included in the loaded objects set, as 0 is a privileged position at the
     /// barycenter of the solar system. It is not typically defined in relation to
     /// anything else.
-    pub fn loaded_objects(&self, include_centers: bool) -> HashSet<i32> {
+    pub fn loaded_objects(&self, include_centers: bool) -> HashSet<i64> {
         let mut found = HashSet::new();
 
         for segment in self.segments.iter() {
@@ -167,7 +167,7 @@ impl SpkCollection {
     /// Given a NAIF ID, and a target NAIF ID, find the intermediate SPICE Segments
     /// which need to be loaded to find a path from one object to the other.
     /// Use Dijkstra plus the known segments to calculate a path.
-    fn find_path(&self, start: i32, goal: i32) -> Result<Vec<i32>, NEOSpyError> {
+    fn find_path(&self, start: i64, goal: i64) -> Result<Vec<i64>, NEOSpyError> {
         // first we check to see if the cache contains the lookup we need.
         if let Some(path) = self.map_cache.get(&(start, goal)) {
             return Ok(path.clone());
@@ -176,10 +176,10 @@ impl SpkCollection {
         // not in the cache, manually compute
         let nodes = &self.nodes;
         let result = dijkstra(
-            &(start, i32::MIN),
+            &(start, i64::MIN),
             |&current| match nodes.get(&current.0) {
-                Some(set) => set.iter().map(|p| (*p, 1_i32)).collect(),
-                None => Vec::<((i32, i32), i32)>::new(),
+                Some(set) => set.iter().map(|p| (*p, 1_i64)).collect(),
+                None => Vec::<((i64, i64), i64)>::new(),
             },
             |&p| p.0 == goal,
         );
@@ -198,11 +198,11 @@ impl SpkCollection {
     /// These mappings are used to be able to change the center ID from whatever is saved in
     /// the spks to any possible combination.
     pub fn build_cache(&mut self) {
-        static PRECACHE: &[i32] = &[0, 10, 399];
+        static PRECACHE: &[i64] = &[0, 10, 399];
 
-        let mut nodes: HashMap<i32, HashSet<(i32, i32)>> = HashMap::new();
+        let mut nodes: HashMap<i64, HashSet<(i64, i64)>> = HashMap::new();
 
-        fn update_nodes(segment: &SpkSegment, nodes: &mut HashMap<i32, HashSet<(i32, i32)>>) {
+        fn update_nodes(segment: &SpkSegment, nodes: &mut HashMap<i64, HashSet<(i64, i64)>>) {
             if let std::collections::hash_map::Entry::Vacant(e) = nodes.entry(segment.obj_id) {
                 let mut set = HashSet::new();
                 let _ = set.insert((segment.center_id, segment.obj_id));
@@ -240,16 +240,16 @@ impl SpkCollection {
                 }
 
                 let result = dijkstra(
-                    &(start, -100_i32),
+                    &(start, -100_i64),
                     |&current| match nodes.get(&current.0) {
-                        Some(set) => set.iter().map(|p| (*p, 1_i32)).collect(),
-                        None => Vec::<((i32, i32), i32)>::new(),
+                        Some(set) => set.iter().map(|p| (*p, 1_i64)).collect(),
+                        None => Vec::<((i64, i64), i64)>::new(),
                     },
                     |&p| p.0 == goal,
                 );
 
                 if let Some((v, _)) = result {
-                    let v: Vec<i32> = v.iter().skip(1).map(|x| x.1).collect();
+                    let v: Vec<i64> = v.iter().skip(1).map(|x| x.1).collect();
                     let _ = self.map_cache.insert(key, v);
                 }
             }

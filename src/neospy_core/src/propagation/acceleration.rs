@@ -183,7 +183,7 @@ impl NonGravModel {
 pub struct AccelSPKMeta<'a> {
     /// Closest approach to a massive object.
     /// This records the ID of the object, time, and distance in AU.
-    pub close_approach: Option<(i32, f64, f64)>,
+    pub close_approach: Option<(i64, f64, f64)>,
 
     /// `A` terms of the non-gravitational forces.
     /// If this is not provided, only standard gravitational model is applied.
@@ -195,7 +195,7 @@ pub struct AccelSPKMeta<'a> {
     /// This list contains the ID of the object in the SPK along with the mass and
     /// radius of the object. Mass is given in fractions of solar mass and radius is
     /// in AU.
-    pub massive_obj: &'a [(i32, f64, f64)],
+    pub massive_obj: &'a [(i64, f64, f64)],
 }
 
 /// Compute the accel on an object which experiences acceleration due to all massive
@@ -304,7 +304,7 @@ where
     /// This list contains the ID of the object in the SPK along with the mass and
     /// radius of the object. Mass is given in fractions of solar mass and radius is
     /// in AU.
-    pub massive_obj: &'a [(i32, f64, f64)],
+    pub massive_obj: &'a [(i64, f64, f64)],
 }
 
 /// Compute the accel on an object which experiences acceleration due to all massive

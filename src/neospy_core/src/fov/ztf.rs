@@ -25,7 +25,7 @@ pub struct ZtfCcdQuad {
     pub maglimit: f64,
 
     /// Filter ID
-    pub fid: usize,
+    pub fid: u64,
 
     /// Filter code used for the frame
     pub filtercode: Box<str>,
@@ -53,7 +53,7 @@ impl ZtfCcdQuad {
         imgtypecode: Box<str>,
         qid: u8,
         maglimit: f64,
-        fid: usize,
+        fid: u64,
     ) -> Self {
         let patch = OnSkyRectangle::from_corners(corners, observer.frame);
         Self {
@@ -114,7 +114,7 @@ pub struct ZtfField {
     pub field: u32,
 
     /// Filter ID
-    pub fid: usize,
+    pub fid: u64,
 
     /// Filter code used for the frame
     pub filtercode: Box<str>,
