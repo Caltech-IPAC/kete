@@ -1,2 +1,0 @@
-These files are packed binary SPICE kernels.
-These are loaded and packed into the final rust binary, and are included automatically.

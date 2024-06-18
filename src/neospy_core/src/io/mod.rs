@@ -7,7 +7,7 @@ use crate::prelude::NEOSpyError;
 use bincode::serde::{decode_from_std_read, encode_into_std_write};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
-use std::io::{BufReader, BufWriter};
+use std::io::{BufReader, BufWriter, Read, Seek};
 
 /// Support for automatic derivation of Save/Load
 pub trait FileIO: Serialize
@@ -23,7 +23,12 @@ where
 
     /// Load from a file.
     fn load(filename: String) -> Result<Self, NEOSpyError> {
-        let mut f = BufReader::new(File::open(filename)?);
+        Self::load_buffer(File::open(filename)?)
+    }
+
+    /// Load from a buffer of bytes.
+    fn load_buffer<T: Read + Seek>(buffer: T) -> Result<Self, NEOSpyError> {
+        let mut f = BufReader::new(buffer);
         decode_from_std_read(&mut f, bincode::config::legacy())
             .map_err(|_| NEOSpyError::IOError("Failed to read from file".into()))
     }
