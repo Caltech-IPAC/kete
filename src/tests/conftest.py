@@ -1,4 +1,5 @@
 import pytest
+import os
 
 
 def pytest_addoption(parser):
@@ -13,3 +14,8 @@ def pytest_addoption(parser):
 def pytest_runtest_setup(item):
     if "horizons" in item.keywords and not item.config.getoption("horizons"):
         pytest.skip("need --horizons option to run this test")
+
+
+@pytest.fixture
+def data_path(request):
+    return os.path.join(os.path.dirname(request.path), "data/")

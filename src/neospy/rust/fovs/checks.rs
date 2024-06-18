@@ -39,7 +39,7 @@ pub fn fov_checks_py(
         // Take small steps based off of the large steps.
         if (fov.observer().jd - jd).abs() >= dt_limit {
             if (jd - big_jd) >= dt_limit * 25.0 {
-                states = big_step_states.clone();
+                states.clone_from(&big_step_states);
             }
             jd = fov.observer().jd;
             states = states
@@ -64,7 +64,7 @@ pub fn fov_checks_py(
 
 #[pyfunction]
 #[pyo3(name = "fov_spk_checks")]
-pub fn fov_spk_checks_py(obj_ids: Vec<i32>, fovs: FOVListLike) -> Vec<PySimultaneousStates> {
+pub fn fov_spk_checks_py(obj_ids: Vec<i64>, fovs: FOVListLike) -> Vec<PySimultaneousStates> {
     let fovs = fovs.into_sorted_vec_fov();
 
     fovs.into_par_iter()

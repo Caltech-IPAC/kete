@@ -69,7 +69,7 @@ impl From<i32> for Frame {
 #[derive(Debug)]
 pub struct SpkSegment {
     /// The NAIF ID of the object recorded in this Segment.
-    pub obj_id: i32,
+    pub obj_id: i64,
 
     /// Start time of the segment.
     pub jd_start: f64,
@@ -78,7 +78,7 @@ pub struct SpkSegment {
     pub jd_end: f64,
 
     /// The reference center NAIF ID for the position/velocity in this Segment.
-    pub center_id: i32,
+    pub center_id: i64,
 
     /// [`Frame`] of reference for this Segment.
     pub ref_frame: Frame,
@@ -104,8 +104,8 @@ impl TryFrom<DafArray> for SpkSegment {
         let summary_ints = &value.summary_ints;
         let jd_start = spice_jds_to_jd(summary_floats[0]);
         let jd_end = spice_jds_to_jd(summary_floats[1]);
-        let obj_id = summary_ints[0];
-        let center_id = summary_ints[1];
+        let obj_id = summary_ints[0] as i64;
+        let center_id = summary_ints[1] as i64;
         let frame_num = summary_ints[2];
         let segment_type = summary_ints[3];
 

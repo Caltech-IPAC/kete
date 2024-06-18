@@ -18,7 +18,7 @@ pub struct WiseCmos {
     pub rotation: f64,
 
     /// Frame number of the fov
-    pub frame_num: usize,
+    pub frame_num: u64,
 
     /// Scan ID of the fov
     pub scan_id: Box<str>,
@@ -30,7 +30,7 @@ impl WiseCmos {
         pointing: Vector3<f64>,
         rotation: f64,
         observer: State,
-        frame_num: usize,
+        frame_num: u64,
         scan_id: Box<str>,
     ) -> Self {
         let patch = OnSkyRectangle::new(pointing, rotation, WISE_WIDTH, WISE_WIDTH, observer.frame);
