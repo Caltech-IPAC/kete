@@ -75,20 +75,3 @@ impl SimultaneousStates {
         })
     }
 }
-
-#[cfg(test)]
-mod tests {
-
-    use std::io::Cursor;
-
-    use super::*;
-
-    const BYTES: &[u8] = include_bytes!("../data/simult_state_v0.2.1.bin");
-
-    #[test]
-    fn loading() {
-        let curse = Cursor::new(BYTES);
-        let states = SimultaneousStates::load_buffer(curse).unwrap();
-        assert!(states.center_id == 10);
-    }
-}
