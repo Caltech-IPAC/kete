@@ -5,8 +5,7 @@ Representation of States, Vectors, and coordinate Frames.
 from __future__ import annotations
 from . import conversion
 
-# pylint: disable=import-error
-from ._core import (  # type: ignore
+from ._core import (
     Vector,
     Frames,
     State,

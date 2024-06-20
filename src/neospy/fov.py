@@ -1,5 +1,4 @@
-# pylint: disable-next=import-error
-from ._core import (  # type: ignore
+from ._core import (
     NeosCmos,
     NeosVisit,
     WiseCmos,

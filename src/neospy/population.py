@@ -4,7 +4,7 @@ Definitions for population groups.
 Group definitions are computed strictly from perihelion distance and eccentricity.
 """
 
-import matplotlib.pyplot as plt  # type: ignore
+import matplotlib.pyplot as plt
 import numpy as np
 from .conversion import compute_aphelion, compute_semi_major
 from numpy.typing import NDArray

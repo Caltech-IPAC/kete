@@ -5,14 +5,14 @@ import time
 import logging
 import warnings
 from xml.etree import ElementTree
-import matplotlib.pyplot as plt  # type: ignore
+import matplotlib.pyplot as plt
 import requests
 import numpy as np
-import pandas as pd  # type: ignore
+import pandas as pd
 
 
-from astropy.wcs import WCS  # type: ignore
-from astropy.coordinates import SkyCoord  # type: ignore
+from astropy.wcs import WCS
+from astropy.coordinates import SkyCoord
 
 IRSA_URL = "https://irsa.ipac.caltech.edu"
 

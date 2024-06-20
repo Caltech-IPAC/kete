@@ -2,9 +2,9 @@ from __future__ import annotations
 import logging
 from functools import lru_cache
 from dataclasses import dataclass
-import pandas as pd  # type: ignore
+import pandas as pd
 import numpy as np
-import astropy  # type: ignore
+import astropy
 
 
 from . import conversion, constants
@@ -12,8 +12,7 @@ from .time import float_day_to_d_h_m_s, Time
 from .vector import Vector, Frames, CometElements
 from .cache import cached_gzip_json_download
 
-# pylint: disable-next=no-name-in-module
-from . import _core  # type: ignore
+from . import _core
 
 
 __all__ = ["unpack_designation", "pack_designation", "find_obs_code"]

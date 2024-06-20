@@ -4,8 +4,7 @@ Thermal and Reflected light modeling tools.
 This includes things like NEATM, FRM, and reflection models.
 """
 
-# pylint: disable=no-name-in-module
-from ._core import (  # type: ignore
+from ._core import (
     lambertian_flux,
     solar_flux,
     hg_phase_curve_correction,

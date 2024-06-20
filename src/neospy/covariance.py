@@ -1,4 +1,4 @@
-from scipy.stats import chi2  # type: ignore
+from scipy.stats import chi2
 import numpy as np
 import neospy
 
