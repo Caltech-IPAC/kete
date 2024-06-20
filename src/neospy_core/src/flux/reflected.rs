@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// * `g_param` - The G parameter, between 0 and 1.
 /// * `phase` - The phase angle in radians.
-fn hg_phase_correction_curve(g_param: f64, phase: f64) -> f64 {
+pub fn hg_phase_curve_correction(g_param: f64, phase: f64) -> f64 {
     fn helper(a: f64, b: f64, c: f64, phase: f64) -> f64 {
         let phase_s = phase.sin();
         let theta_l = (-a * (0.5 * phase).tan().powf(b)).exp();
@@ -235,7 +235,7 @@ impl HGParams {
             return f64::INFINITY;
         }
 
-        let correction = hg_phase_correction_curve(self.g_param, phase).log10();
+        let correction = hg_phase_curve_correction(self.g_param, phase).log10();
         self.h_mag + 5.0 * (obj_r * obj2obs_r).log10() - 2.5 * correction
     }
 
@@ -291,7 +291,7 @@ impl HGParams {
 
         let sc2obj_r_km = obj2obs.norm() * AU_KM;
 
-        let correction = hg_phase_correction_curve(self.g_param, phase) * albedo;
+        let correction = hg_phase_curve_correction(self.g_param, phase) * albedo;
 
         // Jy
         Some(correction * object_flux_total / sc2obj_r_km.powi(2))

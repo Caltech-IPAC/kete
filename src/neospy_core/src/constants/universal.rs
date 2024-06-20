@@ -16,7 +16,7 @@ pub const SUN_DIAMETER: f64 = 1.3914e6;
 
 /// Sun J2 Parameter
 ///
-/// This paper is a source, however it there are several papers which all put
+/// This paper below a source, however there are several papers which all put
 /// the Sun's J2 at 2.2e-7.
 ///
 /// "Prospects of Dynamical Determination of General Relativity Parameter β and Solar
@@ -36,7 +36,7 @@ pub const C_M_PER_S: f64 = 299792458.0;
 /// Inverse of the Speed of light in Day / AU
 pub const C_AU_PER_DAY_INV: f64 = 0.005775518331436995;
 
-/// Square of the inverse of the speed of light in Day^2/AU^2
+/// Square of the inverse of the speed of light in Day^2 / AU^2
 pub const C_AU_PER_DAY_INV_SQUARED: f64 = 3.33566119967647e-05;
 
 /// Km per AU (Definition)
@@ -90,14 +90,5 @@ pub const MASSIVE_OBJECTS_EXTENDED: &[(i64, f64, f64)] = &[
     (20000704, 1.911e-11, 2.219283e-6),                 // Interamnia
 ];
 
-/// The width of the WISE FOV, 47 arcminutes in radians.
-pub const WISE_WIDTH: f64 = 0.01367174580728;
-
-/// Width of wise FOV in radians, 7.10 degrees.
-pub const NEOS_WIDTH: f64 = 0.12391837689159739;
-
-/// Height of wise FOV in radians, 1.68 degrees.
-pub const NEOS_HEIGHT: f64 = 0.029321531433504737;
-
-///V-band constant for the relationship between D, H_V, and p_v, in km.
+/// V-band constant for the relationship between D, H_V, and p_v, in km.
 pub const C_V: f64 = 1329.0;

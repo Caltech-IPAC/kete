@@ -64,9 +64,7 @@ for t in times:
 
     # if we cannot compute mag, set the mag to NAN and keep moving
     if obj.h_mag is not None:
-        mag = neospy.flux.hg_absolute_to_apparent_mag(
-            sun2obj, sun2obs, g_phase, obj.h_mag
-        )
+        mag = neospy.flux.hg_apparent_mag(sun2obj, sun2obs, g_phase, obj.h_mag)
         mag = np.clip(mag, -1000, 1000)
     else:
         mag = np.nan

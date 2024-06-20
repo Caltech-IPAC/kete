@@ -28,7 +28,7 @@ rotation_rate = 3.2
 dts = np.linspace(0, 10, 30)
 
 # Construct an object which is twice the radius in they y axis.
-geom = neospy.flux.shape.TriangleEllipsoid(30, x_scale=1, y_scale=2, z_scale=1)
+geom = neospy.shape.TriangleEllipsoid(30, x_scale=1, y_scale=2, z_scale=1)
 normals = [neospy.Vector(norm) for norm in geom.normals]
 
 # Pick an axis of rotation
@@ -52,10 +52,12 @@ for dt in dts:
         ]
     )
 
-    ss_temp = neospy.flux.subsolar_temp(-obj2obs, albedo, G, emissivity, beaming)
+    ss_temp = neospy.flux.sub_solar_temperature(
+        -obj2obs, albedo, G, emissivity, beaming
+    )
     temps = neospy.flux.neatm_facet_temps(new_normals, ss_temp, obj2obs)
-    facet_fluxes = neospy.flux.black_body_radiation(temps, wavelength)
-    facet_fluxes *= geom.areas
+    facet_fluxes = [neospy.flux.black_body_flux(t, wavelength) for t in temps]
+    facet_fluxes = np.array(facet_fluxes) * geom.areas
     flux = neospy.flux.lambertian_flux(
         facet_fluxes, geom.normals, -obj2obs, diameter, emissivity
     )

@@ -55,15 +55,15 @@ def flux_per_wavelength(
 
     fluxes = []
     for wave in wavelength:
-        flux = neospy.flux.neatm(
+        flux = neospy.flux.neatm_flux(
             sun2obj,
             sun2sc,
             albedo,
             0.15,
             beaming=1.5,
-            emissivity=0.9,
             diameter=diameter,
             wavelength=wave * 1e3,
+            emissivity=0.9,
         )
         refl_flux = neospy.flux.hg_apparent_flux(
             sun2obj,

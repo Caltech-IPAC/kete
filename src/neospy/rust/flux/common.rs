@@ -1,11 +1,12 @@
 use crate::{frame::PyFrames, vector::VectorLike};
 use itertools::Itertools;
 use nalgebra::UnitVector3;
-use neospy_core::constants::C_V;
+use neospy_core::constants::{
+    w1_color_correction, w2_color_correction, w3_color_correction, w4_color_correction, C_V,
+};
 use neospy_core::flux::*;
 use neospy_core::prelude::NEOSpyError;
 use pyo3::{pyfunction, PyResult};
-use rayon::prelude::*;
 
 /// Calculate the visible flux at the observer assuming a convex faceted object made up
 /// of a collection of lambertian surfaces.
@@ -56,7 +57,6 @@ pub fn lambertian_flux_py(
 ///
 /// Parameters
 /// ----------
-///
 /// dist:
 ///     Distance the object is from the Sun in au.
 /// wavelength :
@@ -80,9 +80,9 @@ pub fn solar_flux_py(dist: f64, wavelength: f64) -> PyResult<f64> {
 /// g_param :
 ///     G Phase parameter in the HG system.
 /// beaming :
-///     Beaming parameter.
+///     The beaming parameter of the object.
 /// emissivity :
-///     Emissivity.
+///     Emissivity of the object, 0.9 by default.
 #[pyfunction]
 #[pyo3(name = "sub_solar_temperature")]
 pub fn sub_solar_temperature_py(
@@ -90,13 +90,14 @@ pub fn sub_solar_temperature_py(
     geom_albedo: f64,
     g_param: f64,
     beaming: f64,
-    emissivity: f64,
+    emissivity: Option<f64>,
 ) -> f64 {
+    let emissivity = emissivity.unwrap_or(0.9);
     let obj2sun = obj2sun.into_vec(PyFrames::Ecliptic);
     sub_solar_temperature(&obj2sun, geom_albedo, g_param, beaming, emissivity)
 }
 
-/// Compute the black body flux at the specified temperature and wavelength.
+/// Compute the black body flux at the specified temperatures and wavelength.
 ///
 /// Flux is in units Janskys / steradian per unit freq.
 /// This can be converted to being per unit wavelength by multiplying the result of this
@@ -108,17 +109,19 @@ pub fn sub_solar_temperature_py(
 ///
 /// Parameters
 /// ----------
-/// temps :
-///     In units of Kelvin.
+/// temp :
+///     List of temperatures, in units of Kelvin.
 /// wavelength :
 ///     In units of nanometers.
+///
+/// Returns
+/// -------
+/// List :
+///     Janskys per steradian
 #[pyfunction]
 #[pyo3(name = "black_body_flux")]
-pub fn black_body_flux_py(temps: Vec<f64>, wavelength: f64) -> Vec<f64> {
-    temps
-        .into_par_iter()
-        .map(|t| black_body_flux(t, wavelength))
-        .collect()
+pub fn black_body_flux_py(temp: f64, wavelength: f64) -> f64 {
+    black_body_flux(temp, wavelength)
 }
 
 /// Calculate the temperatures of each facet assuming the NEATM model.
@@ -189,8 +192,37 @@ pub fn frm_facet_temperature_py(
         .collect_vec()
 }
 
+/// Calculate the flux in Janskys from an object using the NEATM thermal model.
+///
+/// See :doc:`../auto_examples/plot_thermal_model`
+///
+/// Parameters
+/// ----------
+/// sun2obj :
+///     A vector-like object containing the X/Y/Z coordinates pointing from the sun
+///     to the object in units of AU.
+/// sun2obs :
+///     A vector-like object containing the X/Y/Z coordinates pointing from the sun
+///     to the observer in units of AU.
+/// vis_albedo :
+///     The visible geometric albedo of the object.
+/// g_param :
+///     The G parameter of the object
+/// beaming :
+///     The beaming parameter.
+/// diameter :
+///     The diameter of the object in km.
+/// wavelength :
+///     The wavelength of the object in nanometers.
+/// emissivity :
+///     The emissivity of the object, defaults to 0.9.
+///
+/// Returns
+/// -------
+/// float
+///     Flux in units of Jy.
 #[pyfunction]
-#[pyo3(name = "neatm_thermal")]
+#[pyo3(name = "neatm_flux")]
 #[allow(clippy::too_many_arguments)]
 pub fn neatm_thermal_py(
     sun2obj: VectorLike,
@@ -200,8 +232,9 @@ pub fn neatm_thermal_py(
     beaming: f64,
     diameter: f64,
     wavelength: f64,
-    emissivity: f64,
+    emissivity: Option<f64>,
 ) -> f64 {
+    let emissivity = emissivity.unwrap_or(0.9);
     let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
     let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
 
@@ -228,8 +261,35 @@ pub fn neatm_thermal_py(
     params.apparent_thermal_flux(&sun2obj, &sun2obs).unwrap()[0]
 }
 
+/// Calculate the flux from an object using the FRM thermal model in Jansky.
+///
+/// See :doc:`../auto_examples/plot_thermal_model`
+///
+/// Parameters
+/// ----------
+/// sun2obj : Vector
+///     A vector-like object containing the X/Y/Z coordinates pointing from the sun
+///     to the object in units of AU.
+/// sun2obs : Vector
+///     A vector-like object containing the X/Y/Z coordinates pointing from the sun
+///     to the observer in units of AU.
+/// vis_albedo : float
+///     The visible geometric albedo of the object.
+/// g_param : float
+///     The G parameter of the object
+/// diameter : float
+///     The diameter of the object in km.
+/// wavelength : float
+///     The wavelength of the object in nanometers.
+/// emissivity : float
+///     The emissivity of the object, defaults to 0.9.
+///
+/// Returns
+/// -------
+/// float
+///     Flux in units of Jy.
 #[pyfunction]
-#[pyo3(name = "frm_thermal")]
+#[pyo3(name = "frm_flux")]
 #[allow(clippy::too_many_arguments)]
 pub fn frm_thermal_py(
     sun2obj: VectorLike,
@@ -238,8 +298,9 @@ pub fn frm_thermal_py(
     g_param: f64,
     diameter: f64,
     wavelength: f64,
-    emissivity: f64,
+    emissivity: Option<f64>,
 ) -> f64 {
+    let emissivity = emissivity.unwrap_or(0.9);
     let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
     let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
     let hg_params = HGParams::try_fill(
@@ -265,49 +326,48 @@ pub fn frm_thermal_py(
     params.apparent_thermal_flux(&sun2obj, &sun2obs).unwrap()[0]
 }
 
-#[allow(clippy::too_many_arguments)]
-#[pyfunction]
-#[pyo3(name = "hg_apparent_flux")]
-pub fn hg_apparent_flux_py(
-    sun2obj: VectorLike,
-    sun2obs: VectorLike,
-    h_mag: f64,
-    g_param: f64,
-    c_hg: f64,
-    diameter: f64,
-    wavelength: f64,
-    albedo: f64,
-) -> f64 {
-    let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-    let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
-    let params = HGParams::try_fill(
-        "".into(),
-        g_param,
-        Some(h_mag),
-        Some(c_hg),
-        None,
-        Some(diameter),
-    )
-    .unwrap();
-    params
-        .apparent_flux(&sun2obj, &sun2obs, wavelength, albedo)
-        .unwrap()
-}
-
-#[pyfunction]
-#[pyo3(name = "hg_apparent_mag")]
-pub fn hg_apparent_mag_py(
-    sun2obj: VectorLike,
-    sun2obs: VectorLike,
-    h_mag: f64,
-    g_param: f64,
-) -> f64 {
-    let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-    let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
-    let params = HGParams::new("".into(), g_param, h_mag, None);
-    params.apparent_mag(&sun2obj, &sun2obs)
-}
-
+/// Given the M1/K1 and M2/K2 values, compute the apparent Comet visible magnitudes.
+///
+/// The model for apparent magnitudes are:
+///
+/// m1 + k1 * log10(sun2obj.r) + 5.0 * log10(obj2obs.r) + phase_mag_slope * phase
+/// m2 + k2 * log10(sun2obj.r) + 5.0 * log10(obj2obs.r) + phase_mag_slope * phase
+///
+/// Where m1/k1 are related to total magnitudes and m2/k2 are nucleus magnitudes.
+///
+/// This model is based off of these:
+/// https://ssd.jpl.nasa.gov/horizons/manual.html#obsquan  (see section 9)
+/// https://en.wikipedia.org/wiki/Absolute_magnitude#Cometary_magnitudes
+///
+/// Note that the above model does not include a 2.5x term attached to the K1/2 terms
+/// which are present in the wikipedia definition, this matches the definitions used by
+/// JPL Horizons.
+///
+/// This does a best effort to compute both magnitudes, if any values are missing this
+/// will return None in the respective calculation.
+///
+/// Parameters
+/// ----------
+/// sun2obj :
+///     A vector-like object containing the X/Y/Z coordinates pointing to the object
+///     from the sun in units of AU.
+/// sun2obs :
+///     A vector-like object containing the X/Y/Z coordinates pointing from the sun
+///     to the observer in units of AU.
+/// mk_1 :
+///     Tuple of (M_1, K_1), where M_1 is the total Absolute magnitude of the comet,
+///     and K_1 magnitude slope as a function of heliocentric distance.
+/// mk_2 :
+///     Tuple of (M_2, K_2), where M_2 is the total Absolute magnitude of the nucleus,
+///     and K_2 nucleus magnitude slope as a function of heliocentric distance.
+/// phase_corr :
+///     Magnitude variation of the comet as a function of observing phase, units are
+///     Mag/Deg of phase, this defaults to 0.035 Mag/Deg.
+///
+/// Returns
+/// -------
+/// float
+///     (Total apparent magnitude, Magnitude of the nucleus)
 #[allow(clippy::too_many_arguments)]
 #[pyfunction]
 #[pyo3(name = "comet_apparent_mags")]
@@ -326,150 +386,6 @@ pub fn comet_mags_py(
         mk_params.apparent_total_flux(&sun2obs, &sun2obj),
         mk_params.apparent_nuclear_flux(&sun2obs, &sun2obj),
     )
-}
-
-#[allow(clippy::too_many_arguments)]
-#[pyfunction]
-#[pyo3(name = "neos_neatm_flux")]
-pub fn neos_neatm_flux_py(
-    sun2obj_vec: Vec<VectorLike>,
-    sun2obs_vec: Vec<VectorLike>,
-    vis_albedo: f64,
-    ir_albedo: f64,
-    g_param: f64,
-    beaming: f64,
-    diameter: f64,
-    emissivity: f64,
-) -> Vec<[Vec<f64>; 3]> {
-    let hg_params = HGParams::try_fill(
-        "".into(),
-        g_param,
-        None,
-        Some(C_V),
-        Some(vis_albedo),
-        Some(diameter),
-    )
-    .unwrap();
-
-    let params = NeatmParams::new_neos([ir_albedo; 2], beaming, hg_params, emissivity);
-
-    sun2obs_vec
-        .into_par_iter()
-        .zip(sun2obj_vec)
-        .map(|(sun2obs, sun2obj)| {
-            let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-            let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
-            let flux_res = params.apparent_total_flux(&sun2obj, &sun2obs).unwrap();
-            let refl = flux_res.reflected_fraction();
-            [flux_res.fluxes, refl, flux_res.magnitudes.unwrap()]
-        })
-        .collect()
-}
-
-#[pyfunction]
-#[pyo3(name = "neos_frm_flux")]
-pub fn neos_frm_flux_py(
-    sun2obj_vec: Vec<VectorLike>,
-    sun2obs_vec: Vec<VectorLike>,
-    vis_albedo: f64,
-    ir_albedo: f64,
-    g_param: f64,
-    diameter: f64,
-    emissivity: f64,
-) -> Vec<[Vec<f64>; 3]> {
-    let hg_params = HGParams::try_fill(
-        "".into(),
-        g_param,
-        None,
-        Some(C_V),
-        Some(vis_albedo),
-        Some(diameter),
-    )
-    .unwrap();
-    let params = FrmParams::new_neos([ir_albedo; 2], hg_params, emissivity);
-    sun2obs_vec
-        .into_par_iter()
-        .zip(sun2obj_vec)
-        .map(|(sun2obs, sun2obj)| {
-            let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-            let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
-            let flux_res = params.apparent_total_flux(&sun2obj, &sun2obs).unwrap();
-            let refl = flux_res.reflected_fraction();
-            [flux_res.fluxes, refl, flux_res.magnitudes.unwrap()]
-        })
-        .collect()
-}
-
-#[allow(clippy::too_many_arguments)]
-#[pyfunction]
-#[pyo3(name = "wise_neatm_flux")]
-pub fn wise_neatm_flux_py(
-    sun2obj_vec: Vec<VectorLike>,
-    sun2obs_vec: Vec<VectorLike>,
-    vis_albedo: f64,
-    ir_albedo: f64,
-    g_param: f64,
-    beaming: f64,
-    diameter: f64,
-    emissivity: f64,
-) -> Vec<[Vec<f64>; 3]> {
-    let hg_params = HGParams::try_fill(
-        "".into(),
-        g_param,
-        None,
-        Some(C_V),
-        Some(vis_albedo),
-        Some(diameter),
-    )
-    .unwrap();
-    let params = NeatmParams::new_wise([ir_albedo; 4], beaming, hg_params, emissivity);
-
-    sun2obs_vec
-        .into_par_iter()
-        .zip(sun2obj_vec)
-        .map(|(sun2obs, sun2obj)| {
-            let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-            let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
-            let flux_res = params.apparent_total_flux(&sun2obj, &sun2obs).unwrap();
-            let refl = flux_res.reflected_fraction();
-            [flux_res.fluxes, refl, flux_res.magnitudes.unwrap()]
-        })
-        .collect()
-}
-
-#[pyfunction]
-#[pyo3(name = "wise_frm_flux")]
-pub fn wise_frm_flux_py(
-    sun2obj_vec: Vec<VectorLike>,
-    sun2obs_vec: Vec<VectorLike>,
-    vis_albedo: f64,
-    ir_albedo: f64,
-    g_param: f64,
-    diameter: f64,
-    emissivity: f64,
-) -> Vec<[Vec<f64>; 3]> {
-    let hg_params = HGParams::try_fill(
-        "".into(),
-        g_param,
-        None,
-        Some(C_V),
-        Some(vis_albedo),
-        Some(diameter),
-    )
-    .unwrap();
-
-    let params = FrmParams::new_wise([ir_albedo; 4], hg_params, emissivity);
-    sun2obs_vec
-        .into_par_iter()
-        .zip(sun2obj_vec)
-        .map(|(sun2obs, sun2obj)| {
-            let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-            let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
-            let flux_res = params.apparent_total_flux(&sun2obj, &sun2obs).unwrap();
-            let refl = flux_res.reflected_fraction();
-            [flux_res.fluxes, refl, flux_res.magnitudes.unwrap()]
-        })
-        .collect()
 }
 
 /// Calculate the W1 black body color correction for the given temperature in kelvin.

@@ -51,10 +51,7 @@ mags = []
 for jd in jds:
     states = neospy.propagate_n_body(states, jd)
     earth = neospy.SpiceKernels.state("earth", jd)
-    m = [
-        neospy.flux.hg_absolute_to_apparent_mag(x.pos, earth.pos, g, obj.h_mag)
-        for x in states
-    ]
+    m = [neospy.flux.hg_apparent_mag(x.pos, earth.pos, g, obj.h_mag) for x in states]
     mags.append(m)
 
 # Find the step where the median magnitude was the brightest
