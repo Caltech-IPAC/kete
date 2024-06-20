@@ -133,7 +133,7 @@ class Time:
     @property
     def year_float(self) -> float:
         """
-        Time as the UTC year in float form, IE: 2024.54321.
+        Time as the UTC year in float form.
 
         Note that Time is TDB Scaled, causing UTC to be a few seconds different.
 
