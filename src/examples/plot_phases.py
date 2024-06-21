@@ -39,10 +39,10 @@ for i, state in enumerate(states):
     obj2earth = sun2earth - sun2obj
     mags.append(
         neospy.flux.hg_apparent_mag(
-            sun2obj,
-            sun2earth,
-            neo_subset.h_mag.iloc[i],
-            neo_subset.g_phase.iloc[i],
+            sun2obj=sun2obj,
+            sun2obs=sun2earth,
+            h_mag=neo_subset.h_mag.iloc[i],
+            g_param=neo_subset.g_phase.iloc[i],
         )
     )
 
