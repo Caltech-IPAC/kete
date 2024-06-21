@@ -31,6 +31,9 @@ pub fn hg_phase_curve_correction_py(g_param: f64, phase_angle: f64) -> f64 {
 ///
 /// This treats the sun as a flat black body disk, which is a good approximation as long
 /// as the object is several solar radii away.
+/// 
+/// Either `h_mag` or `diameter` must be provided, but only 1 is strictly required.
+/// The other will be computed if not provided.
 ///
 /// Parameters
 /// ----------
@@ -40,16 +43,16 @@ pub fn hg_phase_curve_correction_py(g_param: f64, phase_angle: f64) -> f64 {
 /// sun2obs :
 ///     A vector-like object containing the X/Y/Z coordinates pointing from the sun
 ///     to the observer in units of AU.
-/// h_mag :
-///     H magnitude of the object in V band.
 /// g_param :
 ///     The G parameter of the object.
-/// diameter :
-///     The diameter of the object in km.
 /// wavelength :
 ///     The wavelength of the object in nanometers.
 /// v_albedo :
 ///     The geometric albedo of the object at the specified wavelength.
+/// h_mag :
+///     H magnitude of the object in V band.
+/// diameter :
+///     The diameter of the object in km.
 /// c_hg :
 ///     The relationship constant between H, D, and pV for the bandpass. Defaults to
 ///     `1329.0`.
@@ -64,11 +67,11 @@ pub fn hg_phase_curve_correction_py(g_param: f64, phase_angle: f64) -> f64 {
 pub fn hg_apparent_flux_py(
     sun2obj: VectorLike,
     sun2obs: VectorLike,
-    h_mag: f64,
     g_param: f64,
-    diameter: f64,
     wavelength: f64,
     v_albedo: f64,
+    h_mag: Option<f64>,
+    diameter: Option<f64>,
     c_hg: Option<f64>,
 ) -> f64 {
     let c_hg = c_hg.unwrap_or(constants::C_V);
@@ -77,10 +80,10 @@ pub fn hg_apparent_flux_py(
     let params = HGParams::try_fill(
         "".into(),
         g_param,
-        Some(h_mag),
+        h_mag,
         Some(c_hg),
-        None,
-        Some(diameter),
+        Some(v_albedo),
+        diameter,
     )
     .unwrap();
     params

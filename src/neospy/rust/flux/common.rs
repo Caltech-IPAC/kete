@@ -204,8 +204,8 @@ pub fn frm_facet_temperature_py(
 /// sun2obs :
 ///     A vector-like object containing the X/Y/Z coordinates pointing from the sun
 ///     to the observer in units of AU.
-/// vis_albedo :
-///     The visible geometric albedo of the object.
+/// v_albedo :
+///     The V geometric albedo of the object.
 /// g_param :
 ///     The G parameter of the object
 /// beaming :
@@ -227,7 +227,7 @@ pub fn frm_facet_temperature_py(
 pub fn neatm_thermal_py(
     sun2obj: VectorLike,
     sun2obs: VectorLike,
-    vis_albedo: f64,
+    v_albedo: f64,
     g_param: f64,
     beaming: f64,
     diameter: f64,
@@ -243,7 +243,7 @@ pub fn neatm_thermal_py(
         g_param,
         None,
         Some(C_V),
-        Some(vis_albedo),
+        Some(v_albedo),
         Some(diameter),
     )
     .unwrap();
@@ -273,8 +273,8 @@ pub fn neatm_thermal_py(
 /// sun2obs : Vector
 ///     A vector-like object containing the X/Y/Z coordinates pointing from the sun
 ///     to the observer in units of AU.
-/// vis_albedo : float
-///     The visible geometric albedo of the object.
+/// v_albedo : float
+///     The V geometric albedo of the object.
 /// g_param : float
 ///     The G parameter of the object
 /// diameter : float
@@ -294,7 +294,7 @@ pub fn neatm_thermal_py(
 pub fn frm_thermal_py(
     sun2obj: VectorLike,
     sun2obs: VectorLike,
-    vis_albedo: f64,
+    v_albedo: f64,
     g_param: f64,
     diameter: f64,
     wavelength: f64,
@@ -308,7 +308,7 @@ pub fn frm_thermal_py(
         g_param,
         None,
         Some(C_V),
-        Some(vis_albedo),
+        Some(v_albedo),
         Some(diameter),
     )
     .unwrap();

@@ -67,7 +67,13 @@ def test_reflected(obs_pos, h):
     diam = conversion.compute_diameter(albedo, h)
 
     flux = hg_apparent_flux(
-        [2, 0, 0], [0, obs_pos, 0], h, g, diam, 562.25, albedo, 1329.0
+        sun2obj=[2, 0, 0],
+        sun2obs=[0, obs_pos, 0],
+        g_param=g,
+        wavelength=562.25,
+        v_albedo=albedo,
+        h_mag=h,
+        diameter=diam,
     )
     converted_mag = conversion.flux_to_mag(flux, 3620)
 
