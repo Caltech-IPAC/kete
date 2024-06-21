@@ -149,7 +149,7 @@ class SpiceKernels:
 
         # barycenter of the solar system is special
         if name == 0:
-            return ("SSB", 0)
+            return ("ssb", 0)
 
         try:
             lookup_name = _core.spk_get_name_from_id(int(name))
@@ -321,7 +321,7 @@ class SpiceKernels:
         return glob.glob(path)
 
     @staticmethod
-    def kernel_reload(filenames: list[str], include_cache=False):
+    def kernel_reload(filenames: list[str] = None, include_cache=False):
         """
         Load the specified spice kernels into memory, this resets the currently loaded
         kernels.
@@ -347,7 +347,8 @@ class SpiceKernels:
             cache_files = glob.glob(os.path.join(cache_path(), "kernels", "**.bpc"))
             _core.pck_load(cache_files)
 
-        _core.spk_load(filenames)
+        if filenames:
+            _core.spk_load(filenames)
 
     @staticmethod
     def file_header_comments(filename: str):
@@ -393,6 +394,8 @@ class SpiceKernels:
         """
         from .mpc import find_obs_code
 
+        jd = _validate_time(jd)
+
         obs = find_obs_code(obs_code)
         return cls.earth_pos_to_ecliptic(
             jd,
@@ -410,7 +413,7 @@ class SpiceKernels:
         geodetic_lat: float,
         geodetic_lon: float,
         height_above_surface: float,
-        name: Optional[None] = None,
+        name: Optional[str] = None,
         center: str = "Sun",
     ) -> State:
         """
@@ -455,20 +458,24 @@ class SpiceKernels:
         return _core.pck_earth_frame_to_ecliptic(pos, jd, center_id, name)
 
     @classmethod
-    def moon_illumination_frac(cls, jd: Union[float, Time]):
+    def moon_illumination_frac(
+        cls, jd: Union[float, Time], observer: Optional[str] = "399"
+    ):
         """
         Compute the fraction of the moon which is illuminated at the specified time.
 
-        This is a simple approximation using basic spherical geometry, and assumes
-        the observer is located at the geocenter of the Earth.
+        This is a simple approximation using basic spherical geometry, and defaults to
+        having the observer located at the geocenter of the Earth.
 
         >>> SpiceKernels.moon_illumination_frac(Time.from_ymd(2024, 2, 24))
-        0.9622388594340928
+        0.9964858477054903
 
         Parameters
         ----------
         jd:
             Julian time (TDB) of the desired state.
+        observer:
+            NAIF ID of the observer location, defaults to Earth geocenter.
 
         Returns
         -------
@@ -478,5 +485,6 @@ class SpiceKernels:
         jd = _validate_time(jd)
 
         moon2sun = -cls.state("moon", jd).pos
-        moon2earth = -cls.state("moon", jd, center="399").pos
-        return 1.0 - moon2sun.angle_between(moon2earth) / 180
+        moon2earth = -cls.state("moon", jd, center=observer).pos
+        perc = 1.0 - moon2sun.angle_between(moon2earth) / 180
+        return 0.5 - np.cos(np.pi * perc) / 2

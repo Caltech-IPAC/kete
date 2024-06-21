@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 
-from neospy import SpiceKernels, State, Time
+from neospy import SpiceKernels, State, Time, Frames
+from neospy.mpc import find_obs_code
+from neospy.spice import SpkInfo
 
 # Turn off flake8 checker for this file.
 # flake8: noqa
@@ -53,3 +55,56 @@ class TestSpiceKernels:
             -state.vel,
             [2.642169198371849e-04, 4.433586059319487e-05, -1.948260054980404e-05],
         )
+
+    def test_name_lookup(self):
+        assert SpiceKernels.name_lookup("jupi") == ("jupiter barycenter", 5)
+        assert SpiceKernels.name_lookup(0) == ("ssb", 0)
+
+        with pytest.raises(ValueError, match="Multiple objects"):
+            SpiceKernels.name_lookup("ear")
+
+        with pytest.raises(ValueError, match="No loaded objects"):
+            SpiceKernels.name_lookup("banana")
+
+    def test_loaded_info(self):
+        info = SpiceKernels.loaded_object_info("ceres")
+        expected = SpkInfo(
+            name="ceres",
+            jd_start=2415020.5,
+            jd_end=2488069.5,
+            center=10,
+            frame=Frames.Equatorial,
+            spk_type=21,
+        )
+        assert info == [expected]
+
+    @pytest.mark.horizons
+    def test_cache_horizons(self):
+        jd = Time.J2000().jd
+        SpiceKernels.cached_kernel_horizons_download("phaethon", jd, jd + 365)
+
+    def test_cache(self):
+        SpiceKernels.cached_kernel_ls()
+
+    def test_reload(self):
+        SpiceKernels.kernel_reload([], include_cache=True)
+
+    def test_mpc_code(self):
+        jd = Time.J2000().jd
+        state0 = SpiceKernels.mpc_code_to_ecliptic("Palomar Mountain", jd)
+
+        code = find_obs_code("Palomar Mountain")
+
+        state1 = SpiceKernels.earth_pos_to_ecliptic(jd, *code[:-1])
+        assert np.isclose((state0.pos - state1.pos).r, 0.0)
+        assert np.isclose((state0.vel - state1.vel).r, 0.0)
+
+    def test_moon_frac(self):
+        jd = Time.J2000().jd
+        frac = SpiceKernels.moon_illumination_frac(jd)
+        # matches JPL Horizons to 4 decimal places
+        # Horizons reports: 0.230064
+        assert np.isclose(frac, 0.23018685933)
+
+        # Horizons reports: 0.200455
+        assert np.isclose(SpiceKernels.moon_illumination_frac(2451555), 0.2003318)
