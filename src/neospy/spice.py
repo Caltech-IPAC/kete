@@ -458,9 +458,7 @@ class SpiceKernels:
         return _core.pck_earth_frame_to_ecliptic(pos, jd, center_id, name)
 
     @classmethod
-    def moon_illumination_frac(
-        cls, jd: Union[float, Time], observer: str = "399"
-    ):
+    def moon_illumination_frac(cls, jd: Union[float, Time], observer: str = "399"):
         """
         Compute the fraction of the moon which is illuminated at the specified time.
 
