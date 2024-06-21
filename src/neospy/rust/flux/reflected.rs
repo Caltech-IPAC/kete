@@ -31,7 +31,7 @@ pub fn hg_phase_curve_correction_py(g_param: f64, phase_angle: f64) -> f64 {
 ///
 /// This treats the sun as a flat black body disk, which is a good approximation as long
 /// as the object is several solar radii away.
-/// 
+///
 /// Either `h_mag` or `diameter` must be provided, but only 1 is strictly required.
 /// The other will be computed if not provided.
 ///
