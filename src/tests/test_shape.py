@@ -3,7 +3,7 @@ import numpy as np
 
 
 def test_triangle_ellipsoid():
-    geom = neospy.flux.shape.TriangleEllipsoid(6)
+    geom = neospy.shape.TriangleEllipsoid(6)
 
     norms = geom.normals
     assert len(norms) > 100

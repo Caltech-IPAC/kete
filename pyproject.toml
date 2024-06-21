@@ -81,5 +81,9 @@ exclude = '''
 )
 '''
 
-[mypy]
+[tool.pylint.imports]
+ignored-modules=["_core", "neospy._core"]
+
+[tool.mypy]
 plugins = "numpy.typing.mypy_plugin"
+ignore_missing_imports = true

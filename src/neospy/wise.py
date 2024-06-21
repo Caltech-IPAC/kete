@@ -9,13 +9,13 @@ import tempfile
 from typing import Optional, Union
 import warnings
 import requests
-import matplotlib.pyplot as plt  # type: ignore
+import matplotlib.pyplot as plt
 import numpy as np
 
-from astropy.io import fits  # type: ignore
-from astropy.wcs import WCS  # type: ignore
-from astropy import units as u  # type: ignore
-from astropy.coordinates import SkyCoord  # type: ignore
+from astropy.io import fits
+from astropy.wcs import WCS
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 
 
 from .cache import cache_path
@@ -24,8 +24,7 @@ from .spice import SpiceKernels
 from .vector import Vector
 from .irsa import IRSA_URL, query_irsa_tap
 
-# pylint: disable-next=import-error
-from ._core import (  # type: ignore
+from ._core import (
     WiseCmos,
     FOVList,
     w1_color_correction,

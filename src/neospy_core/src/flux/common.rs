@@ -1,11 +1,11 @@
-use crate::constants::{AU_KM, SOLAR_FLUX, STEFAN_BOLTZMANN};
 use crate::io::FileIO;
 use nalgebra::{UnitVector3, Vector3};
 use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;
 
-use super::{
-    NEOS_BANDS, NEOS_ZERO_MAG, WISE_BANDS_300K, WISE_CC, WISE_SUN_CORRECTION, WISE_ZERO_MAG_300K,
+use crate::constants::{
+    AU_KM, NEOS_BANDS, NEOS_SUN_CORRECTION, NEOS_ZERO_MAG, SOLAR_FLUX, STEFAN_BOLTZMANN,
+    WISE_BANDS_300K, WISE_CC, WISE_SUN_CORRECTION, WISE_ZERO_MAG_300K,
 };
 
 /// A function which computes the color correction on a single facet for NEATM and FRM.
@@ -60,7 +60,7 @@ impl ObserverBands {
     /// Flux correction for each of the bands for reflected light from the sun.
     pub fn solar_correction(&self) -> &[f64] {
         match self {
-            Self::Neos => &[1.0, 1.0],
+            Self::Neos => &NEOS_SUN_CORRECTION,
             Self::Wise => &WISE_SUN_CORRECTION,
             Self::Generic {
                 solar_correction, ..

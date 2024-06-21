@@ -6,7 +6,7 @@ models.
 from __future__ import annotations
 import numpy as np
 from functools import lru_cache as cache
-from ..vector import Vector
+from .vector import Vector
 from numpy.typing import ArrayLike
 
 
@@ -107,7 +107,7 @@ class TriangleEllipsoid(TriangleFaceted):
     """
     A simple ellipsoid/sphere made up of triangle facets.
 
-    This is a subclass of :class:`~neospy.flux.shape.TriangleFaceted` which
+    This is a subclass of :class:`~neospy.shape.TriangleFaceted` which
     constructs an approximate Ellipsoid geometry out of triangle facets.
 
     See https://arxiv.org/abs/1502.04816
@@ -132,7 +132,7 @@ class TriangleEllipsoid(TriangleFaceted):
             >>> import neospy
             >>> import matplotlib.pyplot as plt
             >>> from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-            >>> geom = neospy.flux.shape.TriangleEllipsoid(6)
+            >>> geom = neospy.shape.TriangleEllipsoid(6)
             >>> # Plot the results
             >>> plt.figure(dpi=150, figsize=(4, 4))
             >>> plt.subplot(111, projection="3d")

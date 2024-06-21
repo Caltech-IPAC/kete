@@ -11,11 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `Time.year_float` which converts the `Time` object to the Year as a float.
+- Added `SimultaneousState.obs_vecs` which creates vectors from the observer to the
+  objects contained within the state.
 
 ### Changed
 
 - Significant rewrite of the SPICE kernel file management, this rewrite is required
   so that future work can enable writing SPICE kernel files.
+- Moved much of the python documentation into the rust wrappers, and removed the
+  remaining empty python files.
 
 ### Fixed
 

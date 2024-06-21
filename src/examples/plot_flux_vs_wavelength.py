@@ -8,18 +8,17 @@ geometric albedos. This plot appears in several papers.
 Color bands correspond to NEO Surveyor IR observation bands NC1 and NC2 respectively.
 """
 
-import neospy
 import numpy as np
 import matplotlib.pyplot as plt
-from neospy.constants import C_V
+import neospy
 
 
 def flux_per_wavelength(
     phase=np.radians(90),
     solar_elong=np.radians(83),
-    albedo=0.17,
+    v_albedo=0.17,
     diameter=0.140,
-    wavelength=np.logspace(np.log10(0.3), np.log10(30), 100),
+    wavelength=np.logspace(np.log10(300), np.log10(30000), 100),
 ):
     """
     Calculate the flux as a function of wavelength.
@@ -35,7 +34,7 @@ def flux_per_wavelength(
     diameter:
         The diameter of the object in km.
     wavelength:
-        A list of wavelengths in um.
+        A list of wavelengths in nm.
 
     Returns:
     wavelengths:
@@ -51,29 +50,27 @@ def flux_per_wavelength(
     peri_dist = sun2sc.r / np.sin(phase) * np.sin(solar_elong)
 
     sun2obj = neospy.Vector([np.cos(alpha) * peri_dist, np.sin(alpha) * peri_dist, 0])
-    h_mag = neospy.conversion.compute_H(diameter, albedo)
+    # h_mag = neospy.conversion.compute_H(diameter, vis_albedo)
 
     fluxes = []
     for wave in wavelength:
-        flux = neospy.flux.neatm(
+        flux = neospy.flux.neatm_flux(
             sun2obj,
             sun2sc,
-            albedo,
-            0.15,
+            v_albedo=v_albedo,
+            g_param=0.15,
             beaming=1.5,
-            emissivity=0.9,
             diameter=diameter,
-            wavelength=wave * 1e3,
+            wavelength=wave,
+            emissivity=0.9,
         )
         refl_flux = neospy.flux.hg_apparent_flux(
             sun2obj,
             sun2sc,
-            h_mag,
-            0.15,
-            C_V,
-            diameter,
-            wave * 1e3,
-            albedo,
+            g_param=0.15,
+            diameter=diameter,
+            wavelength=wave,
+            v_albedo=v_albedo,
         )
         fluxes.append((flux, refl_flux))
 
@@ -84,28 +81,28 @@ def flux_per_wavelength(
 y_min = 1000
 y_max = 0
 for ls, albedo in zip(["--", "-"], [0.17, 0.03]):
-    wavelength, fluxes = flux_per_wavelength(albedo=albedo)
+    wavelength, fluxes = flux_per_wavelength(v_albedo=albedo)
     total_flux = np.sum(fluxes, axis=1)
     plt.plot(
-        wavelength,
+        wavelength / 1000,
         total_flux,
-        label=f"Albedo={albedo*100:0.0f}%",
+        label=f"Albedo={albedo * 100:0.0f}%",
         ls=ls,
         color="black",
     )
     y_min = min([y_min, np.min(total_flux)])
     y_max = max([y_max, np.max(total_flux)])
     plt.plot(
-        wavelength,
+        wavelength / 1000,
         fluxes[:, 0],
-        label=f"Albedo={albedo*100:0.0f}% - Thermal",
+        label=f"Albedo={albedo * 100:0.0f}% - Thermal",
         ls=ls,
         color="grey",
     )
     plt.plot(
-        wavelength,
+        wavelength / 1000,
         fluxes[:, 1],
-        label=f"Albedo={albedo*100:0.0f}% - Reflected",
+        label=f"Albedo={albedo * 100:0.0f}% - Reflected",
         ls=ls,
         color="C0",
     )

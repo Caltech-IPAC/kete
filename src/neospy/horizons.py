@@ -2,8 +2,7 @@ import requests
 import os
 import numpy as np
 
-# pylint: disable=import-error
-from ._core import HorizonsProperties, Covariance  # type: ignore
+from ._core import HorizonsProperties, Covariance
 
 __all__ = ["HorizonsProperties"]
 
@@ -177,7 +176,7 @@ def _fetch_json(
         try:
             with open(filename, "r", encoding="utf8") as f:
                 return json.load(f)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             pass
 
     if isinstance(name, str):

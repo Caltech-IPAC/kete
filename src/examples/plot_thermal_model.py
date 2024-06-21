@@ -24,7 +24,7 @@ vis_albedo = 0.05
 beaming = 1.4
 
 # Define the geometry
-geom = neospy.flux.shape.TriangleEllipsoid(12)
+geom = neospy.shape.TriangleEllipsoid(12)
 obj2sun = np.array([1, 0, 0])
 # Note: The TriangleEllipsoid geometry is not used by default in the neospy code.
 # This is because its facet normals tend to be slightly correlated with one another.
@@ -36,10 +36,12 @@ obj2sun = np.array([1, 0, 0])
 
 # Compute the temperature at the subsolar point on the object.
 # Note that FRM uses a beaming = pi
-neatm_subsolar_temp = neospy.flux.subsolar_temp(
+neatm_subsolar_temp = neospy.flux.sub_solar_temperature(
     -obj2sun, vis_albedo, g_phase, emissivity, beaming
 )
-frm_subsolar_temp = neospy.flux.subsolar_temp(-obj2sun, vis_albedo, g_phase, emissivity)
+frm_subsolar_temp = neospy.flux.sub_solar_temperature(
+    -obj2sun, vis_albedo, g_phase, emissivity
+)
 
 # Compute the FRM and NEATM facet temperatures for the object
 neatm_facet_temps = neospy.flux.neatm_facet_temps(

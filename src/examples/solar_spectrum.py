@@ -35,8 +35,8 @@ sun_r_au = neospy.constants.SUN_RADIUS_M / neospy.constants.AU_M
 # steradian.
 black_body_flux = np.array(
     [
-        neospy.flux.black_body_radiation(
-            temperature=neospy.constants.SUN_TEMP,
+        neospy.flux.black_body_flux(
+            temp=neospy.constants.SUN_TEMP,
             wavelength=w,
         )
         for w in wavelengths

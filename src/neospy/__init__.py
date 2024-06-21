@@ -17,6 +17,7 @@ from . import (
     irsa,
     ztf,
     fov,
+    shape,
 )
 from .spice import SpiceKernels
 from .propagation import (
@@ -63,6 +64,7 @@ __all__ = [
     "SimultaneousStates",
     "propagate_n_body",
     "propagate_two_body",
+    "shape",
     "compute_H",
     "compute_albedo",
     "compute_diameter",

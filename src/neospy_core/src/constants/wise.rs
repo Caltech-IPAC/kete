@@ -1,6 +1,6 @@
 //! WISE specific functions.
 
-use super::common::ColorCorrFn;
+use crate::flux::ColorCorrFn;
 
 /// WISE cryo effective wavelengths for W1, W2, W3, W4 for stellar sources
 pub const WISE_BANDS: [f64; 4] = [3352.6, 4602.8, 11560.8, 22088.3];
@@ -17,6 +17,9 @@ pub const WISE_ZERO_MAG_300K: [f64; 4] = [306.681, 170.663, 29.0448 * 1.08, 8.28
 
 /// Flux in the reflection model should be scaled by these values.
 pub const WISE_SUN_CORRECTION: [f64; 4] = [1.0049, 1.0193, 1.0024, 1.0012];
+
+/// The width of the WISE FOV, 47 arcminutes in radians.
+pub const WISE_WIDTH: f64 = 0.01367174580728;
 
 /// Calculate the color correction factor for the W1 band to be applied to fluxes.
 ///

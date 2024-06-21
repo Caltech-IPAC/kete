@@ -2,7 +2,7 @@ from __future__ import annotations
 import calendar
 import datetime
 import warnings
-from astropy.time import Time as AstroTime  # type: ignore
+from astropy.time import Time as AstroTime
 
 __all__ = ["Time", "float_day_to_d_h_m_s", "d_h_m_s_to_float_days", "days_in_year"]
 
@@ -43,7 +43,7 @@ class Time:
             | tuple[int, int, int]
             | datetime.datetime
         ),
-        format: str | None = "jd",
+        format: str | None = "jd",  # pylint: disable=redefined-builtin
         scale: str = "tdb",
     ):
         with warnings.catch_warnings():
@@ -133,7 +133,7 @@ class Time:
     @property
     def year_float(self) -> float:
         """
-        Time as the UTC year in float form, IE: 2024.54321.
+        Time as the UTC year in float form.
 
         Note that Time is TDB Scaled, causing UTC to be a few seconds different.
 

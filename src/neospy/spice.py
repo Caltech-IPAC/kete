@@ -8,7 +8,7 @@ import requests
 import numpy as np
 
 from .time import Time
-from . import _core  # pylint: disable=no-name-in-module
+from . import _core
 from .constants import AU_KM
 from .cache import cached_file_download, cache_path
 from .vector import Frames, State

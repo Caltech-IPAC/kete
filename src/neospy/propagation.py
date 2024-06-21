@@ -6,13 +6,13 @@ as well as a N body model which includes some general relativistic effects.
 from __future__ import annotations
 import logging
 from typing import Optional
-from scipy import optimize  # type: ignore
+from scipy import optimize
 import numpy as np
 
 from .spice import SpiceKernels
 from .vector import Vector, State
 from .fov import FOVList
-from . import _core  # pylint: disable=no-name-in-module
+from . import _core
 
 logger = logging.getLogger(__name__)
 

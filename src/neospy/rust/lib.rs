@@ -64,6 +64,7 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(flux::hg_apparent_flux_py, m)?)?;
     m.add_function(wrap_pyfunction!(flux::hg_apparent_mag_py, m)?)?;
+    m.add_function(wrap_pyfunction!(flux::hg_phase_curve_correction_py, m)?)?;
     m.add_function(wrap_pyfunction!(flux::sub_solar_temperature_py, m)?)?;
     m.add_function(wrap_pyfunction!(flux::black_body_flux_py, m)?)?;
     m.add_function(wrap_pyfunction!(flux::neatm_thermal_py, m)?)?;
@@ -75,10 +76,6 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(flux::w2_color_correction_py, m)?)?;
     m.add_function(wrap_pyfunction!(flux::w3_color_correction_py, m)?)?;
     m.add_function(wrap_pyfunction!(flux::w4_color_correction_py, m)?)?;
-    m.add_function(wrap_pyfunction!(flux::wise_neatm_flux_py, m)?)?;
-    m.add_function(wrap_pyfunction!(flux::neos_neatm_flux_py, m)?)?;
-    m.add_function(wrap_pyfunction!(flux::wise_frm_flux_py, m)?)?;
-    m.add_function(wrap_pyfunction!(flux::neos_frm_flux_py, m)?)?;
     m.add_function(wrap_pyfunction!(flux::comet_mags_py, m)?)?;
     m.add_function(wrap_pyfunction!(flux::fib_lattice_vecs_py, m)?)?;
     m.add_function(wrap_pyfunction!(flux::solar_flux_py, m)?)?;
@@ -97,7 +94,6 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(spice::pck_state_to_earth, m)?)?;
 
     m.add_function(wrap_pyfunction!(spice::daf_header_info_py, m)?)?;
-
     m.add_function(wrap_pyfunction!(spice::obs_codes, m)?)?;
 
     m.add_function(wrap_pyfunction!(state_transition::compute_stm_py, m)?)?;

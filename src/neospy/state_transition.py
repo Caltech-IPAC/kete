@@ -2,7 +2,6 @@ import numpy as np
 from numpy.typing import NDArray
 from .vector import State
 
-# pylint: disable=no-name-in-module
 from . import _core
 
 
