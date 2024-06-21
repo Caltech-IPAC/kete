@@ -321,7 +321,7 @@ class SpiceKernels:
         return glob.glob(path)
 
     @staticmethod
-    def kernel_reload(filenames: list[str] = None, include_cache=False):
+    def kernel_reload(filenames: Optional[list[str]] = None, include_cache=False):
         """
         Load the specified spice kernels into memory, this resets the currently loaded
         kernels.
@@ -459,7 +459,7 @@ class SpiceKernels:
 
     @classmethod
     def moon_illumination_frac(
-        cls, jd: Union[float, Time], observer: Optional[str] = "399"
+        cls, jd: Union[float, Time], observer: str = "399"
     ):
         """
         Compute the fraction of the moon which is illuminated at the specified time.
