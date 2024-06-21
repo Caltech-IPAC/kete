@@ -11,7 +11,6 @@ Color bands correspond to NEO Surveyor IR observation bands NC1 and NC2 respecti
 import neospy
 import numpy as np
 import matplotlib.pyplot as plt
-from neospy.constants import C_V
 
 
 def flux_per_wavelength(
@@ -58,8 +57,8 @@ def flux_per_wavelength(
         flux = neospy.flux.neatm_flux(
             sun2obj,
             sun2sc,
-            albedo,
-            0.15,
+            vis_albedo=albedo,
+            g_param=0.15,
             beaming=1.5,
             diameter=diameter,
             wavelength=wave * 1e3,
@@ -70,7 +69,6 @@ def flux_per_wavelength(
             sun2sc,
             h_mag,
             0.15,
-            C_V,
             diameter,
             wave * 1e3,
             albedo,
@@ -89,7 +87,7 @@ for ls, albedo in zip(["--", "-"], [0.17, 0.03]):
     plt.plot(
         wavelength,
         total_flux,
-        label=f"Albedo={albedo*100:0.0f}%",
+        label=f"Albedo={albedo * 100:0.0f}%",
         ls=ls,
         color="black",
     )
@@ -98,14 +96,14 @@ for ls, albedo in zip(["--", "-"], [0.17, 0.03]):
     plt.plot(
         wavelength,
         fluxes[:, 0],
-        label=f"Albedo={albedo*100:0.0f}% - Thermal",
+        label=f"Albedo={albedo * 100:0.0f}% - Thermal",
         ls=ls,
         color="grey",
     )
     plt.plot(
         wavelength,
         fluxes[:, 1],
-        label=f"Albedo={albedo*100:0.0f}% - Reflected",
+        label=f"Albedo={albedo * 100:0.0f}% - Reflected",
         ls=ls,
         color="C0",
     )
