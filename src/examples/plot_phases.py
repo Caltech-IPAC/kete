@@ -39,10 +39,10 @@ for i, state in enumerate(states):
     obj2earth = sun2earth - sun2obj
     mags.append(
         neospy.flux.hg_apparent_mag(
-            -sun2obj,
-            obj2earth,
-            neo_subset.g_phase.iloc[i],
+            sun2obj,
+            sun2earth,
             neo_subset.h_mag.iloc[i],
+            neo_subset.g_phase.iloc[i],
         )
     )
 
@@ -63,7 +63,7 @@ plt.ylabel("Counts")
 
 plt.subplot(2, 1, 2)
 plt.scatter(mags[elongs > 90], phases[elongs > 90], s=1)
-plt.xlim(0, 25)
+plt.xlim(10, 35)
 plt.xlabel("Visible Mag")
 plt.ylabel("Phase (Deg)")
 plt.tight_layout()
