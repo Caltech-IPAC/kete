@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hyperbolic orbits.
 - Typo in Observability example was leading to an incorrect Magnitude value.
 - Astropy WCS warnings are now suppressed.
+- `SpiceKernels.moon_illuminated_frac` now agrees with JPL Horizons, this was doing a
+  geometric calculation which was correct, but with a different interpretation than
+  desired.
 
 ### Removed
 
