@@ -90,7 +90,7 @@ const MIN_STEP: f64 = 0.01;
 #[allow(missing_debug_implementations)]
 pub struct RadauIntegrator<'a, MType, D: Dim>
 where
-    DefaultAllocator: Allocator<f64, D, U1> + Allocator<f64, D, U7>,
+    DefaultAllocator: Allocator<D, U1> + Allocator<D, U7>,
 {
     func: RadauFunc<'a, MType, D>,
     metadata: MType,
@@ -113,7 +113,7 @@ where
 
 impl<'a, MType, D: Dim> RadauIntegrator<'a, MType, D>
 where
-    DefaultAllocator: Allocator<f64, D, U1> + Allocator<f64, D, U7>,
+    DefaultAllocator: Allocator<D, U1> + Allocator<D, U7>,
 {
     fn new(
         func: RadauFunc<'a, MType, D>,
