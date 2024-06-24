@@ -292,7 +292,7 @@ pub fn spk_accel(
 #[derive(Debug)]
 pub struct AccelVecMeta<'a, D: Dim>
 where
-    DefaultAllocator: Allocator<f64, D, U2>,
+    DefaultAllocator: Allocator<D, U2>,
 {
     /// `A` terms of the non-gravitational forces.
     /// If this is not provided, only standard gravitational model is applied.
@@ -327,7 +327,7 @@ pub fn vec_accel<D: Dim>(
     _exact_eval: bool,
 ) -> Result<OVector<f64, D>, NEOSpyError>
 where
-    DefaultAllocator: Allocator<f64, D> + Allocator<f64, D, U2>,
+    DefaultAllocator: Allocator<D> + Allocator<D, U2>,
 {
     // objects in the pos/vel vectors are setup like so
     // (x, y, z, x, y, z, ...

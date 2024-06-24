@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so that future work can enable writing SPICE kernel files.
 - Moved much of the python documentation into the rust wrappers, and removed the
   remaining empty python files.
+- Updated `nalgebra` to minimum version `^0.33.0`, which uses a simplified allocator.
+- Fixed minimum versions for all rust libraries.
 
 ### Fixed
 
