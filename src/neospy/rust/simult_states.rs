@@ -131,23 +131,27 @@ impl PySimultaneousStates {
 
     /// If a FOV is present, calculate all vectors from the observer position to the
     /// position of the objects.
-    /// 
+    ///
     /// Parameters
     /// ----------
     /// final_frame :
     ///     Optional final reference frame. If not provided this will be the frame of
     ///     the observer.
-    pub fn obs_vecs(&self, final_frame:Option<PyFrames>) -> PyResult<Vec<Vector>> {
-        let fov = self.fov().ok_or(PyErr::new::<exceptions::PyValueError, _>(
-            "FOV not present, cannot compute vectors.",
-        ))?.unwrap();
+    pub fn obs_vecs(&self, final_frame: Option<PyFrames>) -> PyResult<Vec<Vector>> {
+        let fov = self
+            .fov()
+            .ok_or(PyErr::new::<exceptions::PyValueError, _>(
+                "FOV not present, cannot compute vectors.",
+            ))?
+            .unwrap();
         let obs = fov.observer();
 
         let final_frame = final_frame.unwrap_or(obs.frame.into());
 
         let mut vecs = Vec::with_capacity(self.__len__());
-        for state in &self.0.states{
-            let diff = Vector::new(state.pos, state.frame.into()).__sub__(crate::vector::VectorLike::Arr(obs.pos));
+        for state in &self.0.states {
+            let diff = Vector::new(state.pos, state.frame.into())
+                .__sub__(crate::vector::VectorLike::Arr(obs.pos));
             vecs.push(diff.change_frame(final_frame));
         }
         Ok(vecs)
