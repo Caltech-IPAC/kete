@@ -8,10 +8,10 @@ name = "neospy_core"
 
 [dependencies]
 itertools = "^0.13.0"
-kdtree = "0.7.0"
+kdtree = "^0.7.0"
 lazy_static = "^1.5.0"
 nalgebra = {version = "^0.33.0"}
-pathfinding = "4.3.0"
+pathfinding = "^4.10.0"
 pyo3 = { version =  "^0.21.2", optional=true }
 rayon = "^1.10.0"
 serde = { version = "^1.0.203", features = ["derive"] }
