@@ -32,19 +32,19 @@ pub fn compute_eccentric_anomaly(
             // Elliptical
             let f = |ecc_anom: f64| -ecc * ecc_anom.sin() + ecc_anom - mean_anom.rem_euclid(TAU);
             let d = |ecc_anom: f64| 1.0 - 1.0 * ecc * ecc_anom.cos();
-            Ok(newton_raphson(f, d, mean_anom % TAU, 1e-11)? % TAU)
+            Ok(newton_raphson(f, d, mean_anom.rem_euclid(TAU), 1e-11)?.rem_euclid(TAU))
         }
         ecc if ecc < 1.0001 => {
             // Parabolic
             let f = |ecc_anom: f64| -mean_anom + peri_dist * ecc_anom + ecc_anom.powi(3) / 6.0;
             let d = |ecc_anom: f64| peri_dist + ecc_anom.powi(2) / 2.0;
-            Ok(newton_raphson(f, d, mean_anom.clamp(0.1, 6.0), 1e-11)?)
+            Ok(newton_raphson(f, d, mean_anom, 1e-11)?)
         }
         ecc => {
             // Hyperbolic
             let f = |ecc_anom: f64| ecc * ecc_anom.sinh() - ecc_anom - mean_anom;
             let d = |ecc_anom: f64| -1.0 + ecc * ecc_anom.cosh();
-            Ok(newton_raphson(f, d, mean_anom.clamp(0.1, 6.0), 1e-11)?)
+            Ok(newton_raphson(f, d, mean_anom, 1e-11)?)
         }
     }
 }
@@ -72,6 +72,9 @@ pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> Result<
     Ok(anom.rem_euclid(TAU))
 }
 
+// Beta value used below to define a parabolic orbit.
+const PARABOLIC_BETA: f64 = 1e-10;
+
 /// This function is used by the kepler universal solver below.
 /// They are defined by the referenced paper.
 ///
@@ -81,7 +84,7 @@ pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> Result<
 ///  https://arxiv.org/abs/1508.02699
 fn g_1(s: f64, beta: f64) -> f64 {
     // the limit of this equation as beta approaches 0 is s
-    if beta.abs() < 1e-14 {
+    if beta.abs() < PARABOLIC_BETA {
         return s;
     }
     let beta_sqrt = beta.abs().sqrt();
@@ -101,12 +104,13 @@ fn g_1(s: f64, beta: f64) -> f64 {
 ///  https://arxiv.org/abs/1508.02699
 fn g_2(s: f64, beta: f64) -> f64 {
     // the limit of this equation as beta approaches 0 is s^2 / 2
-    if beta.abs() < 1e-14 {
+    if beta.abs() < PARABOLIC_BETA {
         return s.powi(2) / 2.0;
     }
     let beta_sqrt = beta.abs().sqrt() * s;
     if beta >= 0.0 {
         2.0 * (beta_sqrt / 2.0).sin().powf(2.0) / beta
+        // (1.0 - beta_sqrt.cos()) / beta
     } else {
         (1.0 - (beta_sqrt).cosh()) / beta
     }
@@ -139,7 +143,7 @@ fn solve_kepler_universal(
     let b_sqrt = beta.abs().sqrt();
 
     let res = {
-        if beta.abs() < 1e-10 {
+        if beta.abs() < PARABOLIC_BETA {
             // This is for parabolic orbits.
             // solve a cubic of the form:
             // x^3 + a2 * x^2 + a1 * x + a0 = 0
@@ -149,7 +153,7 @@ fn solve_kepler_universal(
             let p = (3.0 * a1 - a2.powi(2)) / 3.0;
             let q = (9.0 * a1 * a2 - 27.0 * a0 - 2.0 * a2.powi(3)) / 27.0;
             let w = (q / 2.0 + (q.powi(2) / 4.0 + p.powi(3) / 27.0).sqrt()).powf(1.0 / 3.0);
-            let ans = w - p / (3.0 * w);
+            let ans = w - p / (3.0 * w) - a2 / 3.0;
             Ok(ans)
         } else if beta > 0.0 {
             let period = GMS * b_sqrt.powi(-3);

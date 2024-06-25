@@ -120,14 +120,25 @@ impl CometElements {
             if (ecc - 1.0).abs() < 1e-8 {
                 // Parabolic
                 let mut true_anomaly = ecc_vec.angle(pos);
-                if ang_vec.cross(&ecc_vec).dot(pos).is_sign_negative() {
+                if vp_mag.is_sign_negative() {
                     true_anomaly = -true_anomaly;
                 }
                 let d = (true_anomaly / 2.0).tan();
                 let dt = (2f64.sqrt() * peri_dist.powf(1.5) / GMS_SQRT) * (d + d.powi(3) / 3.0);
                 epoch - dt
+            } else if ecc < 1e-8 {
+                let semi_major = (2.0 / p_mag - v_mag2).recip();
+                let mean_motion = semi_major.abs().powf(-1.5) * GMS_SQRT;
+                // for circular cases mean_anomaly == true_anomaly
+                // for circular orbits, the eccentric vector is 0, so we use the
+                // ascending node as the reference for the true anomaly.
+                let mut true_anomaly = lon_asc_vec.angle(pos);
+                if vp_mag.is_sign_negative() {
+                    true_anomaly = -true_anomaly;
+                }
+                epoch - true_anomaly / mean_motion
             } else {
-                // Hyperbolic or elliptical (aka just-bolic)
+                // Hyperbolic or elliptical
                 let semi_major = (2.0 / p_mag - v_mag2).recip();
                 let mean_motion = semi_major.abs().powf(-1.5) * GMS_SQRT;
                 let mean_anomaly: f64 = {
@@ -193,7 +204,7 @@ impl CometElements {
             false => semi_major.abs().powf(-1.5) * GMS_SQRT,
         };
 
-        let mean_anom = (mean_motion * (self.epoch - self.peri_time)) % TAU;
+        let mean_anom = mean_motion * (self.epoch - self.peri_time);
         let ecc_anom = compute_eccentric_anomaly(self.eccentricity, mean_anom, self.peri_dist)?;
 
         let x: f64;
@@ -222,6 +233,7 @@ impl CometElements {
             x_dot = -semi_major * h_dot * sinh_h * GMS_SQRT;
             y_dot = -b * h_dot * cosh_h * GMS_SQRT;
         } else {
+            // Parabolic
             let d_dot = (self.peri_dist + ecc_anom.powi(2) / 2.0).recip();
 
             x = self.peri_dist - ecc_anom.powi(2) / 2.0;
