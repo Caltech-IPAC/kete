@@ -32,19 +32,19 @@ pub fn compute_eccentric_anomaly(
             // Elliptical
             let f = |ecc_anom: f64| -ecc * ecc_anom.sin() + ecc_anom - mean_anom.rem_euclid(TAU);
             let d = |ecc_anom: f64| 1.0 - 1.0 * ecc * ecc_anom.cos();
-            Ok(newton_raphson(f, d, mean_anom.rem_euclid(TAU), 1e-11)?.rem_euclid(TAU))
+            Ok(newton_raphson(f, d, mean_anom.rem_euclid(TAU), 1e-11, 0.1)?.rem_euclid(TAU))
         }
         ecc if ecc < 1.0001 => {
             // Parabolic
             let f = |ecc_anom: f64| -mean_anom + peri_dist * ecc_anom + ecc_anom.powi(3) / 6.0;
             let d = |ecc_anom: f64| peri_dist + ecc_anom.powi(2) / 2.0;
-            Ok(newton_raphson(f, d, mean_anom, 1e-11)?)
+            Ok(newton_raphson(f, d, mean_anom, 1e-11, 0.1)?)
         }
         ecc => {
             // Hyperbolic
             let f = |ecc_anom: f64| ecc * ecc_anom.sinh() - ecc_anom - mean_anom;
             let d = |ecc_anom: f64| -1.0 + ecc * ecc_anom.cosh();
-            Ok(newton_raphson(f, d, mean_anom, 1e-11)?)
+            Ok(newton_raphson(f, d, 0.0, 1e-11, 0.1)?)
         }
     }
 }
@@ -172,7 +172,7 @@ fn solve_kepler_universal(
             };
             // Significantly better initial guess.
             let guess = b_sqrt.recip() * dt / period;
-            newton_raphson(f, d, guess, 1e-11)
+            newton_raphson(f, d, guess, 1e-11, 0.1)
         } else {
             // hyperbolic orbits
             let f = |x: f64| {
@@ -186,9 +186,10 @@ fn solve_kepler_universal(
                 let g3d = (1.0 - g1d) / beta;
                 r0 * g1d + rv0 * g2d + GMS * g3d
             };
-            newton_raphson(f, d, GMS_SQRT * beta.abs() * dt, 1e-11)
+            newton_raphson(f, d, GMS_SQRT * beta.abs() * dt, 1e-11, 0.1)
         }
-    }?;
+    }
+    .map_err(|_| NEOSpyError::Convergence("Failed to solve universal kepler equation".into()))?;
     Ok((res, beta))
 }
 
@@ -301,12 +302,24 @@ mod tests {
             let res = analytic_2_body(year, &pos, &vel, None).unwrap();
             assert!((res.0 - pos).norm() < 1e-8);
             assert!((res.1 - vel).norm() < 1e-8);
+
+            // go backwards
+            let res = analytic_2_body(-year, &pos, &vel, None).unwrap();
+            assert!((res.0 - pos).norm() < 1e-8);
+            assert!((res.1 - vel).norm() < 1e-8);
         }
     }
 
     #[test]
     fn test_compute_eccentric_anom_hyperbolic() {
-        let _ = compute_eccentric_anomaly(2.0, 63.21151553950512, 0.1).unwrap();
+        for mean_anom in -100..100 {
+            let mean_anom = mean_anom as f64;
+            assert!(
+                compute_eccentric_anomaly(2.0, mean_anom, 0.1).is_ok(),
+                "Mean Anom: {}",
+                mean_anom
+            );
+        }
     }
 
     #[test]
@@ -317,9 +330,13 @@ mod tests {
         let res = analytic_2_body(year, &pos, &vel, None).unwrap();
         let pos_exp = Vector3::new(-4.448805955479905, -0.4739843046525608, 0.0);
         let vel_exp = -Vector3::new(-0.00768983428326951, -0.008552645144187791, 0.0);
-        dbg!(&res);
         assert!((res.0 - pos_exp).norm() < 1e-8);
         assert!((res.1 - vel_exp).norm() < 1e-8);
+
+        // go backwards
+        let res = analytic_2_body(-year, &pos_exp, &vel_exp, None).unwrap();
+        assert!((res.0 - pos).norm() < 1e-8);
+        assert!((res.1 - vel).norm() < 1e-8);
     }
 
     #[test]
@@ -332,6 +349,11 @@ mod tests {
         let vel_exp = Vector3::new(-0.013061655543084886, -0.005508140023183166, 0.0);
         assert!((res.0 - pos_exp).norm() < 1e-8);
         assert!((res.1 - vel_exp).norm() < 1e-8);
+
+        // go backwards
+        let res = analytic_2_body(-year, &pos_exp, &vel_exp, None).unwrap();
+        assert!((res.0 - pos).norm() < 1e-8);
+        assert!((res.1 - vel).norm() < 1e-8);
     }
 
     #[test]
