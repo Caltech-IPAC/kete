@@ -32,19 +32,24 @@ pub fn compute_eccentric_anomaly(
             // Elliptical
             let f = |ecc_anom: f64| -ecc * ecc_anom.sin() + ecc_anom - mean_anom.rem_euclid(TAU);
             let d = |ecc_anom: f64| 1.0 - 1.0 * ecc * ecc_anom.cos();
-            Ok(newton_raphson(f, d, mean_anom.rem_euclid(TAU), 1e-11, 0.1)?.rem_euclid(TAU))
+            Ok(newton_raphson(f, d, mean_anom.rem_euclid(TAU), 1e-11)?.rem_euclid(TAU))
         }
         ecc if ecc < 1.0001 => {
             // Parabolic
-            let f = |ecc_anom: f64| -mean_anom + peri_dist * ecc_anom + ecc_anom.powi(3) / 6.0;
-            let d = |ecc_anom: f64| peri_dist + ecc_anom.powi(2) / 2.0;
-            Ok(newton_raphson(f, d, mean_anom, 1e-11, 0.1)?)
+            // Find the zero point of -mean_anom + peri_dist * ecc_anom + ecc_anom.powi(3) / 6.0
+            // this is a simple cubic equation which can be solved analytically.
+            let p = 2.0 * peri_dist;
+            let q = 6.0 * mean_anom;
+
+            let w = (0.5 * (q + (q.powi(2) + 4.0 * p.powi(3)).sqrt())).cbrt();
+            Ok(w - p / w)
         }
         ecc => {
             // Hyperbolic
-            let f = |ecc_anom: f64| ecc * ecc_anom.sinh() - ecc_anom - mean_anom;
+            let f = |ecc_anom: f64| (ecc * ecc_anom.sinh() - ecc_anom - mean_anom);
             let d = |ecc_anom: f64| -1.0 + ecc * ecc_anom.cosh();
-            Ok(newton_raphson(f, d, 0.0, 1e-11, 0.1)?)
+            let guess = (mean_anom / ecc).asinh();
+            Ok(newton_raphson(f, d, guess, 1e-11)?)
         }
     }
 }
@@ -143,19 +148,7 @@ fn solve_kepler_universal(
     let b_sqrt = beta.abs().sqrt();
 
     let res = {
-        if beta.abs() < PARABOLIC_BETA {
-            // This is for parabolic orbits.
-            // solve a cubic of the form:
-            // x^3 + a2 * x^2 + a1 * x + a0 = 0
-            let a0 = -6.0 * dt / GMS;
-            let a1 = 6.0 * r0 / GMS;
-            let a2 = 3.0 * rv0 / GMS;
-            let p = (3.0 * a1 - a2.powi(2)) / 3.0;
-            let q = (9.0 * a1 * a2 - 27.0 * a0 - 2.0 * a2.powi(3)) / 27.0;
-            let w = (q / 2.0 + (q.powi(2) / 4.0 + p.powi(3) / 27.0).sqrt()).powf(1.0 / 3.0);
-            let ans = w - p / (3.0 * w) - a2 / 3.0;
-            Ok(ans)
-        } else if beta > 0.0 {
+        if beta >= PARABOLIC_BETA {
             let period = GMS * b_sqrt.powi(-3);
             dt %= period * TAU;
             // elliptical orbits
@@ -172,7 +165,19 @@ fn solve_kepler_universal(
             };
             // Significantly better initial guess.
             let guess = b_sqrt.recip() * dt / period;
-            newton_raphson(f, d, guess, 1e-11, 0.1)
+            newton_raphson(f, d, guess, 1e-11)
+        } else if beta.abs() < PARABOLIC_BETA {
+            // This is for parabolic orbits.
+            // solve a cubic of the form:
+            // x^3 + a2 * x^2 + a1 * x + a0 = 0
+            let a0 = -6.0 * dt / GMS;
+            let a1 = 6.0 * r0 / GMS;
+            let a2 = 3.0 * rv0 / GMS;
+            let p = (3.0 * a1 - a2.powi(2)) / 3.0;
+            let q = (9.0 * a1 * a2 - 27.0 * a0 - 2.0 * a2.powi(3)) / 27.0;
+            let w = (q / 2.0 + (q.powi(2) / 4.0 + p.powi(3) / 27.0).sqrt()).powf(1.0 / 3.0);
+            let ans = w - p / (3.0 * w) - a2 / 3.0;
+            Ok(ans)
         } else {
             // hyperbolic orbits
             let f = |x: f64| {
@@ -186,7 +191,7 @@ fn solve_kepler_universal(
                 let g3d = (1.0 - g1d) / beta;
                 r0 * g1d + rv0 * g2d + GMS * g3d
             };
-            newton_raphson(f, d, GMS_SQRT * beta.abs() * dt, 1e-11, 0.1)
+            newton_raphson(f, d, GMS_SQRT * beta.abs() * dt, 1e-11)
         }
     }
     .map_err(|_| NEOSpyError::Convergence("Failed to solve universal kepler equation".into()))?;

@@ -10,7 +10,7 @@ use crate::errors::NEOSpyError;
 ///     use neospy_core::fitting::newton_raphson;
 ///     let f = |x| { 1.0 * x * x - 1.0 };
 ///     let d = |x| { 2.0 * x };
-///     let root = newton_raphson(f, d, 0.0, 1e-10, 1).unwrap();
+///     let root = newton_raphson(f, d, 0.0, 1e-10).unwrap();
 ///     assert!((root - 1.0).abs() < 1e-12);
 /// ```
 ///
@@ -20,7 +20,6 @@ pub fn newton_raphson<Func, Der>(
     der: Der,
     start: f64,
     atol: f64,
-    max_step: f64,
 ) -> Result<f64, NEOSpyError>
 where
     Func: Fn(f64) -> f64,
@@ -57,7 +56,13 @@ where
         }
 
         // 0.5 reduces the step size to slow down the rate of convergence.
-        x -= (0.5 * f_eval / d_eval).clamp(-max_step, max_step);
+        x -= 0.5 * f_eval / d_eval;
+
+        d_eval = der(x);
+        if d_eval.abs() < 1e-3 {
+            f_eval = func(x);
+        }
+        x -= 0.5 * f_eval / d_eval;
     }
     Err(NEOSpyError::Convergence(
         "Newton-Raphson root finding hit iteration limit without converging.".into(),
@@ -73,10 +78,10 @@ mod tests {
         let f = |x| 1.0 * x * x - 1.0;
         let d = |x| 2.0 * x;
 
-        let root = newton_raphson(f, d, 0.0, 1e-10, 1.0).unwrap();
+        let root = newton_raphson(f, d, 0.0, 1e-10).unwrap();
         assert!((root - 1.0).abs() < 1e-12);
 
-        let root = newton_raphson(f, d, 1.0, 1e-10, 1.0).unwrap();
+        let root = newton_raphson(f, d, 1.0, 1e-10).unwrap();
         assert!((root - 1.0).abs() < 1e-12);
     }
 }

@@ -32,5 +32,5 @@ pub fn reduced_chi2_der_der(sigmas: &[f64]) -> f64 {
 pub fn fit_reduced_chi2(data: &[f64], sigmas: &[f64]) -> f64 {
     let cost = |val: f64| -> f64 { reduced_chi2_der(data, sigmas, val) / sigmas.len() as f64 };
     let der = |_: f64| -> f64 { reduced_chi2_der_der(sigmas) / sigmas.len() as f64 };
-    newton_raphson(cost, der, data[0], 1e-8, 1.0).unwrap()
+    newton_raphson(cost, der, data[0], 1e-8).unwrap()
 }

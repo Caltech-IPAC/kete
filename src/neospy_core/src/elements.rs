@@ -410,7 +410,8 @@ mod tests {
                                         peri_dist,
                                         frame: Frame::Ecliptic,
                                     };
-                                    let [pos, vel] = elem.to_pos_vel().unwrap();
+                                    let [pos, vel] =
+                                        elem.to_pos_vel().expect("Failed to convert to state.");
                                     let new_elem = CometElements::from_pos_vel(
                                         Desig::Empty,
                                         epoch,
@@ -418,16 +419,25 @@ mod tests {
                                         &vel.into(),
                                         Frame::Ecliptic,
                                     );
-                                    let [new_pos, new_vel] = new_elem.to_pos_vel().unwrap();
+                                    let [new_pos, new_vel] =
+                                        new_elem.to_pos_vel().expect("Failed to convert to state.");
 
-                                    let t_anom = ((elem.true_anomaly().unwrap()
-                                        - new_elem.true_anomaly().unwrap())
+                                    let t_anom = ((elem
+                                        .true_anomaly()
+                                        .expect("Failed to compute true anomaly.")
+                                        - new_elem
+                                            .true_anomaly()
+                                            .expect("Failed to compute true anomaly."))
                                         * 2.0)
                                         .sin()
                                         .abs();
 
-                                    let t_ecc = ((elem.eccentric_anomaly().unwrap()
-                                        - new_elem.eccentric_anomaly().unwrap())
+                                    let t_ecc = ((elem
+                                        .eccentric_anomaly()
+                                        .expect("Failed to compute eccentric anomaly.")
+                                        - new_elem
+                                            .eccentric_anomaly()
+                                            .expect("Failed to compute eccentric anomaly."))
                                         * 2.0)
                                         .sin()
                                         .abs();
