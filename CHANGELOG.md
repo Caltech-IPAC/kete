@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Improved orbital element conversion, leading to a 2-3x speedup in two body orbit
+  propagation.
 - Significant rewrite of the SPICE kernel file management, this rewrite is required
   so that future work can enable writing SPICE kernel files.
 - Moved much of the python documentation into the rust wrappers, and removed the
@@ -28,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Orbital Elements now correctly computes `true_anomaly`, `mean_anomaly`,
   `eccentric_anomaly`, `semi_major_axis`, and `mean_motion` for parabolic and
   hyperbolic orbits.
+- Two body propagation for parabolic orbits was incorrect.
 - Typo in Observability example was leading to an incorrect Magnitude value.
 - Astropy WCS warnings are now suppressed.
 - `SpiceKernels.moon_illuminated_frac` now agrees with JPL Horizons, this was doing a
