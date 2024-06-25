@@ -119,17 +119,26 @@ impl CometElements {
         let peri_time: f64 = {
             if (ecc - 1.0).abs() < 1e-8 {
                 // Parabolic
-                epoch - (peri_dist * vp_mag + vp_mag.powi(3) / 6.0) / GMS_SQRT
+                let mut true_anomaly = ecc_vec.angle(pos);
+                if vp_mag.is_sign_negative() {
+                    true_anomaly = -true_anomaly;
+                }
+                let d = (true_anomaly / 2.0).tan();
+                let dt = (2f64.sqrt() * peri_dist.powf(1.5) / GMS_SQRT) * (d + d.powi(3) / 3.0);
+                epoch - dt
             } else if ecc < 1e-8 {
                 let semi_major = (2.0 / p_mag - v_mag2).recip();
                 let mean_motion = semi_major.abs().powf(-1.5) * GMS_SQRT;
-                let mut anomaly = lon_asc_vec.angle(pos);
+                // for circular cases mean_anomaly == true_anomaly
+                // for circular orbits, the eccentric vector is 0, so we use the
+                // ascending node as the reference for the true anomaly.
+                let mut true_anomaly = lon_asc_vec.angle(pos);
                 if ang_vec.cross(&lon_asc_vec).dot(pos).is_sign_negative() {
-                    anomaly = -anomaly;
+                    true_anomaly = -true_anomaly;
                 }
-                epoch - anomaly / mean_motion
+                epoch - true_anomaly / mean_motion
             } else {
-                // Hyperbolic or elliptical (aka just-bolic)
+                // Hyperbolic or elliptical
                 let semi_major = (2.0 / p_mag - v_mag2).recip();
                 let mean_motion = semi_major.abs().powf(-1.5) * GMS_SQRT;
                 let mean_anomaly: f64 = {
@@ -195,7 +204,7 @@ impl CometElements {
             false => semi_major.abs().powf(-1.5) * GMS_SQRT,
         };
 
-        let mean_anom = (mean_motion * (self.epoch - self.peri_time)) % TAU;
+        let mean_anom = mean_motion * (self.epoch - self.peri_time);
         let ecc_anom = compute_eccentric_anomaly(self.eccentricity, mean_anom, self.peri_dist)?;
 
         let x: f64;
@@ -224,6 +233,7 @@ impl CometElements {
             x_dot = -semi_major * h_dot * sinh_h * GMS_SQRT;
             y_dot = -b * h_dot * cosh_h * GMS_SQRT;
         } else {
+            // Parabolic
             let d_dot = (self.peri_dist + ecc_anom.powi(2) / 2.0).recip();
 
             x = self.peri_dist - ecc_anom.powi(2) / 2.0;
@@ -280,7 +290,9 @@ impl CometElements {
     /// Compute the mean motion in radians per day.
     pub fn mean_motion(&self) -> f64 {
         match self.eccentricity {
-            ecc if ((ecc - 1.0).abs() <= 1e-5) => GMS_SQRT,
+            ecc if ((ecc - 1.0).abs() <= 1e-5) => {
+                GMS_SQRT * 1.5 / 2f64.sqrt() / self.peri_dist.powf(1.5)
+            }
             _ => GMS_SQRT / self.semi_major().abs().powf(1.5),
         }
     }
@@ -288,7 +300,11 @@ impl CometElements {
     /// Compute the mean anomaly in radians.
     pub fn mean_anomaly(&self) -> f64 {
         let mm = self.mean_motion();
-        ((self.epoch - self.peri_time) * mm + 1e-6).rem_euclid(TAU) - 1e-6
+        let mean_anomaly = (self.epoch - self.peri_time) * mm;
+        match self.eccentricity {
+            ecc if ecc < 0.9999 => mean_anomaly.rem_euclid(TAU),
+            _ => mean_anomaly,
+        }
     }
 
     /// Compute the True Anomaly
@@ -394,7 +410,8 @@ mod tests {
                                         peri_dist,
                                         frame: Frame::Ecliptic,
                                     };
-                                    let [pos, vel] = elem.to_pos_vel().unwrap();
+                                    let [pos, vel] =
+                                        elem.to_pos_vel().expect("Failed to convert to state.");
                                     let new_elem = CometElements::from_pos_vel(
                                         Desig::Empty,
                                         epoch,
@@ -402,22 +419,8 @@ mod tests {
                                         &vel.into(),
                                         Frame::Ecliptic,
                                     );
-                                    let [new_pos, new_vel] = new_elem.to_pos_vel().unwrap();
-
-                                    let t_anom = ((elem.true_anomaly().unwrap()
-                                        - new_elem.true_anomaly().unwrap())
-                                        * 2.0)
-                                        .sin()
-                                        .abs();
-
-                                    let t_ecc = ((elem.eccentric_anomaly().unwrap()
-                                        - new_elem.eccentric_anomaly().unwrap())
-                                        * 2.0)
-                                        .sin()
-                                        .abs();
-
-                                    assert!(t_anom < 1e-7);
-                                    assert!(t_ecc < 1e-7);
+                                    let [new_pos, new_vel] =
+                                        new_elem.to_pos_vel().expect("Failed to convert to state.");
 
                                     for idx in 0..3 {
                                         assert!(
@@ -432,6 +435,21 @@ mod tests {
                                         );
                                         assert!((new_vel[idx] - vel[idx]).abs() < 1e-7);
                                     }
+
+                                    let t_anom = ((elem.true_anomaly().unwrap()
+                                        - new_elem.true_anomaly().unwrap())
+                                        * 2.0)
+                                        .sin()
+                                        .abs();
+
+                                    let t_ecc = ((elem.eccentric_anomaly().unwrap()
+                                        - new_elem.eccentric_anomaly().unwrap())
+                                        * 2.0)
+                                        .sin()
+                                        .abs();
+
+                                    assert!(t_anom < 1e-6);
+                                    assert!(t_ecc < 1e-6);
                                 }
                             }
                         }
@@ -469,14 +487,6 @@ mod tests {
                                     &vel.into(),
                                     Frame::Ecliptic,
                                 );
-                                assert!(
-                                    (elem.true_anomaly().unwrap() - elem.mean_anomaly()).abs()
-                                        < 1e-7,
-                                );
-                                assert!(
-                                    (elem.eccentric_anomaly().unwrap() - elem.mean_anomaly()).abs()
-                                        < 1e-7
-                                );
 
                                 let [new_pos, new_vel] = new_elem.to_pos_vel().unwrap();
                                 for idx in 0..3 {
@@ -499,6 +509,15 @@ mod tests {
                                         new_pos,
                                         vel,
                                         new_vel,
+                                    );
+                                    assert!(
+                                        (elem.true_anomaly().unwrap() - elem.mean_anomaly()).abs()
+                                            < 1e-7,
+                                    );
+                                    assert!(
+                                        (elem.eccentric_anomaly().unwrap() - elem.mean_anomaly())
+                                            .abs()
+                                            < 1e-7
                                     );
                                 }
                             }

@@ -15,7 +15,7 @@ use std::f64::consts::TAU;
 /// # Arguments
 ///
 /// * `ecc` - The eccentricity, must be non-negative.
-/// * `mean_anomaly` - Mean anomaly, between 0 and 2 pi.
+/// * `mean_anomaly` - Mean anomaly.
 /// * `peri_dist` - Perihelion Distance in AU, only used for parabolic orbits.
 ///
 pub fn compute_eccentric_anomaly(
@@ -30,21 +30,26 @@ pub fn compute_eccentric_anomaly(
         ecc if ecc < 1e-6 => Ok(mean_anom),
         ecc if ecc < 0.9999 => {
             // Elliptical
-            let f = |ecc_anom: f64| -ecc * ecc_anom.sin() + ecc_anom - mean_anom;
+            let f = |ecc_anom: f64| -ecc * ecc_anom.sin() + ecc_anom - mean_anom.rem_euclid(TAU);
             let d = |ecc_anom: f64| 1.0 - 1.0 * ecc * ecc_anom.cos();
-            Ok(newton_raphson(f, d, mean_anom % TAU, 1e-11)? % TAU)
+            Ok(newton_raphson(f, d, mean_anom.rem_euclid(TAU), 1e-11)?.rem_euclid(TAU))
         }
         ecc if ecc < 1.0001 => {
             // Parabolic
-            let f = |ecc_anom: f64| -mean_anom + peri_dist * ecc_anom + ecc_anom.powi(3) / 6.0;
-            let d = |ecc_anom: f64| peri_dist + ecc_anom.powi(2) / 2.0;
-            Ok(newton_raphson(f, d, mean_anom.rem_euclid(TAU), 1e-11)? % TAU)
+            // Find the zero point of -mean_anom + peri_dist * ecc_anom + ecc_anom.powi(3) / 6.0
+            // this is a simple cubic equation which can be solved analytically.
+            let p = 2.0 * peri_dist;
+            let q = 6.0 * mean_anom;
+
+            let w = (0.5 * (q + (q.powi(2) + 4.0 * p.powi(3)).sqrt())).cbrt();
+            Ok(w - p / w)
         }
         ecc => {
             // Hyperbolic
-            let f = |ecc_anom: f64| ecc * ecc_anom.sinh() - ecc_anom - mean_anom;
+            let f = |ecc_anom: f64| (ecc * ecc_anom.sinh() - ecc_anom - mean_anom);
             let d = |ecc_anom: f64| -1.0 + ecc * ecc_anom.cosh();
-            Ok(newton_raphson(f, d, mean_anom.rem_euclid(TAU), 1e-11)?)
+            let guess = (mean_anom / ecc).asinh();
+            Ok(newton_raphson(f, d, guess, 1e-11)?)
         }
     }
 }
@@ -72,6 +77,9 @@ pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> Result<
     Ok(anom.rem_euclid(TAU))
 }
 
+// Beta value used below to define a parabolic orbit.
+const PARABOLIC_BETA: f64 = 1e-10;
+
 /// This function is used by the kepler universal solver below.
 /// They are defined by the referenced paper.
 ///
@@ -81,7 +89,7 @@ pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> Result<
 ///  https://arxiv.org/abs/1508.02699
 fn g_1(s: f64, beta: f64) -> f64 {
     // the limit of this equation as beta approaches 0 is s
-    if beta.abs() < 1e-14 {
+    if beta.abs() < PARABOLIC_BETA {
         return s;
     }
     let beta_sqrt = beta.abs().sqrt();
@@ -101,12 +109,13 @@ fn g_1(s: f64, beta: f64) -> f64 {
 ///  https://arxiv.org/abs/1508.02699
 fn g_2(s: f64, beta: f64) -> f64 {
     // the limit of this equation as beta approaches 0 is s^2 / 2
-    if beta.abs() < 1e-14 {
+    if beta.abs() < PARABOLIC_BETA {
         return s.powi(2) / 2.0;
     }
     let beta_sqrt = beta.abs().sqrt() * s;
     if beta >= 0.0 {
         2.0 * (beta_sqrt / 2.0).sin().powf(2.0) / beta
+        // (1.0 - beta_sqrt.cos()) / beta
     } else {
         (1.0 - (beta_sqrt).cosh()) / beta
     }
@@ -139,19 +148,7 @@ fn solve_kepler_universal(
     let b_sqrt = beta.abs().sqrt();
 
     let res = {
-        if beta.abs() < 1e-10 {
-            // This is for parabolic orbits.
-            // solve a cubic of the form:
-            // x^3 + a2 * x^2 + a1 * x + a0 = 0
-            let a0 = -6.0 * dt / GMS;
-            let a1 = 6.0 * r0 / GMS;
-            let a2 = 3.0 * rv0 / GMS;
-            let p = (3.0 * a1 - a2.powi(2)) / 3.0;
-            let q = (9.0 * a1 * a2 - 27.0 * a0 - 2.0 * a2.powi(3)) / 27.0;
-            let w = (q / 2.0 + (q.powi(2) / 4.0 + p.powi(3) / 27.0).sqrt()).powf(1.0 / 3.0);
-            let ans = w - p / (3.0 * w);
-            Ok(ans)
-        } else if beta > 0.0 {
+        if beta >= PARABOLIC_BETA {
             let period = GMS * b_sqrt.powi(-3);
             dt %= period * TAU;
             // elliptical orbits
@@ -169,6 +166,18 @@ fn solve_kepler_universal(
             // Significantly better initial guess.
             let guess = b_sqrt.recip() * dt / period;
             newton_raphson(f, d, guess, 1e-11)
+        } else if beta.abs() < PARABOLIC_BETA {
+            // This is for parabolic orbits.
+            // solve a cubic of the form:
+            // x^3 + a2 * x^2 + a1 * x + a0 = 0
+            let a0 = -6.0 * dt / GMS;
+            let a1 = 6.0 * r0 / GMS;
+            let a2 = 3.0 * rv0 / GMS;
+            let p = (3.0 * a1 - a2.powi(2)) / 3.0;
+            let q = (9.0 * a1 * a2 - 27.0 * a0 - 2.0 * a2.powi(3)) / 27.0;
+            let w = (q / 2.0 + (q.powi(2) / 4.0 + p.powi(3) / 27.0).sqrt()).powf(1.0 / 3.0);
+            let ans = w - p / (3.0 * w) - a2 / 3.0;
+            Ok(ans)
         } else {
             // hyperbolic orbits
             let f = |x: f64| {
@@ -184,7 +193,8 @@ fn solve_kepler_universal(
             };
             newton_raphson(f, d, GMS_SQRT * beta.abs() * dt, 1e-11)
         }
-    }?;
+    }
+    .map_err(|_| NEOSpyError::Convergence("Failed to solve universal kepler equation".into()))?;
     Ok((res, beta))
 }
 
@@ -297,24 +307,41 @@ mod tests {
             let res = analytic_2_body(year, &pos, &vel, None).unwrap();
             assert!((res.0 - pos).norm() < 1e-8);
             assert!((res.1 - vel).norm() < 1e-8);
+
+            // go backwards
+            let res = analytic_2_body(-year, &pos, &vel, None).unwrap();
+            assert!((res.0 - pos).norm() < 1e-8);
+            assert!((res.1 - vel).norm() < 1e-8);
         }
     }
 
     #[test]
     fn test_compute_eccentric_anom_hyperbolic() {
-        let _ = compute_eccentric_anomaly(2.0, 63.21151553950512, 0.1).unwrap();
+        for mean_anom in -100..100 {
+            let mean_anom = mean_anom as f64;
+            assert!(
+                compute_eccentric_anomaly(2.0, mean_anom, 0.1).is_ok(),
+                "Mean Anom: {}",
+                mean_anom
+            );
+        }
     }
 
     #[test]
     fn test_kepler_parabolic() {
         let pos = Vector3::new(0.0, 2.0, 0.0);
-        let vel = Vector3::new(-GMS_SQRT, 0.0, 0.0);
-        let year = TAU / GMS_SQRT;
+        let vel = Vector3::new(GMS_SQRT, 0.0, 0.0);
+        let year = -TAU / GMS_SQRT;
         let res = analytic_2_body(year, &pos, &vel, None).unwrap();
         let pos_exp = Vector3::new(-4.448805955479905, -0.4739843046525608, 0.0);
-        let vel_exp = Vector3::new(-0.00768983428326951, -0.008552645144187791, 0.0);
+        let vel_exp = -Vector3::new(-0.00768983428326951, -0.008552645144187791, 0.0);
         assert!((res.0 - pos_exp).norm() < 1e-8);
         assert!((res.1 - vel_exp).norm() < 1e-8);
+
+        // go backwards
+        let res = analytic_2_body(-year, &pos_exp, &vel_exp, None).unwrap();
+        assert!((res.0 - pos).norm() < 1e-8);
+        assert!((res.1 - vel).norm() < 1e-8);
     }
 
     #[test]
@@ -327,6 +354,11 @@ mod tests {
         let vel_exp = Vector3::new(-0.013061655543084886, -0.005508140023183166, 0.0);
         assert!((res.0 - pos_exp).norm() < 1e-8);
         assert!((res.1 - vel_exp).norm() < 1e-8);
+
+        // go backwards
+        let res = analytic_2_body(-year, &pos_exp, &vel_exp, None).unwrap();
+        assert!((res.0 - pos).norm() < 1e-8);
+        assert!((res.1 - vel).norm() < 1e-8);
     }
 
     #[test]

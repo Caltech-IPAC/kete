@@ -57,6 +57,12 @@ where
 
         // 0.5 reduces the step size to slow down the rate of convergence.
         x -= 0.5 * f_eval / d_eval;
+
+        d_eval = der(x);
+        if d_eval.abs() < 1e-3 {
+            f_eval = func(x);
+        }
+        x -= 0.5 * f_eval / d_eval;
     }
     Err(NEOSpyError::Convergence(
         "Newton-Raphson root finding hit iteration limit without converging.".into(),
