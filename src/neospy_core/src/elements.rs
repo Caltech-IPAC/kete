@@ -422,29 +422,6 @@ mod tests {
                                     let [new_pos, new_vel] =
                                         new_elem.to_pos_vel().expect("Failed to convert to state.");
 
-                                    let t_anom = ((elem
-                                        .true_anomaly()
-                                        .expect("Failed to compute true anomaly.")
-                                        - new_elem
-                                            .true_anomaly()
-                                            .expect("Failed to compute true anomaly."))
-                                        * 2.0)
-                                        .sin()
-                                        .abs();
-
-                                    let t_ecc = ((elem
-                                        .eccentric_anomaly()
-                                        .expect("Failed to compute eccentric anomaly.")
-                                        - new_elem
-                                            .eccentric_anomaly()
-                                            .expect("Failed to compute eccentric anomaly."))
-                                        * 2.0)
-                                        .sin()
-                                        .abs();
-
-                                    assert!(t_anom < 1e-7);
-                                    assert!(t_ecc < 1e-7);
-
                                     for idx in 0..3 {
                                         assert!(
                                             (new_pos[idx] - pos[idx]).abs() < 1e-7,
@@ -458,6 +435,21 @@ mod tests {
                                         );
                                         assert!((new_vel[idx] - vel[idx]).abs() < 1e-7);
                                     }
+
+                                    let t_anom = ((elem.true_anomaly().unwrap()
+                                        - new_elem.true_anomaly().unwrap())
+                                        * 2.0)
+                                        .sin()
+                                        .abs();
+
+                                    let t_ecc = ((elem.eccentric_anomaly().unwrap()
+                                        - new_elem.eccentric_anomaly().unwrap())
+                                        * 2.0)
+                                        .sin()
+                                        .abs();
+
+                                    assert!(t_anom < 1e-7);
+                                    assert!(t_ecc < 1e-7);
                                 }
                             }
                         }
