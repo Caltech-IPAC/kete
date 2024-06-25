@@ -15,7 +15,7 @@ use std::f64::consts::TAU;
 /// # Arguments
 ///
 /// * `ecc` - The eccentricity, must be non-negative.
-/// * `mean_anomaly` - Mean anomaly, between 0 and 2 pi.
+/// * `mean_anomaly` - Mean anomaly.
 /// * `peri_dist` - Perihelion Distance in AU, only used for parabolic orbits.
 ///
 pub fn compute_eccentric_anomaly(
@@ -30,7 +30,7 @@ pub fn compute_eccentric_anomaly(
         ecc if ecc < 1e-6 => Ok(mean_anom),
         ecc if ecc < 0.9999 => {
             // Elliptical
-            let f = |ecc_anom: f64| -ecc * ecc_anom.sin() + ecc_anom - mean_anom;
+            let f = |ecc_anom: f64| -ecc * ecc_anom.sin() + ecc_anom - mean_anom.rem_euclid(TAU);
             let d = |ecc_anom: f64| 1.0 - 1.0 * ecc * ecc_anom.cos();
             Ok(newton_raphson(f, d, mean_anom % TAU, 1e-11)? % TAU)
         }
@@ -38,13 +38,13 @@ pub fn compute_eccentric_anomaly(
             // Parabolic
             let f = |ecc_anom: f64| -mean_anom + peri_dist * ecc_anom + ecc_anom.powi(3) / 6.0;
             let d = |ecc_anom: f64| peri_dist + ecc_anom.powi(2) / 2.0;
-            Ok(newton_raphson(f, d, mean_anom.rem_euclid(TAU), 1e-11)? % TAU)
+            Ok(newton_raphson(f, d, mean_anom.clamp(0.1, 6.0), 1e-11)?)
         }
         ecc => {
             // Hyperbolic
             let f = |ecc_anom: f64| ecc * ecc_anom.sinh() - ecc_anom - mean_anom;
             let d = |ecc_anom: f64| -1.0 + ecc * ecc_anom.cosh();
-            Ok(newton_raphson(f, d, mean_anom.rem_euclid(TAU), 1e-11)?)
+            Ok(newton_raphson(f, d, mean_anom.clamp(0.1, 6.0), 1e-11)?)
         }
     }
 }
@@ -308,11 +308,12 @@ mod tests {
     #[test]
     fn test_kepler_parabolic() {
         let pos = Vector3::new(0.0, 2.0, 0.0);
-        let vel = Vector3::new(-GMS_SQRT, 0.0, 0.0);
-        let year = TAU / GMS_SQRT;
+        let vel = Vector3::new(GMS_SQRT, 0.0, 0.0);
+        let year = -TAU / GMS_SQRT;
         let res = analytic_2_body(year, &pos, &vel, None).unwrap();
         let pos_exp = Vector3::new(-4.448805955479905, -0.4739843046525608, 0.0);
-        let vel_exp = Vector3::new(-0.00768983428326951, -0.008552645144187791, 0.0);
+        let vel_exp = -Vector3::new(-0.00768983428326951, -0.008552645144187791, 0.0);
+        dbg!(&res);
         assert!((res.0 - pos_exp).norm() < 1e-8);
         assert!((res.1 - vel_exp).norm() < 1e-8);
     }

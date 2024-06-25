@@ -119,15 +119,13 @@ impl CometElements {
         let peri_time: f64 = {
             if (ecc - 1.0).abs() < 1e-8 {
                 // Parabolic
-                epoch - (peri_dist * vp_mag + vp_mag.powi(3) / 6.0) / GMS_SQRT
-            } else if ecc < 1e-8 {
-                let semi_major = (2.0 / p_mag - v_mag2).recip();
-                let mean_motion = semi_major.abs().powf(-1.5) * GMS_SQRT;
-                let mut anomaly = lon_asc_vec.angle(pos);
-                if ang_vec.cross(&lon_asc_vec).dot(pos).is_sign_negative() {
-                    anomaly = -anomaly;
+                let mut true_anomaly = ecc_vec.angle(pos);
+                if ang_vec.cross(&ecc_vec).dot(pos).is_sign_negative() {
+                    true_anomaly = -true_anomaly;
                 }
-                epoch - anomaly / mean_motion
+                let d = (true_anomaly / 2.0).tan();
+                let dt = (2f64.sqrt() * peri_dist.powf(1.5) / GMS_SQRT) * (d + d.powi(3) / 3.0);
+                epoch - dt
             } else {
                 // Hyperbolic or elliptical (aka just-bolic)
                 let semi_major = (2.0 / p_mag - v_mag2).recip();
@@ -280,7 +278,9 @@ impl CometElements {
     /// Compute the mean motion in radians per day.
     pub fn mean_motion(&self) -> f64 {
         match self.eccentricity {
-            ecc if ((ecc - 1.0).abs() <= 1e-5) => GMS_SQRT,
+            ecc if ((ecc - 1.0).abs() <= 1e-5) => {
+                GMS_SQRT * 1.5 / 2f64.sqrt() / self.peri_dist.powf(1.5)
+            }
             _ => GMS_SQRT / self.semi_major().abs().powf(1.5),
         }
     }
@@ -288,7 +288,11 @@ impl CometElements {
     /// Compute the mean anomaly in radians.
     pub fn mean_anomaly(&self) -> f64 {
         let mm = self.mean_motion();
-        ((self.epoch - self.peri_time) * mm + 1e-6).rem_euclid(TAU) - 1e-6
+        let mean_anomaly = (self.epoch - self.peri_time) * mm;
+        match self.eccentricity {
+            ecc if ecc < 0.9999 => mean_anomaly.rem_euclid(TAU),
+            _ => mean_anomaly,
+        }
     }
 
     /// Compute the True Anomaly
