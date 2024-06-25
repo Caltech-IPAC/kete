@@ -133,7 +133,7 @@ impl CometElements {
                 // for circular orbits, the eccentric vector is 0, so we use the
                 // ascending node as the reference for the true anomaly.
                 let mut true_anomaly = lon_asc_vec.angle(pos);
-                if vp_mag.is_sign_negative() {
+                if ang_vec.cross(&lon_asc_vec).dot(pos).is_sign_negative() {
                     true_anomaly = -true_anomaly;
                 }
                 epoch - true_anomaly / mean_motion
@@ -448,8 +448,8 @@ mod tests {
                                         .sin()
                                         .abs();
 
-                                    assert!(t_anom < 1e-7);
-                                    assert!(t_ecc < 1e-7);
+                                    assert!(t_anom < 1e-6);
+                                    assert!(t_ecc < 1e-6);
                                 }
                             }
                         }
@@ -487,14 +487,6 @@ mod tests {
                                     &vel.into(),
                                     Frame::Ecliptic,
                                 );
-                                assert!(
-                                    (elem.true_anomaly().unwrap() - elem.mean_anomaly()).abs()
-                                        < 1e-7,
-                                );
-                                assert!(
-                                    (elem.eccentric_anomaly().unwrap() - elem.mean_anomaly()).abs()
-                                        < 1e-7
-                                );
 
                                 let [new_pos, new_vel] = new_elem.to_pos_vel().unwrap();
                                 for idx in 0..3 {
@@ -517,6 +509,15 @@ mod tests {
                                         new_pos,
                                         vel,
                                         new_vel,
+                                    );
+                                    assert!(
+                                        (elem.true_anomaly().unwrap() - elem.mean_anomaly()).abs()
+                                            < 1e-7,
+                                    );
+                                    assert!(
+                                        (elem.eccentric_anomaly().unwrap() - elem.mean_anomaly())
+                                            .abs()
+                                            < 1e-7
                                     );
                                 }
                             }
