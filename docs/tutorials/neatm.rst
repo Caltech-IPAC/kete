@@ -6,8 +6,8 @@ of Near Earth Asteroids (NEAs). NEATM has a small number of parameters, meaning 
 works best in the regime where there is limited data on an asteroid. However as is
 common with any numerical model with a small number of parameters, many approximations
 and assumptions have been made which may not always be correct. Despite these
-limitations, NEATM has very successfully been used to estimate with reasonable accuracy
-the diameter of thousands of asteroids, both NEAs and main belt.
+limitations, NEATM has been successfully used to estimate with reasonable accuracy the
+diameter of thousands of asteroids, both NEAs and main belt.
 
 .. image:: NEATM_heating.png
    :alt: NEATM heating of an asteroid.
@@ -15,7 +15,7 @@ the diameter of thousands of asteroids, both NEAs and main belt.
 NEATM models an asteroid as a perfect Lambertian non-rotating sphere which is heated by
 the Sun. Because the sphere is not rotating, the night side of the asteroid is treated
 as having no emission at all. Clearly these are an idealized set of assumptions, which
-the model acknowledges by introducing an additional parameter called "Beaming", is a
+the model acknowledges by introducing an additional parameter called "Beaming", a
 catch-all correction scaling factor to allow the model to adjust for the surface
 properties, rotation effects, and geometry.
 
