@@ -43,13 +43,21 @@ def build(tutorial):
     Run tutorial code contained within the RST files in the 'tutorials' folder.
     """
     files = glob.glob("tutorials/" + tutorial + "*")
+
+    py_files = [f for f in files if os.path.splitext(f)[1] == ".py"]
     files = [f for f in files if os.path.splitext(f)[1] == ".rst"]
     files = [f for f in files if "index.rst" not in f]
-    click.echo("Will build tutorials:")
+
+    click.echo("Found python files:")
+    click.echo("-------------------")
+    for file in py_files:
+        click.echo(f"\t{file}")
+    click.echo("Found tutorial files:")
     click.echo("---------------------")
     for file in files:
         click.echo(f"\t{file}")
     click.echo("")
+
     cont = input("Run these files? [Y/n]: ").strip().lower()
     if cont in ["yes", "y", ""]:
         pass
@@ -60,12 +68,21 @@ def build(tutorial):
         click.echo("Command not recognized, exiting.")
         return
 
+    for file in py_files:
+        click.echo(f"Running code from : {file}")
+        with open(file, "r", encoding="utf-8") as f:
+            code = f.readlines()
+        code = "".join([t for t in code if t.strip() != "" and t.strip()[0] != "#"])
+        # pylint: disable-next=exec-used
+        exec(code, globals())
+        click.echo("File complete")
+
     for file in files:
         click.echo(f"Collecting code from : {file}")
         code = collect_code(file)
         click.echo("Running Code!")
         # pylint: disable-next=exec-used
-        exec(code)
+        exec(code, globals())
         click.echo("File complete")
     click.echo("Done")
 
@@ -85,6 +102,7 @@ def collect_code(file):
         and x.attributes["classes"] == ["code", "python"]
     ):
         text.append(block.astext())
+    text = [t for t in text if t.strip() != ""]
     code = "\n".join(text)
     return code
 

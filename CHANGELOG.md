@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `Time.year_float` which converts the `Time` object to the Year as a float.
 - Added `SimultaneousState.obs_vecs` which creates vectors from the observer to the
   objects contained within the state.
+- Added `NEATM` tutorial which gives an overview of NEATM along with a small example.
 
 ### Changed
 

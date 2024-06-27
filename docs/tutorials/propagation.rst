@@ -15,7 +15,7 @@ Being accurate to 100nm when we are looking 5 au away is not necessary, alternat
 when we are considering an NEO such as Apophis (which will come very close to hitting
 the Earth), meters matter.
 
-.. figure:: data/orbit_models.png
+.. figure:: ../data/orbit_models.png
     :width: 600
 
     This is a plot of an arbitrary, rather large Main Belt Asteroid, and its orbital
@@ -98,11 +98,11 @@ approximation used in order to get good computational performance. The typical m
 to use a full N-Body simulation to get the highest precision, then use that solution for
 the next day or so (adjustable) with two-body mechanics to query hundreds of times.
 
-.. figure:: data/orbit_models_short.png
+.. figure:: ../data/orbit_models_short.png
     :width: 600
 
     Demonstration of how quickly linear motion, two-body motion, and N-Body deviate from
-    the true position over the course of a few weeks. Linear motion is invalid within a
-    few minutes, but two-body takes several days for this object to become significantly
-    inaccurate. The dotted black line is how far an object must move tangentially to
-    have an error of 0.1 arcseconds when it is 1 au from the observer (about 74km).
+    the true position. Linear motion is invalid within a few minutes, but two-body takes
+    several days for this object to become significantly inaccurate. The dotted black line
+    is how far an object must move tangentially to have an error of 0.1 arcseconds when
+    it is 1 au from the observer (about 74km).
