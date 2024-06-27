@@ -9,7 +9,7 @@ and assumptions have been made which may not always be correct. Despite these
 limitations, NEATM has been successfully used to estimate with reasonable accuracy the
 diameter of thousands of asteroids, both NEAs and main belt.
 
-.. image:: NEATM_heating.png
+.. image:: ../data/NEATM_heating.png
    :alt: NEATM heating of an asteroid.
 
 NEATM models an asteroid as a perfect Lambertian non-rotating sphere which is heated by
@@ -25,7 +25,7 @@ to the visible flux from the surface. The plot below is the actual flux seen fro
 observer in the WISE W3 band, notice that there is a much more gentle falloff near the
 terminator.
 
-.. image:: NEATM_flux.png
+.. image:: ../data/NEATM_flux.png
    :alt: NEATM flux of an asteroid.
 
 In the original description of NEATM, all visible flux from the asteroid is due to
@@ -90,10 +90,10 @@ contribution of thermal and emitted fluxes.
     plt.xlabel("Heliocentric distance (au)")
     plt.ylabel("Flux Ratio (Band 2 / Band 1)")
     plt.tight_layout()
-    plt.savefig("tutorials/NEATM_ratios.png")
+    plt.savefig("data/NEATM_ratios.png")
     plt.close()
 
-.. image:: NEATM_ratios.png
+.. image:: ../data/NEATM_ratios.png
    :alt: NEATM flux ratio as a function of Heliocentric distance.
 
 The lower figure is the ratio of the fluxes from Band NC2 / NC1 of NEOS.

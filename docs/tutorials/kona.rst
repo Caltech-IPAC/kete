@@ -171,8 +171,8 @@ Note again this is only showing the first 20 of 181.
     plt.xlabel("RA")
     plt.ylabel("DEC")
     plt.title(f"NEOWISE Frame on Ecliptic\n{neospy.Time(time_jd).iso}");
-    plt.savefig("tutorials/kona.png")
+    plt.savefig("data/kona.png")
     plt.close()
 
-.. image:: kona.png
+.. image:: ../data/kona.png
    :alt: KONA labelling of all objects.

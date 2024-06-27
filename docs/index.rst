@@ -25,17 +25,11 @@ position of minor planets, which for fast moving objects is long enough that the
 move out of frame.
 
 .. toctree::
-   :maxdepth: 2
-
-   background
-   code_structure
-   propagation
-
-.. toctree::
    :maxdepth: 1
 
+   code_structure
    installation
-   auto_examples/index
    tutorials/index
+   auto_examples/index
    api/api
 

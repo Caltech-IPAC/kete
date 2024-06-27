@@ -69,7 +69,7 @@ plt.title("NEATM")
 cbar = plt.colorbar(m, ax=ax, label="Temp (K)", shrink=0.5)
 cbar.ax.tick_params(labelsize=10)
 plt.tight_layout()
-plt.savefig("tutorials/NEATM_heating.png")
+plt.savefig("data/NEATM_heating.png")
 
 
 # Plot of the relative visible flux from the observer position
@@ -113,4 +113,4 @@ plt.title("NEATM Emitted IR Flux")
 cbar = plt.colorbar(m, ax=ax, label="Flux (Relative)", shrink=0.5)
 cbar.ax.tick_params(labelsize=10)
 plt.tight_layout()
-plt.savefig("tutorials/NEATM_flux.png")
+plt.savefig("data/NEATM_flux.png")
