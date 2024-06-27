@@ -102,7 +102,7 @@ the next day or so (adjustable) with two-body mechanics to query hundreds of tim
     :width: 600
 
     Demonstration of how quickly linear motion, two-body motion, and N-Body deviate from
-    the true position over the course of a few weeks. Linear motion is invalid within a
-    few minutes, but two-body takes several days for this object to become significantly
-    inaccurate. The dotted black line is how far an object must move tangentially to
-    have an error of 0.1 arcseconds when it is 1 au from the observer (about 74km).
+    the true position. Linear motion is invalid within a few minutes, but two-body takes
+    several days for this object to become significantly inaccurate. The dotted black line
+    is how far an object must move tangentially to have an error of 0.1 arcseconds when
+    it is 1 au from the observer (about 74km).
