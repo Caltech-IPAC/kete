@@ -32,18 +32,35 @@ pub enum DAFType {
     Pck,
 
     /// An unrecognized DAF type.
-    Unrecognized(String),
+    Unrecognized([u8; 8]),
 }
 
-impl From<&str> for DAFType {
-    fn from(magic: &str) -> Self {
-        match &magic.to_uppercase()[4..7] {
-            "SPK" => DAFType::Spk,
-            "PCK" => DAFType::Pck,
-            other => DAFType::Unrecognized(other.into()),
+impl DAFType {
+    fn to_bytes(&self) -> [u8; 8] {
+        match self {
+            DAFType::Pck => "DAF/PCK ".as_bytes().try_into().unwrap(),
+            DAFType::Spk => "DAF/SPK ".as_bytes().try_into().unwrap(),
+            DAFType::Unrecognized(s) => *s,
         }
     }
 }
+
+impl TryFrom<&[u8]> for DAFType {
+    type Error = NEOSpyError;
+
+    fn try_from(magic: &[u8]) -> Result<Self, Self::Error> {
+        let magic: [u8; 8] = magic
+            .try_into()
+            .map_err(|_| NEOSpyError::IOError("Not long enough.".into()))?;
+
+        Ok(match magic {
+            m if m.starts_with(b"DAF/SPK") => DAFType::Spk,
+            m if m.starts_with(b"DAF/PCK") => DAFType::Pck,
+            _ => DAFType::Unrecognized(magic),
+        })
+    }
+}
+
 /// DAF Files can contain multiple different types of data.
 /// This list contains the supported formats.
 #[derive(Debug)]
@@ -87,7 +104,6 @@ impl From<DafSegments> for DafArray {
 }
 
 /// DAF files header information.
-/// This contains
 #[derive(Debug)]
 pub struct DafFile {
     /// Magic number within the DAF file corresponds to this DAF type.
@@ -135,6 +151,12 @@ pub struct DafFile {
 }
 
 impl DafFile {
+    /// Convert DAF file back into its binary representation.
+    pub fn to_binary(&self) -> Result<Box<[u8]>, NEOSpyError> {
+        let _ = self.daf_type.to_bytes();
+        Err(NEOSpyError::IOError("Failed to convert to binary.".into()))
+    }
+
     /// Try to load a single record from the DAF.
     pub fn try_load_record<T: Read + Seek>(
         file: &mut T,
@@ -147,7 +169,7 @@ impl DafFile {
     /// Load the contents of a DAF file.
     pub fn from_buffer<T: Read + Seek>(mut buffer: T) -> Result<Self, NEOSpyError> {
         let bytes = Self::try_load_record(&mut buffer, 1)?;
-        let daf_type: DAFType = bytes_to_string(&bytes[0..8]).as_str().into();
+        let daf_type: DAFType = bytes[0..8].try_into().unwrap();
 
         let little_endian = match bytes_to_string(&bytes[88..96]).to_lowercase().as_str() {
             "ltl-ieee" => true,
