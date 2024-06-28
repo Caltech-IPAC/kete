@@ -44,7 +44,7 @@ from .fov import (
     NeosCmos,
     NeosVisit,
     ZtfCcdQuad,
-    ZtfField
+    ZtfField,
 )
 from .horizons import HorizonsProperties
 
