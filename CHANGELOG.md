@@ -21,8 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   propagation.
 - Significant rewrite of the SPICE kernel file management, this rewrite is required
   so that future work can enable writing SPICE kernel files.
+- Moved the downloading of Horizons spice kernels from `SpiceKernel` to `horizons`.
+- Renamed all field of view checking functions to similar names: `fov_static_check`,
+  `fov_state_check`, and `fov_spice_check`. These functions are exposed at the base
+  level of neospy.
 - Moved much of the python documentation into the rust wrappers, and removed the
-  remaining empty python files.
+  remaining empty python files. Part of the rewrite involved moving and renaming many
+  functions.
 - Updated `nalgebra` to minimum version `^0.33.0`, which uses a simplified allocator.
 - Fixed minimum versions for all rust libraries.
 

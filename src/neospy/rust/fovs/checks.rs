@@ -8,14 +8,30 @@ use crate::{
     vector::{Vector, VectorLike},
 };
 
+/// Given states and field of view, return only the objects which are visible to the
+/// observer, adding a correction for optical light delay.
+///
+/// Objects are propagated using 2 body physics to the time of the FOV if time steps are
+/// less than the specified `dt`.
+///
+/// parameters
+/// ----------
+/// states: list[State]
+///     States which do not already have a specified FOV.
+/// fov: FOVList
+///     A field of view from which to subselect objects which are visible.
+/// dt: float
+///     Length of time in days where 2-body mechanics is a good approximation.
 #[pyfunction]
-#[pyo3(name = "fov_checks")]
+#[pyo3(name = "fov_state_check")]
 pub fn fov_checks_py(
     py: Python<'_>,
     obj_state: SimulStateLike,
     fovs: FOVListLike,
-    dt_limit: f64,
+    dt_limit: Option<f64>,
 ) -> PyResult<Vec<PySimultaneousStates>> {
+    let dt_limit = dt_limit.unwrap_or(3.0);
+
     let fovs = fovs.into_sorted_vec_fov();
 
     // This is only here for a check to verify the states are valid
@@ -63,7 +79,7 @@ pub fn fov_checks_py(
 }
 
 #[pyfunction]
-#[pyo3(name = "fov_spk_checks")]
+#[pyo3(name = "fov_spk_check")]
 pub fn fov_spk_checks_py(obj_ids: Vec<i64>, fovs: FOVListLike) -> Vec<PySimultaneousStates> {
     let fovs = fovs.into_sorted_vec_fov();
 
@@ -97,7 +113,7 @@ pub fn fov_spk_checks_py(obj_ids: Vec<i64>, fovs: FOVListLike) -> Vec<PySimultan
 /// fovs :
 ///     Collection of Field of Views to check.
 #[pyfunction]
-#[pyo3(name = "fov_static_checks")]
+#[pyo3(name = "fov_static_check")]
 pub fn fov_static_checks_py(
     pos: Vec<VectorLike>,
     fovs: FOVListLike,

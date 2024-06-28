@@ -5,7 +5,7 @@ from neospy.conversion import (
     compute_albedo,
     compute_diameter,
     compute_earth_radius,
-    compute_H,
+    compute_h_mag,
     compute_eccentric_anomaly,
     compute_tisserand,
     ra_degrees_to_hms,
@@ -36,17 +36,17 @@ ECC_ANOM_VALUES = [
         [1, 0.6, 16.1722],
     ],
 )
-def test_compute_H_D_pV(d_pv_Hv):
+def test_compute_h_d_pv(d_pv_Hv):
     """
     For a 1 km object with the listed range of albedos, confirm the
     computed H matches the manual values given in the input params. Also ensure
     that all three conversions between the params work.
     """
+    d, pv, hv = d_pv_Hv
     c_hg = 1329.0  # default for V band
-    d, pv, Hv = d_pv_Hv
-    assert np.isclose(compute_H(d, pv, c_hg), Hv, atol=0.0001)
-    assert np.isclose(compute_albedo(d, Hv, c_hg), pv, atol=0.0001)
-    assert np.isclose(compute_diameter(pv, Hv, c_hg), d, atol=0.0001)
+    assert np.isclose(compute_h_mag(d, pv, c_hg), hv, atol=0.0001)
+    assert np.isclose(compute_albedo(d, hv, c_hg), pv, atol=0.0001)
+    assert np.isclose(compute_diameter(pv, hv, c_hg), d, atol=0.0001)
 
 
 def test_ra_deg_hms():

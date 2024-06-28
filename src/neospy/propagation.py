@@ -11,7 +11,6 @@ import numpy as np
 
 from .spice import SpiceKernels
 from .vector import Vector, State
-from .fov import FOVList
 from . import _core
 
 logger = logging.getLogger(__name__)
@@ -139,45 +138,3 @@ def moid(state: State, other: Optional[State] = None):
     if other is None:
         other = SpiceKernels.state("Earth", state.jd)
     return _moid_single(state, other)
-
-
-def state_visible(
-    states: list[State], fovs: FOVList, dt: float = 3
-) -> list[list[State]]:
-    """
-    Given states and field of view, return only the objects which are visible to the
-    observer, adding a correction for optical light delay.
-
-    Objects are propagated using 2 body physics to the time of the FOV if time steps are
-    less than the specified `dt`.
-
-    parameters
-    ----------
-    states:
-        States which do not already have a specified FOV.
-    fov:
-        A field of view from which to subselect objects which are visible.
-    dt:
-        Length of time in days where 2-body mechanics is a good approximation.
-    """
-    return _core.fov_checks(states, fovs, dt)
-
-
-def spice_visible(desigs: list[str], fovs) -> list[State]:
-    """
-    Given a list of object names and field of views, return only the objects which are
-    visible to the observer, adding a correction for optical light delay.
-
-    Objects are queried from the loaded SPK files. This does a best effort lookup and
-    may silently not return states if an object is not loaded or doesn't have data for
-    the specified epochs.
-
-    parameters
-    ----------
-    desigs:
-        Designations to lookup.
-    fov:
-        A list of field of views from which to subselect objects which are visible.
-    """
-    obj_ids = [SpiceKernels.name_lookup(n)[1] for n in desigs]
-    return _core.fov_spk_checks(obj_ids, fovs)
