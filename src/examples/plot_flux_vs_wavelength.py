@@ -50,7 +50,6 @@ def flux_per_wavelength(
     peri_dist = sun2sc.r / np.sin(phase) * np.sin(solar_elong)
 
     sun2obj = neospy.Vector([np.cos(alpha) * peri_dist, np.sin(alpha) * peri_dist, 0])
-    # h_mag = neospy.conversion.compute_H(diameter, vis_albedo)
 
     fluxes = []
     for wave in wavelength:

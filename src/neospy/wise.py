@@ -14,7 +14,7 @@ import numpy as np
 
 from astropy.io import fits
 from astropy.wcs import WCS
-from astropy import units as u
+from astropy.units import degree
 from astropy.coordinates import SkyCoord
 
 
@@ -513,7 +513,7 @@ def plot_frames(
         plt.gca().set_aspect("equal", adjustable="box")
 
         if ra is not None and dec is not None:
-            loc = SkyCoord(ra=ra * u.degree, dec=dec * u.degree, frame="icrs")
+            loc = SkyCoord(ra=ra * degree, dec=dec * degree, frame="icrs")
             pixloc = wcs.world_to_pixel(loc)
             plt.scatter(
                 pixloc[0],

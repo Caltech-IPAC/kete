@@ -26,4 +26,3 @@ clean:
 	rm -rf plot_directive/*
 	rm -rf latex/*
 	rm -rf auto_examples/
-	rm -rf ../src/examples/*.db

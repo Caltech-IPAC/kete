@@ -1,4 +1,7 @@
-from __future__ import annotations
+"""
+Time conversion support, primarily provided by the :py:class:`Time` class.
+"""
+
 import calendar
 import datetime
 import warnings
@@ -90,7 +93,11 @@ class Time:
 
     @classmethod
     def J2000(cls) -> "Time":
-        return cls(2451545.0)
+        """
+        J2000 is typically defined in TT time scaling, which is ~4.8 milliseconds
+        different than TDB.
+        """
+        return cls(2451545.0, scale="tt")
 
     @property
     def jd(self) -> float:

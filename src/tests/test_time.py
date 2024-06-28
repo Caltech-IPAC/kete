@@ -1,4 +1,5 @@
 from neospy.time import Time, d_h_m_s_to_float_days, float_day_to_d_h_m_s
+import numpy as np
 
 
 class TestTime:
@@ -11,11 +12,13 @@ class TestTime:
         assert t.utc.jd == 2460676.4991992605
         assert Time.from_ymd(2025, 1, 1).jd == t.jd
 
-        assert Time.J2000().jd == 2451545.0
+        assert Time.J2000().jd == 2451544.999999999
         assert Time.from_current_time().jd > Time.J2000().jd
 
         s = "%Y-%b-%d %H:%M:%S.%f"
-        assert Time.from_strptime(Time.J2000().strftime(s), s).jd == Time.J2000().jd
+        assert np.isclose(
+            Time.from_strptime(Time.J2000().strftime(s), s).jd, Time.J2000().jd
+        )
 
     def test_d_h_m_s_to_float(self):
         t = d_h_m_s_to_float_days(days=1, hours=2, minutes=3, seconds=4.5)

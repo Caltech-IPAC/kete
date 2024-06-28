@@ -78,13 +78,8 @@ class TestSpiceKernels:
         )
         assert info == [expected]
 
-    @pytest.mark.horizons
-    def test_cache_horizons(self):
-        jd = Time.J2000().jd
-        SpiceKernels.cached_kernel_horizons_download("phaethon", jd, jd + 365)
-
     def test_cache(self):
-        SpiceKernels.cached_kernel_ls()
+        SpiceKernels.kernel_ls()
 
     def test_reload(self):
         SpiceKernels.kernel_reload([], include_cache=True)

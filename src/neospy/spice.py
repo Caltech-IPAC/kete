@@ -1,10 +1,8 @@
 from __future__ import annotations
 from typing import Union, Optional
 from collections import namedtuple
-import base64
 import glob
 import os
-import requests
 import numpy as np
 
 from .time import Time
@@ -197,128 +195,19 @@ class SpiceKernels:
         return [SpkInfo(name, *k) for k in _core.spk_available_info(naif)]
 
     @staticmethod
-    def cached_kernel_url_download(url, force_download: bool = False):
-        """
-        Download the target url into the cache folder of spice kernels.
-        """
-        cached_file_download(url, force_download=force_download, subfolder="kernels")
-
-    @staticmethod
-    def cached_kernel_horizons_download(
-        name,
-        jd_start: Union[Time, float],
-        jd_end: Union[Time, float],
-        exact_name: bool = False,
-        update_cache: bool = False,
-        apparition_year: Optional[int] = None,
-    ):
-        """
-        Download a SPICE kernel from JPL Horizons and save it directly into the Cache.
-
-        .. code-block:: python
-
-            from neospy import SpiceKernels, Time
-            jd_start = Time.from_ymd(1900, 1, 1)
-            jd_end = Time.from_ymd(2100, 1, 1)
-            SpiceKernels.cached_kernel_horizons_download("10p", jd_start, jd_end)
-
-        Parameters
-        ----------
-        name :
-            Name or integer id value of the object.
-        jd_start:
-            Start date of the SPICE kernel to download.
-        jd_end:
-            End date of the SPICE kernel to download.
-        exact_name:
-            If the specified name is the exact name in Horizons, this can help for
-            comet fragments.
-        update_cache:
-            If the current state of the cache should be ignored and the file
-            re-downloaded.
-        apparition_year:
-            If the object is a comet, retrieve the orbit fit which is previous to this
-            specified year. If this is not provided, then default to the most recent
-            epoch of orbit fit. Ex: `apparition_year=1980` will return the closest
-            epoch before 1980.
-        """
-        from .mpc import unpack_designation
-
-        if not isinstance(jd_start, Time):
-            jd_start = Time(jd_start)
-        if not isinstance(jd_end, Time):
-            jd_end = Time(jd_end)
-
-        if isinstance(name, str):
-            try:
-                name = unpack_designation(name)
-            except (SyntaxError, ValueError):
-                pass
-        else:
-            name = str(name)
-
-        query = "des" if exact_name else "sstr"
-        # Name resolution using the sbdb database
-        name_dat = requests.get(
-            f"https://ssd-api.jpl.nasa.gov/sbdb.api?{query}={name}",
-            timeout=30,
-        )
-        if "object" not in name_dat.json():
-            raise ValueError("Failed to find object: ", str(name_dat.json()))
-        comet = "c" in name_dat.json()["object"]["kind"].lower()
-
-        if comet and apparition_year is None:
-            apparition_year = jd_end.ymd[0]
-
-        spk_id = int(name_dat.json()["object"]["spkid"])
-
-        dir_path = os.path.join(cache_path(), "kernels")
-
-        if apparition_year is not None:
-            filename = os.path.join(dir_path, f"{spk_id}_epoch_{apparition_year}.bsp")
-        else:
-            filename = os.path.join(dir_path, f"{spk_id}.bsp")
-
-        if os.path.isfile(filename) and not update_cache:
-            return
-
-        if not os.path.isdir(dir_path):
-            os.makedirs(dir_path)
-
-        jd_s_str = jd_start.strftime("%Y-%m-%d")
-        jd_e_str = jd_end.strftime("%Y-%m-%d")
-        cap = f"CAP<{apparition_year}%3B" if comet else ""
-        response = requests.get(
-            f"https://ssd.jpl.nasa.gov/api/horizons.api?COMMAND='DES={spk_id}%3B{cap}'"
-            f"&EPHEM_TYPE=SPK&START_TIME='{jd_s_str}'&STOP_TIME='{jd_e_str}'&CENTER=0",
-            timeout=30,
-        )
-
-        if response.status_code == 300:
-            names = [
-                des["pdes"] for des in response.json()["list"] if "-" not in des["pdes"]
-            ]
-            if len(names) == 1:
-                SpiceKernels.cached_kernel_horizons_download(
-                    names[0], jd_start, jd_end, exact_name=True
-                )
-
-        if response.status_code != 200:
-            raise OSError(f"Error from Horizons: {response.json()}")
-
-        if "spk" not in response.json():
-            raise ValueError("Failed to fetch file\n:", response.json())
-
-        with open(filename, "wb") as f:
-            f.write(base64.b64decode(response.json()["spk"]))
-
-    @staticmethod
-    def cached_kernel_ls():
+    def kernel_ls():
         """
         List all files contained within the kernels cache folder.
         """
         path = os.path.join(cache_path(), "kernels", "**")
         return glob.glob(path)
+
+    @staticmethod
+    def kernel_fetch_from_url(url, force_download: bool = False):
+        """
+        Download the target url into the cache folder of spice kernels.
+        """
+        cached_file_download(url, force_download=force_download, subfolder="kernels")
 
     @staticmethod
     def kernel_reload(filenames: Optional[list[str]] = None, include_cache=False):
@@ -351,7 +240,7 @@ class SpiceKernels:
             _core.spk_load(filenames)
 
     @staticmethod
-    def file_header_comments(filename: str):
+    def kernel_header_comments(filename: str):
         """
         Return the comments contained within the header of the provided DAF file, this
         includes SPK and PCK files.
@@ -486,3 +375,5 @@ class SpiceKernels:
         moon2earth = -cls.state("moon", jd, center=observer).pos
         perc = 1.0 - moon2sun.angle_between(moon2earth) / 180
         return 0.5 - np.cos(np.pi * perc) / 2
+
+    __call__ = state

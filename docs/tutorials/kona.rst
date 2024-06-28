@@ -105,7 +105,7 @@ one, and then immediately take the single result back out.
 
 .. code-block:: python
 
-    visible_obj = neospy.propagation.state_visible(mpc_states, [fov])[0]
+    visible_obj = neospy.fov_state_check(mpc_states, [fov])[0]
 
 
 Results

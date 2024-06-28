@@ -87,7 +87,7 @@ observable to NEOWISE during this mission phase.
     # were seen, and it drops empty FOVs.
 
     # Compute observable objects.
-    visible = neospy.propagation.state_visible(states, fovs)
+    visible = neospy.fov_state_check(states, fovs)
 
 
 .. note::

@@ -3,18 +3,18 @@ Useful conversion functions between various physical values or representations.
 """
 
 from __future__ import annotations
-import numpy as np
 import logging
 from typing import Union
+import numpy as np
 from numpy.typing import NDArray
-from . import _core  # pylint: disable=no-name-in-module
+from . import _core
 from . import constants
 
 
 logger = logging.getLogger(__name__)
 
 
-def compute_H(diameter: NDArray, albedo: NDArray, c_hg=constants.C_V) -> np.ndarray:
+def compute_h_mag(diameter: NDArray, albedo: NDArray, c_hg=constants.C_V) -> np.ndarray:
     """
     Compute the H magnitude of the object given the diameter in km and the albedo.
 
@@ -29,7 +29,7 @@ def compute_H(diameter: NDArray, albedo: NDArray, c_hg=constants.C_V) -> np.ndar
     return -5.0 * np.log10(diameter * np.sqrt(albedo) / c_hg)
 
 
-def compute_albedo(diameter: NDArray, H: NDArray, c_hg=constants.C_V) -> np.ndarray:
+def compute_albedo(diameter: NDArray, h_mag: NDArray, c_hg=constants.C_V) -> np.ndarray:
     """
     Compute the albedo of the object given the diameter in km and H magnitude.
 
@@ -37,13 +37,13 @@ def compute_albedo(diameter: NDArray, H: NDArray, c_hg=constants.C_V) -> np.ndar
     ----------
     diameter:
         The diameter of the object in Km.
-    H:
+    h_mag:
         The H magnitude of the object.
     """
-    return np.clip((c_hg * 10.0 ** (-0.2 * H) / diameter) ** 2.0, 0, 1)
+    return np.clip((c_hg * 10.0 ** (-0.2 * h_mag) / diameter) ** 2.0, 0, 1)
 
 
-def compute_diameter(albedo: NDArray, H: NDArray, c_hg=constants.C_V) -> np.ndarray:
+def compute_diameter(albedo: NDArray, h_mag: NDArray, c_hg=constants.C_V) -> np.ndarray:
     """
     Compute the diameter of the object in km given the albedo and H magnitude.
 
@@ -51,10 +51,10 @@ def compute_diameter(albedo: NDArray, H: NDArray, c_hg=constants.C_V) -> np.ndar
     ----------
     albedo:
         The albedo of the object.
-    H:
+    h_mag:
         The H magnitude of the object.
     """
-    return (c_hg / np.sqrt(albedo)) * 10.0 ** (-0.2 * H)
+    return (c_hg / np.sqrt(albedo)) * 10.0 ** (-0.2 * h_mag)
 
 
 def compute_semi_major(peri_dist: NDArray, ecc: NDArray) -> np.ndarray:

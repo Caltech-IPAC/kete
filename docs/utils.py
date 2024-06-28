@@ -12,8 +12,8 @@ To run all tutorials:
 """
 
 import glob
-import click
 import os
+import click
 from docutils.core import publish_doctree
 
 
