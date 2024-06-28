@@ -2,6 +2,7 @@
 Time conversion support, primarily provided by the :py:class:`Time` class.
 """
 
+from __future__ import annotations
 import calendar
 import datetime
 import warnings
