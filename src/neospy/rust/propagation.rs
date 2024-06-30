@@ -40,9 +40,9 @@ pub fn propagation_n_body_spk_py(
             .map(|(mut state, a_term)| {
                 let a_term = a_term.map(|(a1, a2, a3, comet)| {
                     if comet {
-                        propagation::NonGravModel::new_comet_default(a1, a2, a3)
+                        propagation::NonGravModel::new_jpl_comet_default(a1, a2, a3)
                     } else {
-                        propagation::NonGravModel::new_r2(a1, a2, a3)
+                        propagation::NonGravModel::new_dust(a1, a2)
                     }
                 });
                 let spk = get_spk_singleton().try_read().unwrap();

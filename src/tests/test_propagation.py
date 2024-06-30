@@ -65,10 +65,10 @@ class TestNBodyPropagation:
             pos=(10.0, 0.0, 0.0),
             vel=(0.0, 0.01, 0.0),
         )
-        calc = propagate_n_body(
-            [line], line.jd + 8, a_terms=[(constants.SUN_GM, 0.0, 0.0, False)]
-        )[0]
-        assert np.allclose(calc.pos, line.pos + line.vel * 8)
+        calc = propagate_n_body([line], line.jd + 10, a_terms=[(1.0, 0.0, 0.0, False)])[
+            0
+        ]
+        assert np.allclose(calc.pos, line.pos + line.vel * 10, atol=1e-5)
 
 
 class TestTwoBodyPropagation:
