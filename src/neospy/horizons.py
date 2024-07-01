@@ -6,7 +6,7 @@ import base64
 import json
 import numpy as np
 
-from ._core import HorizonsProperties, Covariance
+from ._core import HorizonsProperties, Covariance, NonGravModel
 from .mpc import unpack_designation, pack_designation
 from .time import Time
 from .cache import cache_path
@@ -217,7 +217,7 @@ def _fetch_json(
 
 
 @property  # type: ignore
-def _json(self):
+def _json(self) -> dict:
     """
     JSON Representation of the object as queried from horizons.
 
@@ -227,8 +227,48 @@ def _json(self):
     return _fetch_json(self.desig, update_cache=False)
 
 
+@property  # type: ignore
+def _nongrav(self) -> NonGravModel:
+    """
+    The non-gravitational forces model from the values returned from horizons.
+    """
+
+    # default parameters used by jpl horizons for their non-grav models.
+    params = {
+        "a1": 0.0,
+        "a2": 0.0,
+        "a3": 0.0,
+        "alpha": 0.1112620426,
+        "r_0": 2.808,
+        "m": 2.15,
+        "n": 5.093,
+        "k": 4.6142,
+    }
+
+    lookup = {
+        "A1": "a1",
+        "A2": "a2",
+        "A3": "a3",
+        "ALN": "alpha",
+        "NM": "m",
+        "R0": "r_0",
+        "NK": "k",
+        "N": "n",
+    }
+
+    orbit = self.json["orbit"]
+    if "model_pars" not in orbit:
+        return None
+
+    for vals in orbit["model_pars"]:
+        params[lookup[vals["name"]]] = float(vals["value"])
+
+    return NonGravModel.new_comet(**params)
+
+
 HorizonsProperties.fetch = fetch
 HorizonsProperties.json = _json
+HorizonsProperties.non_grav = _nongrav
 
 
 def fetch_spice_kernel(

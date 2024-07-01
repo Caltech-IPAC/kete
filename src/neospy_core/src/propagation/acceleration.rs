@@ -19,6 +19,7 @@
 //! thinks that the object should actually be. These times are when close encounter
 //! information should be recorded.
 //!
+use crate::frames;
 use crate::spice::get_spk_singleton;
 use crate::{constants::*, errors::NEOSpyError, frames::Frame, propagation::nongrav::NonGravModel};
 use itertools::Itertools;
@@ -159,8 +160,36 @@ pub fn spk_accel(
         let r2_inv = r.powi(-2);
         accel -= rel_pos_norm * (r2_inv * *mass * GMS);
 
-        // if it is the sun or jupiter, apply a correction for GR
-        if *id == 10 || *id == 5 {
+        // Corrections for the Sun
+        if *id == 10 {
+            let r3_inv = r.powi(-3);
+            let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
+
+            let r_v = 4.0 * rel_pos.dot(&rel_vel);
+
+            let rel_v2: f64 = rel_vel.norm_squared();
+
+            // GR Correction
+            let gr_const: f64 = mass * C_AU_PER_DAY_INV_SQUARED * r3_inv * GMS;
+            let c: f64 = 4. * mass * GMS / r - rel_v2;
+            accel += gr_const * (c * rel_pos + r_v * rel_vel);
+
+            // J2 for the Sun
+            let coef = SUN_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
+            let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos_norm);
+            let z2 = 5.0 * rel_pos_norm_eclip.z.powi(2);
+            accel[0] -= rel_pos.x * coef * (z2 - 1.0);
+            accel[1] -= rel_pos.y * coef * (z2 - 1.0);
+            accel[2] -= rel_pos.z * coef * (z2 - 3.0);
+
+            // non-gravitational forces
+            if let Some(model) = &meta.non_grav_a {
+                accel += model.accel_vec(&rel_pos, &rel_vel)
+            }
+
+        // Corrections for Jupiter
+        } else if *id == 5 {
+            // GR Correction
             let r3_inv = r.powi(-3);
             let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
 
@@ -169,22 +198,26 @@ pub fn spk_accel(
             let rel_v2: f64 = rel_vel.norm_squared();
             let gr_const: f64 = mass * C_AU_PER_DAY_INV_SQUARED * r3_inv * GMS;
             let c: f64 = 4. * mass * GMS / r - rel_v2;
-
             accel += gr_const * (c * rel_pos + r_v * rel_vel);
 
-            if *id == 10 {
-                // J2 for the Sun
-                let coef = SUN_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
-                let z2 = 5.0 * rel_pos_norm.z.powi(2);
-                accel[0] -= rel_pos.x * coef * (z2 - 1.0);
-                accel[1] -= rel_pos.y * coef * (z2 - 1.0);
-                accel[2] -= rel_pos.z * coef * (z2 - 3.0);
+            // J2 for Jupiter
+            // https://www.nature.com/articles/nature25776
+            // Jupiter's pole is 2.3 degrees off of the ecliptic, below is an approximation of this.
+            let coef = JUPITER_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
+            let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos_norm);
+            let z2 = 5.0 * rel_pos_norm_eclip.z.powi(2);
+            accel[0] -= rel_pos.x * coef * (z2 - 1.0);
+            accel[1] -= rel_pos.y * coef * (z2 - 1.0);
+            accel[2] -= rel_pos.z * coef * (z2 - 3.0);
 
-                // non-gravitational forces
-                if let Some(model) = &meta.non_grav_a {
-                    accel += model.accel_vec(&rel_pos, &rel_vel)
-                }
-            }
+        // Corrections for Earth
+        } else if *id == 399 {
+            // J2 for the Earth
+            let coef = EARTH_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
+            let z2 = 5.0 * rel_pos_norm.z.powi(2);
+            accel[0] -= rel_pos.x * coef * (z2 - 1.0);
+            accel[1] -= rel_pos.y * coef * (z2 - 1.0);
+            accel[2] -= rel_pos.z * coef * (z2 - 3.0);
         }
     }
     Ok(accel)

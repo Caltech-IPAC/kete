@@ -1,6 +1,6 @@
 use nalgebra::Vector3;
 
-use crate::constants::GMS;
+use crate::constants::{C_AU_PER_DAY_INV_SQUARED, GMS};
 
 /// Non-Gravitational models.
 /// These are used during integration to model non-gravitational forces on particles in
@@ -41,20 +41,16 @@ pub enum NonGravModel {
         k: f64,
     },
 
-    /// Dust model, including the Beta parameter and the Poynting-Robertson
-    /// effect. Beta scales as 1/r^2 and the Poynting-Robertson effect scales
-    /// as 1/r^2.5, where r is the heliocentric distance of the particle.
+    /// Dust model, including Solar Radiation Pressure (SRP) and the Poynting-Robertson
+    /// effect.
     ///
-    /// Beta acts as an effective reduction in the gravitational force of the
+    /// SRP acts as an effective reduction in the gravitational force of the
     /// Sun, reducing the central acceleration force in the radial direction.
     ///
     /// Poynting-Robertson acts as a drag force, in the opposite direction of motion.
     Dust {
-        /// Dust effective radius
-        radius: f64,
-
-        /// Effective density
-        density: f64,
+        /// Beta Parameter
+        beta: f64,
     },
 }
 
@@ -84,9 +80,9 @@ impl NonGravModel {
         }
     }
 
-    /// Construct a new non-grav model which follows the 1/r^2 drop-off.
-    pub fn new_dust_raw(radius: f64, density: f64) -> Self {
-        Self::Dust { radius, density }
+    /// Construct a new non-grav dust model.
+    pub fn new_dust_raw(beta: f64) -> Self {
+        Self::Dust { beta }
     }
 
     /// Construct a new non-grav model which follows the default comet drop-off.
@@ -95,7 +91,7 @@ impl NonGravModel {
             a1,
             a2,
             a3,
-            alpha: 0.111262,
+            alpha: 0.1112620426,
             r_0: 2.808,
             m: 2.15,
             n: 5.093,
@@ -107,16 +103,14 @@ impl NonGravModel {
     /// and velocity vector with respect to the sun.
     pub fn accel_vec(&self, pos: &Vector3<f64>, vel: &Vector3<f64>) -> Vector3<f64> {
         match self {
-            Self::Dust { radius, density } => {
+            Self::Dust { beta } => {
                 let pos_norm = pos.normalize();
-                let vel_norm = vel.normalize();
-                let norm = pos.norm();
-                let r2_inv = norm.powi(-2);
-                let r2_5 = norm.powf(-2.5);
-
-                let mut accel = pos_norm * (r2_inv * GMS * radius);
-                accel += vel_norm * (r2_5 * density);
-                accel
+                let r_dot = &pos_norm.dot(vel);
+                let norm2_inv = pos.norm_squared().recip();
+                let scaling = GMS * beta * norm2_inv;
+                scaling
+                    * ((1.0 - r_dot * C_AU_PER_DAY_INV_SQUARED) * pos_norm
+                        - vel * C_AU_PER_DAY_INV_SQUARED)
             }
 
             Self::JplComet {

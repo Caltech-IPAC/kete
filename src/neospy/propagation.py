@@ -26,7 +26,7 @@ def propagate_n_body(
     states: list[State],
     jd: float,
     include_asteroids: bool = False,
-    a_terms: Optional[list[Optional[tuple[float, float, float, bool]]]] = None,
+    non_gravs: Optional[list[NonGravModel]] = None,
     suppress_errors: bool = True,
 ) -> list[State]:
     """
@@ -45,15 +45,9 @@ def propagate_n_body(
     include_asteroids:
         If this is true, the computation will include the largest 5 asteroids.
         The asteroids are: Ceres, Pallas, Interamnia, Hygiea, and Vesta.
-    a_terms:
+    non_gravs:
         A list of non-gravitational terms for each object. If provided, then every
-        object must have a defined tuple containing (A_1, A_2, A_3, bool), where
-        A_1 is the radial 1/r^2 correction, A_2 is the correction along the
-        tangential direction of motion, and A_3 is the normal term. The bool defines
-        if this object obeys the cometary force fall-off or simple 1/r^2.
-        (True for comets, False for 1/r^2).
-        A_1 is equivalent to the Beta term used in Cometary dust. These values are
-        what are available on the JPL Horizons website for some objects.
+        object must have an associated :class:`~NonGravModel` or `None`.
     suppress_errors:
         If True, errors during propagation will return NaN for the relevant state
         vectors, but propagation will continue.
@@ -63,10 +57,12 @@ def propagate_n_body(
     Iterable
         A :class:`~neospy.State` at the new time.
     """
-    if a_terms is None:
-        a_terms = [None for _ in range(len(states))]
+    if non_gravs is None:
+        non_gravs = [None for _ in range(len(states))]
+    elif len(non_gravs) != len(states):
+        raise ValueError("non_gravs must be the same length as states.")
     return _core.propagate_n_body_spk(
-        states, jd, include_asteroids, a_terms, suppress_errors
+        states, jd, include_asteroids, non_gravs, suppress_errors
     )
 
 
