@@ -24,7 +24,7 @@ SUN_TEMP = 5778
 """Sun's effective black body temp in Kelvin."""
 
 SUN_GM = 0.00029591220828411956
-"""Standard gravitational parameter, from DE440. G * mass of sun."""
+"""Standard gravitational parameter, from DE440. au^3 / day^2"""
 
 AU_M = 149_597_870_700
 """AU in meters by definition."""

@@ -13,6 +13,7 @@ use nalgebra::{DVector, Vector3};
 
 mod acceleration;
 mod kepler;
+mod nongrav;
 mod radau;
 mod runge_kutta;
 mod state_transition;
@@ -20,6 +21,7 @@ mod state_transition;
 // expose the public methods in spk to the outside world.
 pub use acceleration::*;
 pub use kepler::*;
+pub use nongrav::*;
 pub use radau::*;
 pub use runge_kutta::*;
 pub use state_transition::*;

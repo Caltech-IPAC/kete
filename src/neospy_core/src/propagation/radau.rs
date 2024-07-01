@@ -68,7 +68,7 @@ lazy_static! {
 
 const MIN_RATIO: f64 = 0.25;
 const EPSILON: f64 = 1e-6;
-const MIN_STEP: f64 = 0.01;
+const MIN_STEP: f64 = 0.005;
 
 /// Gauss-Radau Spacing Numerical Integrator
 /// This solves a second-order initial value problem.

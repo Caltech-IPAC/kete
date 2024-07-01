@@ -19,8 +19,9 @@
 //! thinks that the object should actually be. These times are when close encounter
 //! information should be recorded.
 //!
+use crate::frames;
 use crate::spice::get_spk_singleton;
-use crate::{constants::*, errors::NEOSpyError, frames::Frame};
+use crate::{constants::*, errors::NEOSpyError, frames::Frame, propagation::nongrav::NonGravModel};
 use itertools::Itertools;
 use nalgebra::allocator::Allocator;
 use nalgebra::{DefaultAllocator, Dim, Matrix, Matrix3, OMatrix, OVector, Vector3, U1, U2};
@@ -78,104 +79,6 @@ pub fn central_accel(
     }
 
     Ok(-pos * pos.norm().powi(-3) * GMS)
-}
-
-/// Non-gravitational forces are modeled as defined on page 139 of the Comets II
-/// textbook.
-///
-/// This model adds 3 "A" terms to the acceleration which the object feels. These
-/// A terms represent additional radial, tangential, and normal forces on the object.
-///
-/// accel_additional = A_1 * g(r) * r_vec + A_2 * g(r) * t_vec + A_3 * g(r) * n_vec
-/// Where r_vec, t_vec, n_vec are the radial, tangential, and normal unit vectors for
-/// the object.
-///
-/// The g(r) function is defined by the equation:
-/// g(r) = alpha (r / r0) ^ -m * (1 + (r / r0) ^ n) ^ -k
-///
-/// When alpha=1.0, n=0.0, k=0.0, r0=1.0, and m=2.0, this is equivalent to a 1/r^2
-/// correction.
-#[derive(Debug)]
-pub struct NonGravModel {
-    /// Constant for the radial non-gravitational force.
-    pub a1: f64,
-
-    /// Constant for the tangential non-gravitational force.
-    pub a2: f64,
-
-    /// Constant for the normal non-gravitational force.
-    pub a3: f64,
-
-    /// Coefficients for the g(r) function defined above.
-    pub alpha: f64,
-    /// Coefficients for the g(r) function defined above.
-    pub r_0: f64,
-    /// Coefficients for the g(r) function defined above.
-    pub m: f64,
-    /// Coefficients for the g(r) function defined above.
-    pub n: f64,
-    /// Coefficients for the g(r) function defined above.
-    pub k: f64,
-}
-
-impl NonGravModel {
-    /// Construct a new non-grav model, manually specifying all parameters.
-    /// Consider using the other constructors if this is a simple object.
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(a1: f64, a2: f64, a3: f64, alpha: f64, r_0: f64, m: f64, n: f64, k: f64) -> Self {
-        Self {
-            a1,
-            a2,
-            a3,
-            alpha,
-            r_0,
-            m,
-            n,
-            k,
-        }
-    }
-
-    /// Construct a new non-grav model which follows the 1/r^2 drop-off.
-    pub fn new_r2(a1: f64, a2: f64, a3: f64) -> Self {
-        Self {
-            a1,
-            a2,
-            a3,
-            alpha: 1.0,
-            r_0: 1.0,
-            m: 2.0,
-            n: 0.0,
-            k: 0.0,
-        }
-    }
-
-    /// Construct a new non-grav model which follows the default comet drop-off.
-    pub fn new_comet_default(a1: f64, a2: f64, a3: f64) -> Self {
-        Self {
-            a1,
-            a2,
-            a3,
-            alpha: 0.111262,
-            r_0: 2.808,
-            m: 2.15,
-            n: 5.093,
-            k: 4.6142,
-        }
-    }
-
-    /// Compute the non-gravitational acceleration vector when provided the position
-    /// and velocity vector with respect to the sun.
-    pub fn accel_vec(&self, pos: &Vector3<f64>, vel: &Vector3<f64>) -> Vector3<f64> {
-        let pos_norm = pos.normalize();
-        let rr0 = pos.norm() / self.r_0;
-        let scale = self.alpha * rr0.powf(-self.m) * (1.0 + rr0.powf(self.n)).powf(-self.k);
-        let t_vec = (vel - pos_norm * vel.dot(&pos_norm)).normalize();
-        let n_vec = t_vec.cross(&pos_norm).normalize();
-        let mut accel = pos_norm * (scale * self.a1);
-        accel += t_vec * (scale * self.a2);
-        accel += n_vec * (scale * self.a3);
-        accel
-    }
 }
 
 /// Metadata for the [`spk_accel`] function defined below.
@@ -255,10 +158,38 @@ pub fn spk_accel(
         }
 
         let r2_inv = r.powi(-2);
-        accel -= rel_pos_norm * r2_inv * *mass * GMS;
+        accel -= rel_pos_norm * (r2_inv * *mass * GMS);
 
-        // if it is the sun or jupiter, apply a correction for GR
-        if *id == 10 || *id == 5 {
+        // Corrections for the Sun
+        if *id == 10 {
+            let r3_inv = r.powi(-3);
+            let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
+
+            let r_v = 4.0 * rel_pos.dot(&rel_vel);
+
+            let rel_v2: f64 = rel_vel.norm_squared();
+
+            // GR Correction
+            let gr_const: f64 = mass * C_AU_PER_DAY_INV_SQUARED * r3_inv * GMS;
+            let c: f64 = 4. * mass * GMS / r - rel_v2;
+            accel += gr_const * (c * rel_pos + r_v * rel_vel);
+
+            // J2 for the Sun
+            let coef = SUN_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
+            let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos_norm);
+            let z2 = 5.0 * rel_pos_norm_eclip.z.powi(2);
+            accel[0] -= rel_pos.x * coef * (z2 - 1.0);
+            accel[1] -= rel_pos.y * coef * (z2 - 1.0);
+            accel[2] -= rel_pos.z * coef * (z2 - 3.0);
+
+            // non-gravitational forces
+            if let Some(model) = &meta.non_grav_a {
+                accel += model.accel_vec(&rel_pos, &rel_vel)
+            }
+
+        // Corrections for Jupiter
+        } else if *id == 5 {
+            // GR Correction
             let r3_inv = r.powi(-3);
             let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
 
@@ -267,22 +198,26 @@ pub fn spk_accel(
             let rel_v2: f64 = rel_vel.norm_squared();
             let gr_const: f64 = mass * C_AU_PER_DAY_INV_SQUARED * r3_inv * GMS;
             let c: f64 = 4. * mass * GMS / r - rel_v2;
-
             accel += gr_const * (c * rel_pos + r_v * rel_vel);
 
-            if *id == 10 {
-                // J2 for the Sun
-                let coef = SUN_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
-                let z2 = 5.0 * rel_pos_norm.z.powi(2);
-                accel[0] -= rel_pos.x * coef * (z2 - 1.0);
-                accel[1] -= rel_pos.y * coef * (z2 - 1.0);
-                accel[2] -= rel_pos.z * coef * (z2 - 3.0);
+            // J2 for Jupiter
+            // https://www.nature.com/articles/nature25776
+            // Jupiter's pole is 2.3 degrees off of the ecliptic, below is an approximation of this.
+            let coef = JUPITER_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
+            let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos_norm);
+            let z2 = 5.0 * rel_pos_norm_eclip.z.powi(2);
+            accel[0] -= rel_pos.x * coef * (z2 - 1.0);
+            accel[1] -= rel_pos.y * coef * (z2 - 1.0);
+            accel[2] -= rel_pos.z * coef * (z2 - 3.0);
 
-                // non-gravitational forces
-                if let Some(model) = &meta.non_grav_a {
-                    accel += model.accel_vec(&rel_pos, &rel_vel)
-                }
-            }
+        // Corrections for Earth
+        } else if *id == 399 {
+            // J2 for the Earth
+            let coef = EARTH_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
+            let z2 = 5.0 * rel_pos_norm.z.powi(2);
+            accel[0] -= rel_pos.x * coef * (z2 - 1.0);
+            accel[1] -= rel_pos.y * coef * (z2 - 1.0);
+            accel[2] -= rel_pos.z * coef * (z2 - 3.0);
         }
     }
     Ok(accel)

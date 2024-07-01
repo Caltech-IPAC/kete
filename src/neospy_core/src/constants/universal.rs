@@ -24,6 +24,16 @@ pub const SUN_DIAMETER: f64 = 1.3914e6;
 /// The Astrophysical Journal, 845:166 (5pp), 2017 August 20
 pub const SUN_J2: f64 = 2.2e-7;
 
+/// Earth J2 Parameter
+pub const EARTH_J2: f64 = 1.08262668e-3;
+
+/// Jupiter J2 Parameter
+///
+/// "Measurement of Jupiter’s asymmetric gravity field"
+/// https://www.nature.com/articles/nature25776
+/// Nature 555, 220-220, 2018 March 8
+pub const JUPITER_J2: f64 = 0.014696572;
+
 /// W/m^2 measured at 1 AU.
 pub const SOLAR_FLUX: f64 = 1360.8;
 
