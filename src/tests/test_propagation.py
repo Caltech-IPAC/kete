@@ -9,8 +9,7 @@ from neospy import (
     Vector,
     State,
 )
-
-eph = SpiceKernels()
+from neospy.propagation import NonGravModel
 
 
 @pytest.fixture(scope="session")
@@ -65,9 +64,8 @@ class TestNBodyPropagation:
             pos=(10.0, 0.0, 0.0),
             vel=(0.0, 0.01, 0.0),
         )
-        calc = propagate_n_body([line], line.jd + 10, a_terms=[(1.0, 0.0, 0.0, False)])[
-            0
-        ]
+        model = NonGravModel.new_dust(1.0)
+        calc = propagate_n_body([line], line.jd + 10, non_gravs=[model])[0]
         assert np.allclose(calc.pos, line.pos + line.vel * 10, atol=1e-5)
 
 
@@ -77,12 +75,12 @@ class TestTwoBodyPropagation:
         Propagate Venus using StateVector and compare the result to using SpiceKernels.
         This is only over 5 days the 2 body approximation is accurate over that time.
         """
-        state = eph.state("Venus", 2461161.5)
+        state = SpiceKernels.state("Venus", 2461161.5)
 
         for jd in range(-5, 5):
             jd = state.jd + jd
             vec_state = propagate_two_body([state], jd)[0]
-            jpl_state = eph.state("Venus", jd)
+            jpl_state = SpiceKernels.state("Venus", jd)
             assert vec_state.jd == jpl_state.jd
             assert np.allclose(vec_state.vel, jpl_state.vel)
             assert np.allclose(vec_state.pos, jpl_state.pos)
@@ -94,7 +92,7 @@ class TestTwoBodyPropagation:
 
         Place an observer X AU away from Venus and ensure that the delay is correct.
         """
-        state = eph.state("Venus", 2461161.5)
+        state = SpiceKernels.state("Venus", 2461161.5)
 
         for au in range(0, 5):
             sun2obs = Vector(state.pos + [au, 0.0, 0.0])
@@ -110,9 +108,9 @@ class TestTwoBodyPropagation:
 def test_moid(planet):
     if planet is None:
         state = None
-        vs = eph.state("Earth", 2461161.5)
+        vs = SpiceKernels.state("Earth", 2461161.5)
     else:
-        state = eph.state(planet, 2461161.5)
+        state = SpiceKernels.state(planet, 2461161.5)
         vs = state
 
     assert np.isclose(moid(vs, state), 0)
