@@ -1,15 +1,15 @@
 use itertools::Itertools;
 use neospy_core::{
     errors::NEOSpyError,
-    propagation,
+    propagation::{self},
     spice::{self, get_spk_singleton},
     state::State,
 };
 use pyo3::{pyfunction, PyErr, PyResult, Python};
 use rayon::prelude::*;
 
-use crate::simult_states::SimulStateLike;
 use crate::state::PyState;
+use crate::{nongrav::PyNonGravModel, simult_states::SimulStateLike};
 
 /// python wrapper over the propagation_n_body_spk function.
 #[pyfunction]
@@ -19,7 +19,7 @@ pub fn propagation_n_body_spk_py(
     states: SimulStateLike,
     jd_final: f64,
     include_asteroids: bool,
-    a_terms: Vec<Option<(f64, f64, f64, bool)>>,
+    a_terms: Vec<Option<PyNonGravModel>>,
     suppress_errors: Option<bool>,
 ) -> PyResult<Vec<PyState>> {
     let suppress_errors = suppress_errors.unwrap_or(true);
@@ -31,20 +31,19 @@ pub fn propagation_n_body_spk_py(
     // python is checked for signals. This allows keyboard interrupts to be caught
     // and the process interrupted.
 
-    for chunk in states.into_iter().zip(a_terms).collect_vec().chunks(1000) {
+    for chunk in states
+        .into_iter()
+        .zip(a_terms.into_iter())
+        .collect_vec()
+        .chunks(1000)
+    {
         py.check_signals()?;
 
         let mut proc_chunk = chunk
-            .to_vec()
+            .to_owned()
             .into_par_iter()
-            .map(|(mut state, a_term)| {
-                let a_term = a_term.map(|(a1, a2, a3, comet)| {
-                    if comet {
-                        propagation::NonGravModel::new_jpl_comet_default(a1, a2, a3)
-                    } else {
-                        propagation::NonGravModel::new_dust(a1, a2)
-                    }
-                });
+            .map(|(mut state, model)| {
+                let model = model.map(|x| x.0);
                 let spk = get_spk_singleton().try_read().unwrap();
                 let center = state.center_id;
                 if let Err(e) = spk.try_change_center(&mut state, 0) {
@@ -52,7 +51,7 @@ pub fn propagation_n_body_spk_py(
                         Err(e)?;
                     };
                     return Ok::<PyState, PyErr>(
-                        State::new_nan(state.desig.clone(), jd_final, state.frame, center).into(),
+                        State::new_nan(state.desig, jd_final, state.frame, center).into(),
                     );
                 };
 
@@ -64,14 +63,11 @@ pub fn propagation_n_body_spk_py(
                     if !suppress_errors {
                         Err(NEOSpyError::ValueError("Input state contains NaNs.".into()))?;
                     };
-                    return Ok(
-                        State::new_nan(state.desig.clone(), jd_final, state.frame, center).into(),
-                    );
+                    return Ok(State::new_nan(state.desig, jd_final, state.frame, center).into());
                 }
                 let desig = state.desig.clone();
                 let frame = state.frame;
-                match propagation::propagate_n_body_spk(state, jd_final, include_asteroids, a_term)
-                {
+                match propagation::propagate_n_body_spk(state, jd_final, include_asteroids, model) {
                     Ok(mut state) => {
                         if let Err(er) = spk.try_change_center(&mut state, center) {
                             if !suppress_errors {

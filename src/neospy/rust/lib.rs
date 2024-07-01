@@ -8,6 +8,7 @@ mod fovs;
 mod frame;
 mod horizons;
 mod kepler;
+mod nongrav;
 mod propagation;
 mod simult_states;
 mod spice;
@@ -33,6 +34,7 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<vector::Vector>()?;
     m.add_class::<elements::PyCometElements>()?;
     m.add_class::<simult_states::PySimultaneousStates>()?;
+    m.add_class::<nongrav::PyNonGravModel>()?;
 
     m.add_class::<fovs::PyNeosCmos>()?;
     m.add_class::<fovs::PyNeosVisit>()?;

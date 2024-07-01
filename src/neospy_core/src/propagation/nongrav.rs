@@ -5,7 +5,7 @@ use crate::constants::GMS;
 /// Non-Gravitational models.
 /// These are used during integration to model non-gravitational forces on particles in
 /// the solar system.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum NonGravModel {
     /// JPL's non-gravitational forces are modeled as defined on page 139 of the Comets II
     /// textbook.
@@ -22,7 +22,7 @@ pub enum NonGravModel {
     ///
     /// When alpha=1.0, n=0.0, k=0.0, r0=1.0, and m=2.0, this is equivalent to a 1/r^2
     /// correction.
-    JplNonGrav {
+    JplComet {
         /// Constant for the radial non-gravitational force.
         a1: f64,
         /// Constant for the tangential non-gravitational force.
@@ -50,11 +50,11 @@ pub enum NonGravModel {
     ///
     /// Poynting-Robertson acts as a drag force, in the opposite direction of motion.
     Dust {
-        /// Dust Beta parameter.
-        beta: f64,
+        /// Dust effective radius
+        radius: f64,
 
-        /// Coefficient for poynting-robertson effect.
-        poynting_robertson: f64,
+        /// Effective density
+        density: f64,
     },
 }
 
@@ -72,7 +72,7 @@ impl NonGravModel {
         n: f64,
         k: f64,
     ) -> Self {
-        Self::JplNonGrav {
+        Self::JplComet {
             a1,
             a2,
             a3,
@@ -85,16 +85,13 @@ impl NonGravModel {
     }
 
     /// Construct a new non-grav model which follows the 1/r^2 drop-off.
-    pub fn new_dust(beta: f64, pr: f64) -> Self {
-        Self::Dust {
-            beta,
-            poynting_robertson: pr,
-        }
+    pub fn new_dust_raw(radius: f64, density: f64) -> Self {
+        Self::Dust { radius, density }
     }
 
     /// Construct a new non-grav model which follows the default comet drop-off.
     pub fn new_jpl_comet_default(a1: f64, a2: f64, a3: f64) -> Self {
-        Self::JplNonGrav {
+        Self::JplComet {
             a1,
             a2,
             a3,
@@ -110,22 +107,19 @@ impl NonGravModel {
     /// and velocity vector with respect to the sun.
     pub fn accel_vec(&self, pos: &Vector3<f64>, vel: &Vector3<f64>) -> Vector3<f64> {
         match self {
-            Self::Dust {
-                beta,
-                poynting_robertson,
-            } => {
+            Self::Dust { radius, density } => {
                 let pos_norm = pos.normalize();
                 let vel_norm = vel.normalize();
                 let norm = pos.norm();
                 let r2_inv = norm.powi(-2);
                 let r2_5 = norm.powf(-2.5);
 
-                let mut accel = pos_norm * (r2_inv * GMS * beta);
-                accel += vel_norm * (r2_5 * poynting_robertson);
+                let mut accel = pos_norm * (r2_inv * GMS * radius);
+                accel += vel_norm * (r2_5 * density);
                 accel
             }
 
-            Self::JplNonGrav {
+            Self::JplComet {
                 a1,
                 a2,
                 a3,
