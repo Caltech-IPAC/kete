@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `J2` non-spherical terms for the gravitational models of Earth and Jupiter.
+- Add non-gravitational force model for dust particles which includes the
+  Poynting-Roberterson effect. 
 - Added `Time.year_float` which converts the `Time` object to the Year as a float.
 - Added `SimultaneousState.obs_vecs` which creates vectors from the observer to the
   objects contained within the state.
