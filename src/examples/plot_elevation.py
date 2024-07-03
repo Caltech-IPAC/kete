@@ -6,15 +6,16 @@ Given an observer location, a date, and a list of objects, plot the maximum elev
 that each object gets to over the course of the night, and when it happens.
 """
 
-import astropy
+from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
-import neospy
 
-from zoneinfo import ZoneInfo
-from datetime import datetime, timedelta
 from labellines import labelLines
+
+import neospy
 
 
 # %%
@@ -36,7 +37,7 @@ cutoff = 20
 # Calculating elevations over one night
 # -------------------------------------
 
-jd_start = neospy.Time(astropy.time.Time(start_time)).jd
+jd_start = neospy.Time.from_iso(start_time.isoformat()).jd
 jd_end = jd_start + 1
 
 # Fetch orbital elements from horizons
@@ -91,13 +92,7 @@ sort_idx = np.argsort(np.argmax(np.array(elevation).T, axis=1))[::-1]
 elevation = elevation[:, sort_idx]
 object_names = np.array(object_names)[sort_idx]
 
-dates = [
-    neospy.Time(t + jd_start)
-    .utc.to_datetime()
-    .replace(tzinfo=ZoneInfo("UTC"))
-    .astimezone(timezone)
-    for t in steps
-]
+dates = [neospy.Time(t + jd_start).to_datetime().astimezone(timezone) for t in steps]
 
 # %%
 # First Plot:

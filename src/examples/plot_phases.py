@@ -22,7 +22,7 @@ neos = neospy.mpc.table_to_states(neo_subset)
 # them hitting the earth after discovery.
 
 # Pick your favorite time to observe
-jd = neospy.Time("2023-11-04 12:00:00.000", "iso", "utc").jd
+jd = neospy.Time.from_iso("2024-07-03T23:11:42.748000+00:00").jd
 
 # Move the entire population of asteroids to that time using 2-body
 # mechanics, this can be directly substituted with propagate_n_body if you

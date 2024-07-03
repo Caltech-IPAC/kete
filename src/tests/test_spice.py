@@ -36,7 +36,7 @@ class TestSpiceKernels:
         assert np.allclose(state.vel.as_equatorial, e_vel)
 
         # Ensure that the same values are calculated if using an astropy time
-        jd = Time(expected[1], format="jd", scale="tdb")
+        jd = Time(expected[1])
         state = SpiceKernels.state(expected[0], jd)
         assert isinstance(state, State)
         assert np.allclose(state.pos.as_equatorial, e_pos)
@@ -85,7 +85,7 @@ class TestSpiceKernels:
         SpiceKernels.kernel_reload([], include_cache=True)
 
     def test_mpc_code(self):
-        jd = Time.J2000().jd
+        jd = Time.j2000().jd
         state0 = SpiceKernels.mpc_code_to_ecliptic("Palomar Mountain", jd)
 
         code = find_obs_code("Palomar Mountain")
@@ -95,7 +95,7 @@ class TestSpiceKernels:
         assert np.isclose((state0.vel - state1.vel).r, 0.0)
 
     def test_moon_frac(self):
-        jd = Time.J2000().jd
+        jd = Time.j2000().jd
         frac = SpiceKernels.moon_illumination_frac(jd)
         # matches JPL Horizons to 4 decimal places
         # Horizons reports: 0.230064

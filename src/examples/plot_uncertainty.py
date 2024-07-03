@@ -27,7 +27,7 @@ obj = neospy.HorizonsProperties.fetch(obj_name)
 g = obj.g_phase if obj.g_phase else 0.15
 
 # Sample time
-cur_jd = neospy.Time.from_current_time().jd
+cur_jd = neospy.Time.now().jd
 jd_e = cur_jd + days_into_future
 jd_s = obj.epoch - 10
 jds = np.arange(jd_s, jd_e, time_step)

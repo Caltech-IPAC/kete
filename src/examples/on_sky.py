@@ -36,7 +36,7 @@ print(state)
 # %% Pick an observing time:
 # By default, neospy uses TDB scaled JD time, the Time object automatically handles
 # conversions to and from this scaling:
-jd = neospy.Time.from_ymd(2024, 6, 1.5, scale="utc").jd
+jd = neospy.Time.from_ymd(2024, 6, 1.5).jd
 
 # Currently the state of the object above is not at this date
 # lets perform orbit propagation to bring it to this date:
@@ -84,7 +84,7 @@ observer_to_object = (light_delay_state.pos - observer.pos).as_equatorial
 
 
 # %% RA/Dec calculations
-print(f"\nAt {neospy.Time(jd).utc.iso} UTC from the {obs_info[-1]} observatory")
+print(f"\nAt {neospy.Time(jd).iso} UTC from the {obs_info[-1]} observatory")
 print(
     f"{state.desig} is visible at:\n"
     f"{observer_to_object.ra_hms} RA  {observer_to_object.dec_dms} DEC"

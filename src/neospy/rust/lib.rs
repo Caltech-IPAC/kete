@@ -14,6 +14,7 @@ mod simult_states;
 mod spice;
 mod state;
 mod state_transition;
+mod time;
 mod vector;
 
 // Due to the nature of this sort of interface, there is quite a bit of boiler-plate
@@ -35,6 +36,7 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<elements::PyCometElements>()?;
     m.add_class::<simult_states::PySimultaneousStates>()?;
     m.add_class::<nongrav::PyNonGravModel>()?;
+    m.add_class::<time::PyTime>()?;
 
     m.add_class::<fovs::PyNeosCmos>()?;
     m.add_class::<fovs::PyNeosVisit>()?;

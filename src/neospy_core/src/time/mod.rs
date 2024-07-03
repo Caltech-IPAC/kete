@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 pub mod leap_second;
 pub mod scales;
 
-use chrono::{DateTime, Datelike, NaiveDate, Timelike};
+use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc};
 use scales::{TimeScale, JD_TO_MJD, TAI, TDB, UTC};
 
 use crate::prelude::NEOSpyError;
@@ -74,7 +74,16 @@ impl Time<UTC> {
     /// Read time from the standard ISO format for time.
     pub fn from_iso(s: &str) -> Result<Self, NEOSpyError> {
         let time = DateTime::parse_from_rfc3339(s)?.to_utc();
+        Self::from_datetime(&time)
+    }
 
+    /// Construct time from the current time.
+    pub fn now() -> Result<Self, NEOSpyError> {
+        Self::from_datetime(&Utc::now())
+    }
+
+    /// Construct a Time object from a UTC DateTime.
+    pub fn from_datetime(time: &DateTime<Utc>) -> Result<Self, NEOSpyError> {
         let frac_day = hour_min_sec_to_day(
             time.hour(),
             time.minute(),
