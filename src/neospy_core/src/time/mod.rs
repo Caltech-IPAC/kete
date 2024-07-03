@@ -95,6 +95,7 @@ impl Time<UTC> {
     /// https://doi.org/10.1145/364096.364097
     ///
     pub fn from_year_month_day(year: i64, month: u32, day: u32, frac_day: f64) -> Self {
+        let frac_day = frac_day - 0.5;
         let day = day as i64 + frac_day.div_euclid(1.0) as i64;
         let frac_day = frac_day.rem_euclid(1.0);
         let month = month as i64;
@@ -164,15 +165,15 @@ mod tests {
         assert!(t.year_month_day() == (2000, 1, 1, 0.5));
 
         let t2 = Time::<UTC>::from_year_month_day(2000, 1, 1, 0.5);
-        assert!(t2.jd == 2451545.5);
+        assert!(t2.jd == 2451545.);
 
         let t2 = Time::<UTC>::from_year_month_day(2000, 1, 2, -0.5);
-        assert!(t2.jd == 2451545.5);
+        assert!(t2.jd == 2451545.);
 
         let t = Time::<UTC>::new(2000000.);
         assert!(t.year_month_day() == (763, 9, 18, 0.5));
 
-        let t2 = Time::<UTC>::from_year_month_day(763, 9, 18, 0.);
+        let t2 = Time::<UTC>::from_year_month_day(763, 9, 18, 0.5);
         assert!(t2.jd == 2000000.);
     }
 
@@ -224,5 +225,14 @@ mod tests {
                 (t.mjd() - mjd).abs() * 86400.0
             );
         }
+    }
+
+    #[test]
+    fn test_iso() {
+        let t = Time::<UTC>::from_utc_iso("2000-01-01T06:00:00.000Z").unwrap();
+        assert!(t.year_month_day() == (2000, 1, 1, 0.25));
+
+        let t = Time::<UTC>::from_utc_iso("1987-12-25T00:00:00.000Z").unwrap();
+        assert!(t.year_month_day() == (1987, 12, 25, 0.0));
     }
 }
