@@ -53,6 +53,19 @@ lazy_static! {
     };
 }
 
+/// Given an MJD return the TAI - UTC offset for that epoch in days.
+///
+/// TAI - UTC = offset
+/// TAI - offset = UTC
+/// TAI = offset + UTC
+pub fn leap_second_tai_to_utc(mjd: &f64) -> f64 {
+    match LEAP_SECONDS.binary_search_by(|probe| probe.mjd.total_cmp(mjd)) {
+        Ok(idx) => LEAP_SECONDS[idx].tai_m_utc as f64 / 86400.0,
+        Err(0) => 0.0,
+        Err(idx) => LEAP_SECONDS[idx - 1].tai_m_utc as f64 / 86400.0,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -68,5 +81,15 @@ mod tests {
         assert!(t.date == (1, 1, 2017));
         assert!(t.tai_m_utc == 37);
         assert!(t.mjd == 57754.0);
+    }
+
+    #[test]
+    fn test_lookup() {
+        assert!(leap_second_tai_to_utc(&0.0) == 0.0);
+        assert!(leap_second_tai_to_utc(&41317.0) == 10.0);
+        assert!(leap_second_tai_to_utc(&41317.1) == 10.0);
+        assert!(leap_second_tai_to_utc(&57753.9) == 36.0);
+        assert!(leap_second_tai_to_utc(&57754.0) == 37.0);
+        assert!(leap_second_tai_to_utc(&57755.0) == 37.0);
     }
 }

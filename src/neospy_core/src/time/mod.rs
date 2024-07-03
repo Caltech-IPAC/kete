@@ -1,8 +1,10 @@
 //! Time representation and conversions
+
+use leap_second::leap_second_tai_to_utc;
 pub mod leap_second;
 
 /// Known Time Scales
-#[derive(Debug, PartialEq, Default)]
+#[derive(Debug, PartialEq, Default, Clone)]
 pub enum TimeScale {
     /// TDB Scaled JD time.
     /// This is in agreement with TT up to about 1ns per century.
@@ -15,10 +17,16 @@ pub enum TimeScale {
 
     /// UT1 Scaled JD time.
     UT1,
+
+    /// UTC Scaled JD time.
+    UTC,
 }
 
 /// Offset from TDB to TAI.
 /// Technically the definitional offset from TT to TAI, however we treat TT==TDB.
+///
+/// TT = TAI + TDB_TO_TAI
+/// TAI = TT - TDB_TO_TAI
 const TDB_TO_TAI: f64 = 32.184 / 86400.0;
 
 /// Offset from JD to MJD
@@ -40,7 +48,7 @@ const JD_TO_MJD: f64 = -2400000.5;
 /// Any conversions to a single float will by necessity result in some small accuracy
 /// loss due to the nature of the representation of numbers on computers.
 ///
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Time {
     /// Float Date
     julian_date: f64,
@@ -50,8 +58,16 @@ pub struct Time {
 }
 
 impl Time {
+    /// Construct a new Time object.
+    pub fn new(jd: f64, scale: TimeScale) -> Self {
+        Self {
+            julian_date: jd,
+            scale,
+        }
+    }
+
     /// Create Time from an Modified Julian Date (MJD).
-    pub fn from_mjd(&self, mjd: f64, scale: TimeScale) -> Self {
+    pub fn from_mjd(mjd: f64, scale: TimeScale) -> Self {
         Self {
             julian_date: mjd - JD_TO_MJD,
             scale,
@@ -64,23 +80,48 @@ impl Time {
     }
 
     /// Rescale time to the desired time scaling.
-    pub fn rescale(&mut self, scale: &TimeScale) {
-        if &self.scale == scale {
+    pub fn rescale(&mut self, scale: TimeScale) {
+        if self.scale == scale {
             return;
         }
+
+        // Scale time to be in TDB
         match &self.scale {
             TimeScale::TDB => (),
             TimeScale::TAI => {
                 self.julian_date += TDB_TO_TAI;
             }
             TimeScale::UT1 => todo!(),
+            TimeScale::UTC => {
+                // move to tai first
+                // Guess the tai time that this UTC time came from
+                let offset = leap_second_tai_to_utc(&(self.julian_date + JD_TO_MJD));
+
+                // use that guess to update the TAI guess to fix the leap second offset
+                let offset = leap_second_tai_to_utc(&(self.julian_date + JD_TO_MJD + offset));
+                self.julian_date += offset;
+
+                // then tai to tdb
+                self.julian_date += TDB_TO_TAI;
+            }
         };
 
+        // Scale time from TDB to target scale
         match scale {
             TimeScale::TDB => (),
             TimeScale::TAI => self.julian_date -= TDB_TO_TAI,
             TimeScale::UT1 => todo!(),
+            TimeScale::UTC => {
+                // convert from TDB to TAI
+                self.julian_date -= TDB_TO_TAI;
+
+                // Time is now TAI
+                // calculate leap seconds for that time to convert from TAI to UTC
+                let offset = leap_second_tai_to_utc(&(self.julian_date + JD_TO_MJD));
+                self.julian_date -= offset;
+            }
         };
+        self.scale = scale;
     }
 
     /// Return the Gregorian year, month, day, and fraction of a day.
@@ -141,7 +182,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_leap_second() {
+    fn test_time() {
         let t = Time {
             scale: TimeScale::TAI,
             julian_date: 2451545.,
@@ -162,5 +203,55 @@ mod tests {
 
         let t2 = Time::from_year_month_day(763, 9, 18, 0., TimeScale::TAI);
         assert!(t2.julian_date == 2000000.);
+    }
+
+    #[test]
+    fn test_time_near_leap_second() {
+        for offset in -1000..1000 {
+            let offset = offset as f64 / 10.0;
+            let mjd = 41683.0 + offset / 86400.0; // TIME IN TAI
+            let mut t = Time::from_mjd(mjd, TimeScale::TAI);
+            t.rescale(TimeScale::TDB);
+            t.rescale(TimeScale::TAI);
+
+            // Numerical precision of times near J2000 is only around 1e-10
+            assert!((t.mjd() - mjd).abs() < 1e-9,);
+        }
+
+        // Perform round trip conversions in the seconds around a leap second.
+        for offset in -1000..1000 {
+            let offset = offset as f64 / 10.0;
+            let mjd = 41683.0 + offset / 86400.0; // TIME IN TAI
+            let mut t = Time::from_mjd(mjd, TimeScale::UTC);
+            t.rescale(TimeScale::TAI);
+            t.rescale(TimeScale::UTC);
+
+            // Numerical precision of times near J2000 is only around 1e-10
+            assert!(
+                (t.mjd() - mjd).abs() < 1e-9,
+                "time = {} mjd = {} diff = {} sec",
+                t.mjd(),
+                mjd,
+                (t.mjd() - mjd).abs() * 86400.0
+            );
+        }
+
+        for offset in -1000..1000 {
+            let offset = offset as f64 / 10.0;
+
+            let mjd = 41683.0 + offset / 86400.0 + TDB_TO_TAI;
+            let mut t = Time::from_mjd(mjd, TimeScale::UTC);
+            t.rescale(TimeScale::TAI);
+            t.rescale(TimeScale::UTC);
+
+            // Numerical precision of times near J2000 is only around 1e-10
+            assert!(
+                (t.mjd() - mjd).abs() < 1e-9,
+                "time = {} mjd = {} diff = {} sec",
+                t.mjd(),
+                mjd,
+                (t.mjd() - mjd).abs() * 86400.0
+            );
+        }
     }
 }
