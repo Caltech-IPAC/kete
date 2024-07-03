@@ -44,10 +44,10 @@ pub struct Time {
     scale: Scale,
 
     /// Large component of the date.
-    _days: u64,
+    days: i64,
 
-    /// Sub day fraction of the day.
-    day: f64,
+    /// Fraction of the day.
+    frac_day: f64,
 }
 
 impl Time {
@@ -58,16 +58,68 @@ impl Time {
         }
         match &self.scale {
             Scale::TDB => {
-                self.day -= TDB_TO_TAI;
+                self.frac_day -= TDB_TO_TAI;
             }
             Scale::TAI => (),
             Scale::UT1 => todo!(),
         };
 
         match scale {
-            Scale::TDB => self.day += TDB_TO_TAI,
+            Scale::TDB => self.frac_day += TDB_TO_TAI,
             Scale::TAI => (),
             Scale::UT1 => todo!(),
         };
+        self.normalize()
+    }
+
+    /// Return the Gregorian year, month, day, and fraction of a day.
+    pub fn year_month_day(&self) -> (i64, u8, u8, f64) {
+        let mut l = self.days + 68569;
+
+        let mut frac_day = 0.5 + self.frac_day;
+        l += frac_day.div_euclid(1.0) as i64;
+        frac_day = frac_day.rem_euclid(1.0);
+
+        let n = (4 * l) / 146097;
+        l -= (146097 * n + 3) / 4;
+        let i = (4000 * (l + 1)) / 1461001;
+        l -= (1461 * i) / 4 - 31;
+        let k = (80 * l) / 2447;
+        let day = l - (2447 * k) / 80;
+        l = k / 11;
+
+        let month = k + 2 - 12 * l;
+        let year = 100 * (n - 49) + i + l;
+        (year, month as u8, day as u8, frac_day)
+    }
+
+    /// Shift value of the day frac so that it is between 0-1, any value outside of
+    /// that range is added or subtracted to the days count as appropriate.
+    #[inline(always)]
+    fn normalize(&mut self) {
+        self.days += self.frac_day.div_euclid(1.0) as i64;
+        self.frac_day = self.frac_day.rem_euclid(1.0);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_leap_second() {
+        let t = Time {
+            scale: Scale::TAI,
+            days: 2451545,
+            frac_day: 0.0,
+        };
+        assert!(t.year_month_day() == (2000, 1, 1, 0.5));
+
+        let t = Time {
+            scale: Scale::TAI,
+            days: 2000000,
+            frac_day: 0.0,
+        };
+        assert!(t.year_month_day() == (763, 9, 18, 0.5));
     }
 }
