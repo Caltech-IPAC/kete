@@ -16,6 +16,7 @@ pyo3 = { version =  "^0.21.2", optional=true }
 rayon = "^1.10.0"
 serde = { version = "^1.0.203", features = ["derive"] }
 crossbeam = "^0.8.4"
+chrono = "0.4.38"
 
 # bincode is pinned to ensure backward compatability with saved files, all updates to
 # this version need to be validated that they are forward compatable.

@@ -8,12 +8,14 @@ use std::marker::PhantomData;
 pub mod leap_second;
 pub mod scales;
 
-use chrono::{DateTime, Datelike, Timelike};
+use chrono::{DateTime, Datelike, NaiveDate, Timelike};
 use scales::{TimeScale, JD_TO_MJD, TAI, TDB, UTC};
 
 use crate::prelude::NEOSpyError;
 
 /// Representation of Time.
+///
+/// This supports different time scaling standards via the [TimeScale] trait.
 ///
 /// Machine precision between float 64s with numbers near J2000 (IE: 2451545.0) is
 /// around 23 microseconds (2.7e-10 days). So times near J2000 by necessity can only
@@ -37,30 +39,67 @@ pub struct Time<T: TimeScale> {
     /// Julian Date
     pub jd: f64,
 
+    /// PhantomData is used here as the scale is only a record keeping convenience.
     scale_type: PhantomData<T>,
 }
 
-/// Convert Hours/Minutes/Seconds/nanosecond to fraction of a day
-pub fn hour_min_sec_to_day(h: u32, m: u32, s: u32, ns: u32) -> f64 {
+/// Convert Hours/Minutes/Seconds/millisecond to fraction of a day
+pub fn hour_min_sec_to_day(h: u32, m: u32, s: u32, ms: u32) -> f64 {
     h as f64 / 24.0
         + m as f64 / 60. / 24.
         + s as f64 / 60. / 60. / 24.
-        + ns as f64 / 1000. / 60. / 60. / 24.
+        + ms as f64 / 1000. / 60. / 60. / 24.
+}
+
+/// Convert fraction of a day to hours/minutes/seconds/microseconds
+pub fn frac_day_to_hmsms(mut frac: f64) -> Option<(u32, u32, u32, u32)> {
+    if frac.is_sign_negative() || frac.abs() >= 1.0 {
+        return None;
+    }
+    frac *= 24.0;
+    let hour = frac as u32;
+    frac -= hour as f64;
+    frac *= 60.0;
+    let minute = frac as u32;
+    frac -= minute as f64;
+    frac *= 60.0;
+    let second = frac as u32;
+    frac -= second as f64;
+    frac *= 1000.0;
+
+    Some((hour, minute, second, frac as u32))
 }
 
 impl Time<UTC> {
-    /// Read time from the standard ISO  format for time.
-    pub fn from_utc_iso(s: &str) -> Result<Self, NEOSpyError> {
+    /// Read time from the standard ISO format for time.
+    pub fn from_iso(s: &str) -> Result<Self, NEOSpyError> {
         let time = DateTime::parse_from_rfc3339(s)?.to_utc();
 
-        let frac_day =
-            hour_min_sec_to_day(time.hour(), time.minute(), time.second(), time.nanosecond());
+        let frac_day = hour_min_sec_to_day(
+            time.hour(),
+            time.minute(),
+            time.second(),
+            time.timestamp_subsec_millis(),
+        );
         Ok(Time::<UTC>::from_year_month_day(
             time.year() as i64,
             time.month(),
             time.day(),
             frac_day,
         ))
+    }
+
+    /// Construct a ISO compliant UTC string.
+    pub fn to_iso(&self) -> Result<String, NEOSpyError> {
+        let (y, month, d, f) = self.year_month_day();
+        let (h, m, s, ms) = frac_day_to_hmsms(f).unwrap();
+        let datetime = NaiveDate::from_ymd_opt(y as i32, month, d)
+            .ok_or(NEOSpyError::ValueError("Failed to convert ymd".into()))?
+            .and_hms_milli_opt(h, m, s, ms)
+            .ok_or(NEOSpyError::ValueError("Failed to convert hms".into()))?
+            .and_utc();
+
+        Ok(datetime.to_rfc3339())
     }
 
     /// Return the Gregorian year, month, day, and fraction of a day.
@@ -229,10 +268,12 @@ mod tests {
 
     #[test]
     fn test_iso() {
-        let t = Time::<UTC>::from_utc_iso("2000-01-01T06:00:00.000Z").unwrap();
+        let t = Time::<UTC>::from_iso("2000-01-01T06:00:00.000Z").unwrap();
         assert!(t.year_month_day() == (2000, 1, 1, 0.25));
 
-        let t = Time::<UTC>::from_utc_iso("1987-12-25T00:00:00.000Z").unwrap();
+        let t = Time::<UTC>::from_iso("1987-12-25T00:00:00.000Z").unwrap();
         assert!(t.year_month_day() == (1987, 12, 25, 0.0));
+
+        assert!(t.to_iso().unwrap() == "1987-12-25T00:00:00+00:00")
     }
 }
