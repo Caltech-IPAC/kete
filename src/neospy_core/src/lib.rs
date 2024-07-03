@@ -43,6 +43,7 @@ pub mod simult_states;
 pub mod spice;
 pub mod state;
 pub mod stats;
+pub mod time;
 
 /// Common useful imports
 pub mod prelude {

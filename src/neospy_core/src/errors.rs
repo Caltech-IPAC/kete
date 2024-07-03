@@ -86,3 +86,14 @@ impl From<io::Error> for NEOSpyError {
         NEOSpyError::IOError(error.to_string())
     }
 }
+
+impl From<std::num::ParseIntError> for NEOSpyError {
+    fn from(value: std::num::ParseIntError) -> Self {
+        NEOSpyError::IOError(value.to_string())
+    }
+}
+impl From<std::num::ParseFloatError> for NEOSpyError {
+    fn from(value: std::num::ParseFloatError) -> Self {
+        NEOSpyError::IOError(value.to_string())
+    }
+}

@@ -29,44 +29,44 @@ impl PyNonGravModel {
     }
 
     /// Create a new non-gravitational forces Dust model.
-    /// 
+    ///
     /// This implements the radiative force model presented in:
     /// "Radiation forces on small particles in the solar system"
     /// Icarus, Vol 40, Issue 1, Pages 1-48, 1979 Oct
     /// https://doi.org/10.1016/0019-1035(79)90050-2
-    /// 
-    /// 
+    ///
+    ///
     /// The model calculated has the acceleration of the form:
-    /// 
+    ///
     /// .. math::
     ///     
     ///     \text{accel} = \frac{L_0 A Q_{pr}}{r^2 c m} \bigg((1 - \frac{\dot{r}}{c}) \vec{S} - \vec{v} / c \bigg)
-    /// 
+    ///
     /// Where :math:`L_0` is the luminosity of the Sun, `A` is the effective cross
     /// sectional area of the dust, :math:`Q_{pr}` is a scattering coefficient (~1 for
     /// dust larger than about 0.1 micron), `m` mass, `c` speed of light, and
     /// `r` heliocentric distance.
-    /// 
+    ///
     /// The vectors on the right are :math:`\vec{S}` the position with respect to the
     /// Sun. :math:`\vec{v}` the velocity with respect to the Sun. :math:`\dot{r}` is
     /// the radial velocity toward the sun.
-    /// 
+    ///
     /// This equation includes both the effects from solar radiation pressure in
     /// addition to the Poynting-Robertson effect. By neglecting the Poynting-Robertson
     /// components of the above formula, it is possible to find a mapping from the
     /// standard :math:`\beta` formalism to the above coefficient:
-    /// 
+    ///
     /// .. math::
     ///     
     ///     \beta = \frac{L_0 A Q_{pr}}{c m G}
-    /// 
+    ///
     /// Where `G` is the solar standard gravitational parameter (GM).
     /// Making the above equation equivalent to:
-    /// 
+    ///
     /// .. math::
     ///     
     ///     \text{accel} = \frac{\beta G}{r^2} \bigg((1 - \frac{\dot{r}}{c}) \vec{S} - \vec{v} / c \bigg)
-    /// 
+    ///
     #[staticmethod]
     pub fn new_dust(beta: f64) -> Self {
         Self(NonGravModel::Dust { beta })

@@ -426,7 +426,6 @@ mod tests {
         let a = compute_true_anomaly(1.5, 3.211, 0.1).unwrap();
         let ecc_anom = compute_eccentric_anomaly(1.5, 3.211, 0.1).unwrap();
         let c = eccentric_anomaly_from_true(1.5, a, 0.1).unwrap();
-        dbg!(a, c, ecc_anom);
         assert!((c - ecc_anom).abs() < 1e-11);
     }
 }
