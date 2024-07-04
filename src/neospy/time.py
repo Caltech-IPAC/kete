@@ -11,7 +11,6 @@ from ._core import Time
 __all__ = ["Time", "d_h_m_s_to_float_days", "days_in_year"]
 
 
-@property
 def _year_float(self) -> float:
     """
     Time as the UTC year in float form.
@@ -19,7 +18,7 @@ def _year_float(self) -> float:
     Note that Time is TDB Scaled, causing UTC to be a few seconds different.
 
     >>> neospy.Time.from_ymd(2010, 1, 1).year_float
-    2009.999997875444
+    2010.0
 
     >>> neospy.Time(2457754.5, scaling='utc').year_float
     2017.0
@@ -28,7 +27,6 @@ def _year_float(self) -> float:
 
     >>> neospy.Time(2457754.5 - 366, scaling='utc').year_float
     2016.0
-
     """
     tup = datetime.datetime.fromisoformat(self.iso).timetuple()
     frac = d_h_m_s_to_float_days(tup.tm_yday - 1, tup.tm_hour, tup.tm_min, tup.tm_sec)
@@ -60,14 +58,17 @@ def _local_time(self, timezone=None) -> str:
     return (t + timezone.utcoffset(t)).strftime("%Y-%m-%d %X.%f")
 
 
-def _to_datetime(self) -> datetime.Datetime:
+def _to_datetime(self) -> datetime.datetime:
     """
     Convert time to a Datetime object.
     """
     return datetime.datetime.fromisoformat(self.iso).replace(tzinfo=ZoneInfo("UTC"))
 
 
-Time.year_float = _year_float
+Time.year_float = property(
+    fget=_year_float,
+)
+
 Time.local_time = _local_time
 Time.to_datetime = _to_datetime
 
