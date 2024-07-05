@@ -16,7 +16,7 @@ states = neospy.mpc.table_to_states(subset)
 states = neospy.propagate_n_body(states, states[0].jd)
 
 # Where is jupiter?
-jupiter = neospy.SpiceKernels.state("Jupiter", states[0].jd)
+jupiter = neospy.spice.state("Jupiter", states[0].jd)
 # found it!
 
 # Compute the positions, and relative longitudinal distance from jupiter

@@ -50,7 +50,7 @@ for sample in samples:
 mags = []
 for jd in jds:
     states = neospy.propagate_n_body(states, jd)
-    earth = neospy.SpiceKernels.state("earth", jd)
+    earth = neospy.spice.state("earth", jd)
     m = [
         neospy.flux.hg_apparent_mag(
             sun2obj=x.pos, sun2obs=earth.pos, h_mag=obj.h_mag, g_param=g
@@ -65,7 +65,7 @@ brightest_jd = jds[brightest_idx]
 
 # position at lowest mag
 states = neospy.propagate_n_body(states, brightest_jd)
-earth = neospy.SpiceKernels.state("earth", brightest_jd)
+earth = neospy.spice.state("earth", brightest_jd)
 vecs = [(s.pos - earth.pos).as_equatorial for s in states]
 ras = np.array([v.ra for v in vecs])
 decs = np.array([v.dec for v in vecs])

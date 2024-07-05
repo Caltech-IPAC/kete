@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Removed `SpiceKernel` as a class, lowering all its methods to the submodule level,
+  see #68 for more discussion.
 - Removed `Time` object which was a wrapper over astropy.Time, instead making a
   custom implementation of time which is ~3-400x faster than previous.
 - Improved orbital element conversion, leading to a 2-3x speedup in two body orbit

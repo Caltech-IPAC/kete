@@ -18,9 +18,9 @@ from astropy.units import degree
 from astropy.coordinates import SkyCoord
 
 
+from . import spice
 from .cache import cache_path
 from .time import Time
-from .spice import SpiceKernels
 from .vector import Vector
 from .irsa import IRSA_URL, query_irsa_tap
 
@@ -579,7 +579,7 @@ def fetch_WISE_fovs(phase):
 
     fovs = []
     for row in res.itertuples():
-        state = SpiceKernels.state("WISE", row.jd)
+        state = spice.state("WISE", row.jd)
 
         pointing = Vector.from_ra_dec(row.ra, row.dec).as_ecliptic
         fov = WiseCmos(

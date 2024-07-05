@@ -59,10 +59,8 @@ for subrange in steps:
     # for each time step, calculate the elevation and sun elevation
     jd_step = jd_start + subrange
     approx_state = neospy.propagate_two_body(states, jd_step)
-    sun2obs = neospy.SpiceKernels.mpc_code_to_ecliptic(site, jd_step).pos
-    earth2obs = neospy.SpiceKernels.mpc_code_to_ecliptic(
-        site, jd_step, center="399"
-    ).pos
+    sun2obs = neospy.spice.mpc_code_to_ecliptic(site, jd_step).pos
+    earth2obs = neospy.spice.mpc_code_to_ecliptic(site, jd_step, center="399").pos
     sun_elevation.append(90 - earth2obs.angle_between(-sun2obs))
 
     cur_elev = []

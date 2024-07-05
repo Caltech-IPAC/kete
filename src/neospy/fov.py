@@ -16,7 +16,7 @@ from ._core import (
     fov_spk_check as _fov_spk_check,
 )
 from .vector import State
-from .spice import SpiceKernels
+from . import spice
 
 
 __all__ = [
@@ -49,5 +49,5 @@ def fov_spice_check(desigs: list[str], fovs) -> list[State]:
     fov:
         A list of field of views from which to subselect objects which are visible.
     """
-    obj_ids = [SpiceKernels.name_lookup(n)[1] for n in desigs]
+    obj_ids = [spice.name_lookup(n)[1] for n in desigs]
     return _fov_spk_check(obj_ids, fovs)

@@ -8,9 +8,8 @@ from typing import Optional
 from scipy import optimize
 import numpy as np
 
-from .spice import SpiceKernels
 from .vector import Vector, State
-from . import _core
+from . import _core, spice
 from ._core import NonGravModel
 
 
@@ -133,10 +132,10 @@ def moid(state: State, other: Optional[State] = None):
     state:
         The state describing an object.
     other:
-        The state of the object to calculate the MOID for, if this is not provided, then
-        Earth is fetched from :class:`~neospy.spice.SpiceKernels` and is used in
-        the calculation.
+        The state of the object to calculate the MOID for, if this is not provided,
+        then Earth is fetched from :mod:`~neospy.spice` and is used in the
+        calculation.
     """
     if other is None:
-        other = SpiceKernels.state("Earth", state.jd)
+        other = spice.state("Earth", state.jd)
     return _moid_single(state, other)

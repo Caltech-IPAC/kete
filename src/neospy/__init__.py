@@ -18,8 +18,8 @@ from . import (
     ztf,
     fov,
     shape,
+    spice,
 )
-from .spice import SpiceKernels
 from .propagation import (
     propagate_n_body,
     propagate_two_body,
@@ -64,12 +64,12 @@ __all__ = [
     "population",
     "Time",
     "set_logging",
-    "SpiceKernels",
     "flux",
     "fov",
     "wise",
     "neos",
     "mpc",
+    "spice",
     "SimultaneousStates",
     "propagate_n_body",
     "propagate_two_body",

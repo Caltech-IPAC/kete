@@ -56,7 +56,7 @@ print("lat, lon, elevation, Obs code, and name")
 print(obs_info)
 
 # Load the position of the observer in the solar system:
-observer = neospy.SpiceKernels.mpc_code_to_ecliptic("Palomar Mountain", jd)
+observer = neospy.spice.mpc_code_to_ecliptic("Palomar Mountain", jd)
 
 
 # %% Propagation and Orbit calculations

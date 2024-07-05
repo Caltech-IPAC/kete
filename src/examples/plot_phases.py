@@ -27,7 +27,7 @@ jd = neospy.Time.from_iso("2024-07-03T23:11:42.748000+00:00").jd
 # Move the entire population of asteroids to that time using 2-body
 # mechanics, this can be directly substituted with propagate_n_body if you
 # want more precision.
-sun2earth = neospy.SpiceKernels.state("Earth", jd).pos
+sun2earth = neospy.spice.state("Earth", jd).pos
 states = neospy.propagate_two_body(neos, jd)
 
 # Compute the expected V-mags for these objects at this time
