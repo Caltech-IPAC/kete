@@ -213,7 +213,7 @@ MISSION_PHASES = {
     "Reactivation_2014": MissionPhase(
         name="Reactivation_2014",
         jd_start=Time.from_ymd(2013, 12, 13).jd,
-        jd_end=Time.from_ymd(2015, 1, 1).utc.jd,
+        jd_end=Time.from_ymd(2015, 1, 1).jd,
         bands=(1, 2),
         frame_url=IRSA_URL + "/ibe/data/wise/neowiser/p1bm_frm/",
         frame_meta_table="neowiser_p1bs_frm",
@@ -221,7 +221,7 @@ MISSION_PHASES = {
     ),
     "Reactivation_2023": MissionPhase(
         name="Reactivation_2023",
-        jd_start=Time.from_ymd(2023, 1, 1).utc.jd,
+        jd_start=Time.from_ymd(2023, 1, 1).jd,
         jd_end=Time.from_ymd(2023, 12, 13.121151733).jd,
         bands=(1, 2),
         frame_url=IRSA_URL + "/ibe/data/wise/neowiser/p1bm_frm/",
@@ -234,8 +234,8 @@ MISSION_PHASES = {
 for year in range(2015, 2023):
     MISSION_PHASES[f"Reactivation_{year}"] = MissionPhase(
         name=f"Reactivation_{year}",
-        jd_start=Time.from_ymd(year, 1, 1).utc.jd,
-        jd_end=Time.from_ymd(year + 1, 1, 1).utc.jd,
+        jd_start=Time.from_ymd(year, 1, 1).jd,
+        jd_end=Time.from_ymd(year + 1, 1, 1).jd,
         bands=(1, 2),
         frame_url=IRSA_URL + "/ibe/data/wise/neowiser/p1bm_frm/",
         frame_meta_table="neowiser_p1bs_frm",
@@ -562,8 +562,8 @@ def fetch_WISE_fovs(phase):
 
     table = phase.frame_meta_table
     cols = ["scan_id", "frame_num", "mjd", "ra", "dec"]
-    mjd_start = Time(phase.jd_start).utc.mjd
-    mjd_end = Time(phase.jd_end).utc.mjd
+    mjd_start = Time(phase.jd_start).mjd
+    mjd_end = Time(phase.jd_end).mjd
 
     res = query_irsa_tap(
         f"SELECT {', '.join(cols)} FROM {table} "
@@ -571,7 +571,11 @@ def fetch_WISE_fovs(phase):
     )
 
     # Adding 4.4 seconds for the offset due to W3/4 exposures taking 8.8 seconds
-    res["jd"] = np.array(Time(list(res.mjd), "mjd", "utc").jd) + 5.092592592592592e-05
+    jd = [
+        Time.from_mjd(mjd, scaling="utc").jd + 5.092592592592592e-05
+        for mjd in list(res.mjd)
+    ]
+    res["jd"] = jd
 
     fovs = []
     for row in res.itertuples():

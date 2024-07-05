@@ -6,7 +6,7 @@ use crate::io::FileIO;
 use crate::prelude::{Frame, NEOSpyError, State};
 use serde::{Deserialize, Serialize};
 
-/// /// Collection of [`State`] at the same time.
+/// Collection of [`State`] at the same time.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SimultaneousStates {
     /// Collection of states

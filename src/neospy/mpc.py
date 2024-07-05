@@ -4,11 +4,10 @@ from functools import lru_cache
 from dataclasses import dataclass
 import pandas as pd
 import numpy as np
-import astropy
 
 
 from . import conversion, constants
-from .time import float_day_to_d_h_m_s, Time
+from .time import Time
 from .vector import Vector, Frames, CometElements
 from .cache import cached_gzip_json_download
 
@@ -713,8 +712,8 @@ def fetch_known_comet_orbit_data(force_download=False):
             incl=comet["i"],
             lon_node=comet["Node"],
             peri_arg=comet["Peri"],
-            peri_time=Time.from_ymd(*peri_time, scale="utc").jd,
-            epoch=Time.from_ymd(*epoch_time, scale="utc").jd,
+            peri_time=Time.from_ymd(*peri_time).jd,
+            epoch=Time.from_ymd(*epoch_time).jd,
         )
         objects.append(obj)
     return pd.DataFrame.from_records(objects)
@@ -880,19 +879,7 @@ class MPCObservation:
         jds = []
         for line in lines:
             year, month, day = line[15:32].strip().split()
-            day, hour, minute, sec = float_day_to_d_h_m_s(float(day))
-            jds.append(
-                dict(
-                    year=int(year),
-                    month=int(month),
-                    day=day,
-                    hour=hour,
-                    minute=minute,
-                    second=sec,
-                ),
-            )
-
-        jds = list(astropy.time.Time(astropy.table.Table(jds), format="ymdhms").tdb.jd)
+            jds.append(Time.from_ymd(int(year), int(month), float(day)).jd)
 
         found = []
         while len(lines) > 0:

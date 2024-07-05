@@ -77,7 +77,7 @@ for t in times:
     phases.append((-sun2obj).angle_between(-obs2obj))
     dist.append(obs2obj.r)
 
-dates = [neospy.Time(t).time.datetime for t in times]
+dates = [neospy.Time(t).to_datetime() for t in times]
 plt.figure(dpi=150, figsize=(8, 5))
 
 plt.suptitle(f"{obj.desig}")
@@ -146,7 +146,7 @@ for t in day_steps:
     night_len.append(sum(nights) * substep_time)
     elevations.append(elevation)
 
-dates = [neospy.Time(t + step_size / 2).time.datetime for t in day_steps]
+dates = [neospy.Time(t + step_size / 2).to_datetime() for t in day_steps]
 for ang in [0, 15, 30, 45, 60, 75]:
     plt.plot(
         dates,

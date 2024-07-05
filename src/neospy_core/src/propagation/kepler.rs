@@ -24,6 +24,9 @@ pub fn compute_eccentric_anomaly(
     peri_dist: f64,
 ) -> Result<f64, NEOSpyError> {
     match ecc {
+        ecc if !ecc.is_finite() => Err(NEOSpyError::ValueError(
+            "Eccentricity must be a finite value".into(),
+        )),
         ecc if ecc < 0.0 => Err(NEOSpyError::ValueError(
             "Eccentricity must be greater than 0".into(),
         )),
@@ -71,10 +74,46 @@ pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> Result<
         e if e > 1.0 => {
             ((-(1.0 + ecc) / (1.0 - ecc)).sqrt() * (ecc_anom / 2.0).tanh()).atan() * 2.0
         }
-        _ => unreachable!(),
+        // Other cases are when the checks above fail, should be only NAN and INF
+        _ => f64::NAN,
     };
 
     Ok(anom.rem_euclid(TAU))
+}
+
+/// Compute eccentric anomaly from the true anomaly for all orbital classes.
+///
+/// # Arguments
+///
+/// * `ecc` - The eccentricity, must be non-negative.
+/// * `true_anomaly` - true anomaly, between 0 and 2 pi.
+/// * `peri_dist` - Perihelion Distance in AU, only used for parabolic orbits.
+///
+pub fn eccentric_anomaly_from_true(
+    ecc: f64,
+    true_anom: f64,
+    peri_dist: f64,
+) -> Result<f64, NEOSpyError> {
+    let ecc_anom = match ecc {
+        ecc if !ecc.is_finite() => Err(NEOSpyError::ValueError(
+            "Eccentricity must be a finite value".into(),
+        ))?,
+        ecc if ecc < 0.0 => Err(NEOSpyError::ValueError(
+            "Eccentricity must be greater than 0".into(),
+        ))?,
+        e if e < 1e-6 => true_anom,
+        e if e < 0.9999 => {
+            let (sin_true, cos_true) = true_anom.sin_cos();
+            let t = (1.0 + ecc * cos_true).recip();
+            ((1.0 - ecc.powi(2)).sqrt() * sin_true * t).atan2((ecc + cos_true) * t)
+        }
+        e if e < 1.0001 => (0.5 * true_anom).tan() * (2.0 * peri_dist).sqrt(),
+        _ => {
+            let v = (-(1.0 - ecc) / (1.0 + ecc)).sqrt();
+            ((true_anom * 0.5).tan() * v).atanh() * 2.0
+        }
+    };
+    Ok(ecc_anom.rem_euclid(TAU))
 }
 
 // Beta value used below to define a parabolic orbit.
@@ -367,8 +406,26 @@ mod tests {
         let b = compute_true_anomaly(0.5, 3.211 + TAU, 0.1).unwrap();
         assert!((a - b).abs() < 1e-11);
 
+        let ecc_anom = compute_eccentric_anomaly(0.5, 3.211, 0.1).unwrap();
+        let c = eccentric_anomaly_from_true(0.5, a, 0.1).unwrap();
+        assert!((c - ecc_anom).abs() < 1e-11);
+
         let a = compute_true_anomaly(0.0, 3.211, 0.1).unwrap();
         let b = compute_true_anomaly(0.0, 3.211 + TAU, 0.1).unwrap();
         assert!((a - b).abs() < 1e-11);
+
+        let ecc_anom = compute_eccentric_anomaly(0.0, 3.211, 0.1).unwrap();
+        let c = eccentric_anomaly_from_true(0.0, a, 0.1).unwrap();
+        assert!((c - ecc_anom).abs() < 1e-11);
+
+        let a = compute_true_anomaly(1.0, 3.211, 0.1).unwrap();
+        let ecc_anom = compute_eccentric_anomaly(1.0, 3.211, 0.1).unwrap();
+        let c = eccentric_anomaly_from_true(1.0, a, 0.1).unwrap();
+        assert!((c - ecc_anom).abs() < 1e-11);
+
+        let a = compute_true_anomaly(1.5, 3.211, 0.1).unwrap();
+        let ecc_anom = compute_eccentric_anomaly(1.5, 3.211, 0.1).unwrap();
+        let c = eccentric_anomaly_from_true(1.5, a, 0.1).unwrap();
+        assert!((c - ecc_anom).abs() < 1e-11);
     }
 }

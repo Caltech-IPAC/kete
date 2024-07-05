@@ -3,6 +3,7 @@
 
 /// Define all errors which may be raise by this crate, as well as optionally provide
 /// conversion to pyo3 error types which allow for the errors to be raised in Python.
+use chrono::ParseError;
 use std::{error::Error, fmt, io};
 
 /// Possible Errors which may be raised by this crate.
@@ -84,5 +85,22 @@ impl From<NEOSpyError> for PyErr {
 impl From<io::Error> for NEOSpyError {
     fn from(error: io::Error) -> Self {
         NEOSpyError::IOError(error.to_string())
+    }
+}
+
+impl From<std::num::ParseIntError> for NEOSpyError {
+    fn from(value: std::num::ParseIntError) -> Self {
+        NEOSpyError::IOError(value.to_string())
+    }
+}
+impl From<std::num::ParseFloatError> for NEOSpyError {
+    fn from(value: std::num::ParseFloatError) -> Self {
+        NEOSpyError::IOError(value.to_string())
+    }
+}
+
+impl From<ParseError> for NEOSpyError {
+    fn from(value: ParseError) -> Self {
+        NEOSpyError::IOError(value.to_string())
     }
 }

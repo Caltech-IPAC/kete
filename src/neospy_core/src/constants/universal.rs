@@ -25,7 +25,14 @@ pub const SUN_DIAMETER: f64 = 1.3914e6;
 pub const SUN_J2: f64 = 2.2e-7;
 
 /// Earth J2 Parameter
-pub const EARTH_J2: f64 = 1.08262668e-3;
+/// See "Revisiting Spacetrack Report #3" - Final page of appendix.
+pub const EARTH_J2: f64 = 0.00108262998905;
+
+/// Earth J3 Parameter
+pub const EARTH_J3: f64 = -0.00000253215306;
+
+/// Earth J4 Parameter
+pub const EARTH_J4: f64 = -0.00000161098761;
 
 /// Jupiter J2 Parameter
 ///

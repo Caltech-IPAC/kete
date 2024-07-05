@@ -47,7 +47,10 @@ calculated from the corners of the frame.
 
     # Load the time
     time = datetime.datetime.fromisoformat(frame.header['DATIME'])
-    time_jd = neospy.Time(time, "datetime", scale='utc').jd
+    # add utc timezone to date
+    time = time.replace(tzinfo=datetime.timezone.utc)
+    # now it is correctly formatted, load it
+    time_jd = neospy.Time.from_iso(time.isoformat()).jd
 
     # Now there is a final state of the observer
     sc_state = neospy.State("WISE", time_jd, sc_pos, sc_vel)

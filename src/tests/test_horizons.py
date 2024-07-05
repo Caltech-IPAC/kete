@@ -39,6 +39,6 @@ def test_fetch_horizons():
 
 @pytest.mark.horizons
 def test_cache_horizons():
-    jd = neospy.Time.J2000().jd
+    jd = neospy.Time.j2000().jd
     neospy.horizons.fetch_spice_kernel("phaethon", jd, jd + 365, update_cache=True)
     neospy.horizons.fetch_spice_kernel("phaethon", jd, jd + 365, update_cache=False)

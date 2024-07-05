@@ -1,7 +1,7 @@
 //! Conversion tools to and from WGS84 coordinate system
 
 /// Earth semi major axis in km as defined by WGS84
-const EARTH_A: f64 = 6378.1370;
+pub const EARTH_A: f64 = 6378.1370;
 
 // /// Earth inverse flattening as defined by WGS84
 const _EARTH_INV_FLAT: f64 = 298.257223563;
