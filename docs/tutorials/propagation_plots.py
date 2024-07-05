@@ -2,12 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import neospy
 
-neospy.SpiceKernels.kernel_reload(["./data/20000042.bsp"])
+neospy.spice.kernel_reload(["./data/20000042.bsp"])
 
 jd_start = neospy.Time.from_ymd(1920, 1, 1).jd
 jd_end = neospy.Time.from_ymd(2020, 1, 1).jd
 
-state = neospy.SpiceKernels.state("42", jd_end)
+state = neospy.spice.state("42", jd_end)
 
 jds = np.logspace(np.log10(jd_end), np.log10(jd_end - 10), 1000)
 jds = np.concatenate(
@@ -21,9 +21,9 @@ error_line = []
 error_2body = []
 n_body_no_asteroids = []
 n_body_ast = []
-state = neospy.SpiceKernels.state("42", jd_end)
+state = neospy.spice.state("42", jd_end)
 for jd in jds:
-    jpl_pos = neospy.SpiceKernels.state("42", jd).pos
+    jpl_pos = neospy.spice.state("42", jd).pos
 
     line = state.pos + state.vel * (jd - state.jd)
     error_line.append((jpl_pos - line).r * neospy.constants.AU_KM)

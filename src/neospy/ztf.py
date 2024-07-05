@@ -13,7 +13,7 @@ from .time import Time
 from .irsa import query_irsa_tap
 from .mpc import find_obs_code
 from .vector import Vector, State
-from .spice import SpiceKernels
+from . import spice
 
 
 __all__ = ["fetch_ZTF_file", "fetch_ZTF_fovs"]
@@ -112,7 +112,7 @@ def fetch_ZTF_fovs(year: int):
             ra = getattr(row, f"ra{i + 1}")
             dec = getattr(row, f"dec{i + 1}")
             corners.append(Vector.from_ra_dec(ra, dec))
-        observer = SpiceKernels.earth_pos_to_ecliptic(jd, *obs_info[:-1])
+        observer = spice.earth_pos_to_ecliptic(jd, *obs_info[:-1])
         observer = State("ZTF", observer.jd, observer.pos, observer.vel)
 
         fov = ZtfCcdQuad(

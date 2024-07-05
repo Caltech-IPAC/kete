@@ -920,7 +920,7 @@ class MPCObservation:
 
     @staticmethod
     def _read_second_line(line, jd):
-        from .spice import SpiceKernels
+        from . import spice
 
         if line[14] != "s":
             raise ValueError("No second line of spacecraft observation found.")
@@ -929,7 +929,7 @@ class MPCObservation:
         y = float(line[46:57].replace(" ", "")) / constants.AU_KM
         z = float(line[58:69].replace(" ", "")) / constants.AU_KM
         earth2sc = Vector([x, y, z], Frames.Equatorial).as_ecliptic
-        sun2earth = SpiceKernels.state("Earth", jd).pos
+        sun2earth = spice.state("Earth", jd).pos
         sun2sc = sun2earth + earth2sc
         return list(sun2sc)
 

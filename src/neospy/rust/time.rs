@@ -101,12 +101,6 @@ impl PyTime {
         PyTime(Time::<UTC>::from_year_month_day(year, month, day, frac_day).tdb())
     }
 
-    /// Time in the UTC ISO time format.
-    #[getter]
-    pub fn iso(&self) -> PyResult<String> {
-        Ok(self.0.utc().to_iso()?)
-    }
-
     /// Time in the current time.
     #[staticmethod]
     pub fn now() -> Self {
@@ -137,6 +131,24 @@ impl PyTime {
     #[getter]
     pub fn mjd(&self) -> f64 {
         self.0.mjd()
+    }
+
+    /// Julian Date in UTC scaled time.
+    #[getter]
+    pub fn utc_jd(&self) -> f64 {
+        self.0.utc().jd
+    }
+
+    /// Modified Julian Date in UTC scaled time.
+    #[getter]
+    pub fn utc_mjd(&self) -> f64 {
+        self.0.utc().jd
+    }
+
+    /// Time in the UTC ISO time format.
+    #[getter]
+    pub fn iso(&self) -> PyResult<String> {
+        Ok(self.0.utc().to_iso()?)
     }
 
     #[staticmethod]

@@ -36,7 +36,7 @@ dist_to_galactic_center = []
 while states[0].jd < jd_end:
     states = neospy.propagate_two_body(states, states[0].jd + 1)
 
-    earth = neospy.SpiceKernels.state("Earth", states[0].jd)
+    earth = neospy.spice.state("Earth", states[0].jd)
 
     earth_to_obj = [(s.pos - earth.pos) for s in states]
     dist_to_galactic_center.append(

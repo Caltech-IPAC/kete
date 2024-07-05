@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from neospy import SpiceKernels, State, Time, Frames
+from neospy import spice, State, Time, Frames
 from neospy.mpc import find_obs_code
 from neospy.spice import SpkInfo
 
@@ -25,28 +25,28 @@ EXPECTED_EQUITORIAL = [
 # fmt: on
 
 
-class TestSpiceKernels:
+class TestSpice:
     @pytest.mark.parametrize("expected", EXPECTED_EQUITORIAL)
     def test_ecliptic_state(self, expected):
         e_pos = expected[2:5]
         e_vel = expected[5:8]
-        state = SpiceKernels.state(expected[0], expected[1])
+        state = spice.state(expected[0], expected[1])
         assert isinstance(state, State)
         assert np.allclose(state.pos.as_equatorial, e_pos)
         assert np.allclose(state.vel.as_equatorial, e_vel)
 
         # Ensure that the same values are calculated if using an astropy time
         jd = Time(expected[1])
-        state = SpiceKernels.state(expected[0], jd)
+        state = spice.state(expected[0], jd)
         assert isinstance(state, State)
         assert np.allclose(state.pos.as_equatorial, e_pos)
         assert np.allclose(state.vel.as_equatorial, e_vel)
 
     def test_loaded_objects(self):
-        assert len(SpiceKernels.loaded_objects()) > 8
+        assert len(spice.loaded_objects()) > 8
 
     def test_earth_to_ecliptic(self):
-        state = SpiceKernels.earth_pos_to_ecliptic(2454832.5, 0, 0, 0, center="399")
+        state = spice.earth_pos_to_ecliptic(2454832.5, 0, 0, 0, center="399")
         assert np.allclose(
             list(-state.pos),
             [7.686364937857906e-06, -3.847842319488030e-05, 1.667609317250255e-05],
@@ -57,17 +57,17 @@ class TestSpiceKernels:
         )
 
     def test_name_lookup(self):
-        assert SpiceKernels.name_lookup("jupi") == ("jupiter barycenter", 5)
-        assert SpiceKernels.name_lookup(0) == ("ssb", 0)
+        assert spice.name_lookup("jupi") == ("jupiter barycenter", 5)
+        assert spice.name_lookup(0) == ("ssb", 0)
 
         with pytest.raises(ValueError, match="Multiple objects"):
-            SpiceKernels.name_lookup("ear")
+            spice.name_lookup("ear")
 
         with pytest.raises(ValueError, match="No loaded objects"):
-            SpiceKernels.name_lookup("banana")
+            spice.name_lookup("banana")
 
     def test_loaded_info(self):
-        info = SpiceKernels.loaded_object_info("ceres")
+        info = spice.loaded_object_info("ceres")
         expected = SpkInfo(
             name="ceres",
             jd_start=2415020.5,
@@ -79,27 +79,27 @@ class TestSpiceKernels:
         assert info == [expected]
 
     def test_cache(self):
-        SpiceKernels.kernel_ls()
+        spice.kernel_ls()
 
     def test_reload(self):
-        SpiceKernels.kernel_reload([], include_cache=True)
+        spice.kernel_reload([], include_cache=True)
 
     def test_mpc_code(self):
         jd = Time.j2000().jd
-        state0 = SpiceKernels.mpc_code_to_ecliptic("Palomar Mountain", jd)
+        state0 = spice.mpc_code_to_ecliptic("Palomar Mountain", jd)
 
         code = find_obs_code("Palomar Mountain")
 
-        state1 = SpiceKernels.earth_pos_to_ecliptic(jd, *code[:-1])
+        state1 = spice.earth_pos_to_ecliptic(jd, *code[:-1])
         assert np.isclose((state0.pos - state1.pos).r, 0.0)
         assert np.isclose((state0.vel - state1.vel).r, 0.0)
 
     def test_moon_frac(self):
         jd = Time.j2000().jd
-        frac = SpiceKernels.moon_illumination_frac(jd)
+        frac = spice.moon_illumination_frac(jd)
         # matches JPL Horizons to 4 decimal places
         # Horizons reports: 0.230064
         assert np.isclose(frac, 0.23018685933)
 
         # Horizons reports: 0.200455
-        assert np.isclose(SpiceKernels.moon_illumination_frac(2451555), 0.2003318)
+        assert np.isclose(spice.moon_illumination_frac(2451555), 0.2003318)

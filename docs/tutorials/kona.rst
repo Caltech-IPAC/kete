@@ -35,7 +35,7 @@ calculated from the corners of the frame.
     frame = fits.open("data/01772a127-w3-int-1b.fits.gz")[0]
 
     # Here we compute a State of the observer, this could also be constructed
-    # using spice kernels using neospy.SpiceKernels.state
+    # using spice kernels using neospy.spice.state
     sc_pos = neospy.Vector([frame.header['SUN2SCX'],
                             frame.header['SUN2SCY'],
                             frame.header['SUN2SCZ']],
