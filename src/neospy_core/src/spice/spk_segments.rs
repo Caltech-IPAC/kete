@@ -19,7 +19,9 @@ use crate::errors::NEOSpyError;
 use crate::frames::Frame;
 use crate::prelude::Desig;
 use crate::state::State;
+use crate::time::Time;
 use itertools::Itertools;
+use sgp4::{julian_years_since_j2000, Constants, Geopotential, MinutesSinceEpoch, Orbit, WGS84};
 use std::fmt::Debug;
 
 #[derive(Debug)]
@@ -384,12 +386,50 @@ pub struct SpkSegmentType10 {
     /// `Reference Directory` is where the 100 step JDs are stored.
     /// `Reference Items` is a list of all JDs
     array: GenericSegment,
+
+    /// spg4 uses a geopotential model which is loaded from the spice kernel.
+    /// Unfortunately SGP4 doesn't support custom altitude bounds, but this
+    /// probably shouldn't be altered from the defaults.
+    geopotential: Geopotential,
 }
 
 #[allow(unused)]
 impl SpkSegmentType10 {
     fn get_times(&self) -> &[f64] {
         self.array.get_reference_items()
+    }
+
+    /// Return the SGP4 record stored within the spice kernel.
+    fn get_record(&self, idx: usize) -> Constants {
+        let rec = self.array.get_packet::<15>(idx);
+        let [_, _, _, b_star, inclination, right_ascension, eccentricity, argument_of_perigee, mean_anomaly, kozai_mean_motion, epoch, _, _, _, _] =
+            *rec;
+
+        let epoch = julian_years_since_j2000(
+            &Time::new(spice_jds_to_jd(epoch))
+                .to_datetime()
+                .unwrap()
+                .naive_utc(),
+        );
+        let orbit_0 = Orbit::from_kozai_elements(
+            &self.geopotential,
+            inclination,
+            right_ascension,
+            eccentricity,
+            argument_of_perigee,
+            mean_anomaly,
+            kozai_mean_motion,
+        )
+        .expect("Failed to load orbit values");
+
+        Constants::new(
+            WGS84,
+            sgp4::iau_epoch_to_sidereal_time,
+            epoch,
+            b_star,
+            orbit_0,
+        )
+        .expect("Failed to load orbit values")
     }
 
     fn try_get_pos_vel(
@@ -399,25 +439,50 @@ impl SpkSegmentType10 {
     ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
         let jd = jd_to_spice_jd(jd);
         let times = self.get_times();
-        let start_idx: isize = match times.binary_search_by(|probe| probe.total_cmp(&jd)) {
-            Ok(c) => c as isize,
+        let idx: usize = match times.binary_search_by(|probe| probe.total_cmp(&jd)) {
+            Ok(c) => c,
             Err(c) => {
-                if (jd - times[c - 1]).abs() < (jd - times[c]).abs() {
-                    c as isize - 1
+                if c == 0 {
+                    c
+                } else if c == times.len() || (jd - times[c - 1]).abs() < (jd - times[c]).abs() {
+                    c - 1
                 } else {
-                    c as isize
+                    c
                 }
             }
         };
-        dbg!(start_idx);
-        panic!()
+        let epoch = times[idx];
+        let record = self.get_record(idx);
+        let prediction = record
+            .propagate(MinutesSinceEpoch((jd - epoch) / 60.0))
+            .unwrap();
+
+        let [x, y, z] = prediction.position;
+        let [vx, vy, vz] = prediction.velocity;
+        let v_scale = 86400.0 / AU_KM;
+        Ok((
+            [x / AU_KM, y / AU_KM, z / AU_KM],
+            [vx * v_scale, vy * v_scale, vz * v_scale],
+        ))
     }
 }
 
 impl From<DafArray> for SpkSegmentType10 {
     fn from(array: DafArray) -> Self {
         let array: GenericSegment = array.try_into().unwrap();
-        SpkSegmentType10 { array }
+        let constants = array.constants();
+        let geopotential = Geopotential {
+            j2: constants[0],
+            j3: constants[1],
+            j4: constants[2],
+            ke: constants[3],
+            ae: constants[6],
+        };
+
+        SpkSegmentType10 {
+            array,
+            geopotential,
+        }
     }
 }
 
@@ -732,6 +797,16 @@ impl GenericSegment {
             self.array
                 .data
                 .get_unchecked(self.ref_items_addr..self.ref_items_addr + self.n_ref_items)
+        }
+    }
+
+    fn get_packet<const T: usize>(&self, idx: usize) -> &[f64; T] {
+        unsafe {
+            self.array
+                .data
+                .get_unchecked(self.packet_addr + T * idx..self.packet_addr + T * (idx + 1))
+                .try_into()
+                .unwrap()
         }
     }
 }
