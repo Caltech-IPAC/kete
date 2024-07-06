@@ -19,12 +19,14 @@ use crate::errors::NEOSpyError;
 use crate::frames::Frame;
 use crate::prelude::Desig;
 use crate::state::State;
+use itertools::Itertools;
 use std::fmt::Debug;
 
 #[derive(Debug)]
 pub enum SpkSegmentType {
     Type1(SpkSegmentType1),
     Type2(SpkSegmentType2),
+    Type10(SpkSegmentType10),
     Type13(SpkSegmentType13),
     Type21(SpkSegmentType21),
 }
@@ -36,6 +38,7 @@ impl SpkSegmentType {
             1 => Ok(SpkSegmentType::Type1(array.into())),
             2 => Ok(SpkSegmentType::Type2(array.into())),
             13 => Ok(SpkSegmentType::Type13(array.into())),
+            10 => Ok(SpkSegmentType::Type10(array.into())),
             21 => Ok(SpkSegmentType::Type21(array.into())),
             v => Err(NEOSpyError::IOError(format!(
                 "SPK Segment type {:?} not supported.",
@@ -50,6 +53,7 @@ impl From<SpkSegmentType> for DafArray {
         match value {
             SpkSegmentType::Type1(seg) => seg.array,
             SpkSegmentType::Type2(seg) => seg.array,
+            SpkSegmentType::Type10(seg) => seg.array.array,
             SpkSegmentType::Type13(seg) => seg.array,
             SpkSegmentType::Type21(seg) => seg.array,
         }
@@ -147,6 +151,7 @@ impl SpkSegment {
         let (pos, vel) = match &self.segment {
             SpkSegmentType::Type1(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type2(v) => v.try_get_pos_vel(self, jd)?,
+            SpkSegmentType::Type10(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type13(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type21(v) => v.try_get_pos_vel(self, jd)?,
         };
@@ -363,6 +368,56 @@ impl From<DafArray> for SpkSegmentType2 {
             record_len,
             jd_step,
         }
+    }
+}
+
+/// Space Command two-line elements
+///
+/// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/spk.html#Type%2010:%20Space%20Command%20Two-Line%20Elements>
+///
+#[derive(Debug)]
+#[allow(unused)]
+pub struct SpkSegmentType10 {
+    /// Generic Segments are a collection of a few different directories:
+    /// `Packets` are where Type 10 stores the TLE values.
+    /// `Packet Directory` is unused.
+    /// `Reference Directory` is where the 100 step JDs are stored.
+    /// `Reference Items` is a list of all JDs
+    array: GenericSegment,
+}
+
+#[allow(unused)]
+impl SpkSegmentType10 {
+    fn get_times(&self) -> &[f64] {
+        self.array.get_reference_items()
+    }
+
+    fn try_get_pos_vel(
+        &self,
+        _: &SpkSegment,
+        jd: f64,
+    ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
+        let jd = jd_to_spice_jd(jd);
+        let times = self.get_times();
+        let start_idx: isize = match times.binary_search_by(|probe| probe.total_cmp(&jd)) {
+            Ok(c) => c as isize,
+            Err(c) => {
+                if (jd - times[c - 1]).abs() < (jd - times[c]).abs() {
+                    c as isize - 1
+                } else {
+                    c as isize
+                }
+            }
+        };
+        dbg!(start_idx);
+        panic!()
+    }
+}
+
+impl From<DafArray> for SpkSegmentType10 {
+    fn from(array: DafArray) -> Self {
+        let array: GenericSegment = array.try_into().unwrap();
+        SpkSegmentType10 { array }
     }
 }
 
@@ -593,5 +648,158 @@ impl SpkSegmentType21 {
         });
 
         Ok((pos, vel))
+    }
+}
+
+/// Segments of type 10 and 14 use a "generic segment" definition.
+/// This segment type has poor documentation on the NAIF website, a significant amount
+/// of reverse engineering was to understand this.
+/// The DAF Array is big flat vector of floats.
+
+#[derive(Debug)]
+#[allow(dead_code)]
+struct GenericSegment {
+    array: DafArray,
+
+    /// Number of metadata value stored in this segment.
+    n_meta: usize,
+
+    // Below meta data is guaranteed to exist.
+    /// address of the constant values
+    const_addr: usize,
+
+    /// Number of constants
+    n_consts: usize,
+
+    /// Address of reference directory
+    ref_dir_addr: usize,
+
+    /// Number of reference directory items
+    n_item_ref_dir: usize,
+
+    /// Type of reference directory
+    ref_dir_type: usize,
+
+    /// Address of reference items
+    ref_items_addr: usize,
+
+    /// Number of reference items
+    n_ref_items: usize,
+
+    /// Address of the data packets
+    packet_dir_addr: usize,
+
+    /// Number of data packets
+    n_dir_packets: usize,
+
+    /// Packet directory type
+    packet_dir_dype: usize,
+
+    /// Packet address
+    packet_addr: usize,
+
+    /// Number of data packets
+    n_packets: usize,
+
+    /// Address of reserved area
+    res_addr: usize,
+
+    /// number of entries in reserved area.
+    n_reserved: usize,
+}
+
+#[allow(dead_code)]
+impl GenericSegment {
+    fn constants(&self) -> &[f64] {
+        unsafe {
+            self.array
+                .data
+                .get_unchecked(self.const_addr..self.const_addr + self.n_consts)
+        }
+    }
+
+    fn peak_packet(&self) -> &[f64] {
+        unsafe {
+            self.array
+                .data
+                .get_unchecked(self.packet_addr - 3..self.packet_addr + 7)
+        }
+    }
+
+    /// Slice into the entire reference items array.
+    fn get_reference_items(&self) -> &[f64] {
+        unsafe {
+            self.array
+                .data
+                .get_unchecked(self.ref_items_addr..self.ref_items_addr + self.n_ref_items)
+        }
+    }
+}
+
+impl TryFrom<DafArray> for GenericSegment {
+    type Error = NEOSpyError;
+
+    fn try_from(array: DafArray) -> Result<Self, Self::Error> {
+        // The very last value of this array is an int (cast to f64) which indicates the number
+        // of meta-data values.
+
+        let n_meta = array[array.len() - 1] as usize;
+
+        if n_meta < 15 {
+            return Err(NEOSpyError::IOError(
+                "PSK File not correctly formatted. There are fewer values found than expected."
+                    .into(),
+            ));
+        }
+        // there are guaranteed to be 15 meta data values.
+        let (
+            const_addr,
+            n_consts,
+            ref_dir_addr,
+            n_item_ref_dir,
+            ref_dir_type,
+            ref_items_addr,
+            n_ref_items,
+            packet_dir_addr,
+            n_dir_packets,
+            packet_dir_dype,
+            packet_addr,
+            n_packets,
+        ) = array
+            .data
+            .get(array.len() - n_meta..array.len() - 1)
+            .unwrap()
+            .iter()
+            .map(|x| *x as usize)
+            .next_tuple()
+            .unwrap();
+
+        let (res_addr, n_reserved) = array
+            .data
+            .get(array.len() - n_meta..array.len() - 1)
+            .unwrap()
+            .iter()
+            .map(|x| *x as usize)
+            .next_tuple()
+            .unwrap();
+
+        Ok(GenericSegment {
+            array,
+            n_meta,
+            const_addr,
+            n_consts,
+            ref_dir_addr,
+            n_item_ref_dir,
+            ref_dir_type,
+            ref_items_addr,
+            n_ref_items,
+            packet_dir_addr,
+            n_dir_packets,
+            packet_dir_dype,
+            packet_addr,
+            n_packets,
+            res_addr,
+            n_reserved,
+        })
     }
 }
