@@ -19,6 +19,7 @@ use crate::errors::NEOSpyError;
 use crate::frames::Frame;
 use crate::prelude::Desig;
 use crate::state::State;
+use crate::time::scales::TDB;
 use crate::time::Time;
 use itertools::Itertools;
 use sgp4::{julian_years_since_j2000, Constants, Geopotential, MinutesSinceEpoch, Orbit, WGS84};
@@ -406,7 +407,8 @@ impl SpkSegmentType10 {
             *rec;
 
         let epoch = julian_years_since_j2000(
-            &Time::new(spice_jds_to_jd(epoch))
+            &Time::<TDB>::new(spice_jds_to_jd(epoch))
+                .utc()
                 .to_datetime()
                 .unwrap()
                 .naive_utc(),
