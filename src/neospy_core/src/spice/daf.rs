@@ -17,6 +17,7 @@ use super::pck_segments::PckSegment;
 use super::spk_segments::SpkSegment;
 
 use crate::errors::NEOSpyError;
+use std::fmt::Debug;
 use std::io::{Cursor, Read, Seek};
 use std::ops::Index;
 use std::slice::SliceIndex;
@@ -268,7 +269,6 @@ impl DafFile {
 ///
 /// Contents of the structure depends on specific file formats, however they are all
 /// made up of floats.
-#[derive(Debug)]
 pub struct DafArray {
     /// DafArray segment summary float information.
     pub summary_floats: Box<[f64]>,
@@ -278,6 +278,12 @@ pub struct DafArray {
 
     /// Data contained within the array.
     pub data: Box<[f64]>,
+}
+
+impl Debug for DafArray {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("DafArray({} values)", self.data.len()))
+    }
 }
 
 impl DafArray {

@@ -12,6 +12,7 @@ serde = { version = "^1.0.203", features = ["derive"] }
 nalgebra = {version = "^0.33.0"}
 itertools = "^0.13.0"
 rayon = "^1.10.0"
+sgp4 = "2.2.0"
 
 # bincode is pinned to ensure backward compatability with saved files, all updates to
 # this version need to be validated that they are forward compatable.

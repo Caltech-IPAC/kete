@@ -98,19 +98,6 @@ impl Time<UTC> {
         ))
     }
 
-    /// Construct a ISO compliant UTC string.
-    pub fn to_iso(&self) -> Result<String, NEOSpyError> {
-        let (y, month, d, f) = self.year_month_day();
-        let (h, m, s, ms) = frac_day_to_hmsms(f).unwrap();
-        let datetime = NaiveDate::from_ymd_opt(y as i32, month, d)
-            .ok_or(NEOSpyError::ValueError("Failed to convert ymd".into()))?
-            .and_hms_milli_opt(h, m, s, ms)
-            .ok_or(NEOSpyError::ValueError("Failed to convert hms".into()))?
-            .and_utc();
-
-        Ok(datetime.to_rfc3339())
-    }
-
     /// Return the Gregorian year, month, day, and fraction of a day.
     ///
     /// Algorithm from:
@@ -153,6 +140,23 @@ impl Time<UTC> {
             - 3 * ((year + 4900 + tmp) / 100) / 4;
 
         Self::new(days as f64 + frac_day)
+    }
+
+    /// Create a DateTime object
+    pub fn to_datetime(&self) -> Result<DateTime<Utc>, NEOSpyError> {
+        let (y, month, d, f) = self.year_month_day();
+        let (h, m, s, ms) = frac_day_to_hmsms(f).unwrap();
+        Ok(NaiveDate::from_ymd_opt(y as i32, month, d)
+            .ok_or(NEOSpyError::ValueError("Failed to convert ymd".into()))?
+            .and_hms_milli_opt(h, m, s, ms)
+            .ok_or(NEOSpyError::ValueError("Failed to convert hms".into()))?
+            .and_utc())
+    }
+
+    /// Construct a ISO compliant UTC string.
+    pub fn to_iso(&self) -> Result<String, NEOSpyError> {
+        let datetime = self.to_datetime()?;
+        Ok(datetime.to_rfc3339())
     }
 }
 
