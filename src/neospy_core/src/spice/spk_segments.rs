@@ -22,7 +22,7 @@ use crate::state::State;
 use crate::time::scales::TDB;
 use crate::time::Time;
 use itertools::Itertools;
-use sgp4::{julian_years_since_j2000, Constants, Geopotential, MinutesSinceEpoch, Orbit, WGS84};
+use sgp4::{julian_years_since_j2000, Constants, Geopotential, MinutesSinceEpoch, Orbit};
 use std::fmt::Debug;
 
 #[derive(Debug)]
@@ -413,6 +413,8 @@ impl SpkSegmentType10 {
                 .unwrap()
                 .naive_utc(),
         );
+
+        /// use the provided goepotential even if it is not correct.
         let orbit_0 = Orbit::from_kozai_elements(
             &self.geopotential,
             inclination,
@@ -423,9 +425,8 @@ impl SpkSegmentType10 {
             kozai_mean_motion,
         )
         .expect("Failed to load orbit values");
-
         Constants::new(
-            WGS84,
+            self.geopotential,
             sgp4::iau_epoch_to_sidereal_time,
             epoch,
             b_star,
@@ -439,6 +440,16 @@ impl SpkSegmentType10 {
         _: &SpkSegment,
         jd: f64,
     ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
+        // TODO: this does not yet implement the interpolation between two neighboring states
+        // which is present in the cSPICE implementation.
+        // This currently matches the cspice implementation to within about 20km, where the error
+        // is less near the year 2000.
+
+        // There is also an outstanding small time conversion issue.
+        // I am somewhat certain that this conversion is incorrect in cSPICE itself.
+        // Much of this error may be fixed by applying a small linear offset to time which
+        // causes about a 3 second offset in 2024 vs a 0 second offset in 2000.
+        // See #66 for more details.
         let jd = jd_to_spice_jd(jd);
         let times = self.get_times();
         let idx: usize = match times.binary_search_by(|probe| probe.total_cmp(&jd)) {
