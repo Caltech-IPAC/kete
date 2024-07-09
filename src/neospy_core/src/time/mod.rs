@@ -110,13 +110,13 @@ impl Time<UTC> {
 
         let mut l = offset.div_euclid(1.0) as i64 + 68569;
 
-        let n = (4 * l) / 146097;
-        l -= (146097 * n + 3) / 4;
-        let i = (4000 * (l + 1)) / 1461001;
-        l -= (1461 * i) / 4 - 31;
-        let k = (80 * l) / 2447;
-        let day = l - (2447 * k) / 80;
-        l = k / 11;
+        let n = (4 * l).div_euclid(146097);
+        l -= (146097 * n + 3).div_euclid(4);
+        let i = (4000 * (l + 1)).div_euclid(1461001);
+        l -= (1461 * i).div_euclid(4) - 31;
+        let k = (80 * l).div_euclid(2447);
+        let day = l - (2447 * k).div_euclid(80);
+        l = k.div_euclid(11);
 
         let month = k + 2 - 12 * l;
         let year = 100 * (n - 49) + i + l;
@@ -227,6 +227,11 @@ mod tests {
 
         let t2 = Time::<UTC>::from_year_month_day(763, 9, 18, 0.5);
         assert!(t2.jd == 2000000.);
+
+        let ymd = Time::<UTC>::new(-68774.4991992591).year_month_day();
+        assert!(ymd.0 == -4901);
+        assert!(ymd.1 == 8);
+        assert!(ymd.2 == 8);
     }
 
     #[test]
