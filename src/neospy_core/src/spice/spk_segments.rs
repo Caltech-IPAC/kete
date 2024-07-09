@@ -306,12 +306,33 @@ pub struct SpkSegmentType2 {
     record_len: usize,
 }
 
+/// Type 2 Record View
+/// A view into a record of type 2, provided mainly for clarity to the underlying
+/// data structure.
+struct Type2RecordView<'a> {
+    t_mid: &'a f64,
+    t_step: &'a f64,
+
+    x_coef: &'a [f64],
+    y_coef: &'a [f64],
+    z_coef: &'a [f64],
+}
+
 impl SpkSegmentType2 {
-    fn get_record(&self, idx: usize) -> &[f64] {
+    fn get_record(&self, idx: usize) -> Type2RecordView {
         unsafe {
-            self.array
+            let vals = self
+                .array
                 .data
-                .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len)
+                .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len);
+
+            Type2RecordView {
+                t_mid: vals.get_unchecked(0),
+                t_step: vals.get_unchecked(1),
+                x_coef: vals.get_unchecked(2..(self.n_coef + 2)),
+                y_coef: vals.get_unchecked((self.n_coef + 2)..(2 * self.n_coef + 2)),
+                z_coef: vals.get_unchecked((2 * self.n_coef + 2)..(3 * self.n_coef + 2)),
+            }
         }
     }
 
@@ -325,29 +346,26 @@ impl SpkSegmentType2 {
         let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
         let record = self.get_record(record_index);
 
-        let x_coef = unsafe { record.get_unchecked(2..(self.n_coef + 2)) };
-        let y_coef = unsafe { record.get_unchecked((self.n_coef + 2)..(2 * self.n_coef + 2)) };
-        let z_coef = unsafe { record.get_unchecked((2 * self.n_coef + 2)..(3 * self.n_coef + 2)) };
+        let t_step = record.t_step;
 
-        let t_mid = unsafe { record.get_unchecked(0) };
-        let t_step = unsafe { record.get_unchecked(1) };
-        let t = (jd - t_mid) / t_step;
+        let t = (jd - record.t_mid) / t_step;
 
         let t_step_scaled = 86400.0 / t_step / AU_KM;
 
-        let (x, vx) = chebyshev_evaluate_both(t, x_coef)?;
-        let (y, vy) = chebyshev_evaluate_both(t, y_coef)?;
-        let (z, vz) = chebyshev_evaluate_both(t, z_coef)?;
+        let (p, v) = chebyshev3_evaluate_both(t, record.x_coef, record.y_coef, record.z_coef)?;
         Ok((
-            [x / AU_KM, y / AU_KM, z / AU_KM],
-            [vx * t_step_scaled, vy * t_step_scaled, vz * t_step_scaled],
+            [p[0] / AU_KM, p[1] / AU_KM, p[2] / AU_KM],
+            [
+                v[0] * t_step_scaled,
+                v[1] * t_step_scaled,
+                v[2] * t_step_scaled,
+            ],
         ))
     }
 }
 
 impl From<DafArray> for SpkSegmentType2 {
     fn from(array: DafArray) -> Self {
-        // let n_records = array[array.len() - 1] as usize;
         let record_len = array[array.len() - 2] as usize;
         let jd_step = array[array.len() - 3];
 
@@ -394,9 +412,23 @@ impl From<DafArray> for SpkSegmentType13 {
     }
 }
 
+/// Type 13 Record View
+/// A view into a record of type 13, provided mainly for clarity to the underlying
+/// data structure.
+struct Type13RecordView<'a> {
+    pos: &'a [f64; 3],
+    vel: &'a [f64; 3],
+}
+
 impl SpkSegmentType13 {
-    fn get_record(&self, idx: usize) -> &[f64] {
-        unsafe { self.array.data.get_unchecked(idx * 6..(idx + 1) * 6) }
+    fn get_record(&self, idx: usize) -> Type13RecordView {
+        unsafe {
+            let rec = self.array.data.get_unchecked(idx * 6..(idx + 1) * 6);
+            Type13RecordView {
+                pos: rec[0..3].try_into().unwrap(),
+                vel: rec[3..6].try_into().unwrap(),
+            }
+        }
     }
 
     fn get_times(&self) -> &[f64] {
@@ -429,19 +461,15 @@ impl SpkSegmentType13 {
 
         let mut pos = [0.0; 3];
         let mut vel = [0.0; 3];
-        let times: Box<[&f64]> = times
-            .iter()
-            .skip(start_idx)
-            .take(self.window_size)
-            .collect();
         for idx in 0..3 {
             let p: Box<[f64]> = (0..self.window_size)
-                .map(|i| self.get_record(i + start_idx)[idx])
+                .map(|i| self.get_record(i + start_idx).pos[idx])
                 .collect();
             let dp: Box<[f64]> = (0..self.window_size)
-                .map(|i| self.get_record(i + start_idx)[idx + 3])
+                .map(|i| self.get_record(i + start_idx).vel[idx])
                 .collect();
-            let (p, v) = hermite_interpolation(&times, &p, &dp, jd);
+            let (p, v) =
+                hermite_interpolation(&times[start_idx..start_idx + self.window_size], &p, &dp, jd);
             pos[idx] = p / AU_KM;
             vel[idx] = v / AU_KM * 86400.;
         }
