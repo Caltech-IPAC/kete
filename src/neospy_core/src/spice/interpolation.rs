@@ -11,14 +11,24 @@ use nalgebra::DVector;
 /// This is useful for reading values out of JPL SPK format, be aware though that time
 /// scaling is also important for that particular use case.
 ///
+/// This evaluates the coefficients at a single point of time, but for 3 sets of
+/// coefficients at once. This is specifically done for performance reasons.
+///
 /// # Arguments
 ///
 /// * `t`       - Time at which to evaluate the chebyshev polynomials.
-/// * `coef`    - List of coefficients of the chebyshev polynomials.
+/// * `coefx`    - Slice of coefficients of the chebyshev polynomials.
+/// * `coefy`    - Slice of coefficients of the chebyshev polynomials.
+/// * `coefz`    - Slice of coefficients of the chebyshev polynomials.
 ///
 #[inline(always)]
-pub fn chebyshev_evaluate_both(x: f64, coef: &[f64]) -> Result<(f64, f64), NEOSpyError> {
-    let n_coef = coef.len();
+pub fn chebyshev3_evaluate_both(
+    x: f64,
+    coefx: &[f64],
+    coefy: &[f64],
+    coefz: &[f64],
+) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
+    let n_coef = coefx.len();
 
     if n_coef < 2 {
         return Err(NEOSpyError::IOError(
@@ -28,38 +38,42 @@ pub fn chebyshev_evaluate_both(x: f64, coef: &[f64]) -> Result<(f64, f64), NEOSp
     }
     let x2 = 2.0 * x;
 
-    let mut val = 0.0;
+    let mut val = [
+        coefx[0] + coefx[1] * x,
+        coefy[0] + coefy[1] * x,
+        coefz[0] + coefz[1] * x,
+    ];
     let mut second_t = 1.0;
     let mut last_t = x;
     let mut next_t;
 
-    val += coef[0] * second_t;
-    val += coef[1] * last_t;
-
     // The derivative of the first kind is defined by the recurrence relation:
     // d T_i / dx = i * U_{i-1}
-    let mut der_vel;
     let mut second_u = 1.0;
     let mut last_u = x2;
     let mut next_u;
 
-    der_vel = coef[1] * second_u;
+    let mut der_val = [coefx[1], coefy[1], coefz[1]];
 
-    for (idx, &c) in coef.iter().enumerate().skip(2) {
+    for (idx, ((x, y), z)) in coefx.iter().zip(coefy).zip(coefz).enumerate().skip(2) {
         next_t = x2 * last_t - second_t;
-        val += c * next_t;
+        val[0] += x * next_t;
+        val[1] += y * next_t;
+        val[2] += z * next_t;
 
         second_t = last_t;
         last_t = next_t;
 
         next_u = x2 * last_u - second_u;
-        der_vel += c * last_u * (idx as f64);
+        der_val[0] += x * last_u * (idx as f64);
+        der_val[1] += y * last_u * (idx as f64);
+        der_val[2] += z * last_u * (idx as f64);
 
         second_u = last_u;
         last_u = next_u;
     }
 
-    Ok((val, der_vel))
+    Ok((val, der_val))
 }
 
 /// Interpolate using Hermite interpolation.
@@ -70,7 +84,7 @@ pub fn chebyshev_evaluate_both(x: f64, coef: &[f64]) -> Result<(f64, f64), NEOSp
 /// * `x` - The values of the function `f` evaluated at the specified times.
 /// * `dx` - The values of the derivative of the function `f`.
 /// * `eval_time` - Time at which to evaluate the interpolation function.
-pub fn hermite_interpolation(times: &[&f64], x: &[f64], dx: &[f64], eval_time: f64) -> (f64, f64) {
+pub fn hermite_interpolation(times: &[f64], x: &[f64], dx: &[f64], eval_time: f64) -> (f64, f64) {
     assert_eq!(times.len(), x.len());
     assert_eq!(times.len(), dx.len());
 

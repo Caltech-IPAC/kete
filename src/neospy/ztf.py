@@ -5,7 +5,6 @@ ZTF Related Functions and Data.
 from functools import lru_cache
 import os
 from collections import defaultdict
-import numpy as np
 
 from .cache import cached_file_download, cache_path
 from .fov import ZtfCcdQuad, ZtfField, FOVList
@@ -98,9 +97,7 @@ def fetch_ZTF_fovs(year: int):
     )
 
     # Exposures are 30 seconds
-    jds_str = [x.split("+")[0] for x in irsa_query["obsdate"]]
-    jds = np.array(Time(jds_str, "iso", "utc").jd)
-
+    jds = [Time.from_iso(x + ":00").jd for x in irsa_query["obsdate"]]
     obs_info = find_obs_code("ZTF")
 
     # ZTF fields are made up of up to 64 individual CCD quads, here we first construct

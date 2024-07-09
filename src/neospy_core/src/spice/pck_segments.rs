@@ -173,9 +173,8 @@ impl PckSegmentType2 {
         let dec_coef = &record[(self.n_coef + 2)..(2 * self.n_coef + 2)];
         let w_coef = &record[(2 * self.n_coef + 2)..(3 * self.n_coef + 2)];
 
-        let (ra, ra_der) = chebyshev_evaluate_both(t, ra_coef)?;
-        let (dec, dec_der) = chebyshev_evaluate_both(t, dec_coef)?;
-        let (w, w_der) = chebyshev_evaluate_both(t, w_coef)?;
+        let ([ra, dec, w], [ra_der, dec_der, w_der]) =
+            chebyshev3_evaluate_both(t, ra_coef, dec_coef, w_coef)?;
 
         // rem_euclid is equivalent to the modulo operator, so this maps w to [0, 2pi]
         let w = w.rem_euclid(std::f64::consts::TAU);
