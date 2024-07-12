@@ -83,7 +83,7 @@ impl PySimultaneousStates {
     /// States contained within.
     #[getter]
     pub fn states(&self) -> Vec<PyState> {
-        self.0.states.iter().map(|x| x.clone().into()).collect()
+        self.0.states.iter().map(|x| x.clone().into_frame()).collect()
     }
 
     /// The time of the simultaneous states.
@@ -126,7 +126,7 @@ impl PySimultaneousStates {
         if idx >= self.__len__() {
             return Err(PyErr::new::<exceptions::PyIndexError, _>(""));
         }
-        Ok(self.0.states[idx].clone().into())
+        Ok(self.0.states[idx].clone().into_frame())
     }
 
     /// If a FOV is present, calculate all vectors from the observer position to the

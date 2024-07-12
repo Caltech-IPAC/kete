@@ -5,7 +5,7 @@
 
 use crate::constants::{MASSIVE_OBJECTS, MASSIVE_OBJECTS_EXTENDED};
 use crate::errors::NEOSpyError;
-use crate::frames::Frame;
+use crate::frames::{Equatorial, InertialFrame};
 use crate::prelude::Desig;
 use crate::spice::get_spk_singleton;
 use crate::state::State;
@@ -49,35 +49,32 @@ pub fn propagate_two_body_radau(dt: f64, pos: &[f64; 3], vel: &[f64; 3]) -> ([f6
 ///
 /// This is a very poor approximation over more than a few minutes/hours, however it
 /// is very fast.
-pub fn propagate_linear(state: &State, jd_final: f64) -> Result<State, NEOSpyError> {
+pub fn propagate_linear<F: InertialFrame>(
+    state: &State<F>,
+    jd_final: f64,
+) -> Result<State<F>, NEOSpyError> {
     let dt = jd_final - state.jd;
-    let mut pos: Vector3<f64> = state.pos.into();
-    pos.iter_mut()
-        .zip(&state.vel)
-        .for_each(|(p, v)| *p += v * dt);
+    let pos = state.pos + &(state.vel * dt);
 
     Ok(State::new(
         state.desig.to_owned(),
         jd_final,
         pos,
-        state.vel.into(),
-        state.frame,
+        state.vel,
         state.center_id,
     ))
 }
 
 /// Propagate an object using full N-Body physics with the Radau 15th order integrator.
 pub fn propagate_n_body_spk(
-    mut state: State,
+    mut state: State<Equatorial>,
     jd_final: f64,
     include_extended: bool,
     a_terms: Option<NonGravModel>,
-) -> Result<State, NEOSpyError> {
+) -> Result<State<Equatorial>, NEOSpyError> {
     let center = state.center_id;
-    let frame = state.frame;
     let spk = get_spk_singleton().try_read().unwrap();
     spk.try_change_center(&mut state, 0)?;
-    state.try_change_frame_mut(Frame::Equatorial)?;
 
     let mass_list = {
         if include_extended {
@@ -104,16 +101,8 @@ pub fn propagate_n_body_spk(
         )?
     };
 
-    let mut new_state = State::new(
-        state.desig.to_owned(),
-        jd_final,
-        pos,
-        vel,
-        Frame::Equatorial,
-        0,
-    );
+    let mut new_state = State::new(state.desig.to_owned(), jd_final, pos.into(), vel.into(), 0);
     spk.try_change_center(&mut new_state, center)?;
-    new_state.try_change_frame_mut(frame)?;
     Ok(new_state)
 }
 
@@ -123,13 +112,14 @@ pub fn propagate_n_body_spk(
 ///
 /// It is *strongly recommended* to use the `kepler.rs` code for this, as
 /// it will be much more computationally efficient.
-pub fn propagation_central(state: &State, jd_final: f64) -> Result<[[f64; 3]; 2], NEOSpyError> {
-    let pos: Vector3<f64> = state.pos.into();
-    let vel: Vector3<f64> = state.vel.into();
+pub fn propagation_central(
+    state: &State<Equatorial>,
+    jd_final: f64,
+) -> Result<[[f64; 3]; 2], NEOSpyError> {
     let (pos, vel, _meta) = RadauIntegrator::integrate(
         &central_accel,
-        pos,
-        vel,
+        state.pos.into(),
+        state.vel.into(),
         state.jd,
         jd_final,
         CentralAccelMeta::default(),
@@ -140,7 +130,7 @@ pub fn propagation_central(state: &State, jd_final: f64) -> Result<[[f64; 3]; 2]
 /// Propagate using n-body mechanics but skipping SPK queries.
 /// This will propagate all planets and the Moon, so it may vary from SPK states slightly.
 pub fn propagation_n_body_vec(
-    states: Vec<State>,
+    states: Vec<State<Equatorial>>,
     jd_final: f64,
 ) -> Result<Vec<[[f64; 3]; 2]>, NEOSpyError> {
     let spk = get_spk_singleton().try_read().unwrap();
@@ -157,7 +147,7 @@ pub fn propagation_n_body_vec(
     let mut desigs: Vec<Desig> = Vec::new();
 
     for (id, _mass, _radius) in MASSIVE_OBJECTS.iter() {
-        let planet = spk.try_get_state(*id, jd_init, 0, Frame::Ecliptic)?;
+        let planet: State<Equatorial> = spk.try_get_state(*id, jd_init, 0)?;
         pos.append(&mut planet.pos.into());
         vel.append(&mut planet.vel.into());
         desigs.push(planet.desig.to_owned());
@@ -165,7 +155,6 @@ pub fn propagation_n_body_vec(
 
     for mut state in states.into_iter() {
         spk.try_change_center(&mut state, 0)?;
-        state.try_change_frame_mut(Frame::Ecliptic)?;
         if jd_init != state.jd {
             return Err(NEOSpyError::ValueError(
                 "All input states must have the same JD".into(),
@@ -196,15 +185,10 @@ pub fn propagation_n_body_vec(
     for (idx, desig) in desigs.into_iter().enumerate() {
         let pos_chunk = pos.rows(idx * 3, 3) - sun_pos;
         let vel_chunk = vel.rows(idx * 3, 3) - sun_vel;
-        let state = State::new(
-            desig,
-            jd_final,
-            nalgebra::convert(pos_chunk),
-            nalgebra::convert(vel_chunk),
-            Frame::Ecliptic,
-            10,
-        );
-        final_states.push([state.pos, state.vel]);
+        let pos: Vector3<f64> = nalgebra::convert(pos_chunk);
+        let vel: Vector3<f64> = nalgebra::convert(vel_chunk);
+        let state = State::<Equatorial>::new(desig, jd_final, pos.into(), vel.into(), 10);
+        final_states.push([state.pos.into(), state.vel.into()]);
     }
     Ok(final_states)
 }

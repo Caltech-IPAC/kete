@@ -51,7 +51,7 @@ pub fn propagation_n_body_spk_py(
                         Err(e)?;
                     };
                     return Ok::<PyState, PyErr>(
-                        State::new_nan(state.desig, jd_final, state.frame, center).into(),
+                        State::new_nan(state.desig, jd_final, state.frame, center).into_frame(),
                     );
                 };
 
@@ -63,7 +63,9 @@ pub fn propagation_n_body_spk_py(
                     if !suppress_errors {
                         Err(NEOSpyError::ValueError("Input state contains NaNs.".into()))?;
                     };
-                    return Ok(State::new_nan(state.desig, jd_final, state.frame, center).into());
+                    return Ok(
+                        State::new_nan(state.desig, jd_final, state.frame, center).into_frame()
+                    );
                 }
                 let desig = state.desig.clone();
                 let frame = state.frame;
@@ -73,9 +75,9 @@ pub fn propagation_n_body_spk_py(
                             if !suppress_errors {
                                 Err(er)?;
                             }
-                            return Ok(State::new_nan(desig, jd_final, frame, center).into());
+                            return Ok(State::new_nan(desig, jd_final, frame, center).into_frame());
                         };
-                        Ok(state.into())
+                        Ok(state.into_frame())
                     }
                     Err(er) => {
                         if !suppress_errors {
@@ -89,7 +91,7 @@ pub fn propagation_n_body_spk_py(
                                     time
                                 );
                             };
-                            Ok(State::new_nan(desig, jd_final, frame, center).into())
+                            Ok(State::new_nan(desig, jd_final, frame, center).into_frame())
                         }
                     }
                 }

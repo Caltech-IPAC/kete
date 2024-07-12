@@ -3,34 +3,36 @@
 
 use std::fmt::Debug;
 
-use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
 
-use super::{Contains, FovLike, Frame, NEOSpyError, OnSkyRectangle, SkyPatch, SphericalCone, FOV};
-use crate::state::State;
+use super::{Contains, FovLike, OnSkyRectangle, SkyPatch, SphericalCone, FOV};
+use crate::{
+    frames::{Equatorial, InertialFrame, Vector},
+    state::State,
+};
 
 /// Generic rectangular FOV
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct GenericRectangle {
-    observer: State,
+pub struct GenericRectangle<F: InertialFrame> {
+    observer: State<F>,
 
     /// Patch of sky
-    pub patch: OnSkyRectangle,
+    pub patch: OnSkyRectangle<F>,
 
     /// Rotation of the FOV.
     pub rotation: f64,
 }
 
-impl GenericRectangle {
+impl<F: InertialFrame> GenericRectangle<F> {
     /// Create a new Generic Rectangular FOV
     pub fn new(
-        pointing: Vector3<f64>,
+        pointing: Vector<F>,
         rotation: f64,
         lon_width: f64,
         lat_width: f64,
-        observer: State,
+        observer: State<F>,
     ) -> Self {
-        let patch = OnSkyRectangle::new(pointing, rotation, lon_width, lat_width, observer.frame);
+        let patch = OnSkyRectangle::new(pointing, rotation, lon_width, lat_width);
         Self {
             observer,
             patch,
@@ -39,8 +41,8 @@ impl GenericRectangle {
     }
 
     /// Create a Field of view from a collection of corners.
-    pub fn from_corners(corners: [Vector3<f64>; 4], observer: State) -> Self {
-        let patch = OnSkyRectangle::from_corners(corners, observer.frame);
+    pub fn from_corners(corners: [Vector<F>; 4], observer: State<F>) -> Self {
+        let patch = OnSkyRectangle::from_corners(corners);
         Self {
             patch,
             observer,
@@ -61,7 +63,7 @@ impl GenericRectangle {
     }
 }
 
-impl FovLike for GenericRectangle {
+impl FovLike<Equatorial> for GenericRectangle<Equatorial> {
     #[inline]
     fn get_fov(&self, index: usize) -> FOV {
         if index != 0 {
@@ -71,12 +73,12 @@ impl FovLike for GenericRectangle {
     }
 
     #[inline]
-    fn observer(&self) -> &State {
+    fn observer(&self) -> &State<Equatorial> {
         &self.observer
     }
 
     #[inline]
-    fn contains(&self, obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
+    fn contains(&self, obs_to_obj: &Vector<Equatorial>) -> (usize, Contains) {
         (0, self.patch.contains(obs_to_obj))
     }
 
@@ -84,31 +86,25 @@ impl FovLike for GenericRectangle {
     fn n_patches(&self) -> usize {
         1
     }
-
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
-        self.observer.try_change_frame_mut(target_frame)?;
-        self.patch = self.patch.try_frame_change(target_frame)?;
-        Ok(())
-    }
 }
 
 /// Generic rectangular FOV
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct GenericCone {
-    observer: State,
+pub struct GenericCone<F: InertialFrame> {
+    observer: State<F>,
 
     /// Patch of sky
-    pub patch: SphericalCone,
+    pub patch: SphericalCone<F>,
 }
-impl GenericCone {
+impl<F: InertialFrame> GenericCone<F> {
     /// Create a new Generic Conic FOV
-    pub fn new(pointing: Vector3<f64>, angle: f64, observer: State) -> Self {
-        let patch = SphericalCone::new(&pointing, angle, observer.frame);
+    pub fn new(pointing: Vector<F>, angle: f64, observer: State<F>) -> Self {
+        let patch = SphericalCone::new(&pointing, angle);
         Self { observer, patch }
     }
 }
 
-impl FovLike for GenericCone {
+impl FovLike<Equatorial> for GenericCone<Equatorial> {
     #[inline]
     fn get_fov(&self, index: usize) -> FOV {
         if index != 0 {
@@ -118,12 +114,12 @@ impl FovLike for GenericCone {
     }
 
     #[inline]
-    fn observer(&self) -> &State {
+    fn observer(&self) -> &State<Equatorial> {
         &self.observer
     }
 
     #[inline]
-    fn contains(&self, obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
+    fn contains(&self, obs_to_obj: &Vector<Equatorial>) -> (usize, Contains) {
         (0, self.patch.contains(obs_to_obj))
     }
 
@@ -131,53 +127,53 @@ impl FovLike for GenericCone {
     fn n_patches(&self) -> usize {
         1
     }
-
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
-        self.observer.try_change_frame_mut(target_frame)?;
-        self.patch = self.patch.try_frame_change(target_frame)?;
-        Ok(())
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::constants::GMS_SQRT;
+    use crate::frames::Ecliptic;
     use crate::prelude::*;
     use crate::state::Desig;
 
     #[test]
     fn test_check_visible() {
-        let circular = State::new(
+        let circular = State::<Ecliptic>::new(
             Desig::Empty,
             2451545.0,
             [0.0, 1., 0.0].into(),
             [-GMS_SQRT, 0.0, 0.0].into(),
-            Frame::Ecliptic,
             0,
         );
-        let circular_back = State::new(
+        let circular_back = State::<Ecliptic>::new(
             Desig::Empty,
             2451545.0,
             [1.0, 0.0, 0.0].into(),
             [0.0, GMS_SQRT, 0.0].into(),
-            Frame::Ecliptic,
             0,
         );
 
         for offset in [-10.0, -5.0, 0.0, 5.0, 10.0] {
             let off_state = propagate_n_body_spk(
-                circular_back.clone(),
+                circular_back.clone().into_frame(),
                 circular_back.jd - offset,
                 false,
                 None,
             )
-            .unwrap();
+            .unwrap()
+            .into_frame();
 
-            let vec = Vector3::from(circular_back.pos) - Vector3::from(circular.pos);
+            let vec = circular_back.pos - &circular.pos;
 
-            let fov = GenericRectangle::new(vec, 0.0001, 0.01, 0.01, circular.clone());
-            assert!(fov.check_two_body(&off_state).is_ok());
+            let fov = GenericRectangle::new(
+                vec.into_frame(),
+                0.0001,
+                0.01,
+                0.01,
+                circular.clone().into_frame(),
+            );
+            assert!(fov.check_two_body(&off_state.clone().into_frame()).is_ok());
             assert!(fov.check_n_body(&off_state).is_ok());
 
             assert!(fov

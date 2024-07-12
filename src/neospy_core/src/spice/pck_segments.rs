@@ -1,4 +1,3 @@
-use super::daf::DafArray;
 /// Most users should interface with `pck.rs`, not this module.
 ///
 /// PCK Files are collections of `Segments`, which are ranges of times where the state
@@ -14,10 +13,12 @@ use super::daf::DafArray;
 /// There is a lot of repetition in this file, as many of the segment types have very
 /// similar internal structures.
 ///
+use super::daf::DafArray;
 use super::interpolation::*;
+use super::spk_segments::SpiceFrames;
 use super::{jd_to_spice_jd, spice_jds_to_jd};
 use crate::errors::NEOSpyError;
-use crate::frames::Frame;
+use crate::frames::EclipticNonInertial;
 use std::fmt::Debug;
 
 #[derive(Debug)]
@@ -52,7 +53,7 @@ pub struct PckSegment {
     pub center_id: isize,
 
     /// [`Frame`] of reference for this Segment.
-    pub ref_frame: Frame,
+    pub ref_frame: SpiceFrames,
 
     /// Start time of the segment.
     pub jd_start: f64,
@@ -77,14 +78,8 @@ impl TryFrom<DafArray> for PckSegment {
         let jd_end = spice_jds_to_jd(summary_floats[1]);
 
         let center_id = summary_ints[0] as isize;
-        let frame_id = summary_ints[1];
+        let ref_frame: SpiceFrames = summary_ints[1].into();
         let segment_type = summary_ints[2];
-
-        let ref_frame = match frame_id {
-            1 => Frame::Equatorial, // J2000
-            17 => Frame::Ecliptic,  // ECLIPJ2000
-            _ => Frame::Unknown(frame_id as usize),
-        };
 
         let segment = PckSegmentType::from_array(segment_type, array)?;
 
@@ -106,7 +101,7 @@ impl PckSegment {
 
     /// Return the [`Frame`] at the specified JD. If the requested time is not within
     /// the available range, this will fail.
-    pub fn try_get_orientation(&self, jd: f64) -> Result<Frame, NEOSpyError> {
+    pub fn try_get_orientation(&self, jd: f64) -> Result<EclipticNonInertial, NEOSpyError> {
         if jd < self.jd_start || jd > self.jd_end {
             return Err(NEOSpyError::DAFLimits(
                 "JD is not present in this record.".to_string(),
@@ -147,7 +142,11 @@ impl PckSegmentType2 {
     }
 
     /// Return the stored orientation, along with the rate of change of the orientation.
-    fn try_get_orientation(&self, segment: &PckSegment, jd: f64) -> Result<Frame, NEOSpyError> {
+    fn try_get_orientation(
+        &self,
+        segment: &PckSegment,
+        jd: f64,
+    ) -> Result<EclipticNonInertial, NEOSpyError> {
         // Records in the segment contain information about the central position of the
         // north pole, as well as the position of the prime meridian. These values for
         // type 2 segments are stored as chebyshev polynomials of the first kind, in
@@ -179,17 +178,14 @@ impl PckSegmentType2 {
         // rem_euclid is equivalent to the modulo operator, so this maps w to [0, 2pi]
         let w = w.rem_euclid(std::f64::consts::TAU);
 
-        Ok(Frame::EclipticNonInertial(
-            segment.center_id,
-            [
-                ra,
-                dec,
-                w,
-                ra_der / t_step * 86400.0,
-                dec_der / t_step * 86400.0,
-                w_der / t_step * 86400.0,
-            ],
-        ))
+        Ok(EclipticNonInertial([
+            ra,
+            dec,
+            w,
+            ra_der / t_step * 86400.0,
+            dec_der / t_step * 86400.0,
+            w_der / t_step * 86400.0,
+        ]))
     }
 }
 

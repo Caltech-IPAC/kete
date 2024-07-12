@@ -167,7 +167,7 @@ impl PyCometElements {
     /// Convert the orbital elements into a cartesian State.
     #[getter]
     pub fn state(&self) -> PyResult<PyState> {
-        Ok(self.0.try_to_state()?.into())
+        Ok(self.0.try_to_state()?.into_frame())
     }
 
     /// Eccentric Anomaly in degrees.

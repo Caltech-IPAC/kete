@@ -69,11 +69,11 @@ pub fn propagation_kepler_py(
             let center = state.center_id();
 
             let Some(state) = state.change_center(10).ok() else {
-                return State::new_nan(state.0.desig.clone(), jd, state.0.frame, center).into();
+                return State::new_nan(state.0.desig.clone(), jd, state.0.frame, center).into_frame();
             };
 
             let Some(mut new_state) = propagation::propagate_two_body(&state.0, jd).ok() else {
-                return State::new_nan(state.0.desig.clone(), jd, state.0.frame, center).into();
+                return State::new_nan(state.0.desig.clone(), jd, state.0.frame, center).into_frame();
             };
 
             if let Some(sun2obs) = &sun2obs {
@@ -86,12 +86,12 @@ pub fn propagation_kepler_py(
                     Ok(state) => state,
                     Err(_) => {
                         return State::new_nan(state.0.desig.clone(), jd, state.0.frame, center)
-                            .into()
+                            .into_frame()
                     }
                 };
             }
             PyState(new_state).change_center(center).unwrap_or(
-                State::new_nan(state.0.desig.clone(), jd, state.0.frame, state.0.center_id).into(),
+                State::new_nan(state.0.desig.clone(), jd, state.0.frame, state.0.center_id).into_frame(),
             )
         })
         .collect()

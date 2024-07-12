@@ -3,10 +3,10 @@
 //! such as the solar system.
 //!
 
-use crate::constants::*;
 use crate::errors::NEOSpyError;
 use crate::fitting::newton_raphson;
 use crate::state::State;
+use crate::{constants::*, frames::InertialFrame};
 use nalgebra::{ComplexField, Vector3};
 use std::f64::consts::TAU;
 
@@ -310,7 +310,10 @@ pub fn analytic_2_body(
 /// recommended to use a center of the Sun (10) for this computation.
 ///
 /// This is the fastest method for getting a relatively good estimate of the orbits.
-pub fn propagate_two_body(state: &State, jd_final: f64) -> Result<State, NEOSpyError> {
+pub fn propagate_two_body<F: InertialFrame>(
+    state: &State<F>,
+    jd_final: f64,
+) -> Result<State<F>, NEOSpyError> {
     let (pos, vel) = analytic_2_body(
         jd_final - state.jd,
         &state.pos.into(),
@@ -321,9 +324,8 @@ pub fn propagate_two_body(state: &State, jd_final: f64) -> Result<State, NEOSpyE
     Ok(State::new(
         state.desig.to_owned(),
         jd_final,
-        pos,
-        vel,
-        state.frame,
+        pos.into(),
+        vel.into(),
         state.center_id,
     ))
 }

@@ -16,7 +16,7 @@ use super::interpolation::*;
 use super::{jd_to_spice_jd, spice_jds_to_jd, DafArray};
 use crate::constants::AU_KM;
 use crate::errors::NEOSpyError;
-use crate::frames::Frame;
+use crate::frames::{Ecliptic, Equatorial, InertialFrame};
 use crate::prelude::Desig;
 use crate::state::State;
 use crate::time::scales::TDB;
@@ -63,14 +63,20 @@ impl From<SpkSegmentType> for DafArray {
     }
 }
 
-impl From<i32> for Frame {
+impl From<i32> for SpiceFrames {
     fn from(value: i32) -> Self {
         match value {
-            1 => Frame::Equatorial, // J2000
-            17 => Frame::Ecliptic,  // ECLIPJ2000
-            _ => Frame::Unknown(value as usize),
+            1 => SpiceFrames::J2000,       // Equatorial
+            17 => SpiceFrames::ECLIPJ2000, // Ecliptic
+            i => panic!("{} is an unsupported frame", i),
         }
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum SpiceFrames {
+    J2000,
+    ECLIPJ2000,
 }
 
 #[derive(Debug)]
@@ -87,14 +93,14 @@ pub struct SpkSegment {
     /// The reference center NAIF ID for the position/velocity in this Segment.
     pub center_id: i64,
 
-    /// [`Frame`] of reference for this Segment.
-    pub ref_frame: Frame,
-
     /// Number which defines the segment type as defined by the DAF standard.
     pub segment_type: i32,
 
     /// Internal data representation.
     segment: SpkSegmentType,
+
+    /// Frame of reference for this Segment.
+    pub ref_frame: SpiceFrames,
 }
 
 impl From<SpkSegment> for DafArray {
@@ -143,7 +149,7 @@ impl SpkSegment {
 
     /// Return the [`State`] object at the specified JD. If the requested time is
     /// not within the available range, this will fail.
-    pub fn try_get_state(&self, jd: f64) -> Result<State, NEOSpyError> {
+    pub fn try_get_state<T: InertialFrame>(&self, jd: f64) -> Result<State<T>, NEOSpyError> {
         // this is faster than calling contains, probably because the || instead of &&
         if jd < self.jd_start || jd > self.jd_end {
             return Err(NEOSpyError::DAFLimits(
@@ -159,14 +165,24 @@ impl SpkSegment {
             SpkSegmentType::Type21(v) => v.try_get_pos_vel(self, jd)?,
         };
 
-        Ok(State::new(
-            Desig::Naif(self.obj_id),
-            jd,
-            pos.into(),
-            vel.into(),
-            self.ref_frame,
-            self.center_id,
-        ))
+        match self.ref_frame {
+            SpiceFrames::ECLIPJ2000 => Ok(State::<Ecliptic>::new(
+                Desig::Naif(self.obj_id),
+                jd,
+                pos.into(),
+                vel.into(),
+                self.center_id,
+            )
+            .into_frame()),
+            SpiceFrames::J2000 => Ok(State::<Equatorial>::new(
+                Desig::Naif(self.obj_id),
+                jd,
+                pos.into(),
+                vel.into(),
+                self.center_id,
+            )
+            .into_frame()),
+        }
     }
 }
 
@@ -759,7 +775,7 @@ impl SpkSegmentType21 {
 
 /// Segments of type 10 and 14 use a "generic segment" definition.
 /// This segment type has poor documentation on the NAIF website, a significant amount
-/// of reverse engineering was to understand this.
+/// of reverse engineering was required to understand this.
 /// The DAF Array is big flat vector of floats.
 
 #[derive(Debug)]
@@ -863,7 +879,7 @@ impl TryFrom<DafArray> for GenericSegment {
 
         if n_meta < 15 {
             return Err(NEOSpyError::IOError(
-                "PSK File not correctly formatted. There are fewer values found than expected."
+                "SPK File not correctly formatted. There are fewer values found than expected."
                     .into(),
             ));
         }

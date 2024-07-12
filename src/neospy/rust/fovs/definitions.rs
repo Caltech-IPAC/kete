@@ -236,7 +236,7 @@ impl PyGenericRectangle {
     /// The observer State.
     #[getter]
     pub fn observer(&self) -> PyState {
-        self.0.observer().clone().into()
+        self.0.observer().clone().into_frame()
     }
 
     /// Direction that the observer is looking.
