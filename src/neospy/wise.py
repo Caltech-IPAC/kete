@@ -579,7 +579,7 @@ def fetch_WISE_fovs(phase):
 
     fovs = []
     for row in res.itertuples():
-        state = spice.state("WISE", row.jd)
+        state = spice.get_state("WISE", row.jd)
 
         pointing = Vector.from_ra_dec(row.ra, row.dec).as_ecliptic
         fov = WiseCmos(

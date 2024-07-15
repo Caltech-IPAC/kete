@@ -75,12 +75,12 @@ class TestTwoBodyPropagation:
         Propagate Venus using StateVector and compare the result to using spice.
         This is only over 5 days the 2 body approximation is accurate over that time.
         """
-        state = spice.state("Venus", 2461161.5)
+        state = spice.get_state("Venus", 2461161.5)
 
         for jd in range(-5, 5):
             jd = state.jd + jd
             vec_state = propagate_two_body([state], jd)[0]
-            jpl_state = spice.state("Venus", jd)
+            jpl_state = spice.get_state("Venus", jd)
             assert vec_state.jd == jpl_state.jd
             assert np.allclose(vec_state.vel, jpl_state.vel)
             assert np.allclose(vec_state.pos, jpl_state.pos)
@@ -92,7 +92,7 @@ class TestTwoBodyPropagation:
 
         Place an observer X AU away from Venus and ensure that the delay is correct.
         """
-        state = spice.state("Venus", 2461161.5)
+        state = spice.get_state("Venus", 2461161.5)
 
         for au in range(0, 5):
             sun2obs = Vector(state.pos + [au, 0.0, 0.0])
@@ -108,9 +108,9 @@ class TestTwoBodyPropagation:
 def test_moid(planet):
     if planet is None:
         state = None
-        vs = spice.state("Earth", 2461161.5)
+        vs = spice.get_state("Earth", 2461161.5)
     else:
-        state = spice.state(planet, 2461161.5)
+        state = spice.get_state(planet, 2461161.5)
         vs = state
 
     assert np.isclose(moid(vs, state), 0)

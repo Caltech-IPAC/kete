@@ -1,6 +1,6 @@
 [project]
 name = "neospy"
-version = "0.2.3"
+version = "0.2.4"
 description = "NEO Surveyor Simulation Tools"
 readme = "README.md"
 authors = [{name = "Dar Dahlen", email = "ddahlen@ipac.caltech.edu"},

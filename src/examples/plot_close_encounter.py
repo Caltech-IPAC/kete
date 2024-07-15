@@ -38,7 +38,7 @@ last_state = obj.state
 for jd in jds:
     last_state = neospy.propagate_two_body([last_state], jd)[0]
     obj_pos.append(last_state.pos)
-    earth_pos.append(neospy.spice.state("Earth", jd).pos)
+    earth_pos.append(neospy.spice.get_state("Earth", jd).pos)
     earth_r.append(neospy.Vector(obj_pos[-1] - earth_pos[-1]).r)
 
 # Find the time where the closest encounter with the earth
@@ -55,10 +55,10 @@ plt.title(
 ax.plot(pos[0], pos[1], pos[2], alpha=0.5, color="black")
 ax.scatter(pos_center.x, pos_center.y, pos_center.z, s=5, color="black")
 for i, planet in enumerate(["Mercury", "Venus", "Earth", "Mars", "Jupiter"]):
-    states = [neospy.spice.state(planet, jd).pos for jd in jds]
+    states = [neospy.spice.get_state(planet, jd).pos for jd in jds]
     pos = np.array(states).T
     ax.plot(pos[0], pos[1], pos[2], color=f"C{i}", alpha=0.5)
-    pos = neospy.spice.state(planet, jd_center).pos
+    pos = neospy.spice.get_state(planet, jd_center).pos
     ax.scatter(pos.x, pos.y, pos.z, color=f"C{i}", s=5)
 ax.scatter(0, 0, 0, color="red")
 ax.set_xticks([-zoom, 0, zoom])

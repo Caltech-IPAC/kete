@@ -39,10 +39,10 @@ ax.scatter(pos[:, 0], pos[:, 1], pos[:, 2], s=0.1, alpha=0.5)
 # Plot the planets for 1 orbit each
 for i, planet in enumerate(["Mercury", "Venus", "Earth", "Mars", "Jupiter"]):
     jd = states[0].jd
-    plan = neospy.spice.state(planet, jd)
+    plan = neospy.spice.get_state(planet, jd)
     ax.scatter(plan.pos.x, plan.pos.y, color=f"C{i}", s=10)
     jds = np.linspace(jd - plan.elements.orbital_period, jd, 100)
-    pos = np.array([neospy.spice.state(planet, jd).pos for jd in jds]).T
+    pos = np.array([neospy.spice.get_state(planet, jd).pos for jd in jds]).T
     ax.plot(pos[0], pos[1], pos[2], color="black", alpha=0.2)
 
 for state in states:
