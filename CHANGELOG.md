@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2024 - 7 - 15
+
 ### Added
 
 - Add `J2` non-spherical terms for the gravitational models of Earth and Jupiter.
@@ -155,6 +157,7 @@ Initial Release
 
 
 [Unreleased]: https://github.com/IPAC-SW/neospy/tree/main
+[0.2.4]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.4
 [0.2.3]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.3
 [0.2.2]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.2
 [0.2.1]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.1
