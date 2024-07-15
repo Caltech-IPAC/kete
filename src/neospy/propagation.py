@@ -137,5 +137,5 @@ def moid(state: State, other: Optional[State] = None):
         calculation.
     """
     if other is None:
-        other = spice.state("Earth", state.jd)
+        other = spice.get_state("Earth", state.jd)
     return _moid_single(state, other)

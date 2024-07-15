@@ -40,7 +40,7 @@ while cur_state.jd < jd_end:
     rel_earth_state = cur_state.change_center(399)
     pos.append([rel_earth_state.pos.x, rel_earth_state.pos.y])
     # gets earths position and record the distances.
-    moon = neospy.spice.state("Moon", cur_state.jd, center=399).pos
+    moon = neospy.spice.get_state("Moon", cur_state.jd, center=399).pos
     dist_to_moon.append((moon - rel_earth_state.pos).r * neospy.constants.AU_KM)
     dist_to_earth.append(rel_earth_state.pos.r * neospy.constants.AU_KM)
     moon_pos.append([moon.x, moon.y])

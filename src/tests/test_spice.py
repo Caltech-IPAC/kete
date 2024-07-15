@@ -30,14 +30,14 @@ class TestSpice:
     def test_ecliptic_state(self, expected):
         e_pos = expected[2:5]
         e_vel = expected[5:8]
-        state = spice.state(expected[0], expected[1])
+        state = spice.get_state(expected[0], expected[1])
         assert isinstance(state, State)
         assert np.allclose(state.pos.as_equatorial, e_pos)
         assert np.allclose(state.vel.as_equatorial, e_vel)
 
         # Ensure that the same values are calculated if using an astropy time
         jd = Time(expected[1])
-        state = spice.state(expected[0], jd)
+        state = spice.get_state(expected[0], jd)
         assert isinstance(state, State)
         assert np.allclose(state.pos.as_equatorial, e_pos)
         assert np.allclose(state.vel.as_equatorial, e_vel)

@@ -13,7 +13,7 @@ from .vector import Frames, State
 
 __all__ = [
     "SpkInfo",
-    "state",
+    "get_state",
     "name_lookup",
     "loaded_objects",
     "loaded_object_info",
@@ -71,7 +71,7 @@ def _validate_time(time: Union[float, Time]) -> float:
 _NAME_CACHE: dict = {}
 
 
-def state(
+def get_state(
     target: Union[str, int],
     jd: Union[float, Time],
     center: str = "Sun",
@@ -372,7 +372,7 @@ def moon_illumination_frac(jd: Union[float, Time], observer: str = "399"):
     """
     jd = _validate_time(jd)
 
-    moon2sun = -state("moon", jd).pos
-    moon2earth = -state("moon", jd, center=observer).pos
+    moon2sun = -get_state("moon", jd).pos
+    moon2earth = -get_state("moon", jd, center=observer).pos
     perc = 1.0 - moon2sun.angle_between(moon2earth) / 180
     return 0.5 - np.cos(np.pi * perc) / 2

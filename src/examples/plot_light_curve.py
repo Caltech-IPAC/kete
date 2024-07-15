@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 
 # Using ceres as a source for a state vector
-state = neospy.spice.state("ceres", 2460000.5)
+state = neospy.spice.get_state("ceres", 2460000.5)
 
 # Various input values
 albedo = 0.1
@@ -39,7 +39,7 @@ fluxes = []
 
 for dt in dts:
     # Find the observer and object positions some time in the future.
-    earth_pos = neospy.spice.state("Earth", jd + dt).pos
+    earth_pos = neospy.spice.get_state("Earth", jd + dt).pos
     final_pos = neospy.propagate_two_body([state], jd + dt, earth_pos)[0].pos
 
     obj2obs = final_pos - earth_pos
