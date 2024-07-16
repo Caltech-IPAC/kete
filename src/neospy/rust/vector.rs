@@ -1,4 +1,4 @@
-use neospy_core::frames::{Ecliptic, Equatorial, Galactic, InertialFrame, Vector, FK4};
+use neospy_core::frames::{Ecliptic, Equatorial, Galactic, Vector, FK4};
 use pyo3::exceptions;
 use std::f64::consts::FRAC_PI_2;
 
@@ -64,43 +64,55 @@ impl FrameVector {
     }
 
     pub fn to_equatorial(self) -> Self {
-        let v: Vector<Equatorial> = match self {
+        FrameVector::Equatorial(self.to_equatorial_raw())
+    }
+
+    pub fn to_ecliptic(self) -> Self {
+        FrameVector::Ecliptic(self.to_ecliptic_raw())
+    }
+
+    pub fn to_fk4(self) -> Self {
+        FrameVector::FK4(self.to_fk4_raw())
+    }
+
+    pub fn to_galactic(self) -> Self {
+        FrameVector::Galactic(self.to_galactic_raw())
+    }
+
+    pub fn to_equatorial_raw(self) -> Vector<Equatorial> {
+        match self {
             FrameVector::Ecliptic(v) => v.into_frame(),
             FrameVector::Equatorial(v) => v,
             FrameVector::FK4(v) => v.into_frame(),
             FrameVector::Galactic(v) => v.into_frame(),
-        };
-        FrameVector::Equatorial(v)
+        }
     }
 
-    pub fn to_ecliptic(self) -> Self {
-        let v: Vector<Ecliptic> = match self {
+    pub fn to_ecliptic_raw(self) -> Vector<Ecliptic> {
+        match self {
             FrameVector::Ecliptic(v) => v,
             FrameVector::Equatorial(v) => v.into_frame(),
             FrameVector::FK4(v) => v.into_frame(),
             FrameVector::Galactic(v) => v.into_frame(),
-        };
-        FrameVector::Ecliptic(v)
+        }
     }
 
-    pub fn to_fk4(self) -> Self {
-        let v: Vector<FK4> = match self {
+    pub fn to_fk4_raw(self) -> Vector<FK4> {
+        match self {
             FrameVector::Ecliptic(v) => v.into_frame(),
             FrameVector::Equatorial(v) => v.into_frame(),
             FrameVector::FK4(v) => v,
             FrameVector::Galactic(v) => v.into_frame(),
-        };
-        FrameVector::FK4(v)
+        }
     }
 
-    pub fn to_galactic(self) -> Self {
-        let v: Vector<Galactic> = match self {
+    pub fn to_galactic_raw(self) -> Vector<Galactic> {
+        match self {
             FrameVector::Ecliptic(v) => v.into_frame(),
             FrameVector::Equatorial(v) => v.into_frame(),
             FrameVector::FK4(v) => v.into_frame(),
             FrameVector::Galactic(v) => v,
-        };
-        FrameVector::Galactic(v)
+        }
     }
 }
 
@@ -151,6 +163,12 @@ impl VectorLike {
         match self {
             VectorLike::Arr(raw) => PyVector(FrameVector::new(raw, target_frame)),
             VectorLike::PyVec(pyvec) => pyvec.change_frame(target_frame),
+        }
+    }
+    pub fn into_ecliptic_raw(self) -> Vector<Ecliptic> {
+        match self {
+            VectorLike::Arr(raw) => Vector::<Ecliptic>::new(raw),
+            VectorLike::PyVec(pyvec) => pyvec.0.to_ecliptic_raw(),
         }
     }
 }
@@ -313,8 +331,8 @@ impl PyVector {
     /// Compute the angle in degrees between two vectors in degrees.
     /// This will automatically make a frame change if necessary.
     pub fn angle_between(&self, other: VectorLike) -> f64 {
-        let self_vec = self.0;
-        let other_vec = other.into_pyvector(self.frame()).0;
+        let self_vec = self.0.to_ecliptic_raw();
+        let other_vec = other.into_ecliptic_raw();
         self_vec.angle(&other_vec).to_degrees()
     }
 
@@ -366,10 +384,8 @@ impl PyVector {
     }
 
     pub fn rotate_around(&self, other: VectorLike, angle: f64) -> Self {
-        let self_vec = self.into_vector::<Ecliptic>();
-        let other_vec = other
-            .into_pyvector(PyFrames::Ecliptic)
-            .into_vector::<Ecliptic>();
+        let self_vec = self.0.to_ecliptic_raw();
+        let other_vec = other.into_ecliptic_raw();
         let rotated = self_vec.rotate_around(other_vec, angle.to_radians());
         Self::new(rotated.into(), self.frame())
     }
@@ -383,17 +399,13 @@ impl PyVector {
     }
 
     pub fn __sub__(&self, other: VectorLike) -> Self {
-        let self_vec = Vector3::from(self.raw());
-        let other_vec = other.into_vec(self.frame());
-        let diff = self_vec - other_vec;
-        Self::new(diff.into(), self.frame())
+        let diff = self.0.to_ecliptic_raw() - &other.into_ecliptic_raw();
+        PyVector(diff.into())
     }
 
     pub fn __add__(&self, other: VectorLike) -> Self {
-        let self_vec = Vector3::from(self.raw());
-        let other_vec = other.into_vec(self.frame());
-        let diff = self_vec + other_vec;
-        Self::new(diff.into(), self.frame())
+        let diff = self.0.to_ecliptic_raw() + &other.into_ecliptic_raw();
+        PyVector(diff.into())
     }
 
     pub fn __mul__(&self, other: f64) -> Self {
@@ -407,7 +419,7 @@ impl PyVector {
     }
 
     pub fn __neg__(&self) -> Self {
-        Self::new([-self.x(), -self.y(), -self.z()], self.frame)
+        Self::new([-self.x(), -self.y(), -self.z()], self.frame())
     }
 
     pub fn __len__(&self) -> usize {
@@ -418,15 +430,14 @@ impl PyVector {
         if idx >= 3 {
             return Err(PyErr::new::<exceptions::PyIndexError, _>(""));
         }
-        Ok(self.raw[idx])
+        Ok(self.0.raw()[idx])
     }
 
     fn __richcmp__(&self, other: VectorLike, op: CompareOp, py: Python<'_>) -> PyObject {
-        let self_vec = Vector3::from(self.raw);
-        let other_vec = other.into_vec(self.frame());
+        let diff = self.__sub__(other).r();
         match op {
-            CompareOp::Eq => ((self_vec - other_vec).norm() < 1e-12).into_py(py),
-            CompareOp::Ne => ((self_vec - other_vec).norm() >= 1e-12).into_py(py),
+            CompareOp::Eq => (diff < 1e-12).into_py(py),
+            CompareOp::Ne => (diff >= 1e-12).into_py(py),
             _ => py.NotImplemented(),
         }
     }
