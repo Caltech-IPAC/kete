@@ -38,9 +38,6 @@ pub enum Desig {
     /// NAIF id for the object.
     /// These are used by SPICE kernels for identification.
     Naif(i64),
-
-    /// No id assigned.
-    Empty,
 }
 
 impl Display for Desig {
@@ -70,7 +67,7 @@ impl From<i64> for Desig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct State<T: InertialFrame> {
     /// Designation number which corresponds to the object.
-    pub desig: Desig,
+    pub desig: Option<Desig>,
 
     /// JD of the object's state in TDB scaled time.
     pub jd: f64,
@@ -86,38 +83,16 @@ pub struct State<T: InertialFrame> {
     pub center_id: i64,
 }
 
-// /// Exact State of an object.
-// ///
-// /// This represents the id, position, and velocity of an object with respect to a
-// /// coordinate frame and a center point.
-// ///
-// /// This state object assumes no uncertainty in its values.
-// #[derive(Debug, Deserialize, Serialize, Clone)]
-// pub struct State {
-//     /// Designation number which corresponds to the object.
-//     pub desig: Desig,
-
-//     /// JD of the object's state in TDB scaled time.
-//     pub jd: f64,
-
-//     /// Position of the object with respect to the center_id object, units of AU.
-//     pub pos: [f64; 3],
-
-//     /// Velocity of the object with respect to the center_id object, units of AU/Day.
-//     pub vel: [f64; 3],
-
-//     /// Coordinate frame of the object.
-//     pub frame: Frame,
-
-//     /// Position and velocity are given with respect to the specified center_id.
-//     /// The only privileged center ID is the Solar System Barycenter 0.
-//     pub center_id: i64,
-// }
-
 impl<T: InertialFrame> State<T> {
     /// Construct a new State object.
     #[inline(always)]
-    pub fn new(desig: Desig, jd: f64, pos: Vector<T>, vel: Vector<T>, center_id: i64) -> Self {
+    pub fn new(
+        desig: Option<Desig>,
+        jd: f64,
+        pos: Vector<T>,
+        vel: Vector<T>,
+        center_id: i64,
+    ) -> Self {
         State {
             desig,
             jd,
@@ -130,7 +105,7 @@ impl<T: InertialFrame> State<T> {
     /// Construct a new state made of NAN pos and vel vectors but containing the
     /// remaining data. This is primarily useful as a place holder when propagation
     /// has failed and the object needs to be recorded still.
-    pub fn new_nan(desig: Desig, jd: f64, center_id: i64) -> Self {
+    pub fn new_nan(desig: Option<Desig>, jd: f64, center_id: i64) -> Self {
         Self::new(desig, jd, Vector::new_nan(), Vector::new_nan(), center_id)
     }
 
@@ -151,13 +126,13 @@ impl<T: InertialFrame> State<T> {
     /// Trade the center ID and ID values, and flip the direction of the position and
     /// velocity vectors.
     pub fn try_flip_center_id(&mut self) -> Result<(), NEOSpyError> {
-        if let Desig::Naif(mut id) = self.desig {
+        if let Some(Desig::Naif(mut id)) = self.desig {
             (id, self.center_id) = (self.center_id, id);
             for i in 0..3 {
                 self.pos[i] = -self.pos[i];
                 self.vel[i] = -self.vel[i];
             }
-            self.desig = Desig::Naif(id);
+            self.desig = Some(Desig::Naif(id));
             return Ok(());
         }
         Err(NEOSpyError::ValueError(
@@ -188,7 +163,7 @@ impl<T: InertialFrame> State<T> {
         }
 
         let state_id = match state.desig {
-            Desig::Naif(id) => id,
+            Some(Desig::Naif(id)) => id,
             _ => {
                 return Err(NEOSpyError::ValueError(
                     "Changing centers only works on states with NAIF Ids.".into(),
@@ -223,8 +198,8 @@ impl<T: InertialFrame> State<T> {
 
     /// Attempt to update the designation from a naif id to a name.
     pub fn try_naif_id_to_name(&mut self) -> Option<()> {
-        if let Desig::Naif(id) = self.desig {
-            self.desig = Desig::Name(spice::try_name_from_id(id)?);
+        if let Some(Desig::Naif(id)) = self.desig {
+            self.desig = Some(Desig::Name(spice::try_name_from_id(id)?));
             Some(())
         } else {
             None
@@ -254,7 +229,7 @@ mod tests {
     #[test]
     fn flip_center() {
         let mut a = State::<Ecliptic>::new(
-            1i64.into(),
+            Some(1i64.into()),
             0.0,
             [1.0, 0.0, 0.0].into(),
             [0.0, 1.0, 0.0].into(),
@@ -270,14 +245,14 @@ mod tests {
     #[test]
     fn change_center() {
         let mut a = State::<Ecliptic>::new(
-            1i64.into(),
+            Some(1i64.into()),
             0.0,
             [1.0, 0.0, 0.0].into(),
             [1.0, 0.0, 0.0].into(),
             0,
         );
         let b = State::<Equatorial>::new(
-            3i64.into(),
+            Some(3i64.into()),
             0.0,
             [0.0, 1.0, 0.0].into(),
             [0.0, 1.0, 0.0].into(),

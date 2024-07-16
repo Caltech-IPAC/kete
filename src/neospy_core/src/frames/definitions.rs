@@ -9,7 +9,7 @@ use std::f64::consts::PI;
 use std::fmt::Debug;
 
 /// Frame which supports vector conversion
-pub trait InertialFrame: Sized + Sync + Send + Clone + Copy + Debug {
+pub trait InertialFrame: 'static + Sized + Sync + Send + Clone + Copy + Debug {
     /// Convert a vector from input frame to equatorial frame.
     fn to_equatorial(vec: Vector3<f64>) -> Vector3<f64>;
 

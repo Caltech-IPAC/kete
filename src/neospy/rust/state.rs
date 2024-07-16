@@ -1,6 +1,7 @@
 use crate::elements::PyCometElements;
 use crate::frame::*;
 use crate::vector::*;
+use neospy_core::frames::Equatorial;
 use neospy_core::prelude;
 use pyo3::prelude::*;
 
@@ -8,10 +9,10 @@ use pyo3::prelude::*;
 ///
 #[pyclass(frozen, module = "neospy", name = "State")]
 #[derive(Clone, Debug)]
-pub struct PyState(pub prelude::State);
+pub struct PyState(pub prelude::State<Equatorial>);
 
-impl From<prelude::State> for PyState {
-    fn from(value: prelude::State) -> Self {
+impl From<prelude::State<Equatorial>> for PyState {
+    fn from(value: prelude::State<Equatorial>) -> Self {
         Self(value)
     }
 }
@@ -26,18 +27,15 @@ impl PyState {
         pos: VectorLike,
         vel: VectorLike,
         frame: Option<PyFrames>,
-        center_id: Option<i64>,
+        center_id: i64,
     ) -> Self {
-        let desig = match desig {
-            Some(name) => prelude::Desig::Name(name),
-            None => prelude::Desig::Empty,
-        };
+        let desig = desig.map(|x| prelude::Desig::Name(x));
 
         // if no frame is provided, but pos or vel have a frame, use that one.
         let frame = frame.unwrap_or({
-            if let VectorLike::Vec(v) = &pos {
+            if let VectorLike::PyVec(v) = &pos {
                 v.frame()
-            } else if let VectorLike::Vec(v) = &vel {
+            } else if let VectorLike::PyVec(v) = &vel {
                 v.frame()
             } else {
                 PyFrames::Ecliptic
@@ -48,8 +46,7 @@ impl PyState {
         let pos = pos.into_vec(frame);
         let vel = vel.into_vec(frame);
 
-        let center_id = center_id.unwrap_or(10);
-        let state = prelude::State::new(desig, jd, pos, vel, frame.into(), center_id);
+        let state = prelude::State::new(desig, jd, pos.into(), vel.into(), center_id);
         Self(state)
     }
 
@@ -61,7 +58,7 @@ impl PyState {
     ///     New frame to change to.
     pub fn change_frame(&self, frame: PyFrames) -> PyResult<Self> {
         let mut state = self.0.clone();
-        state.try_change_frame_mut(frame.into())?;
+        state.into_frame()?;
         Ok(Self(state))
     }
 
@@ -109,16 +106,16 @@ impl PyState {
 
     /// Position of the object in AU with respect to the central object.
     #[getter]
-    pub fn pos(&self) -> Vector {
+    pub fn pos(&self) -> PyVector {
         let v = self.0.pos;
-        Vector::new(v, self.frame())
+        PyVector::new(v, self.frame())
     }
 
     /// Velocity of the object in AU/Day.
     #[getter]
-    pub fn vel(&self) -> Vector {
+    pub fn vel(&self) -> PyVector {
         let v = self.0.vel;
-        Vector::new(v, self.frame())
+        PyVector::new(v, self.frame())
     }
 
     /// Frame of reference used to define the coordinate system.

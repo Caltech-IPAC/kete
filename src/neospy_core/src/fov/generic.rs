@@ -135,19 +135,18 @@ mod tests {
     use crate::constants::GMS_SQRT;
     use crate::frames::Ecliptic;
     use crate::prelude::*;
-    use crate::state::Desig;
 
     #[test]
     fn test_check_visible() {
         let circular = State::<Ecliptic>::new(
-            Desig::Empty,
+            None,
             2451545.0,
             [0.0, 1., 0.0].into(),
             [-GMS_SQRT, 0.0, 0.0].into(),
             0,
         );
         let circular_back = State::<Ecliptic>::new(
-            Desig::Empty,
+            None,
             2451545.0,
             [1.0, 0.0, 0.0].into(),
             [0.0, GMS_SQRT, 0.0].into(),

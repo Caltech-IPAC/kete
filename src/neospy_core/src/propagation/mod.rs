@@ -144,7 +144,7 @@ pub fn propagation_n_body_vec(
 
     let mut pos: Vec<f64> = Vec::new();
     let mut vel: Vec<f64> = Vec::new();
-    let mut desigs: Vec<Desig> = Vec::new();
+    let mut desigs: Vec<Option<Desig>> = Vec::new();
 
     for (id, _mass, _radius) in MASSIVE_OBJECTS.iter() {
         let planet: State<Equatorial> = spk.try_get_state(*id, jd_init, 0)?;

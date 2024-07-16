@@ -10,7 +10,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 lazy_static! {
     static ref CIRCULAR: State<Ecliptic> = {
         State::new(
-            Desig::Name("Circular".into()),
+            Some(Desig::Name("Circular".into())),
             2451545.0,
             [0.0, 1., 0.0].into(),
             [-constants::GMS_SQRT, 0.0, 0.0].into(),
@@ -19,7 +19,7 @@ lazy_static! {
     };
     static ref ELLIPTICAL: State<Ecliptic> = {
         State::<Ecliptic>::new(
-            Desig::Name("Elliptical".into()),
+            Some(Desig::Name("Elliptical".into())),
             2451545.0,
             [0.0, 1.5, 0.0].into(),
             [-constants::GMS_SQRT, 0.0, 0.0].into(),
@@ -28,7 +28,7 @@ lazy_static! {
     };
     static ref PARABOLIC: State<Ecliptic> = {
         State::new(
-            Desig::Name("Parabolic".into()),
+            Some(Desig::Name("Parabolic".into())),
             2451545.0,
             [0.0, 2., 0.0].into(),
             [-constants::GMS_SQRT, 0.0, 0.0].into(),
@@ -37,7 +37,7 @@ lazy_static! {
     };
     static ref HYPERBOLIC: State<Ecliptic> = {
         State::new(
-            Desig::Name("Hyperbolic".into()),
+            Some(Desig::Name("Hyperbolic".into())),
             2451545.0,
             [0.0, 3., 0.0].into(),
             [-constants::GMS_SQRT, 0.0, 0.0].into(),
@@ -81,7 +81,7 @@ pub fn two_body_numeric(c: &mut Criterion) {
         HYPERBOLIC.clone(),
     ] {
         let name = match &state.desig {
-            Desig::Name(n) => n,
+            Some(Desig::Name(n)) => n,
             _ => panic!(),
         };
         twobody_num_group.bench_with_input(BenchmarkId::new("Single", name), &state, |b, s| {
@@ -100,7 +100,7 @@ pub fn n_body_prop(c: &mut Criterion) {
         HYPERBOLIC.clone(),
     ] {
         let name = match &state.desig {
-            Desig::Name(n) => n,
+            Some(Desig::Name(n)) => n,
             _ => panic!(),
         };
         nbody_group.bench_with_input(BenchmarkId::new("Single", name), &state, |b, s| {
@@ -123,7 +123,7 @@ pub fn two_body_analytic(c: &mut Criterion) {
         HYPERBOLIC.clone(),
     ] {
         let name = match &state.desig {
-            Desig::Name(n) => n,
+            Some(Desig::Name(n)) => n,
             _ => panic!(),
         };
         twobody_group.bench_with_input(BenchmarkId::new("Single", name), &state, |b, s| {

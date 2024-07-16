@@ -167,7 +167,7 @@ impl SpkSegment {
 
         match self.ref_frame {
             SpiceFrames::ECLIPJ2000 => Ok(State::<Ecliptic>::new(
-                Desig::Naif(self.obj_id),
+                Some(Desig::Naif(self.obj_id)),
                 jd,
                 pos.into(),
                 vel.into(),
@@ -175,7 +175,7 @@ impl SpkSegment {
             )
             .into_frame()),
             SpiceFrames::J2000 => Ok(State::<Equatorial>::new(
-                Desig::Naif(self.obj_id),
+                Some(Desig::Naif(self.obj_id)),
                 jd,
                 pos.into(),
                 vel.into(),

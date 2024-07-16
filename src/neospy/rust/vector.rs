@@ -1,4 +1,4 @@
-use neospy_core::frames::rotate_around;
+use neospy_core::frames::{Ecliptic, Equatorial, Galactic, InertialFrame, Vector, FK4};
 use pyo3::exceptions;
 use std::f64::consts::FRAC_PI_2;
 
@@ -9,69 +9,158 @@ use pyo3::class::basic::CompareOp;
 use pyo3::prelude::*;
 use pyo3::{PyResult, Python};
 
-/// Vector class which is a vector along with a reference frame.
-#[pyclass(sequence, frozen, module = "neospy")]
-#[derive(Clone, Debug)]
-pub struct Vector {
-    pub raw: [f64; 3],
-
-    frame: PyFrames,
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum FrameVector {
+    Ecliptic(Vector<Ecliptic>),
+    Equatorial(Vector<Equatorial>),
+    Galactic(Vector<Galactic>),
+    FK4(Vector<FK4>),
 }
 
-impl Vector {
+impl FrameVector {
     pub fn new(raw: [f64; 3], frame: PyFrames) -> Self {
-        Self { raw, frame }
+        match frame {
+            PyFrames::Ecliptic => FrameVector::Ecliptic(raw.into()),
+            PyFrames::Equatorial => FrameVector::Equatorial(raw.into()),
+            PyFrames::FK4 => FrameVector::FK4(raw.into()),
+            PyFrames::Galactic => FrameVector::Galactic(raw.into()),
+        }
+    }
+
+    pub fn frame(&self) -> PyFrames {
+        match self {
+            FrameVector::Ecliptic(_) => PyFrames::Ecliptic,
+            FrameVector::Equatorial(_) => PyFrames::Equatorial,
+            FrameVector::FK4(_) => PyFrames::FK4,
+            FrameVector::Galactic(_) => PyFrames::Galactic,
+        }
+    }
+
+    pub fn raw(self) -> [f64; 3] {
+        match self {
+            FrameVector::Ecliptic(v) => v.into(),
+            FrameVector::Equatorial(v) => v.into(),
+            FrameVector::FK4(v) => v.into(),
+            FrameVector::Galactic(v) => v.into(),
+        }
+    }
+
+    pub fn r(self) -> f64 {
+        match self {
+            FrameVector::Ecliptic(v) => v.norm(),
+            FrameVector::Equatorial(v) => v.norm(),
+            FrameVector::FK4(v) => v.norm(),
+            FrameVector::Galactic(v) => v.norm(),
+        }
+    }
+
+    pub fn into_frame(self, frame: PyFrames) -> Self {
+        match frame {
+            PyFrames::Ecliptic => self.to_ecliptic(),
+            PyFrames::Equatorial => self.to_equatorial(),
+            PyFrames::FK4 => self.to_fk4(),
+            PyFrames::Galactic => self.to_galactic(),
+        }
+    }
+
+    pub fn to_equatorial(self) -> Self {
+        let v: Vector<Equatorial> = match self {
+            FrameVector::Ecliptic(v) => v.into_frame(),
+            FrameVector::Equatorial(v) => v,
+            FrameVector::FK4(v) => v.into_frame(),
+            FrameVector::Galactic(v) => v.into_frame(),
+        };
+        FrameVector::Equatorial(v)
+    }
+
+    pub fn to_ecliptic(self) -> Self {
+        let v: Vector<Ecliptic> = match self {
+            FrameVector::Ecliptic(v) => v,
+            FrameVector::Equatorial(v) => v.into_frame(),
+            FrameVector::FK4(v) => v.into_frame(),
+            FrameVector::Galactic(v) => v.into_frame(),
+        };
+        FrameVector::Ecliptic(v)
+    }
+
+    pub fn to_fk4(self) -> Self {
+        let v: Vector<FK4> = match self {
+            FrameVector::Ecliptic(v) => v.into_frame(),
+            FrameVector::Equatorial(v) => v.into_frame(),
+            FrameVector::FK4(v) => v,
+            FrameVector::Galactic(v) => v.into_frame(),
+        };
+        FrameVector::FK4(v)
+    }
+
+    pub fn to_galactic(self) -> Self {
+        let v: Vector<Galactic> = match self {
+            FrameVector::Ecliptic(v) => v.into_frame(),
+            FrameVector::Equatorial(v) => v.into_frame(),
+            FrameVector::FK4(v) => v.into_frame(),
+            FrameVector::Galactic(v) => v,
+        };
+        FrameVector::Galactic(v)
+    }
+}
+
+impl From<Vector<Equatorial>> for FrameVector {
+    fn from(value: Vector<Equatorial>) -> Self {
+        FrameVector::new(value.into(), PyFrames::Equatorial)
+    }
+}
+
+impl From<Vector<Ecliptic>> for FrameVector {
+    fn from(value: Vector<Ecliptic>) -> Self {
+        FrameVector::new(value.into(), PyFrames::Ecliptic)
+    }
+}
+
+impl From<Vector<Galactic>> for FrameVector {
+    fn from(value: Vector<Galactic>) -> Self {
+        FrameVector::new(value.into(), PyFrames::Galactic)
+    }
+}
+
+impl From<Vector<FK4>> for FrameVector {
+    fn from(value: Vector<FK4>) -> Self {
+        FrameVector::new(value.into(), PyFrames::FK4)
+    }
+}
+
+/// Vector class which is a vector along with a reference frame.
+#[pyclass(sequence, frozen, module = "neospy")]
+#[derive(Clone, Debug, Copy)]
+pub struct PyVector(FrameVector);
+
+impl PyVector {
+    pub fn new(raw: [f64; 3], frame: PyFrames) -> Self {
+        PyVector(FrameVector::new(raw, frame))
     }
 }
 
 /// Polymorphic support
 #[derive(FromPyObject)]
 pub enum VectorLike {
-    Vec(Vector),
+    PyVec(PyVector),
     Arr([f64; 3]),
 }
 
 impl VectorLike {
-    pub fn into_vec(self, target_frame: PyFrames) -> Vector3<f64> {
+    pub fn into_pyvector(self, target_frame: PyFrames) -> PyVector {
         match self {
-            VectorLike::Arr(arr) => Vector3::from(arr),
-            VectorLike::Vec(mut vec) => {
-                if vec.frame() != target_frame {
-                    vec = vec.change_frame(target_frame);
-                };
-                Vector3::from(vec.raw)
-            }
-        }
-    }
-
-    pub fn into_vector(self, target_frame: PyFrames) -> Vector {
-        let vec = self.into_vec(target_frame);
-        Vector {
-            raw: vec.into(),
-            frame: target_frame,
+            VectorLike::Arr(raw) => PyVector(FrameVector::new(raw, target_frame)),
+            VectorLike::PyVec(pyvec) => pyvec.change_frame(target_frame),
         }
     }
 }
 
 #[pymethods]
-impl Vector {
+impl PyVector {
     #[new]
-    pub fn py_new(raw: VectorLike, frame: Option<PyFrames>) -> PyResult<Self> {
-        match raw {
-            VectorLike::Arr(raw) => {
-                let frame = frame.unwrap_or(PyFrames::Ecliptic);
-                Ok(Self { raw, frame })
-            }
-            VectorLike::Vec(vec) => {
-                if frame.is_some() {
-                    return Err(NEOSpyError::ValueError(
-                        "If a vector is provided, then the frame cannot be specified.".into(),
-                    )
-                    .into());
-                }
-                Ok(vec)
-            }
-        }
+    pub fn py_new(raw: VectorLike, frame: Option<PyFrames>) -> Self {
+        let frame = frame.unwrap_or(PyFrames::Ecliptic);
+        raw.into_pyvector(frame)
     }
 
     /// Create a new Vector from the elevation and azimuthal angle in degrees.
@@ -129,26 +218,25 @@ impl Vector {
     /// The raw vector without the Frame.
     #[getter]
     fn raw(&self) -> [f64; 3] {
-        self.raw
+        self.0.raw()
     }
 
     /// The Frame of reference.
     #[getter]
     pub fn frame(&self) -> PyFrames {
-        self.frame
+        self.0.frame()
     }
 
     /// Length of the Vector
     #[getter]
     pub fn r(&self) -> f64 {
-        let data: &Vector3<f64> = &self.raw.into();
-        data.norm()
+        self.0.r()
     }
 
     /// Azimuth in degrees from the X axis in the X-Y plane of the coordinate frame.
     #[getter]
     pub fn az(&self) -> f64 {
-        let data: &Vector3<f64> = &self.raw.into();
+        let data: &Vector3<f64> = &self.raw().into();
         let r = data.norm();
         if r < 1e-8 {
             return 0.0;
@@ -160,7 +248,7 @@ impl Vector {
     /// Values will be between -180 and 180
     #[getter]
     pub fn el(&self) -> f64 {
-        let data: &Vector3<f64> = &self.raw.into();
+        let data: &Vector3<f64> = &self.raw().into();
         let r = data.norm();
         if r < 1e-8 {
             return 0.0;
@@ -173,7 +261,7 @@ impl Vector {
     /// Right Ascension in degrees if the frame is Equatorial.
     #[getter]
     pub fn ra(&self) -> PyResult<f64> {
-        if self.frame != PyFrames::Equatorial {
+        if self.frame() != PyFrames::Equatorial {
             return Err(NEOSpyError::ValueError(
                 "Cannot compute RA as the frame is not equatorial. Change frame to equatorial before calling ra/dec."
                     .into(),
@@ -186,7 +274,7 @@ impl Vector {
     /// Declination in degrees if the frame is Equatorial.
     #[getter]
     pub fn dec(&self) -> PyResult<f64> {
-        if self.frame != PyFrames::Equatorial {
+        if self.frame() != PyFrames::Equatorial {
             return Err(NEOSpyError::ValueError(
                 "Cannot compute Dec as the frame is not equatorial. Change frame to equatorial before calling ra/dec."
                     .into(),
@@ -199,7 +287,7 @@ impl Vector {
     /// Latitude in degrees if the frame is Ecliptic.
     #[getter]
     pub fn lat(&self) -> PyResult<f64> {
-        if self.frame != PyFrames::Ecliptic {
+        if self.frame() != PyFrames::Ecliptic {
             return Err(NEOSpyError::ValueError(
                 "Cannot compute Latitude as the frame is not ecliptic. Change frame to ecliptic."
                     .into(),
@@ -212,7 +300,7 @@ impl Vector {
     /// Longitude in degrees if the frame is Ecliptic.
     #[getter]
     pub fn lon(&self) -> PyResult<f64> {
-        if self.frame != PyFrames::Ecliptic {
+        if self.frame() != PyFrames::Ecliptic {
             return Err(NEOSpyError::ValueError(
                 "Cannot compute Longitude as the frame is not ecliptic. Change frame to ecliptic."
                     .into(),
@@ -225,8 +313,8 @@ impl Vector {
     /// Compute the angle in degrees between two vectors in degrees.
     /// This will automatically make a frame change if necessary.
     pub fn angle_between(&self, other: VectorLike) -> f64 {
-        let self_vec = Vector3::from(self.raw);
-        let other_vec = other.into_vec(self.frame());
+        let self_vec = self.0;
+        let other_vec = other.into_pyvector(self.frame()).0;
         self_vec.angle(&other_vec).to_degrees()
     }
 
@@ -256,67 +344,66 @@ impl Vector {
 
     /// Return the vector in the target frame, regardless of starting frame.
     pub fn change_frame(&self, target_frame: PyFrames) -> Self {
-        let new_dat = std::convert::Into::<Frame>::into(self.frame)
-            .try_vec_frame_change(self.raw.into(), target_frame.into())
-            .unwrap();
-        Self::new(new_dat.into(), target_frame)
+        Self(self.0.into_frame(target_frame))
     }
 
     /// X coordinate in au.
     #[getter]
     pub fn x(&self) -> f64 {
-        self.raw[0]
+        self.raw()[0]
     }
 
     /// Y coordinate in au.
     #[getter]
     pub fn y(&self) -> f64 {
-        self.raw[1]
+        self.raw()[1]
     }
 
     /// Z coordinate in au.
     #[getter]
     pub fn z(&self) -> f64 {
-        self.raw[2]
+        self.raw()[2]
     }
 
     pub fn rotate_around(&self, other: VectorLike, angle: f64) -> Self {
-        let self_vec = Vector3::from(self.raw);
-        let other_vec = other.into_vec(self.frame());
-        let rotated = rotate_around(&self_vec, other_vec, angle.to_radians());
-        Self::new(rotated.into(), self.frame)
+        let self_vec = self.into_vector::<Ecliptic>();
+        let other_vec = other
+            .into_pyvector(PyFrames::Ecliptic)
+            .into_vector::<Ecliptic>();
+        let rotated = self_vec.rotate_around(other_vec, angle.to_radians());
+        Self::new(rotated.into(), self.frame())
     }
 
     pub fn __repr__(&self) -> String {
         // 1e-12 AU is about 15cm, this seems like a reasonable printing resolution
-        let x = (self.raw[0] * 1e12).round() / 1e12 + 0.0;
-        let y = (self.raw[1] * 1e12).round() / 1e12 + 0.0;
-        let z = (self.raw[2] * 1e12).round() / 1e12 + 0.0;
-        format!("Vector([{:?}, {:?}, {:?}], {:?})", x, y, z, self.frame)
+        let x = (self.raw()[0] * 1e12).round() / 1e12 + 0.0;
+        let y = (self.raw()[1] * 1e12).round() / 1e12 + 0.0;
+        let z = (self.raw()[2] * 1e12).round() / 1e12 + 0.0;
+        format!("Vector([{:?}, {:?}, {:?}], {:?})", x, y, z, self.frame())
     }
 
     pub fn __sub__(&self, other: VectorLike) -> Self {
-        let self_vec = Vector3::from(self.raw);
+        let self_vec = Vector3::from(self.raw());
         let other_vec = other.into_vec(self.frame());
         let diff = self_vec - other_vec;
-        Self::new(diff.into(), self.frame)
+        Self::new(diff.into(), self.frame())
     }
 
     pub fn __add__(&self, other: VectorLike) -> Self {
-        let self_vec = Vector3::from(self.raw);
+        let self_vec = Vector3::from(self.raw());
         let other_vec = other.into_vec(self.frame());
         let diff = self_vec + other_vec;
-        Self::new(diff.into(), self.frame)
+        Self::new(diff.into(), self.frame())
     }
 
     pub fn __mul__(&self, other: f64) -> Self {
-        let self_vec = Vector3::from(self.raw);
-        Self::new((self_vec * other).into(), self.frame)
+        let self_vec = Vector3::from(self.raw());
+        Self::new((self_vec * other).into(), self.frame())
     }
 
     pub fn __truediv__(&self, other: f64) -> Self {
-        let self_vec = Vector3::from(self.raw);
-        Self::new((self_vec / other).into(), self.frame)
+        let self_vec = Vector3::from(self.raw());
+        Self::new((self_vec / other).into(), self.frame())
     }
 
     pub fn __neg__(&self) -> Self {

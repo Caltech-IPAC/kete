@@ -19,7 +19,7 @@ use std::marker::PhantomData;
 #[derive(Debug, Clone)]
 pub struct CometElements<T: InertialFrame> {
     /// Designation of the object
-    pub desig: Desig,
+    pub desig: Option<Desig>,
 
     /// Epoch of fit
     pub epoch: f64,
@@ -48,7 +48,7 @@ pub struct CometElements<T: InertialFrame> {
 impl<T: InertialFrame> CometElements<T> {
     /// Create a new CometaryElements.
     pub fn new(
-        desig: Desig,
+        desig: Option<Desig>,
         epoch: f64,
         eccentricity: f64,
         inclination: f64,
@@ -80,7 +80,7 @@ impl<T: InertialFrame> CometElements<T> {
     /// The units of the vectors are AU and AU/Day, with the central mass assumed
     /// to be the Sun.
     ///
-    fn from_pos_vel(desig: Desig, epoch: f64, pos: &Vector<T>, vel: &Vector<T>) -> Self {
+    fn from_pos_vel(desig: Option<Desig>, epoch: f64, pos: &Vector<T>, vel: &Vector<T>) -> Self {
         let vel_scaled = vel / GMS_SQRT;
         let v_mag2 = vel_scaled.norm_squared();
         let p_mag = pos.norm();
@@ -336,7 +336,7 @@ mod tests {
     fn test_specific_conversion() {
         // This was previously a failed instance.
         let elem = CometElements::<Ecliptic>::new(
-            Desig::Empty,
+            None,
             2461722.5,
             0.7495474422690582,
             0.1582845445910239,
@@ -349,7 +349,7 @@ mod tests {
 
         // This was previously a failed instance.
         let elem = CometElements::<Ecliptic> {
-            desig: Desig::Empty,
+            desig: None,
             epoch: 2455341.243793971,
             eccentricity: 1.001148327267,
             inclination: 2.433767,
@@ -371,7 +371,7 @@ mod tests {
                     for peri_arg in [-2.0, 0.0, 0.1, 0.5, 10.0] {
                         for peri_dist in [0.1, 0.5, 10.0] {
                             let elem = CometElements {
-                                desig: Desig::Empty,
+                                desig: None,
                                 epoch: 10.0,
                                 eccentricity: ecc,
                                 inclination: incl,
@@ -384,7 +384,7 @@ mod tests {
                             let [pos, vel] = elem.to_pos_vel().unwrap();
                             assert!((Vector::<Ecliptic>::new(pos).norm() - peri_dist).abs() < 1e-6);
                             let new_elem = CometElements::<Ecliptic>::from_pos_vel(
-                                Desig::Empty,
+                                None,
                                 10.0,
                                 &pos.into(),
                                 &vel.into(),
@@ -408,7 +408,7 @@ mod tests {
                             for peri_arg in [-1.0, 0.0, 1.0] {
                                 for peri_dist in [0.3, 0.5] {
                                     let elem = CometElements {
-                                        desig: Desig::Empty,
+                                        desig: None,
                                         epoch,
                                         eccentricity: ecc,
                                         inclination: incl,
@@ -421,7 +421,7 @@ mod tests {
                                     let [pos, vel] =
                                         elem.to_pos_vel().expect("Failed to convert to state.");
                                     let new_elem = CometElements::<Ecliptic>::from_pos_vel(
-                                        Desig::Empty,
+                                        None,
                                         epoch,
                                         &pos.into(),
                                         &vel.into(),
@@ -476,7 +476,7 @@ mod tests {
                         for peri_arg in [0.0, 1.0] {
                             for peri_dist in [0.3, 0.5] {
                                 let elem = CometElements {
-                                    desig: Desig::Empty,
+                                    desig: None,
                                     epoch,
                                     eccentricity: ecc,
                                     inclination: incl,
@@ -488,7 +488,7 @@ mod tests {
                                 };
                                 let [pos, vel] = elem.to_pos_vel().unwrap();
                                 let new_elem = CometElements::<Ecliptic>::from_pos_vel(
-                                    Desig::Empty,
+                                    None,
                                     epoch,
                                     &pos.into(),
                                     &vel.into(),

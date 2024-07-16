@@ -143,7 +143,7 @@ impl PyWiseCmos {
         frame_num: u64,
         scan_id: String,
     ) -> Self {
-        let pointing = pointing.into_vector(observer.frame());
+        let pointing = pointing.into_pyvector(observer.frame());
         let pointing = pointing.raw.into();
         let scan_id = scan_id.into();
         PyWiseCmos(fov::WiseCmos::new(
@@ -208,7 +208,7 @@ impl PyGenericRectangle {
         lon_width: f64,
         lat_width: f64,
     ) -> Self {
-        let pointing = pointing.into_vector(observer.frame());
+        let pointing = pointing.into_pyvector(observer.frame());
         PyGenericRectangle(fov::GenericRectangle::new(
             pointing.raw.into(),
             rotation.to_radians(),
@@ -314,7 +314,7 @@ impl PyNeosCmos {
         cmos_id: u8,
         band: u8,
     ) -> Self {
-        let pointing = pointing.into_vector(observer.frame());
+        let pointing = pointing.into_pyvector(observer.frame());
         let pointing = pointing.raw.into();
         PyNeosCmos(fov::NeosCmos::new(
             pointing,
@@ -482,7 +482,7 @@ impl PyNeosVisit {
         exposure_id: u8,
         band: u8,
     ) -> Self {
-        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+        let pointing = pointing.into_pyvector(crate::frame::PyFrames::Ecliptic);
         let pointing = pointing.raw.into();
         PyNeosVisit(fov::NeosVisit::from_pointing(
             x_width.to_radians(),
@@ -630,7 +630,7 @@ impl PyZtfCcdQuad {
     ) -> Self {
         let corners = corners
             .into_iter()
-            .map(|v| v.into_vector(observer.frame()).raw.into())
+            .map(|v| v.into_pyvector(observer.frame()).raw.into())
             .collect::<Vec<_>>()
             .try_into()
             .unwrap();
