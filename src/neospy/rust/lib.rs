@@ -32,7 +32,7 @@ mod vector;
 fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<frame::PyFrames>()?;
     m.add_class::<state::PyState>()?;
-    m.add_class::<vector::Vector>()?;
+    m.add_class::<vector::PyVector>()?;
     m.add_class::<elements::PyCometElements>()?;
     m.add_class::<simult_states::PySimultaneousStates>()?;
     m.add_class::<nongrav::PyNonGravModel>()?;
@@ -54,7 +54,6 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_class::<covariance::Covariance>()?;
 
-    m.add_function(wrap_pyfunction!(frame::frame_change_py, m)?)?;
     m.add_function(wrap_pyfunction!(frame::wgs_lat_lon_to_ecef, m)?)?;
 
     m.add_function(wrap_pyfunction!(kepler::compute_eccentric_anomaly_py, m)?)?;

@@ -1,4 +1,4 @@
-use neospy_core::frames::*;
+use neospy_core::{frames::*, state::State};
 use pyo3::prelude::*;
 
 /// Defined inertial frames supported by the python side of NEOSpy
@@ -9,53 +9,14 @@ pub enum PyFrames {
     Equatorial,
     Galactic,
     FK4,
-    Undefined,
 }
 
-/// Provide a mapping from the python mapping above to the backend frames
-impl From<PyFrames> for neospy_core::frames::Frame {
-    fn from(value: PyFrames) -> Self {
-        match value {
-            PyFrames::Ecliptic => neospy_core::frames::Frame::Ecliptic,
-            PyFrames::Equatorial => neospy_core::frames::Frame::Equatorial,
-            PyFrames::Galactic => neospy_core::frames::Frame::Galactic,
-            PyFrames::FK4 => neospy_core::frames::Frame::FK4,
-            PyFrames::Undefined => neospy_core::frames::Frame::Unknown(0),
-        }
-    }
-}
-
-/// Provide a mapping from the python mapping above to the backend frames
-impl From<neospy_core::frames::Frame> for PyFrames {
-    fn from(value: neospy_core::frames::Frame) -> Self {
-        match value {
-            neospy_core::frames::Frame::Ecliptic => PyFrames::Ecliptic,
-            neospy_core::frames::Frame::Equatorial => PyFrames::Equatorial,
-            neospy_core::frames::Frame::FK4 => PyFrames::FK4,
-            neospy_core::frames::Frame::Galactic => PyFrames::Galactic,
-            _ => PyFrames::Undefined,
-        }
-    }
-}
-
-/// Convert a vector in the input frame to the same vector in the output frame.
-#[allow(clippy::too_many_arguments)]
-#[pyfunction]
-#[pyo3(name = "frame_change")]
-pub fn frame_change_py(
-    states: Vec<[f64; 3]>,
-    input_frame: PyFrames,
-    output_frame: PyFrames,
-) -> Vec<[f64; 3]> {
-    states
-        .into_iter()
-        .map(|vec| {
-            std::convert::Into::<Frame>::into(input_frame)
-                .try_vec_frame_change(vec.into(), output_frame.into())
-                .unwrap()
-                .into()
-        })
-        .collect()
+#[derive(Clone, Debug)]
+pub enum FrameState {
+    Ecliptic(State<Ecliptic>),
+    Equatorial(State<Equatorial>),
+    Galactic(State<Galactic>),
+    FK4(State<FK4>),
 }
 
 /// Compute a ECEF position from WCS84 Geodetic latitude/longitude/height.

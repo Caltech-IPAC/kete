@@ -8,20 +8,20 @@
 /// Here is a small worked example:
 /// ```
 ///     use neospy_core::spice::get_spk_singleton;
-///     use neospy_core::frames::Frame;
+///     use neospy_core::frames::Ecliptic;
 ///
 ///     // get a read-only reference to the [`SegmentCollection`]
 ///     let singleton = get_spk_singleton().try_read().unwrap();
 ///
 ///     // get the state of 399 (Earth) with respect to the Sun (10)
-///     let state = singleton.try_get_state(399, 2451545.0, 10, Frame::Ecliptic);
+///     let state = singleton.try_get_state::<Ecliptic>(399, 2451545.0, 10);
 /// ```
 ///
 ///
 use super::daf::DafFile;
 use super::{spk_segments::*, DAFType};
 use crate::errors::NEOSpyError;
-use crate::frames::Frame;
+use crate::frames::InertialFrame;
 use crate::state::State;
 use pathfinding::prelude::dijkstra;
 use std::collections::{HashMap, HashSet};
@@ -62,7 +62,11 @@ impl SpkCollection {
     /// Get the raw state from the loaded SPK files.
     /// This state will have the center and frame of whatever was originally loaded
     /// into the file.
-    pub fn try_get_raw_state(&self, id: i64, jd: f64) -> Result<State, NEOSpyError> {
+    pub fn try_get_raw_state<T: InertialFrame>(
+        &self,
+        id: i64,
+        jd: f64,
+    ) -> Result<State<T>, NEOSpyError> {
         for segment in self.segments.iter() {
             if id == segment.obj_id && segment.contains(jd) {
                 return segment.try_get_state(jd);
@@ -79,21 +83,23 @@ impl SpkCollection {
 
     /// Load a state from the file, then attempt to change the center to the center id
     /// specified.
-    pub fn try_get_state(
+    pub fn try_get_state<T: InertialFrame>(
         &self,
         id: i64,
         jd: f64,
         center: i64,
-        frame: Frame,
-    ) -> Result<State, NEOSpyError> {
+    ) -> Result<State<T>, NEOSpyError> {
         let mut state = self.try_get_raw_state(id, jd)?;
         self.try_change_center(&mut state, center)?;
-        state.try_change_frame_mut(frame)?;
         Ok(state)
     }
 
     /// Use the data loaded in the SPKs to change the center ID of the provided state.
-    pub fn try_change_center(&self, state: &mut State, new_center: i64) -> Result<(), NEOSpyError> {
+    pub fn try_change_center<T: InertialFrame>(
+        &self,
+        state: &mut State<T>,
+        new_center: i64,
+    ) -> Result<(), NEOSpyError> {
         if state.center_id == new_center {
             return Ok(());
         }
@@ -101,15 +107,15 @@ impl SpkCollection {
         let path = self.find_path(state.center_id, new_center)?;
 
         for intermediate in path {
-            let next = self.try_get_raw_state(intermediate, state.jd)?;
+            let next = self.try_get_raw_state::<T>(intermediate, state.jd)?;
             state.try_change_center(next)?;
         }
         Ok(())
     }
 
     /// For a given NAIF ID, return all increments of time which are currently loaded.
-    pub fn available_info(&self, id: i64) -> Vec<(f64, f64, i64, Frame, i32)> {
-        let mut segment_info = Vec::<(f64, f64, i64, Frame, i32)>::new();
+    pub fn available_info(&self, id: i64) -> Vec<(f64, f64, i64, SpiceFrames, i32)> {
+        let mut segment_info = Vec::<(f64, f64, i64, SpiceFrames, i32)>::new();
         for segment in self.segments.iter() {
             if id == segment.obj_id {
                 let jd_range = segment.jd_range();
@@ -128,7 +134,7 @@ impl SpkCollection {
 
         segment_info.sort_by(|a, b| (a.0).total_cmp(&b.0));
 
-        let mut avail_times = Vec::<(f64, f64, i64, Frame, i32)>::new();
+        let mut avail_times = Vec::<(f64, f64, i64, SpiceFrames, i32)>::new();
 
         let mut cur_segment = segment_info[0];
         for segment in segment_info.iter().skip(1) {

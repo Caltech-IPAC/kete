@@ -10,7 +10,7 @@
 use super::daf::{DAFType, DafFile};
 use super::pck_segments::PckSegment;
 use crate::errors::NEOSpyError;
-use crate::frames::Frame;
+use crate::frames::EclipticNonInertial;
 
 use std::io::Cursor;
 use std::mem::MaybeUninit;
@@ -49,7 +49,11 @@ impl PckCollection {
 
     /// Get the raw orientation from the loaded PCK files.
     /// This orientation will have the frame of what was originally present in the file.
-    pub fn try_get_orientation(&self, id: isize, jd: f64) -> Result<Frame, NEOSpyError> {
+    pub fn try_get_orientation(
+        &self,
+        id: isize,
+        jd: f64,
+    ) -> Result<EclipticNonInertial, NEOSpyError> {
         for segment in self.segments.iter() {
             if id == segment.center_id && segment.contains(jd) {
                 return segment.try_get_orientation(jd);

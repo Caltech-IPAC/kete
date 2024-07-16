@@ -2,15 +2,16 @@
 //! These primarily exist to allow for easy read/write to binary formats.
 
 use crate::fov::FOV;
+use crate::frames::{Ecliptic, Equatorial, Galactic, InertialFrame, FK4};
 use crate::io::FileIO;
-use crate::prelude::{Frame, NEOSpyError, State};
+use crate::prelude::{NEOSpyError, State};
 use serde::{Deserialize, Serialize};
 
 /// Collection of [`State`] at the same time.
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SimultaneousStates {
+pub struct SimultaneousStates<T: InertialFrame> {
     /// Collection of states
-    pub states: Vec<State>,
+    pub states: Vec<State<T>>,
 
     /// Common JD time of all states
     pub jd: f64,
@@ -18,28 +19,28 @@ pub struct SimultaneousStates {
     /// Center ID of all states.
     pub center_id: i64,
 
-    /// Frame of reference for all states.
-    pub frame: Frame,
-
     /// An optional field of view.
     pub fov: Option<FOV>,
 }
 
-impl FileIO for SimultaneousStates {}
+impl FileIO for SimultaneousStates<Ecliptic> {}
+impl FileIO for SimultaneousStates<Equatorial> {}
+impl FileIO for SimultaneousStates<FK4> {}
+impl FileIO for SimultaneousStates<Galactic> {}
 
-impl SimultaneousStates {
+impl<T: InertialFrame> SimultaneousStates<T> {
     /// Create a new Exact SimultaneousStates
     /// Simultaneous States occur at the same JD, which is defined by either the time
     /// in the optional fov, or the time of the first state.
-    pub fn new_exact(mut states: Vec<State>, fov: Option<FOV>) -> Result<Self, NEOSpyError> {
+    pub fn new_exact(states: Vec<State<T>>, fov: Option<FOV>) -> Result<Self, NEOSpyError> {
         if states.is_empty() {
             return Err(NEOSpyError::ValueError(
                 "SimultaneousStates must contain at least one state.".into(),
             ));
         }
-        let (mut jd, frame, center_id) = {
+        let (mut jd, center_id) = {
             let first = states.first().unwrap();
-            (first.jd, first.frame, first.center_id)
+            (first.jd, first.center_id)
         };
 
         if let Some(f) = &fov {
@@ -47,21 +48,14 @@ impl SimultaneousStates {
         }
 
         if !states
-            .iter_mut()
-            .map(|state| state.try_change_frame_mut(frame))
-            .all(|x| x.is_ok())
-        {
-            return Err(NEOSpyError::ValueError("Failed to change frames".into()));
-        };
-        if !states
-            .iter_mut()
-            .all(|state: &mut State| state.center_id == center_id)
+            .iter()
+            .all(|state: &State<T>| state.center_id == center_id)
         {
             return Err(NEOSpyError::ValueError(
                 "Center IDs do not match expected".into(),
             ));
         };
-        if fov.is_none() && !states.iter_mut().all(|state: &mut State| state.jd == jd) {
+        if fov.is_none() && !states.iter().all(|state: &State<T>| state.jd == jd) {
             return Err(NEOSpyError::ValueError(
                 "Epoch JDs do not match expected".into(),
             ));
@@ -70,7 +64,6 @@ impl SimultaneousStates {
             states,
             jd,
             center_id,
-            frame,
             fov,
         })
     }

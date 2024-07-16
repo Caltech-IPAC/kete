@@ -19,9 +19,9 @@
 //! thinks that the object should actually be. These times are when close encounter
 //! information should be recorded.
 //!
-use crate::frames;
+use crate::frames::{Ecliptic, Equatorial, InertialFrame};
 use crate::spice::get_spk_singleton;
-use crate::{constants::*, errors::NEOSpyError, frames::Frame, propagation::nongrav::NonGravModel};
+use crate::{constants::*, errors::NEOSpyError, propagation::nongrav::NonGravModel};
 use itertools::Itertools;
 use nalgebra::allocator::Allocator;
 use nalgebra::{DefaultAllocator, Dim, Matrix, Matrix3, OMatrix, OVector, Vector3, U1, U2};
@@ -141,8 +141,8 @@ pub fn spk_accel(
     let spk = get_spk_singleton().try_read().unwrap();
 
     for (id, mass, radius) in meta.massive_obj.iter() {
-        let state = spk.try_get_state(*id, time, 0, Frame::Equatorial)?;
-        let rel_pos: Vector3<f64> = pos - Vector3::from(state.pos);
+        let state = spk.try_get_state::<Equatorial>(*id, time, 0)?;
+        let rel_pos: Vector3<f64> = pos - Into::<Vector3<f64>>::into(state.pos);
         let rel_pos_norm = rel_pos.normalize();
         let r = rel_pos.norm();
 
@@ -163,7 +163,7 @@ pub fn spk_accel(
         // Corrections for the Sun
         if *id == 10 {
             let r3_inv = r.powi(-3);
-            let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
+            let rel_vel: Vector3<f64> = vel - Into::<Vector3<f64>>::into(state.vel);
 
             let r_v = 4.0 * rel_pos.dot(&rel_vel);
 
@@ -176,7 +176,7 @@ pub fn spk_accel(
 
             // J2 for the Sun
             let coef = SUN_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
-            let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos_norm);
+            let rel_pos_norm_eclip = Equatorial::convert::<Ecliptic>(rel_pos_norm);
             let z2 = 5.0 * rel_pos_norm_eclip.z.powi(2);
             accel[0] -= rel_pos.x * coef * (z2 - 1.0);
             accel[1] -= rel_pos.y * coef * (z2 - 1.0);
@@ -191,7 +191,7 @@ pub fn spk_accel(
         } else if *id == 5 {
             // GR Correction
             let r3_inv = r.powi(-3);
-            let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
+            let rel_vel: Vector3<f64> = vel - Into::<Vector3<f64>>::into(state.vel);
 
             let r_v = 4.0 * rel_pos.dot(&rel_vel);
 
@@ -204,7 +204,7 @@ pub fn spk_accel(
             // https://www.nature.com/articles/nature25776
             // Jupiter's pole is 2.3 degrees off of the ecliptic, below is an approximation of this.
             let coef = JUPITER_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
-            let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos_norm);
+            let rel_pos_norm_eclip = Equatorial::convert::<Ecliptic>(rel_pos_norm);
             let z2 = 5.0 * rel_pos_norm_eclip.z.powi(2);
             accel[0] -= rel_pos.x * coef * (z2 - 1.0);
             accel[1] -= rel_pos.y * coef * (z2 - 1.0);
@@ -384,9 +384,9 @@ mod tests {
         let mut vel: Vec<f64> = Vec::new();
 
         for (id, _mass, _radius) in MASSIVE_OBJECTS.iter() {
-            let planet = spk.try_get_state(*id, jd, 0, Frame::Equatorial).unwrap();
-            pos.append(&mut planet.pos.into());
-            vel.append(&mut planet.vel.into());
+            let planet = spk.try_get_state::<Equatorial>(*id, jd, 0).unwrap();
+            pos.append(&mut Into::<[f64; 3]>::into(planet.pos).into());
+            vel.append(&mut Into::<[f64; 3]>::into(planet.vel).into());
         }
 
         pos.append(&mut [0.0, 0.0, 0.5].into());
