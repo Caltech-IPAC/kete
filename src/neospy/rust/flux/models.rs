@@ -40,6 +40,7 @@ impl From<neospy_core::flux::ModelResults> for PyModelResults {
 #[pymethods]
 impl PyModelResults {
     #[new]
+    #[pyo3(signature = (fluxes, thermal_fluxes, hg_fluxes, v_band_magnitude, v_band_flux, magnitudes=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         fluxes: Vec<f64>,
@@ -188,6 +189,8 @@ impl From<neospy_core::flux::NeatmParams> for PyNeatmParams {
 impl PyNeatmParams {
     #[new]
     #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (desig, band_wavelength, band_albedos, h_mag=None, diam=None,
+        vis_albedo=None, beaming=None, g_param=None, c_hg=None, emissivity=None, zero_mags=None))]
     pub fn new(
         desig: String,
         band_wavelength: Vec<f64>,
@@ -225,6 +228,8 @@ impl PyNeatmParams {
     /// This requires all 4 albedos to be provided.
     #[staticmethod]
     #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None,
+        beaming=None, g_param=None, c_hg=None, emissivity=None))]
     pub fn new_wise(
         desig: String,
         band_albedos: Vec<f64>,
@@ -256,6 +261,8 @@ impl PyNeatmParams {
     /// Create a new NeatmParams with NEOS bands and zero magnitudes.
     /// This requires 2 albedos to be provided, one for each band.
     #[staticmethod]
+    #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, beaming=None,
+        g_param=None, c_hg=None, emissivity=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn new_neos(
         desig: String,
@@ -471,6 +478,8 @@ impl From<neospy_core::flux::FrmParams> for PyFrmParams {
 impl PyFrmParams {
     #[new]
     #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (desig, band_wavelength, band_albedos, h_mag=None, diam=None,
+        vis_albedo=None, g_param=None, c_hg=None, emissivity=None, zero_mags=None))]
     pub fn new(
         desig: String,
         band_wavelength: Vec<f64>,
@@ -505,6 +514,8 @@ impl PyFrmParams {
     /// This requires all 4 albedos to be provided.
     #[staticmethod]
     #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, g_param=None,
+        c_hg=None, emissivity=None))]
     pub fn new_wise(
         desig: String,
         band_albedos: Vec<f64>,
@@ -532,6 +543,8 @@ impl PyFrmParams {
     /// This requires 2 albedos to be provided, one for each band.
     #[staticmethod]
     #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, g_param=None,
+        c_hg=None, emissivity=None))]
     pub fn new_neos(
         desig: String,
         band_albedos: Vec<f64>,

@@ -125,7 +125,14 @@ impl Covariance {
                 .ok_or(NEOSpyError::ValueError("Covariance missing 'vz'".into()))?;
             let pos = VectorLike::Arr([x, y, z]);
             let vel = VectorLike::Arr([vx, vy, vz]);
-            Ok(PyState::new(Some(desig), epoch, pos, vel, None, None))
+            Ok(PyState::new(
+                Some(desig),
+                epoch.into(),
+                pos,
+                vel,
+                None,
+                None,
+            ))
         } else {
             Err(NEOSpyError::ValueError("Covariance cannot be converted to a state, \
             the covariance parameters must either contain: \

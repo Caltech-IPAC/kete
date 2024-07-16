@@ -7,6 +7,7 @@ use pyo3::{pyfunction, PyResult};
 use rayon::prelude::*;
 
 use crate::state::PyState;
+use crate::time::PyTime;
 use crate::vector::Vector;
 
 /// Solve kepler's equation for the Eccentric Anomaly.
@@ -43,8 +44,8 @@ pub fn compute_eccentric_anomaly_py(
         .collect())
 }
 
-/// Given a collection of states, and an amount of time (days). Move the states
-/// in time using two body mechanics by the desired `dt`.
+/// Propagate the :class:`~neospy.State` for all the objects to the specified time.
+/// This assumes 2 body interactions.
 ///
 /// This is a multi-core operation.
 ///
@@ -54,15 +55,23 @@ pub fn compute_eccentric_anomaly_py(
 ///     List of states, which are in units of AU from the Sun and velocity is in AU/Day.
 /// jd :
 ///     Time to integrate to in JD days with TDB scaling.
-/// sun2obj :
-///     Position of the observer in AU.
+/// observer_pos :
+///     A vector of length 3 describing the position of an observer. If this is
+///     provided then the estimated states will be returned as a result of light
+///     propagation delay.
+///
+/// Returns
+/// -------
+/// State
+///     Final states after propagating to the target time.
 #[pyfunction]
-#[pyo3(name = "propagate_two_body")]
+#[pyo3(name = "propagate_two_body", signature = (states, jd, observer_pos=None))]
 pub fn propagation_kepler_py(
     states: Vec<PyState>,
-    jd: f64,
-    sun2obs: Option<Vector>,
+    jd: PyTime,
+    observer_pos: Option<Vector>,
 ) -> Vec<PyState> {
+    let jd = jd.jd();
     states
         .par_iter()
         .map(|state| {
@@ -76,10 +85,10 @@ pub fn propagation_kepler_py(
                 return State::new_nan(state.0.desig.clone(), jd, state.0.frame, center).into();
             };
 
-            if let Some(sun2obs) = &sun2obs {
-                let sun2obs = Vector3::<f64>::from(sun2obs.raw);
+            if let Some(observer_pos) = &observer_pos {
+                let observer_pos = Vector3::<f64>::from(observer_pos.raw);
                 let delay =
-                    -(Vector3::from(new_state.pos) - sun2obs).norm() / constants::C_AU_PER_DAY;
+                    -(Vector3::from(new_state.pos) - observer_pos).norm() / constants::C_AU_PER_DAY;
 
                 new_state = match propagation::propagate_two_body(&new_state, new_state.jd + delay)
                 {

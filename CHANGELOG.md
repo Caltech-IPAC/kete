@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Moved python wrappers over propagation into the rust backend entirely.
+- Simplified polymorphic support in the rust wrappers, removing some intermediate
+  objects which were over-complicating the interface.
+
+### Fixed
+
+- Fixed documentation on Time which was not being displayed correctly in python.
+
+
 ## [0.2.4] - 2024 - 7 - 15
 
 ### Added

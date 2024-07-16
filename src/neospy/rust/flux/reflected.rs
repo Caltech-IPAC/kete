@@ -63,7 +63,8 @@ pub fn hg_phase_curve_correction_py(g_param: f64, phase_angle: f64) -> f64 {
 ///     Flux in Jy per unit frequency.
 #[allow(clippy::too_many_arguments)]
 #[pyfunction]
-#[pyo3(name = "hg_apparent_flux")]
+#[pyo3(name = "hg_apparent_flux", signature = (sun2obj, sun2obs, g_param, wavelength, v_albedo,
+    h_mag=None, diameter=None, c_hg=None))]
 pub fn hg_apparent_flux_py(
     sun2obj: VectorLike,
     sun2obs: VectorLike,

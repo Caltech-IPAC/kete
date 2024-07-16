@@ -1,42 +1,11 @@
 use neospy_core::io::FileIO;
 use neospy_core::simult_states;
-use neospy_core::state::State;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::{pyclass, pymethods, PyResult};
 
 use crate::vector::Vector;
 use crate::{fovs::AllowedFOV, frame::PyFrames, state::PyState};
-
-/// Polymorphic support
-#[derive(FromPyObject)]
-pub enum SimulStateLike {
-    Vec(Vec<PyState>),
-    Simul(Py<PySimultaneousStates>),
-}
-
-impl SimulStateLike {
-    /// Convert state-like object into a simultaneous state.
-    pub fn into_simul_state(self, py: Python<'_>) -> PyResult<simult_states::SimultaneousStates> {
-        Ok(match self {
-            SimulStateLike::Vec(state_vec) => simult_states::SimultaneousStates::new_exact(
-                state_vec.into_iter().map(|x| x.0).collect(),
-                None,
-            )?,
-
-            SimulStateLike::Simul(p) => *p.extract::<PySimultaneousStates>(py)?.0,
-        })
-    }
-
-    /// Convert a collection of state-like objects into a collection of exact states.
-    pub fn into_states(self, py: Python<'_>) -> PyResult<Vec<State>> {
-        Ok(match self {
-            SimulStateLike::Vec(state_vec) => state_vec.into_iter().map(|x| x.0).collect(),
-
-            SimulStateLike::Simul(p) => p.extract::<PySimultaneousStates>(py)?.0.states,
-        })
-    }
-}
 
 /// Representation of a collection of [`State`] at a single point in time.
 ///
@@ -45,12 +14,27 @@ impl SimulStateLike {
 /// in this file were objects seen by the FOV.
 ///
 #[pyclass(module = "neospy", frozen, sequence, name = "SimultaneousStates")]
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct PySimultaneousStates(pub Box<simult_states::SimultaneousStates>);
 
 impl From<simult_states::SimultaneousStates> for PySimultaneousStates {
     fn from(value: simult_states::SimultaneousStates) -> Self {
         Self(Box::new(value))
+    }
+}
+
+impl<'py> FromPyObject<'py> for PySimultaneousStates {
+    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+        if let Ok(states) = ob.extract::<Vec<PyState>>() {
+            return PySimultaneousStates::new(states, None);
+        }
+        ob.extract::<PySimultaneousStates>()
+    }
+}
+
+impl From<PySimultaneousStates> for Vec<PyState> {
+    fn from(value: PySimultaneousStates) -> Self {
+        value.states()
     }
 }
 
@@ -67,6 +51,7 @@ impl PySimultaneousStates {
     ///     An optional FOV, if this is provided it is expected that the states provided
     ///     are what have been seen by this FOV. This is not checked.
     #[new]
+    #[pyo3(signature = (states, fov=None))]
     pub fn new(states: Vec<PyState>, fov: Option<AllowedFOV>) -> PyResult<Self> {
         let states: Vec<_> = states.into_iter().map(|x| x.0).collect();
         let fov = fov.map(|x| x.unwrap());
@@ -137,6 +122,7 @@ impl PySimultaneousStates {
     /// final_frame :
     ///     Optional final reference frame. If not provided this will be the frame of
     ///     the observer.
+    #[pyo3(signature = (final_frame=None))]
     pub fn obs_vecs(&self, final_frame: Option<PyFrames>) -> PyResult<Vec<Vector>> {
         let fov = self
             .fov()

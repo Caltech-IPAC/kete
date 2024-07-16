@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 neospy_core = { version = "*", path = "src/neospy_core", features=["pyo3"]}
-pyo3 = { version =  "^0.21.2", features = ["extension-module"] }
+pyo3 = { version =  "^0.22.1", features = ["extension-module"] }
 serde = { version = "^1.0.203", features = ["derive"] }
 nalgebra = {version = "^0.33.0"}
 itertools = "^0.13.0"
@@ -29,3 +29,4 @@ default-members = ["src/neospy_core"]
 
 [profile.release]
 opt-level = 3
+pyo3_disable_reference_pool = true

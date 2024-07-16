@@ -8,9 +8,9 @@ from typing import Optional
 from scipy import optimize
 import numpy as np
 
-from .vector import Vector, State
-from . import _core, spice
-from ._core import NonGravModel
+from .vector import State
+from . import spice
+from ._core import NonGravModel, propagate_n_body, propagate_two_body
 
 
 __all__ = [
@@ -19,78 +19,6 @@ __all__ = [
     "NonGravModel",
     "moid",
 ]
-
-
-def propagate_n_body(
-    states: list[State],
-    jd: float,
-    include_asteroids: bool = False,
-    non_gravs: Optional[list[NonGravModel]] = None,
-    suppress_errors: bool = True,
-) -> list[State]:
-    """
-    Propagate the provided :class:`~neospy.State` using N body mechanics to the
-    specified times, no approximations are made, this can be very CPU intensive.
-
-    This does not compute light delay, however it does include corrections for general
-    relativity due to the Sun.
-
-    Parameters
-    ----------
-    states:
-        The initial states, this is a list of multiple State objects.
-    jd:
-        A JD to propagate the initial states to.
-    include_asteroids:
-        If this is true, the computation will include the largest 5 asteroids.
-        The asteroids are: Ceres, Pallas, Interamnia, Hygiea, and Vesta.
-    non_gravs:
-        A list of non-gravitational terms for each object. If provided, then every
-        object must have an associated :class:`~NonGravModel` or `None`.
-    suppress_errors:
-        If True, errors during propagation will return NaN for the relevant state
-        vectors, but propagation will continue.
-
-    Returns
-    -------
-    Iterable
-        A :class:`~neospy.State` at the new time.
-    """
-    if non_gravs is None:
-        non_gravs = [None for _ in range(len(states))]
-    elif len(non_gravs) != len(states):
-        raise ValueError("non_gravs must be the same length as states.")
-    return _core.propagate_n_body_spk(
-        states, jd, include_asteroids, non_gravs, suppress_errors
-    )
-
-
-def propagate_two_body(
-    states: list[State],
-    jd: float,
-    observer_pos: Optional[Vector] = None,
-) -> list[State]:
-    """
-    Propagate the :class:`~neospy.State` for all the objects to the specified time.
-    This assumes 2 body interactions.
-
-    Parameters
-    ----------
-    states:
-        The input vector state to propagate.
-    jd:
-        The desired time at which to estimate the objects' state.
-    observer_pos:
-        A vector of length 3 describing the position of an observer. If this is
-        provided then the estimated states will be returned as a result of light
-        propagation delay.
-
-    Returns
-    -------
-    State
-        Final state after propagating to the target time.
-    """
-    return _core.propagate_two_body(states, jd, observer_pos)
 
 
 def _moid_single(obj0: State, other: State):
