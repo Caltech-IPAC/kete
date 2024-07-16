@@ -56,6 +56,7 @@ impl VectorLike {
 #[pymethods]
 impl Vector {
     #[new]
+    #[pyo3(signature = (raw, frame=None))]
     pub fn py_new(raw: VectorLike, frame: Option<PyFrames>) -> PyResult<Self> {
         match raw {
             VectorLike::Arr(raw) => {
@@ -107,6 +108,7 @@ impl Vector {
     /// r :
     ///     Optional length of the vector, defaults to 1.
     #[staticmethod]
+    #[pyo3(signature = (lat, lon, r=None))]
     pub fn from_lat_lon(lat: f64, lon: f64, r: Option<f64>) -> Self {
         Self::from_el_az(lat, lon, r.unwrap_or(1.0), PyFrames::Ecliptic)
     }
@@ -122,6 +124,7 @@ impl Vector {
     /// r :
     ///     Optional length of the vector, defaults to 1.
     #[staticmethod]
+    #[pyo3(signature = (ra, dec, r=None))]
     pub fn from_ra_dec(ra: f64, dec: f64, r: Option<f64>) -> Self {
         Self::from_el_az(dec, ra, r.unwrap_or(1.0), PyFrames::Equatorial)
     }

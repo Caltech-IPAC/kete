@@ -84,7 +84,7 @@ pub fn solar_flux_py(dist: f64, wavelength: f64) -> PyResult<f64> {
 /// emissivity :
 ///     Emissivity of the object, 0.9 by default.
 #[pyfunction]
-#[pyo3(name = "sub_solar_temperature")]
+#[pyo3(name = "sub_solar_temperature", signature = (obj2sun, geom_albedo, g_param, beaming, emissivity=None))]
 pub fn sub_solar_temperature_py(
     obj2sun: VectorLike,
     geom_albedo: f64,
@@ -222,7 +222,7 @@ pub fn frm_facet_temperature_py(
 /// float
 ///     Flux in units of Jy.
 #[pyfunction]
-#[pyo3(name = "neatm_flux")]
+#[pyo3(name = "neatm_flux", signature = (sun2obj, sun2obs, v_albedo, g_param, beaming, diameter, wavelength, emissivity=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn neatm_thermal_py(
     sun2obj: VectorLike,
@@ -289,7 +289,7 @@ pub fn neatm_thermal_py(
 /// float
 ///     Flux in units of Jy.
 #[pyfunction]
-#[pyo3(name = "frm_flux")]
+#[pyo3(name = "frm_flux", signature = (sun2obj, sun2obs, v_albedo, g_param, diameter, wavelength, emissivity=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn frm_thermal_py(
     sun2obj: VectorLike,
@@ -370,7 +370,7 @@ pub fn frm_thermal_py(
 ///     (Total apparent magnitude, Magnitude of the nucleus)
 #[allow(clippy::too_many_arguments)]
 #[pyfunction]
-#[pyo3(name = "comet_apparent_mags")]
+#[pyo3(name = "comet_apparent_mags", signature = (sun2obj, sun2obs, mk_1=None, mk_2=None, phase_corr=None))]
 pub fn comet_mags_py(
     sun2obj: VectorLike,
     sun2obs: VectorLike,

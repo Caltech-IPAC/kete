@@ -7,11 +7,17 @@ use neospy_core::{
 };
 use pyo3::prelude::*;
 
-/// Vector class which is a vector along with a reference frame.
-#[pyclass(sequence, frozen, module = "neospy", name = "Time")]
-pub struct PyTime(Time<TDB>);
-
 /// A representation of time, always in JD with TDB scaling.
+///
+/// Note that TDB is not the same as UTC, there is often about 60 seconds or more
+/// offset between these time formats. This class enables fast conversion to and from
+/// UTC however, via the :py:meth:`~Time.from_mjd`, and :py:meth:`~Time.from_iso`.
+/// UTC can be recovered from this object through :py:meth:`~Time.utc_mjd`,
+/// :py:meth:`~Time.utc_jd`, or :py:meth:`~Time.iso`.
+///
+/// UTC Leap seconds cannot be predicted, as a result of this, UTC becomes a bit fuzzy
+/// when attempting to record future times. All conversion of future times ignores the
+/// possibility of leap seconds.
 ///
 /// This representation and conversion tools make some small tradeoff for performance
 /// vs accuracy. Conversion between time scales is only accurate on the millisecond
@@ -24,6 +30,24 @@ pub struct PyTime(Time<TDB>);
 /// scaling:
 ///     Accepts 'tdb', 'tai', 'utc', and 'tt', but they are converted to TDB
 ///     immediately.
+#[pyclass(frozen, module = "neospy", name = "Time")]
+pub struct PyTime(Time<TDB>);
+
+impl<'py> FromPyObject<'py> for PyTime {
+    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
+        if let Ok(jd) = ob.extract::<f64>() {
+            return Ok(PyTime(Time::new(jd)));
+        }
+        ob.extract::<PyTime>()
+    }
+}
+
+impl From<f64> for PyTime {
+    fn from(value: f64) -> Self {
+        PyTime(Time::new(value))
+    }
+}
+
 #[pymethods]
 impl PyTime {
     #[new]

@@ -1,31 +1,65 @@
 use itertools::Itertools;
 use neospy_core::{
     errors::NEOSpyError,
-    propagation::{self},
+    propagation,
     spice::{self, get_spk_singleton},
     state::State,
+    time::{scales::TDB, Time},
 };
 use pyo3::{pyfunction, PyErr, PyResult, Python};
 use rayon::prelude::*;
 
 use crate::state::PyState;
-use crate::{nongrav::PyNonGravModel, simult_states::SimulStateLike};
+use crate::{nongrav::PyNonGravModel, time::PyTime};
 
-/// python wrapper over the propagation_n_body_spk function.
+/// Propagate the provided :class:`~neospy.State` using N body mechanics to the
+/// specified times, no approximations are made, this can be very CPU intensive.
+///
+/// This does not compute light delay, however it does include corrections for general
+/// relativity due to the Sun.
+///
+/// Parameters
+/// ----------
+/// states:
+///     The initial states, this is a list of multiple State objects.
+/// jd:
+///     A JD to propagate the initial states to.
+/// include_asteroids:
+///     If this is true, the computation will include the largest 5 asteroids.
+///     The asteroids are: Ceres, Pallas, Interamnia, Hygiea, and Vesta.
+/// non_gravs:
+///     A list of non-gravitational terms for each object. If provided, then every
+///     object must have an associated :class:`~NonGravModel` or `None`.
+/// suppress_errors:
+///     If True, errors during propagation will return NaN for the relevant state
+///     vectors, but propagation will continue.
+///
+/// Returns
+/// -------
+/// Iterable
+///     A :class:`~neospy.State` at the new time.
 #[pyfunction]
-#[pyo3(name = "propagate_n_body_spk")]
+#[pyo3(name = "propagate_n_body", signature = (states, jd, include_asteroids=false,
+    non_gravs=None, suppress_errors=true))]
 pub fn propagation_n_body_spk_py(
     py: Python<'_>,
-    states: SimulStateLike,
-    jd_final: f64,
+    states: Vec<PyState>,
+    jd: PyTime,
     include_asteroids: bool,
-    a_terms: Vec<Option<PyNonGravModel>>,
-    suppress_errors: Option<bool>,
+    non_gravs: Option<Vec<Option<PyNonGravModel>>>,
+    suppress_errors: bool,
 ) -> PyResult<Vec<PyState>> {
-    let suppress_errors = suppress_errors.unwrap_or(true);
-    let states = states.into_states(py)?;
+    let states: Vec<State> = states.into_iter().map(|x| x.0).collect();
+    let non_gravs = non_gravs.unwrap_or(vec![None; states.len()]);
+
+    if states.len() != non_gravs.len() {
+        Err(NEOSpyError::ValueError(
+            "non_gravs must be the same length as states.".into(),
+        ))?;
+    }
 
     let mut res: Vec<PyState> = Vec::new();
+    let jd = jd.jd();
 
     // propagation is broken into chunks of 1000 states, every time a chunk is completed
     // python is checked for signals. This allows keyboard interrupts to be caught
@@ -33,7 +67,7 @@ pub fn propagation_n_body_spk_py(
 
     for chunk in states
         .into_iter()
-        .zip(a_terms.into_iter())
+        .zip(non_gravs.into_iter())
         .collect_vec()
         .chunks(1000)
     {
@@ -51,7 +85,7 @@ pub fn propagation_n_body_spk_py(
                         Err(e)?;
                     };
                     return Ok::<PyState, PyErr>(
-                        State::new_nan(state.desig, jd_final, state.frame, center).into(),
+                        State::new_nan(state.desig, jd, state.frame, center).into(),
                     );
                 };
 
@@ -63,17 +97,17 @@ pub fn propagation_n_body_spk_py(
                     if !suppress_errors {
                         Err(NEOSpyError::ValueError("Input state contains NaNs.".into()))?;
                     };
-                    return Ok(State::new_nan(state.desig, jd_final, state.frame, center).into());
+                    return Ok(State::new_nan(state.desig, jd, state.frame, center).into());
                 }
                 let desig = state.desig.clone();
                 let frame = state.frame;
-                match propagation::propagate_n_body_spk(state, jd_final, include_asteroids, model) {
+                match propagation::propagate_n_body_spk(state, jd, include_asteroids, model) {
                     Ok(mut state) => {
                         if let Err(er) = spk.try_change_center(&mut state, center) {
                             if !suppress_errors {
                                 Err(er)?;
                             }
-                            return Ok(State::new_nan(desig, jd_final, frame, center).into());
+                            return Ok(State::new_nan(desig, jd, frame, center).into());
                         };
                         Ok(state.into())
                     }
@@ -82,14 +116,16 @@ pub fn propagation_n_body_spk_py(
                             Err(er)?
                         } else {
                             if let neospy_core::errors::NEOSpyError::Impact(id, time) = er {
+                                let time_full: Time<TDB> = Time::new(time);
                                 eprintln!(
-                                    "Impact detected between {:?} <-> {} at time {}",
+                                    "Impact detected between {:?} <-> {} at time {} ({})",
                                     desig,
                                     spice::try_name_from_id(id).unwrap_or(id.to_string()),
-                                    time
+                                    time,
+                                    time_full.utc().to_iso().unwrap()
                                 );
                             };
-                            Ok(State::new_nan(desig, jd_final, frame, center).into())
+                            Ok(State::new_nan(desig, jd, frame, center).into())
                         }
                     }
                 }

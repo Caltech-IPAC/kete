@@ -40,7 +40,7 @@ pub fn pck_load_py(filenames: Vec<String>) -> PyResult<()> {
 /// name : String
 ///     Optional name of the state.
 #[pyfunction]
-#[pyo3(name = "pck_earth_frame_to_ecliptic")]
+#[pyo3(name = "pck_earth_frame_to_ecliptic", signature = (pos, jd, new_center, name=None))]
 pub fn pck_earth_frame_py(
     pos: [f64; 3],
     jd: f64,

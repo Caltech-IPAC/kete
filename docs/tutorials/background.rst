@@ -64,30 +64,30 @@ few milliseconds).
 
 Examples of time scales (roughly in order of creation):
 
-    - **TAI** - Time measured by atomic clocks on the surface of the Earth. This is
-      strictly monotonically increasing time, and is the basis for measurement of all
-      time.
-    - **Terrestrial Time (TT)** - Basically defined by 1 second on an atomic clock on
-      Earth's surface. It is a more modern equivalent to UT. Using the SI units
-      definition of a second. This is by definition offset from TAI by 32.184 seconds.
-    - **Universal Time (UT or UT1)** - Time scale based upon Earth's rotation with
-      respect to the ICRF reference frame. This is one of the oldest definitions.
-      Unfortunately, Earth's rotation rate varies slightly over time, due to this, this
-      definition slowly drifts from TT on a yearly basis. It can only be measured,
-      predicting it with accuracy is currently impossible. This is an inconvient system
-      when a regulatory agency is attempting to broadcast time to the world, as it is
-      constantly changing. A result of this was the creation of the UTC system.
-    - **Coordinated Universal Time (UTC)** - Equivalent scaling as Terrestrial Time(TT)
-      however, they are offset by ~32.184 seconds (this amount varies due to leap
-      seconds, which are covered below).
-    - **Ephemeris Time (ET)** - An attempt to fix the UT time to correct for Earths
-      rotation rate variance. This has been replaced by more modern scales. This has
-      been largely replaced by TDB time.
-    - **Barycentric Dynamical Time (TDB)** - Basically defined as 1 second of an atomic
-      clock in the reference frame of the Solar System, but outside of gravitational
-      fields. However an offset has been applied to make it as close to TT as is
-      reasonably possible. This is the current reference time which JPL Ephemeris
-      uses.
+  - **TAI** - Time measured by atomic clocks on the surface of the Earth. This is
+    strictly monotonically increasing time, and is the basis for measurement of all
+    time.
+  - **Terrestrial Time (TT)** - Basically defined by 1 second on an atomic clock on
+    Earth's surface. It is a more modern equivalent to UT. Using the SI units
+    definition of a second. This is by definition offset from TAI by 32.184 seconds.
+  - **Universal Time (UT or UT1)** - Time scale based upon Earth's rotation with
+    respect to the ICRF reference frame. This is one of the oldest definitions.
+    Unfortunately, Earth's rotation rate varies slightly over time, due to this, this
+    definition slowly drifts from TT on a yearly basis. It can only be measured,
+    predicting it with accuracy is currently impossible. This is an inconvient system
+    when a regulatory agency is attempting to broadcast time to the world, as it is
+    constantly changing. A result of this was the creation of the UTC system.
+  - **Coordinated Universal Time (UTC)** - Equivalent scaling as Terrestrial Time(TT)
+    however, they are offset by ~32.184 seconds (this amount varies due to leap
+    seconds, which are covered below).
+  - **Ephemeris Time (ET)** - An attempt to fix the UT time to correct for Earths
+    rotation rate variance. This has been replaced by more modern scales. This has
+    been largely replaced by TDB time.
+  - **Barycentric Dynamical Time (TDB)** - Basically defined as 1 second of an atomic
+    clock in the reference frame of the Solar System, but outside of gravitational
+    fields. However an offset has been applied to make it as close to TT as is
+    reasonably possible. This is the current reference time which JPL Ephemeris
+    uses.
 
 In addition to the rate of passage of time (scale), it is necessary to pick the 0
 point. Examples of this include the Julian Date (JD) or the Modified Julian Date (MJD).

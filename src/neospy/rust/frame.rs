@@ -2,7 +2,7 @@ use neospy_core::frames::*;
 use pyo3::prelude::*;
 
 /// Defined inertial frames supported by the python side of NEOSpy
-#[pyclass(frozen, name = "Frames", module = "neospy")]
+#[pyclass(frozen, eq, eq_int, name = "Frames", module = "neospy")]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PyFrames {
     Ecliptic,

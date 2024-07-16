@@ -1,5 +1,6 @@
 use crate::elements::PyCometElements;
 use crate::frame::*;
+use crate::time::PyTime;
 use crate::vector::*;
 use neospy_core::prelude;
 use pyo3::prelude::*;
@@ -22,7 +23,7 @@ impl PyState {
     #[pyo3(signature = (desig, jd, pos, vel, frame=None, center_id=10))]
     pub fn new(
         desig: Option<String>,
-        jd: f64,
+        jd: PyTime,
         pos: VectorLike,
         vel: VectorLike,
         frame: Option<PyFrames>,
@@ -49,7 +50,7 @@ impl PyState {
         let vel = vel.into_vec(frame);
 
         let center_id = center_id.unwrap_or(10);
-        let state = prelude::State::new(desig, jd, pos, vel, frame.into(), center_id);
+        let state = prelude::State::new(desig, jd.jd(), pos, vel, frame.into(), center_id);
         Self(state)
     }
 

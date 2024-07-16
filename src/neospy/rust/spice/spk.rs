@@ -3,6 +3,7 @@ use pyo3::{pyfunction, PyResult};
 
 use crate::frame::PyFrames;
 use crate::state::PyState;
+use crate::time::PyTime;
 
 /// Load all specified files into the SPK shared memory singleton.
 #[pyfunction]
@@ -78,7 +79,8 @@ pub fn spk_reset_py() {
 ///     Frame of reference for the state.
 #[pyfunction]
 #[pyo3(name = "spk_state")]
-pub fn spk_state_py(id: i64, jd: f64, center: i64, frame: PyFrames) -> PyResult<PyState> {
+pub fn spk_state_py(id: i64, jd: PyTime, center: i64, frame: PyFrames) -> PyResult<PyState> {
+    let jd = jd.jd();
     let spk = get_spk_singleton().try_read().unwrap();
     let mut state = spk.try_get_state(id, jd, center, frame.into())?;
     state.try_naif_id_to_name();
@@ -97,7 +99,8 @@ pub fn spk_state_py(id: i64, jd: f64, center: i64, frame: PyFrames) -> PyResult<
 ///     Time (JD) in TDB scaled time.
 #[pyfunction]
 #[pyo3(name = "spk_raw_state")]
-pub fn spk_raw_state_py(id: i64, jd: f64) -> PyResult<PyState> {
+pub fn spk_raw_state_py(id: i64, jd: PyTime) -> PyResult<PyState> {
+    let jd = jd.jd();
     let spk = get_spk_singleton().try_read().unwrap();
     Ok(PyState(spk.try_get_raw_state(id, jd)?))
 }

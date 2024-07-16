@@ -68,6 +68,9 @@ impl neospy_core::io::FileIO for HorizonsProperties {}
 impl HorizonsProperties {
     #[new]
     #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (desig, group=None, epoch=None, eccentricity=None, inclination=None,
+        lon_of_ascending=None, peri_arg=None, peri_dist=None, peri_time=None, h_mag=None,
+        vis_albedo=None, diameter=None, moid=None, g_phase=None, arc_len=None, covariance=None))]
     pub fn new(
         desig: String,
         group: Option<String>,

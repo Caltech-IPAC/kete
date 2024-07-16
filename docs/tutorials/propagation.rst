@@ -35,22 +35,22 @@ understanding of what is required in order to accurately model their motion. The
 listed in approximately the order of their effects on objects (though order may change
 due to varying circumstances).
 
-- *Newtonian Gravity* - Typically what is imagined when people say the force of gravity.
-- *Corrections for Relativity (GR)* - The orbit of Mercury precesses due to effects from 
+  - **Newtonian Gravity** - Typically what is imagined when people say the force of gravity.
+  - **Corrections for Relativity (GR)** - The orbit of Mercury precesses due to effects from 
     relativity, and in fact many NEOs, or even objects which get close enough to planets
     will experience effects from relativity.  
-- *Gravity from Minor Planets* - Main belt asteroids are often non-negligible.
+  - **Gravity from Minor Planets** - Main belt asteroids are often non-negligible.
     The motion of objects through the main belt often needs to include the mass of
     asteroids such as Ceres, which makes up an appreciable fraction of the total mass of
     the belt.  
-- *Oblateness of the Sun/Planets* - The Sun and Planets are not ideal spheres, and as a
+  - **Oblateness of the Sun/Planets** - The Sun and Planets are not ideal spheres, and as a
     result, cannot be exactly modeled as a point source. This non-sphericity can be
     written as an expansion of spherical harmonic-like terms, commonly written as `J`
     terms. The first non-trivial term of this expansion is the oblateness, referred to
     as `J2`. This term by itself will cause objects in orbit of the central mass to
     have their longitude of ascending node precess as a function of how inclined they
     are with respect to the equator of the central mass.  
-- *Non-gravitational Forces* - The forces above are a result of gravity, however there
+  - **Non-gravitational Forces** - The forces above are a result of gravity, however there
     are many potential forces which an object may experience, these include things such
     as outgassing, radiation pressure, the Yarkovsky effect, and the Poynting-Robertson
     effect. These effects typically have some relation to the total solar radiation that

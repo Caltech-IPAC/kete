@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 use rayon::prelude::*;
 
 use crate::{
-    simult_states::{PySimultaneousStates, SimulStateLike},
+    simult_states::PySimultaneousStates,
     vector::{Vector, VectorLike},
 };
 
@@ -23,10 +23,10 @@ use crate::{
 /// dt: float
 ///     Length of time in days where 2-body mechanics is a good approximation.
 #[pyfunction]
-#[pyo3(name = "fov_state_check")]
+#[pyo3(name = "fov_state_check", signature = (obj_state, fovs, dt_limit=None))]
 pub fn fov_checks_py(
     py: Python<'_>,
-    obj_state: SimulStateLike,
+    obj_state: PySimultaneousStates,
     fovs: FOVListLike,
     dt_limit: Option<f64>,
 ) -> PyResult<Vec<PySimultaneousStates>> {
@@ -35,7 +35,7 @@ pub fn fov_checks_py(
     let fovs = fovs.into_sorted_vec_fov();
 
     // This is only here for a check to verify the states are valid
-    let pop = obj_state.into_simul_state(py)?;
+    let pop = obj_state.0;
 
     let mut jd = pop.jd;
     let mut big_jd = jd;
