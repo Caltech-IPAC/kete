@@ -49,12 +49,13 @@ states = neospy.propagate_n_body(states, jd_start)
 
 
 # step through time in 1 minute increments
-steps = np.arange(0, 1, 1 / (24 * 60))
-step_time = np.diff(steps)[0]
+step_time = 1 / (24 * 60)
+steps = np.arange(0, 1, step_time)
 
 elevation = []
 night_len = []
 sun_elevation = []
+moon_elevation = []
 for subrange in steps:
     # for each time step, calculate the elevation and sun elevation
     jd_step = jd_start + subrange
@@ -63,10 +64,15 @@ for subrange in steps:
     earth2obs = neospy.spice.mpc_code_to_ecliptic(site, jd_step, center="399").pos
     sun_elevation.append(90 - earth2obs.angle_between(-sun2obs))
 
+    moon = neospy.spice.get_state("Moon", jd_step)
+    obs2obj = neospy.Vector(moon.pos - sun2obs)
+    moon_elevation.append(90 - earth2obs.angle_between(obs2obj))
+
     cur_elev = []
     for state in approx_state:
         obs2obj = neospy.Vector(state.pos - sun2obs)
         cur_elev.append(90 - earth2obs.angle_between(obs2obj))
+
     elevation.append(cur_elev)
 
 elevation = np.array(elevation)
@@ -78,26 +84,32 @@ sunset_idx = np.argmax(sun_elevation < 0)
 elevation = elevation[sunset_idx:]
 steps = steps[sunset_idx:]
 sun_elevation = sun_elevation[sunset_idx:]
+moon_elevation = moon_elevation[sunset_idx:]
 
 # repeat for sunrise
 sunrise_idx = np.argmax(sun_elevation > 0)
 elevation = elevation[:sunrise_idx]
 steps = steps[:sunrise_idx]
 sun_elevation = sun_elevation[:sunrise_idx]
+moon_elevation = moon_elevation[:sunrise_idx]
 
 # Now sort the objects by earliest maximum elevation
 sort_idx = np.argsort(np.argmax(np.array(elevation).T, axis=1))[::-1]
 elevation = elevation[:, sort_idx]
 object_names = np.array(object_names)[sort_idx]
 
-dates = [neospy.Time(t + jd_start).to_datetime().astimezone(timezone) for t in steps]
+dates_utc = [neospy.Time(t + jd_start).to_datetime() for t in steps]
+dates = [t.astimezone(timezone) for t in dates_utc]
+moon_frac = neospy.spice.moon_illumination_frac(jd_start)
+
+# Find the time closest to midnight
+midnight = dates[np.argmax([d.hour + d.minute for d in dates])]
 
 # %%
 # First Plot:
 # -----------
 # This shows the elevation of all objects as the night progresses.
-
-plt.figure(dpi=150, figsize=(8, 3))
+plt.figure(dpi=150, figsize=(8, 4))
 
 ys = np.arange(0, 91, 10)
 plt.yticks(ys, ys)
@@ -114,15 +126,24 @@ for idx, line in zip(np.argmax(np.array(elevation).T, axis=1), lines):
     max_elev.append(line._x[idx])
 labelLines(lines, xvals=max_elev, zorder=2.5)
 
-plt.title(
-    start_time.strftime("%Y-%m-%d")
+line = plt.plot(
+    dates, moon_elevation, label=f"Moon ({moon_frac:0.0%})", ls="--", c="k", lw=1
+)[0]
+labelLines([line], xvals=line._x[np.argmax(moon_elevation)], zorder=2.45, fontsize=8)
+
+plt.axvline(midnight, c="k", zorder=2)
+
+
+plt.xlabel(
+    "Local Time - "
+    + start_time.strftime("%Y-%m-%d")
     + "  to  "
     + (start_time + timedelta(days=1)).strftime("%Y-%m-%d")
 )
+
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz=timezone))
 plt.gca().xaxis.set_major_locator(mdates.HourLocator(byhour=range(24)))
 plt.gca().xaxis.set_minor_locator(mdates.MinuteLocator(byminute=range(0, 24 * 15, 15)))
-plt.gcf().autofmt_xdate()
 plt.ylabel("Elevation")
 
 night = np.array(dates)[sun_elevation < 0]
@@ -143,6 +164,15 @@ for dark in [night, civil_night, nautical_night, astro_night]:
     )
 
 plt.grid()
+ax = plt.twiny()
+for elev, name in zip(elevation.T, object_names):
+    plt.plot(dates, elev, c="None")
+ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz="UTC"))
+ax.xaxis.set_major_locator(mdates.HourLocator(byhour=range(24)))
+ax.xaxis.set_minor_locator(mdates.MinuteLocator(byminute=range(0, 24 * 15, 15)))
+plt.gcf().autofmt_xdate()
+
+plt.xlabel("Time (UTC)")
 
 plt.tight_layout()
 plt.show()
@@ -152,17 +182,19 @@ plt.show()
 # ------------
 # Same data as above, but plotted as a heatmap, sorted by earliest maximum elevation.
 
-
 elevation[elevation < 0] = np.nan
 plt.figure(dpi=150, figsize=(8, 3 + len(object_names) * 0.2))
-plt.title(
-    start_time.strftime("%Y-%m-%d")
+plt.xlabel(
+    "Local Time - "
+    + start_time.strftime("%Y-%m-%d")
     + "  to  "
     + (start_time + timedelta(days=1)).strftime("%Y-%m-%d")
 )
 plt.yticks(range(len(object_names)), object_names)
 plt.xlim(np.min(night), np.max(night))
+plt.axvline(midnight, c="k", alpha=0.8, zorder=-1)
 plt.pcolormesh(dates, range(len(object_names)), np.clip(elevation.T, 0, 100))
+
 
 x_cut = np.argmax(elevation > cutoff, axis=0)
 for idx, idy in enumerate(x_cut):
@@ -188,8 +220,18 @@ plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz=timezone))
 plt.gca().xaxis.set_major_locator(mdates.HourLocator(byhour=range(24)))
 plt.gca().xaxis.set_minor_locator(mdates.MinuteLocator(byminute=range(0, 24 * 15, 15)))
 plt.gcf().autofmt_xdate()
-cb = plt.colorbar(location="bottom", pad=0.15, fraction=0.05, label="Elevation (Deg)")
+
+
+cb = plt.colorbar(location="bottom", pad=0.25, fraction=0.05, label="Elevation (Deg)")
 cb.ax.plot([cutoff, cutoff], [0, 1], c="w", ls="--", lw=0.75)
 plt.grid(axis="x", lw=0.25)
+
+ax = plt.twiny()
+ax.pcolormesh(dates, range(len(object_names)), np.clip(elevation.T, 0, 100), alpha=0)
+ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz="UTC"))
+ax.xaxis.set_major_locator(mdates.HourLocator(byhour=range(24)))
+ax.xaxis.set_minor_locator(mdates.MinuteLocator(byminute=range(0, 24 * 15, 15)))
+plt.xlabel("Time (UTC)")
+
 plt.tight_layout()
 plt.show()
