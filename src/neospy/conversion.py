@@ -14,6 +14,24 @@ from . import constants
 logger = logging.getLogger(__name__)
 
 
+def compute_airmass(zenith_angle: float) -> float:
+    """
+    Compute the approximate air-mass above the observer given the zenith angle.
+
+    Algorithm from:
+    Andrew T. Young, "Air mass and refraction," Appl. Opt. 33, 1108-1110 (1994)
+
+    Parameters
+    ----------
+    zenith_angle:
+        True zenith angle in degrees.
+    """
+    cos_z = np.cos(np.radians(zenith_angle))
+    num = 1.002432 * cos_z**2 + 0.148386 * cos_z + 0.0096467
+    denominator = cos_z**3 + 0.149864 * cos_z**2 + 0.0102963 * cos_z + 0.000303978
+    return num / denominator
+
+
 def compute_h_mag(diameter: NDArray, albedo: NDArray, c_hg=constants.C_V) -> np.ndarray:
     """
     Compute the H magnitude of the object given the diameter in km and the albedo.

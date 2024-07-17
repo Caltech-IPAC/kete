@@ -233,5 +233,14 @@ ax.xaxis.set_major_locator(mdates.HourLocator(byhour=range(24)))
 ax.xaxis.set_minor_locator(mdates.MinuteLocator(byminute=range(0, 24 * 15, 15)))
 plt.xlabel("Time (UTC)")
 
+ymin, ymax = plt.gca().get_ylim()
+ax2 = plt.twinx()
+ax2.set_ylim(ymin, ymax)
+elev_ticks = np.array([90, 70, 50, 30, 10])
+airmass = [f"{x:0.3g}" for x in neospy.conversion.compute_airmass(90 - elev_ticks)]
+
+ax2.set_yticks(elev_ticks, airmass)
+plt.ylabel("Airmass")
+
 plt.tight_layout()
 plt.show()
