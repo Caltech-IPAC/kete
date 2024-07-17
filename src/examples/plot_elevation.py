@@ -170,7 +170,6 @@ for elev, name in zip(elevation.T, object_names):
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz="UTC"))
 ax.xaxis.set_major_locator(mdates.HourLocator(byhour=range(24)))
 ax.xaxis.set_minor_locator(mdates.MinuteLocator(byminute=range(0, 24 * 15, 15)))
-plt.gcf().autofmt_xdate()
 
 plt.xlabel("Time (UTC)")
 
