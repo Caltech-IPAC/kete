@@ -176,7 +176,7 @@ plt.xlabel("Time (UTC)")
 ymin, ymax = plt.gca().get_ylim()
 ax2 = plt.twinx()
 ax2.set_ylim(ymin, ymax)
-elev_ticks = np.array([90, 70, 50, 30, 10])
+elev_ticks = np.arange(10, 91, 10)
 airmass = [f"{x:0.3g}" for x in neospy.conversion.compute_airmass(90 - elev_ticks)]
 
 ax2.set_yticks(elev_ticks, airmass)
@@ -227,7 +227,6 @@ for idx, idy in enumerate(np.argmax(np.nan_to_num(elevation), axis=0)):
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz=timezone))
 plt.gca().xaxis.set_major_locator(mdates.HourLocator(byhour=range(24)))
 plt.gca().xaxis.set_minor_locator(mdates.MinuteLocator(byminute=range(0, 24 * 15, 15)))
-plt.gcf().autofmt_xdate()
 
 
 cb = plt.colorbar(location="bottom", pad=0.25, fraction=0.05, label="Elevation (Deg)")
