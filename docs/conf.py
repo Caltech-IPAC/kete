@@ -13,6 +13,8 @@ author = "Dar Dahlen"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
+html_favicon = "data/favicon.png"
+
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
