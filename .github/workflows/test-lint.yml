@@ -66,6 +66,12 @@ jobs:
     - name: Upload Docs artifact
       uses: actions/upload-artifact@master
       with:
+        name: "docs"
+        path:
+          docs/html/    
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
         name: "github-pages"
         path:
           docs/html/
