@@ -81,6 +81,7 @@ def cached_file_download(url, force_download=False, subfolder=""):
     filename = os.path.join(cache_path(subfolder), parsed.path.split("/")[-1])
     # check if already downloaded
     if not os.path.isfile(filename) or force_download:
+        raise ValueError("missing file ", filename)
         with requests.Session() as session:
             retry = Retry(connect=3, backoff_factor=0.5)
             adapter = requests.adapters.HTTPAdapter(max_retries=retry)
