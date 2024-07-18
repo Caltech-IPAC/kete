@@ -3,6 +3,9 @@
 
 name: Tests and Lint
 
+env:
+  NEOSPY_CACHE_DIR: ${{ github.workspace }}/docs/data
+
 on:
   push:
     branches: [ "main" ]
@@ -12,32 +15,58 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
-  build:
-    timeout-minutes: 10
+
+  lint:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.9"
-    - name: Install dependencies
-      run: |
-        python3 -m pip install --upgrade pip setuptools black mypy types-requests numpy
-    - name: Black Formatting
-      run: |
-        python3 -m black . --check
-    - name: Lint with mypy
-      run: |
-        python3 -m mypy src/neospy/
-    - name: Build neospy
-      run: |
-        python3 -m pip install '.[dev]' -v
-    - name: Test with pytest
-      run: |
-        python3 -m pytest --cov-report term-missing --cov=neospy
-    - name: Test with cargo
-      run: |
-        cargo test
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip setuptools black mypy types-requests numpy
+      - name: Black Formatting
+        run: |
+          python3 -m black . --check
+      - name: Lint with mypy
+        run: |
+          python3 -m mypy src/neospy/
+
+  build:
+    needs: lint
+    timeout-minutes: 10
+    steps:
+      - name: Build neospy
+        run: |
+          python3 -m pip install '.[dev]' -v
+  
+  test:
+    needs: build
+    timeout-minutes: 10
+    steps:
+      - name: Test with pytest
+        run: |
+          python3 -m pytest --cov-report term-missing --cov=neospy
+      - name: Test with cargo
+        run: |
+          cargo test
+  
+  docs:
+    needs: build
+    timeout-minutes: 10
+    steps:
+      - name: Build Docs
+        run: |
+          (cd docs && make clean && make html && make doctest)
+      - name: Archive Docs
+        uses: actions/upload-artifact@v2
+        with:
+          name: "docs"
+          path:
+            docs/html/*
