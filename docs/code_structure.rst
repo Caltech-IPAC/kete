@@ -84,5 +84,4 @@ NEOSpy Python
 ~~~~~~~~~~~~~
 The remaining part of the code which is strictly Python is mostly quality of life
 functions, plotting, and web query code. There is little to no mathematics or physics
-contained within the Python. The exception being the population related code, which
-manages the fair sampling of the known asteroids to generation synthetic populations.
+contained within the Python.

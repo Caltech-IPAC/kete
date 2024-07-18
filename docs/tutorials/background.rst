@@ -11,8 +11,11 @@ definitions, and the object from which they are relative to must also be kept tr
 Additionally, all coordinate frames within NEOSpy are treated as inertial, meaning there
 is no funny business regarding accelerating frames such as a rocket.
 
+.. image:: ../data/background_frames.png
+   :alt: Conversions between reference frames.
+
 There are several common definitions of coordinate frames in astronomy, here are some
-listed in order of general popularity:
+popular choices:
 
     - **Equatorial** - The X-Y plane is defined by the celestial equator (Earth's
       Equator). The x-axis is defined pointing to the Vernal Equinox (IE: where the
