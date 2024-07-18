@@ -6,6 +6,10 @@ name: Build Docs
 on:
   push:
     branches: [ "main" ]
+
+env:
+  NEOSPY_CACHE_DIR: ${{ github.workspace }}/docs/data
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -16,7 +20,9 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        lfs: true
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -35,12 +41,6 @@ jobs:
         chmod -c -R +rX "docs/" | while read line; do
           echo "::warning title=Invalid file permissions automatically fixed::$line"
         done
-    # - name: Archive Docs
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: "github-pages"
-    #     path:
-    #       docs/html/*
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
       with:
