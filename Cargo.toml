@@ -29,4 +29,3 @@ default-members = ["src/neospy_core"]
 
 [profile.release]
 opt-level = 3
-pyo3_disable_reference_pool = true
