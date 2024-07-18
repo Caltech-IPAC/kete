@@ -39,6 +39,7 @@ jobs:
           python3 -m mypy src/neospy/
 
   build:
+    runs-on: ubuntu-latest
     needs: lint
     timeout-minutes: 10
     steps:
@@ -47,6 +48,7 @@ jobs:
           python3 -m pip install '.[dev]' -v
   
   test:
+    runs-on: ubuntu-latest
     needs: build
     timeout-minutes: 10
     steps:
@@ -58,6 +60,7 @@ jobs:
           cargo test
   
   docs:
+    runs-on: ubuntu-latest
     needs: build
     timeout-minutes: 10
     steps:
