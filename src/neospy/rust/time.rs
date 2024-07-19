@@ -38,7 +38,7 @@ impl<'py> FromPyObject<'py> for PyTime {
         if let Ok(jd) = ob.extract::<f64>() {
             return Ok(PyTime(Time::new(jd)));
         }
-        ob.extract::<PyTime>()
+        Ok(PyTime(ob.downcast_exact::<PyTime>()?.get().0))
     }
 }
 

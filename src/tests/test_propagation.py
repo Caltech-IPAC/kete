@@ -8,6 +8,7 @@ from neospy import (
     moid,
     Vector,
     State,
+    Time,
 )
 from neospy.propagation import NonGravModel
 
@@ -46,7 +47,7 @@ class TestNBodyPropagation:
     def test_propagation_short(self, ceres_traj):
         initial_state = ceres_traj[0]
         final_state = ceres_traj[1]
-        calc = propagate_n_body([initial_state], final_state.jd)[0]
+        calc = propagate_n_body([initial_state], Time(final_state.jd))[0]
         assert np.allclose(calc.pos, final_state.pos)
         assert np.allclose(calc.vel, final_state.vel)
 

@@ -253,7 +253,7 @@ def _nongrav(self) -> NonGravModel:
         "NM": "m",
         "R0": "r_0",
         "NK": "k",
-        "N": "n",
+        "NN": "n",
     }
 
     orbit = self.json["orbit"]
@@ -261,6 +261,8 @@ def _nongrav(self) -> NonGravModel:
         return None
 
     for vals in orbit["model_pars"]:
+        if vals["name"] not in lookup:
+            raise ValueError("Unknown non-grav values: ", vals)
         params[lookup[vals["name"]]] = float(vals["value"])
 
     return NonGravModel.new_comet(**params)
