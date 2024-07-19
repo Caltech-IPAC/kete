@@ -16,6 +16,7 @@ dependencies = ["astropy>=5.3.4",
                 "pandas",
                 "requests",
                 "scipy",
+                "cartopy",
                 ]
 
 [project.urls]

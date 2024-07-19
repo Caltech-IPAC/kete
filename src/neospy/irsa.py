@@ -64,7 +64,7 @@ def query_irsa_tap(
                             ['bar', 55232.963786, 49.14175, 21.63811111]],
                             columns=['name', 'mjd0', 'ra0', 'dec0'])
 
-        jd = neospy.Time(56823.933738, 'mjd').jd
+        jd = neospy.Time.from_mjd(56823.933738).jd
 
         # This time corresponds to this phase:
         phase = neospy.wise.mission_phase_from_jd(jd)
