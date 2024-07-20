@@ -4,6 +4,8 @@ import matplotlib.patches as mpatches
 from cartopy.mpl.ticker import LatitudeFormatter, LongitudeFormatter
 import numpy as np
 from .vector import Vector, Frames
+from .propagation import propagate_n_body
+from .spice import get_state
 
 __all__ = ["neos_field_of_regard", "add_rectangle", "celestial_sphere"]
 
@@ -17,6 +19,8 @@ def celestial_sphere(
     x_inline=False,
     y_inline=False,
     deg_format=".0f",
+    include_equatorial=False,
+    include_galactic=False,
 ):
     """
     Plot the celestial sphere, returning the axis so that other things may be added.
@@ -42,6 +46,10 @@ def celestial_sphere(
         Should the y line labels be inline on the plot.
     deg_format :
         Format string for the degree labels of the ticks.
+    include_equatorial :
+        Plot an indicator line for the equatorial plane.
+    include_galactic :
+        Plot an indicator line for the galactic plane.
     """
     if extent is None:
         extent = [-150, 150, -50, 50]
@@ -91,6 +99,30 @@ def celestial_sphere(
     gl.xlabel_style = {"size": 6}
     gl.ylabel_style = {"size": 6}
     ax.invert_xaxis()
+
+    lon_steps = np.linspace(0, 360, 100)
+    frames = []
+    if include_equatorial:
+        frames.append(Frames.Equatorial)
+    if include_galactic:
+        frames.append(Frames.Galactic)
+
+    for frame in frames:
+        vecs = [Vector.from_el_az(0, step, 1, frame=frame) for step in lon_steps]
+
+        vecs = [v.as_ecliptic for v in vecs]
+        pos = np.array([[v.az, v.el] for v in vecs])
+
+        # roll the indices so that it plots pretty
+        # this is just to make the visualization nice
+        pos[:, 0] = (pos[:, 0] + 180) % 360 - 180
+        idx = np.argmax(abs(np.diff(pos[:, 0])))
+        pos = np.roll(pos, -idx - 1, axis=0)
+
+        ax.plot(*pos.T, label=frame, transform=ccrs.PlateCarree(), lw=0.5)
+        vec_0 = Vector([1, 0, 0], frame=frame).as_ecliptic
+        ax.scatter(vec_0.az, vec_0.el, transform=ccrs.PlateCarree(), s=10, marker="x")
+
     return ax
 
 
@@ -156,7 +188,11 @@ def neos_field_of_regard(
     elon_range = [45, 120] if elon_range is None else elon_range
     lat_range = [-40, 40] if lat_range is None else lat_range
     sun_pos = -state.pos.as_ecliptic
-    ax = celestial_sphere(extent="None")
+    ax = celestial_sphere(
+        extent="None",
+        include_equatorial=include_equatorial,
+        include_galactic=include_galactic,
+    )
     ax.scatter(sun_pos.lon, sun_pos.lat, c="Orange", transform=ccrs.PlateCarree())
     width = elon_range[1] - elon_range[0]
     height = lat_range[1] - lat_range[0]
@@ -166,27 +202,71 @@ def neos_field_of_regard(
     add_rectangle([sun_pos.lon - x_center, y_center], width, height, alpha=0.1)
     add_rectangle([sun_pos.lon + x_center, y_center], width, height, alpha=0.1)
 
-    lon_steps = np.linspace(0, 360, 100)
-    frames = []
-    if include_equatorial:
-        frames.append(Frames.Equatorial)
-    if include_galactic:
-        frames.append(Frames.Galactic)
-
-    for frame in frames:
-        vecs = [Vector.from_el_az(0, step, 1, frame=frame) for step in lon_steps]
-
-        vecs = [v.as_ecliptic for v in vecs]
-        pos = np.array([[v.az, v.el] for v in vecs])
-
-        # roll the indices so that it plots pretty
-        # this is just to make the visualization nice
-        pos[:, 0] = (pos[:, 0] + 180) % 360 - 180
-        idx = np.argmax(abs(np.diff(pos[:, 0])))
-        pos = np.roll(pos, -idx - 1, axis=0)
-
-        ax.plot(*pos.T, label=frame, transform=ccrs.PlateCarree(), lw=0.5)
-        vec_0 = Vector([1, 0, 0], frame=frame).as_ecliptic
-        ax.scatter(vec_0.az, vec_0.el, transform=ccrs.PlateCarree(), s=10, marker="x")
-
     return ax
+
+
+def plot_state(
+    state,
+    observer=None,
+    into_past=90,
+    step_size=1,
+    ms=10,
+    lw=1,
+    c=None,
+    spot_alpha=1,
+    line_alpha=0.3,
+):
+    """
+    Given the state of an object, plot it on the already plotted celestial sphere.
+
+    The object is plotted with respect to an observer.
+
+    This also propagates the object backward in time and plots the objects 'trail'.
+
+    If an observer is provided, the object will be propagated to the observer's time.
+
+    Parameters
+    ----------
+    state :
+        State defining the object with respect to the Sun.
+    observer:
+        Observers state, defaults to Earth if not provided.
+    into_past:
+        How many days into the past to print the objects tail.
+    step_size:
+        How frequently to sample the propagation.
+    ms :
+        marker size.
+    lw :
+        Line width.
+    c :
+        Color.
+    spot_alpha :
+        Alpha of the spot.
+    line_alpha :
+        Alpha of the line.
+    """
+    if observer is None:
+        observer = get_state("Earth", state.jd)
+
+    if abs(state.jd - observer.jd) > 1e-6:
+        state = propagate_n_body([state], observer.jd)[0]
+    jds = state.jd - np.arange(0, into_past, step_size)
+    ax = plt.gca()
+
+    pos = state.pos.as_ecliptic - observer.pos
+    ax.scatter(
+        pos.lon, pos.lat, s=ms, c=c, alpha=spot_alpha, transform=ccrs.PlateCarree()
+    )
+    prev_pos = []
+    for jd in jds:
+        state = propagate_n_body([state], jd)[0]
+        vec = state.pos.as_ecliptic - observer.pos
+        prev_pos.append([vec.lon, vec.lat])
+    ax.plot(
+        *np.transpose(prev_pos),
+        lw=lw,
+        c=c,
+        alpha=line_alpha,
+        transform=ccrs.PlateCarree(),
+    )
