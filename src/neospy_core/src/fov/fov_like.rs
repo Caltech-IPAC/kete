@@ -87,11 +87,15 @@ pub trait FovLike: Sync + Sized {
     /// Assuming the object undergoes n-body motion, check to see if it is within the
     /// field of view.
     #[inline]
-    fn check_n_body(&self, state: &State) -> Result<(usize, Contains, State), NEOSpyError> {
+    fn check_n_body(
+        &self,
+        state: &State,
+        include_asteroids: bool,
+    ) -> Result<(usize, Contains, State), NEOSpyError> {
         let obs = self.observer();
         let obs_pos = Vector3::from(obs.pos);
 
-        let exact_state = propagate_n_body_spk(state.clone(), obs.jd, false, None)?;
+        let exact_state = propagate_n_body_spk(state.clone(), obs.jd, include_asteroids, None)?;
 
         // correct for light delay
         let dt = -(Vector3::from(exact_state.pos) - obs_pos).norm() * C_AU_PER_DAY_INV;
@@ -125,12 +129,18 @@ pub trait FovLike: Sync + Sized {
     /// * `state` - A vector of States which define the objects, the center ID should be set
     ///             to 10 (the Sun).
     /// * `dt_limit` - Length of time in days where two body motion is considered valid.
+    /// * `include_asteroids` - Include the 5 largest asteroids during the computation.
     ///
-    fn check_visible(&self, states: &[State], dt_limit: f64) -> Vec<Option<SimultaneousStates>> {
+    fn check_visible(
+        &self,
+        states: &[State],
+        dt_limit: f64,
+        include_asteroids: bool,
+    ) -> Vec<Option<SimultaneousStates>> {
         let obs_state = self.observer();
 
         let final_states: Vec<(usize, State)> = states
-            .par_iter()
+            .iter()
             .filter_map(|state: &State| {
                 // assuming linear motion, how far can the object have moved relative
                 // to the observer? Then add a factor of 2 for safety
@@ -157,7 +167,8 @@ pub trait FovLike: Sync + Sized {
                             return None;
                         }
                     }
-                    let (idx, contains, state) = self.check_n_body(state).ok()?;
+                    let (idx, contains, state) =
+                        self.check_n_body(state, include_asteroids).ok()?;
                     match contains {
                         Contains::Inside => Some((idx, state)),
                         _ => None,

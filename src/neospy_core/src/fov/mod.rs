@@ -47,15 +47,20 @@ pub enum FOV {
 
 impl FOV {
     /// Check if a collection of states are visible to this FOV using orbital propagation
-    pub fn check_visible(self, states: &[State], dt_limit: f64) -> Vec<Option<SimultaneousStates>> {
+    pub fn check_visible(
+        self,
+        states: &[State],
+        dt_limit: f64,
+        include_asteroids: bool,
+    ) -> Vec<Option<SimultaneousStates>> {
         match self {
-            FOV::Wise(fov) => fov.check_visible(states, dt_limit),
-            FOV::NeosCmos(fov) => fov.check_visible(states, dt_limit),
-            FOV::ZtfCcdQuad(fov) => fov.check_visible(states, dt_limit),
-            FOV::GenericCone(fov) => fov.check_visible(states, dt_limit),
-            FOV::GenericRectangle(fov) => fov.check_visible(states, dt_limit),
-            FOV::ZtfField(fov) => fov.check_visible(states, dt_limit),
-            FOV::NeosVisit(fov) => fov.check_visible(states, dt_limit),
+            FOV::Wise(fov) => fov.check_visible(states, dt_limit, include_asteroids),
+            FOV::NeosCmos(fov) => fov.check_visible(states, dt_limit, include_asteroids),
+            FOV::ZtfCcdQuad(fov) => fov.check_visible(states, dt_limit, include_asteroids),
+            FOV::GenericCone(fov) => fov.check_visible(states, dt_limit, include_asteroids),
+            FOV::GenericRectangle(fov) => fov.check_visible(states, dt_limit, include_asteroids),
+            FOV::ZtfField(fov) => fov.check_visible(states, dt_limit, include_asteroids),
+            FOV::NeosVisit(fov) => fov.check_visible(states, dt_limit, include_asteroids),
         }
     }
 

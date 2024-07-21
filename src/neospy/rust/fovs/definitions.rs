@@ -45,16 +45,22 @@ pub struct PyZtfField(pub fov::ZtfField);
 #[derive(Clone, Debug)]
 pub struct PyGenericRectangle(pub fov::GenericRectangle);
 
+/// Generic Cone field of view.
+#[pyclass(module = "neospy", frozen, name = "ConeFOV")]
+#[derive(Clone, Debug)]
+pub struct PyGenericCone(pub fov::GenericCone);
+
 /// Field of views supported by the python interface
 #[derive(Clone, FromPyObject)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum AllowedFOV {
     WISE(PyWiseCmos),
     NEOS(PyNeosCmos),
-    Rectangle(PyGenericRectangle),
     ZTF(PyZtfCcdQuad),
     ZTFField(PyZtfField),
     NEOSVisit(PyNeosVisit),
+    Rectangle(PyGenericRectangle),
+    Cone(PyGenericCone),
 }
 
 impl AllowedFOV {
@@ -66,6 +72,7 @@ impl AllowedFOV {
             AllowedFOV::ZTF(fov) => fov.0.observer().jd,
             AllowedFOV::ZTFField(fov) => fov.0.observer().jd,
             AllowedFOV::NEOSVisit(fov) => fov.0.observer().jd,
+            AllowedFOV::Cone(fov) => fov.0.observer().jd,
         }
     }
 
@@ -78,6 +85,7 @@ impl AllowedFOV {
             AllowedFOV::ZTF(fov) => fov.0.get_fov(idx),
             AllowedFOV::ZTFField(fov) => fov.0.get_fov(idx),
             AllowedFOV::NEOSVisit(fov) => fov.0.get_fov(idx),
+            AllowedFOV::Cone(fov) => fov.0.get_fov(idx),
         }
     }
 
@@ -89,6 +97,7 @@ impl AllowedFOV {
             AllowedFOV::ZTF(fov) => fov::FOV::ZtfCcdQuad(fov.0),
             AllowedFOV::ZTFField(fov) => fov::FOV::ZtfField(fov.0),
             AllowedFOV::NEOSVisit(fov) => fov::FOV::NeosVisit(fov.0),
+            AllowedFOV::Cone(fov) => fov::FOV::GenericCone(fov.0),
         }
     }
 
@@ -100,6 +109,7 @@ impl AllowedFOV {
             AllowedFOV::ZTF(fov) => fov.__repr__(),
             AllowedFOV::ZTFField(fov) => fov.__repr__(),
             AllowedFOV::NEOSVisit(fov) => fov.__repr__(),
+            AllowedFOV::Cone(fov) => fov.__repr__(),
         }
     }
 }
@@ -113,6 +123,7 @@ impl IntoPy<PyObject> for AllowedFOV {
             Self::ZTF(fov) => fov.into_py(py),
             Self::ZTFField(fov) => fov.into_py(py),
             Self::NEOSVisit(fov) => fov.into_py(py),
+            Self::Cone(fov) => fov.into_py(py),
         }
     }
 }
@@ -126,9 +137,7 @@ impl From<fov::FOV> for AllowedFOV {
             fov::FOV::GenericRectangle(fov) => AllowedFOV::Rectangle(PyGenericRectangle(fov)),
             fov::FOV::ZtfField(fov) => AllowedFOV::ZTFField(PyZtfField(fov)),
             fov::FOV::NeosVisit(fov) => AllowedFOV::NEOSVisit(PyNeosVisit(fov)),
-            _ => {
-                unimplemented!("Python interface doesn't support this FOV.")
-            }
+            fov::FOV::GenericCone(fov) => AllowedFOV::Cone(PyGenericCone(fov)),
         }
     }
 }
@@ -267,6 +276,49 @@ impl PyGenericRectangle {
             self.observer().__repr__(),
             self.lon_width(),
             self.lat_width(),
+        )
+    }
+}
+
+#[pymethods]
+impl PyGenericCone {
+    #[new]
+    pub fn new(pointing: VectorLike, angle: f64, observer: PyState) -> Self {
+        let pointing = pointing.into_vector(observer.frame());
+        PyGenericCone(fov::GenericCone::new(
+            pointing.raw.into(),
+            angle.to_radians(),
+            observer.0,
+        ))
+    }
+
+    /// The observer State.
+    #[getter]
+    pub fn observer(&self) -> PyState {
+        self.0.observer().clone().into()
+    }
+
+    /// Direction that the observer is looking.
+    #[getter]
+    pub fn pointing(&self) -> Vector {
+        Vector::new(
+            self.0.patch.pointing().into_inner().into(),
+            self.0.observer().frame.into(),
+        )
+    }
+
+    /// The longitudinal width of the FOV.
+    #[getter]
+    pub fn angle(&self) -> f64 {
+        self.0.angle().to_degrees()
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "GenericCone(pointing={}, angle={}, observer={})",
+            self.pointing().__repr__(),
+            self.angle(),
+            self.observer().__repr__(),
         )
     }
 }

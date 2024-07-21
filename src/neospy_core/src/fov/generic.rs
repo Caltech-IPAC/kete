@@ -106,6 +106,12 @@ impl GenericCone {
         let patch = SphericalCone::new(&pointing, angle, observer.frame);
         Self { observer, patch }
     }
+
+    /// Angle of the cone from the central pointing vector.
+    #[inline]
+    pub fn angle(&self) -> &f64 {
+        &self.patch.angle
+    }
 }
 
 impl FovLike for GenericCone {
@@ -178,10 +184,10 @@ mod tests {
 
             let fov = GenericRectangle::new(vec, 0.0001, 0.01, 0.01, circular.clone());
             assert!(fov.check_two_body(&off_state).is_ok());
-            assert!(fov.check_n_body(&off_state).is_ok());
+            assert!(fov.check_n_body(&off_state, false).is_ok());
 
             assert!(fov
-                .check_visible(&[off_state], 6.0)
+                .check_visible(&[off_state], 6.0, false)
                 .first()
                 .unwrap()
                 .is_some());
