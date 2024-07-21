@@ -91,19 +91,20 @@ impl SpkCollection {
     pub fn try_change_center(&self, state: &mut State, new_center: i64) -> NeosResult<()> {
         match (state.center_id, new_center) {
             (a, b) if a == b => (),
-            (399, 10) | (301, 10) => {
-                let next = self.try_get_raw_state(3, state.jd)?;
-                state.try_change_center(next)?;
+            (i, 0) if i <= 10 => {
+                state.try_change_center(self.try_get_raw_state(i, state.jd)?)?;
+            }
+            (0, 10) => {
                 let next = self.try_get_raw_state(10, state.jd)?;
                 state.try_change_center(next)?;
             }
-            (i, 10) if i <= 8 => {
-                let next = self.try_get_raw_state(10, state.jd)?;
-                state.try_change_center(next)?;
+            (i, 10) if i < 10 => {
+                state.try_change_center(self.try_get_raw_state(i, state.jd)?)?;
+                state.try_change_center(self.try_get_raw_state(10, state.jd)?)?;
             }
-            (10, 0) => {
-                let next = self.try_get_raw_state(10, state.jd)?;
-                state.try_change_center(next)?;
+            (10, i) if i < 10 => {
+                state.try_change_center(self.try_get_raw_state(10, state.jd)?)?;
+                state.try_change_center(self.try_get_raw_state(i, state.jd)?)?;
             }
             _ => {
                 let path = self.find_path(state.center_id, new_center)?;
