@@ -89,15 +89,29 @@ impl SpkCollection {
     /// Use the data loaded in the SPKs to change the center ID of the provided state.
     #[inline(always)]
     pub fn try_change_center(&self, state: &mut State, new_center: i64) -> NeosResult<()> {
-        if state.center_id == new_center {
-            return Ok(());
-        }
-
-        let path = self.find_path(state.center_id, new_center)?;
-
-        for intermediate in path {
-            let next = self.try_get_raw_state(intermediate, state.jd)?;
-            state.try_change_center(next)?;
+        match (state.center_id, new_center) {
+            (a, b) if a == b => (),
+            (399, 10) | (301, 10) => {
+                let next = self.try_get_raw_state(3, state.jd)?;
+                state.try_change_center(next)?;
+                let next = self.try_get_raw_state(10, state.jd)?;
+                state.try_change_center(next)?;
+            }
+            (i, 10) if i <= 8 => {
+                let next = self.try_get_raw_state(10, state.jd)?;
+                state.try_change_center(next)?;
+            }
+            (10, 0) => {
+                let next = self.try_get_raw_state(10, state.jd)?;
+                state.try_change_center(next)?;
+            }
+            _ => {
+                let path = self.find_path(state.center_id, new_center)?;
+                for intermediate in path {
+                    let next = self.try_get_raw_state(intermediate, state.jd)?;
+                    state.try_change_center(next)?;
+                }
+            }
         }
         Ok(())
     }
@@ -162,7 +176,6 @@ impl SpkCollection {
     /// Given a NAIF ID, and a target NAIF ID, find the intermediate SPICE Segments
     /// which need to be loaded to find a path from one object to the other.
     /// Use Dijkstra plus the known segments to calculate a path.
-    #[inline(always)]
     fn find_path(&self, start: i64, goal: i64) -> NeosResult<Vec<i64>> {
         // first we check to see if the cache contains the lookup we need.
         if let Some(path) = self.map_cache.get(&(start, goal)) {
