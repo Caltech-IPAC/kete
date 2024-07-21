@@ -19,7 +19,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
 
-use crate::errors::NEOSpyError;
+use crate::errors::{Error, NeosResult};
 use crate::frames::{
     ecliptic_to_equatorial, ecliptic_to_fk4, ecliptic_to_galactic, equatorial_to_ecliptic,
     fk4_to_ecliptic, galactic_to_ecliptic, inertial_to_noninertial, noninertial_to_inertial, Frame,
@@ -117,6 +117,7 @@ impl State {
     /// Construct a new state made of NAN pos and vel vectors but containing the
     /// remaining data. This is primarily useful as a place holder when propagation
     /// has failed and the object needs to be recorded still.
+    #[inline(always)]
     pub fn new_nan(desig: Desig, jd: f64, frame: Frame, center_id: i64) -> Self {
         Self::new(
             desig,
@@ -134,7 +135,7 @@ impl State {
     ///
     /// * `target_frame` - Target frame from the [`Frame`] enum.
     #[inline(always)]
-    pub fn try_change_frame_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
+    pub fn try_change_frame_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
         if self.frame == target_frame {
             return Ok(());
         }
@@ -167,7 +168,7 @@ impl State {
                 new_pos = galactic_to_ecliptic(&self.pos.into()).into();
                 new_vel = galactic_to_ecliptic(&self.vel.into()).into();
             }
-            Frame::Unknown(id) => return Err(NEOSpyError::UnknownFrame(id)),
+            Frame::Unknown(id) => return Err(Error::UnknownFrame(id)),
         }
 
         // new_pos and new_vel are now in ecliptic.
@@ -194,7 +195,7 @@ impl State {
                 self.pos = ecliptic_to_galactic(&new_pos.into()).into();
                 self.vel = ecliptic_to_galactic(&new_vel.into()).into();
             }
-            Frame::Unknown(id) => return Err(NEOSpyError::UnknownFrame(id)),
+            Frame::Unknown(id) => return Err(Error::UnknownFrame(id)),
         }
         self.frame = target_frame;
         Ok(())
@@ -202,7 +203,8 @@ impl State {
 
     /// Trade the center ID and ID values, and flip the direction of the position and
     /// velocity vectors.
-    pub fn try_flip_center_id(&mut self) -> Result<(), NEOSpyError> {
+    #[inline(always)]
+    pub fn try_flip_center_id(&mut self) -> NeosResult<()> {
         if let Desig::Naif(mut id) = self.desig {
             (id, self.center_id) = (self.center_id, id);
             for i in 0..3 {
@@ -212,7 +214,7 @@ impl State {
             self.desig = Desig::Naif(id);
             return Ok(());
         }
-        Err(NEOSpyError::ValueError(
+        Err(Error::ValueError(
             "Flip center ID is only valid for NAIF ids.".into(),
         ))
     }
@@ -229,17 +231,15 @@ impl State {
     ///
     /// * `state` - [`State`] object which defines the new center point.
     #[inline(always)]
-    pub fn try_change_center(&mut self, mut state: Self) -> Result<(), NEOSpyError> {
+    pub fn try_change_center(&mut self, mut state: Self) -> NeosResult<()> {
         if self.jd != state.jd {
-            return Err(NEOSpyError::ValueError(
-                "States don't have matching jds.".into(),
-            ));
+            return Err(Error::ValueError("States don't have matching jds.".into()));
         }
 
         let state_id = match state.desig {
             Desig::Naif(id) => id,
             _ => {
-                return Err(NEOSpyError::ValueError(
+                return Err(Error::ValueError(
                     "Changing centers only works on states with NAIF Ids.".into(),
                 ))
             }
@@ -247,7 +247,7 @@ impl State {
 
         // target state does not match at all, error
         if self.center_id != state.center_id && self.center_id != state_id {
-            return Err(NEOSpyError::ValueError(
+            return Err(Error::ValueError(
                 "States do not reference one another at all, cannot change center.".into(),
             ));
         }

@@ -5,7 +5,7 @@ use neospy_core::constants::{
     w1_color_correction, w2_color_correction, w3_color_correction, w4_color_correction, C_V,
 };
 use neospy_core::flux::*;
-use neospy_core::prelude::NEOSpyError;
+use neospy_core::prelude::Error;
 use pyo3::{pyfunction, PyResult};
 
 /// Calculate the visible flux at the observer assuming a convex faceted object made up
@@ -64,7 +64,7 @@ pub fn lambertian_flux_py(
 #[pyfunction]
 #[pyo3(name = "solar_flux")]
 pub fn solar_flux_py(dist: f64, wavelength: f64) -> PyResult<f64> {
-    Ok(solar_flux(dist, wavelength).ok_or(NEOSpyError::ValueError(
+    Ok(solar_flux(dist, wavelength).ok_or(Error::ValueError(
         "Query is outside of the range of the dataset".into(),
     ))?)
 }

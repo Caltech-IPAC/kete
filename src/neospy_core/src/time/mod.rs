@@ -11,7 +11,7 @@ pub mod scales;
 use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc};
 use scales::{TimeScale, JD_TO_MJD, TAI, TDB, UTC};
 
-use crate::prelude::NEOSpyError;
+use crate::prelude::{Error, NeosResult};
 
 /// Representation of Time.
 ///
@@ -72,18 +72,18 @@ pub fn frac_day_to_hmsms(mut frac: f64) -> Option<(u32, u32, u32, u32)> {
 
 impl Time<UTC> {
     /// Read time from the standard ISO format for time.
-    pub fn from_iso(s: &str) -> Result<Self, NEOSpyError> {
+    pub fn from_iso(s: &str) -> NeosResult<Self> {
         let time = DateTime::parse_from_rfc3339(s)?.to_utc();
         Self::from_datetime(&time)
     }
 
     /// Construct time from the current time.
-    pub fn now() -> Result<Self, NEOSpyError> {
+    pub fn now() -> NeosResult<Self> {
         Self::from_datetime(&Utc::now())
     }
 
     /// Construct a Time object from a UTC DateTime.
-    pub fn from_datetime(time: &DateTime<Utc>) -> Result<Self, NEOSpyError> {
+    pub fn from_datetime(time: &DateTime<Utc>) -> NeosResult<Self> {
         let frac_day = hour_min_sec_to_day(
             time.hour(),
             time.minute(),
@@ -143,18 +143,18 @@ impl Time<UTC> {
     }
 
     /// Create a DateTime object
-    pub fn to_datetime(&self) -> Result<DateTime<Utc>, NEOSpyError> {
+    pub fn to_datetime(&self) -> NeosResult<DateTime<Utc>> {
         let (y, month, d, f) = self.year_month_day();
         let (h, m, s, ms) = frac_day_to_hmsms(f).unwrap();
         Ok(NaiveDate::from_ymd_opt(y as i32, month, d)
-            .ok_or(NEOSpyError::ValueError("Failed to convert ymd".into()))?
+            .ok_or(Error::ValueError("Failed to convert ymd".into()))?
             .and_hms_milli_opt(h, m, s, ms)
-            .ok_or(NEOSpyError::ValueError("Failed to convert hms".into()))?
+            .ok_or(Error::ValueError("Failed to convert hms".into()))?
             .and_utc())
     }
 
     /// Construct a ISO compliant UTC string.
-    pub fn to_iso(&self) -> Result<String, NEOSpyError> {
+    pub fn to_iso(&self) -> NeosResult<String> {
         let datetime = self.to_datetime()?;
         Ok(datetime.to_rfc3339())
     }

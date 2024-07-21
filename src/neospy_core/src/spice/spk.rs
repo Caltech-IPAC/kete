@@ -20,8 +20,9 @@
 ///
 use super::daf::DafFile;
 use super::{spk_segments::*, DAFType};
-use crate::errors::NEOSpyError;
+use crate::errors::Error;
 use crate::frames::Frame;
+use crate::prelude::NeosResult;
 use crate::state::State;
 use pathfinding::prelude::dijkstra;
 use std::collections::{HashMap, HashSet};
@@ -62,30 +63,23 @@ impl SpkCollection {
     /// Get the raw state from the loaded SPK files.
     /// This state will have the center and frame of whatever was originally loaded
     /// into the file.
-    pub fn try_get_raw_state(&self, id: i64, jd: f64) -> Result<State, NEOSpyError> {
+    #[inline(always)]
+    pub fn try_get_raw_state(&self, id: i64, jd: f64) -> NeosResult<State> {
         for segment in self.segments.iter() {
             if id == segment.obj_id && segment.contains(jd) {
                 return segment.try_get_state(jd);
             }
         }
-        Err(NEOSpyError::DAFLimits(
-            format!(
-                "Object ({}) does not have an SPK record for the target JD.",
-                id
-            )
-            .to_string(),
-        ))
+        Err(Error::DAFLimits(format!(
+            "Object ({}) does not have an SPK record for the target JD.",
+            id
+        )))
     }
 
     /// Load a state from the file, then attempt to change the center to the center id
     /// specified.
-    pub fn try_get_state(
-        &self,
-        id: i64,
-        jd: f64,
-        center: i64,
-        frame: Frame,
-    ) -> Result<State, NEOSpyError> {
+    #[inline(always)]
+    pub fn try_get_state(&self, id: i64, jd: f64, center: i64, frame: Frame) -> NeosResult<State> {
         let mut state = self.try_get_raw_state(id, jd)?;
         self.try_change_center(&mut state, center)?;
         state.try_change_frame_mut(frame)?;
@@ -93,7 +87,8 @@ impl SpkCollection {
     }
 
     /// Use the data loaded in the SPKs to change the center ID of the provided state.
-    pub fn try_change_center(&self, state: &mut State, new_center: i64) -> Result<(), NEOSpyError> {
+    #[inline(always)]
+    pub fn try_change_center(&self, state: &mut State, new_center: i64) -> NeosResult<()> {
         if state.center_id == new_center {
             return Ok(());
         }
@@ -167,7 +162,8 @@ impl SpkCollection {
     /// Given a NAIF ID, and a target NAIF ID, find the intermediate SPICE Segments
     /// which need to be loaded to find a path from one object to the other.
     /// Use Dijkstra plus the known segments to calculate a path.
-    fn find_path(&self, start: i64, goal: i64) -> Result<Vec<i64>, NEOSpyError> {
+    #[inline(always)]
+    fn find_path(&self, start: i64, goal: i64) -> NeosResult<Vec<i64>> {
         // first we check to see if the cache contains the lookup we need.
         if let Some(path) = self.map_cache.get(&(start, goal)) {
             return Ok(path.clone());
@@ -186,7 +182,7 @@ impl SpkCollection {
         if let Some((v, _)) = result {
             Ok(v.iter().skip(1).map(|x| x.1).collect())
         } else {
-            Err(NEOSpyError::DAFLimits(format!(
+            Err(Error::DAFLimits(format!(
                 "SPK files are missing information to be able to map from obj {} to obj {}",
                 start, goal
             )))
@@ -260,14 +256,14 @@ impl SpkCollection {
 
     /// Given an SPK filename, load all the segments present inside of it.
     /// These segments are added to the SPK singleton in memory.
-    pub fn load_file(&mut self, filename: &str) -> Result<(), NEOSpyError> {
+    pub fn load_file(&mut self, filename: &str) -> NeosResult<()> {
         let file = DafFile::from_file(filename)?;
 
         if !matches!(file.daf_type, DAFType::Spk) {
-            return Err(NEOSpyError::IOError(format!(
+            Err(Error::IOError(format!(
                 "File {:?} is not a PCK formatted file.",
                 filename
-            )));
+            )))?;
         }
         self.segments
             .extend(file.segments.into_iter().map(|x| x.spk()));

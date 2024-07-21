@@ -6,7 +6,7 @@ use std::fmt::Debug;
 use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
 
-use super::{Contains, FovLike, Frame, NEOSpyError, OnSkyRectangle, SkyPatch, SphericalCone, FOV};
+use super::{Contains, FovLike, Frame, NeosResult, OnSkyRectangle, SkyPatch, SphericalCone, FOV};
 use crate::state::State;
 
 /// Generic rectangular FOV
@@ -85,7 +85,7 @@ impl FovLike for GenericRectangle {
         1
     }
 
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
         self.observer.try_change_frame_mut(target_frame)?;
         self.patch = self.patch.try_frame_change(target_frame)?;
         Ok(())
@@ -138,7 +138,7 @@ impl FovLike for GenericCone {
         1
     }
 
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
         self.observer.try_change_frame_mut(target_frame)?;
         self.patch = self.patch.try_frame_change(target_frame)?;
         Ok(())

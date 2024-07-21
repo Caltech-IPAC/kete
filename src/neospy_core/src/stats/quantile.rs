@@ -1,4 +1,4 @@
-use crate::errors::NEOSpyError;
+use crate::{errors::Error, prelude::NeosResult};
 
 /// Calculate desired quantile of the provided data.
 ///
@@ -9,11 +9,11 @@ use crate::errors::NEOSpyError;
 /// Quantiles are linearly interpolated between the two closest ranked values.
 ///
 /// If only one valid data point is provided, all quantiles evaluate to that value.
-pub fn quantile(data: &[f64], quant: f64) -> Result<f64, NEOSpyError> {
+pub fn quantile(data: &[f64], quant: f64) -> NeosResult<f64> {
     if quant <= 0.0 || quant >= 1.0 {
-        return Err(NEOSpyError::ValueError(
+        Err(Error::ValueError(
             "Quantile must be between 0.0 and 1.0".into(),
-        ));
+        ))?;
     }
 
     let mut data: Box<[f64]> = data
@@ -25,9 +25,9 @@ pub fn quantile(data: &[f64], quant: f64) -> Result<f64, NEOSpyError> {
     let n_data = data.len();
 
     if n_data == 0 {
-        return Err(NEOSpyError::ValueError(
+        Err(Error::ValueError(
             "Data must have at least 1 finite value.".into(),
-        ));
+        ))?;
     } else if n_data == 1 {
         return Ok(data[0]);
     }
@@ -46,7 +46,7 @@ pub fn quantile(data: &[f64], quant: f64) -> Result<f64, NEOSpyError> {
 /// Compute the median value of the data.
 ///
 /// This ignores non-finite values such as inf and nan.
-pub fn median(data: &[f64]) -> Result<f64, NEOSpyError> {
+pub fn median(data: &[f64]) -> NeosResult<f64> {
     quantile(data, 0.5)
 }
 
@@ -55,7 +55,7 @@ pub fn median(data: &[f64]) -> Result<f64, NEOSpyError> {
 /// <https://en.wikipedia.org/wiki/Median_absolute_deviation>
 ///
 #[allow(dead_code)]
-pub fn mad(data: &[f64]) -> Result<f64, NEOSpyError> {
+pub fn mad(data: &[f64]) -> NeosResult<f64> {
     let median = quantile(data, 0.5)?;
     let abs_deviation_from_med: Box<[f64]> = data.iter().map(|d| d - median).collect();
     quantile(&abs_deviation_from_med, 0.5)

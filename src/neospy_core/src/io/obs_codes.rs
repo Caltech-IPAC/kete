@@ -2,7 +2,7 @@
 use lazy_static::lazy_static;
 use serde::Deserialize;
 
-use crate::prelude::NEOSpyError;
+use crate::prelude::{Error, NeosResult};
 use std::str;
 use std::str::FromStr;
 
@@ -26,10 +26,10 @@ pub struct ObsCode {
 }
 
 impl FromStr for ObsCode {
-    type Err = NEOSpyError;
+    type Err = Error;
 
     /// Load an ObsCode from a single string.
-    fn from_str(row: &str) -> Result<Self, Self::Err> {
+    fn from_str(row: &str) -> NeosResult<Self> {
         let code = row[3..6].to_string();
         let lon = f64::from_str(row[8..19].trim()).unwrap();
         let lat = f64::from_str(row[18..29].trim()).unwrap();

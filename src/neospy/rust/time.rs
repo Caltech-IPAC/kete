@@ -1,5 +1,5 @@
 use neospy_core::{
-    errors::NEOSpyError,
+    errors::Error,
     time::{
         scales::{TAI, TDB, UTC},
         Time,
@@ -60,7 +60,7 @@ impl PyTime {
             "tdb" => PyTime(Time::<TDB>::new(jd)),
             "tai" => PyTime(Time::<TAI>::new(jd).tdb()),
             "utc" => PyTime(Time::<UTC>::new(jd).tdb()),
-            s => Err(NEOSpyError::ValueError(format!(
+            s => Err(Error::ValueError(format!(
                 "Scaling of type ({:?}) is not supported, must be one of: 'tt', 'tdb', 'tai', 'utc'",
                 s
             )))?,
@@ -86,7 +86,7 @@ impl PyTime {
             "tdb" => PyTime(Time::<TDB>::from_mjd(mjd)),
             "tai" => PyTime(Time::<TAI>::from_mjd(mjd).tdb()),
             "utc" => PyTime(Time::<UTC>::from_mjd(mjd).tdb()),
-            s => Err(NEOSpyError::ValueError(format!(
+            s => Err(Error::ValueError(format!(
                 "Scaling of type ({:?}) is not supported, must be one of: 'tt', 'tdb', 'tai', 'utc'",
                 s
             )))?,

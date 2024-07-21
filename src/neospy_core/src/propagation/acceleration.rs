@@ -7,7 +7,7 @@
 //! These functions have a strict function signature, which is defined inside of the
 //! radau integrator class. This function signature contains 4 terms:
 //!
-//! (time, x, x_der, &mut MetaData, exact_eval) -> Result<x_der_der, Error>
+//! (time, x, x_der, &mut MetaData, exact_eval) -> NeosResult<x_der_der>
 //!
 //! Where `x` and its derivative `x_der` are vectors. This also accepts a mutable
 //! reference to a metadata collection. Metadata may include things like object
@@ -20,8 +20,9 @@
 //! information should be recorded.
 //!
 use crate::frames;
+use crate::prelude::NeosResult;
 use crate::spice::get_spk_singleton;
-use crate::{constants::*, errors::NEOSpyError, frames::Frame, propagation::nongrav::NonGravModel};
+use crate::{constants::*, errors::Error, frames::Frame, propagation::nongrav::NonGravModel};
 use itertools::Itertools;
 use nalgebra::allocator::Allocator;
 use nalgebra::{DefaultAllocator, Dim, Matrix, Matrix3, OMatrix, OVector, Vector3, U1, U2};
@@ -71,7 +72,7 @@ pub fn central_accel(
     vel: &Vector3<f64>,
     meta: &mut CentralAccelMeta,
     exact_eval: bool,
-) -> Result<Vector3<f64>, NEOSpyError> {
+) -> NeosResult<Vector3<f64>> {
     if exact_eval {
         meta.times.push(time);
         meta.pos.push(*pos);
@@ -127,7 +128,7 @@ pub fn spk_accel(
     vel: &Vector3<f64>,
     meta: &mut AccelSPKMeta,
     exact_eval: bool,
-) -> Result<Vector3<f64>, NEOSpyError> {
+) -> NeosResult<Vector3<f64>> {
     let mut accel = Vector3::<f64>::zeros();
 
     if exact_eval {
@@ -154,7 +155,7 @@ pub fn spk_accel(
             }
         }
         if r <= *radius {
-            return Err(NEOSpyError::Impact(*id, time));
+            Err(Error::Impact(*id, time))?;
         }
 
         let r2_inv = r.powi(-2);
@@ -260,7 +261,7 @@ pub fn vec_accel<D: Dim>(
     vel: &OVector<f64, D>,
     meta: &mut AccelVecMeta<D>,
     _exact_eval: bool,
-) -> Result<OVector<f64, D>, NEOSpyError>
+) -> NeosResult<OVector<f64, D>>
 where
     DefaultAllocator: Allocator<D> + Allocator<D, U2>,
 {
@@ -285,7 +286,7 @@ where
             let r = rel_pos.norm();
 
             if r <= *radius {
-                return Err(NEOSpyError::Impact(*id, time));
+                Err(Error::Impact(*id, time))?;
             }
 
             let r2_inv = r.powi(-2);

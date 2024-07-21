@@ -3,7 +3,7 @@
 pub mod obs_codes;
 pub mod serde_const_arr;
 
-use crate::prelude::NEOSpyError;
+use crate::prelude::{Error, NeosResult};
 use bincode::serde::{decode_from_std_read, encode_into_std_write};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -15,34 +15,34 @@ where
     for<'de> Self: Deserialize<'de>,
 {
     /// Save into a file.
-    fn save(&self, filename: String) -> Result<usize, NEOSpyError> {
+    fn save(&self, filename: String) -> NeosResult<usize> {
         let mut f = BufWriter::new(File::create(filename)?);
         encode_into_std_write(self, &mut f, bincode::config::legacy())
-            .map_err(|_| NEOSpyError::IOError("Failed to write to file".into()))
+            .map_err(|_| Error::IOError("Failed to write to file".into()))
     }
 
     /// Load from a file.
-    fn load(filename: String) -> Result<Self, NEOSpyError> {
+    fn load(filename: String) -> NeosResult<Self> {
         let mut f = BufReader::new(File::open(filename)?);
         decode_from_std_read(&mut f, bincode::config::legacy())
-            .map_err(|_| NEOSpyError::IOError("Failed to read from file".into()))
+            .map_err(|_| Error::IOError("Failed to read from file".into()))
     }
 
     /// Save a vector of this object.
-    fn save_vec(vec: &[Self], filename: String) -> Result<(), NEOSpyError> {
+    fn save_vec(vec: &[Self], filename: String) -> NeosResult<()> {
         let mut f = BufWriter::new(File::create(filename)?);
 
         let _ = encode_into_std_write(vec, &mut f, bincode::config::legacy())
-            .map_err(|_| NEOSpyError::IOError("Failed to write to file".into()))?;
+            .map_err(|_| Error::IOError("Failed to write to file".into()))?;
         Ok(())
     }
 
     /// load a vector of this object.
-    fn load_vec(filename: String) -> Result<Vec<Self>, NEOSpyError> {
+    fn load_vec(filename: String) -> NeosResult<Vec<Self>> {
         let mut f = BufReader::new(File::open(filename)?);
 
         let res: Vec<Self> = decode_from_std_read(&mut f, bincode::config::legacy())
-            .map_err(|_| NEOSpyError::IOError("Failed to load from file".into()))?;
+            .map_err(|_| Error::IOError("Failed to load from file".into()))?;
         Ok(res)
     }
 }

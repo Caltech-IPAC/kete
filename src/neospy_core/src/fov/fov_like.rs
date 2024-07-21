@@ -28,7 +28,7 @@ pub trait FovLike: Sync + Sized {
     fn n_patches(&self) -> usize;
 
     /// Change the target frame to the new frame.
-    fn try_frame_change_mut(&mut self, new_frame: Frame) -> Result<(), NEOSpyError>;
+    fn try_frame_change_mut(&mut self, new_frame: Frame) -> NeosResult<()>;
 
     /// Check if a static source is visible. This assumes the vector passed in is at an
     /// infinite distance from the observer.
@@ -68,7 +68,7 @@ pub trait FovLike: Sync + Sized {
     /// Assuming the object undergoes two-body motion, check to see if it is within the
     /// field of view.
     #[inline]
-    fn check_two_body(&self, state: &State) -> Result<(usize, Contains, State), NEOSpyError> {
+    fn check_two_body(&self, state: &State) -> NeosResult<(usize, Contains, State)> {
         let obs = self.observer();
         let obs_pos: Vector3<_> = obs.pos.into();
 
@@ -91,7 +91,7 @@ pub trait FovLike: Sync + Sized {
         &self,
         state: &State,
         include_asteroids: bool,
-    ) -> Result<(usize, Contains, State), NEOSpyError> {
+    ) -> NeosResult<(usize, Contains, State)> {
         let obs = self.observer();
         let obs_pos = Vector3::from(obs.pos);
 
@@ -140,7 +140,7 @@ pub trait FovLike: Sync + Sized {
         let obs_state = self.observer();
 
         let final_states: Vec<(usize, State)> = states
-            .iter()
+            .into_par_iter()
             .filter_map(|state: &State| {
                 // assuming linear motion, how far can the object have moved relative
                 // to the observer? Then add a factor of 2 for safety

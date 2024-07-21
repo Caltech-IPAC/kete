@@ -65,7 +65,7 @@ impl Vector {
             }
             VectorLike::Vec(vec) => {
                 if frame.is_some() {
-                    return Err(NEOSpyError::ValueError(
+                    return Err(Error::ValueError(
                         "If a vector is provided, then the frame cannot be specified.".into(),
                     )
                     .into());
@@ -177,7 +177,7 @@ impl Vector {
     #[getter]
     pub fn ra(&self) -> PyResult<f64> {
         if self.frame != PyFrames::Equatorial {
-            return Err(NEOSpyError::ValueError(
+            return Err(Error::ValueError(
                 "Cannot compute RA as the frame is not equatorial. Change frame to equatorial before calling ra/dec."
                     .into(),
             )
@@ -190,7 +190,7 @@ impl Vector {
     #[getter]
     pub fn dec(&self) -> PyResult<f64> {
         if self.frame != PyFrames::Equatorial {
-            return Err(NEOSpyError::ValueError(
+            return Err(Error::ValueError(
                 "Cannot compute Dec as the frame is not equatorial. Change frame to equatorial before calling ra/dec."
                     .into(),
             )
@@ -203,7 +203,7 @@ impl Vector {
     #[getter]
     pub fn lat(&self) -> PyResult<f64> {
         if self.frame != PyFrames::Ecliptic {
-            return Err(NEOSpyError::ValueError(
+            return Err(Error::ValueError(
                 "Cannot compute Latitude as the frame is not ecliptic. Change frame to ecliptic."
                     .into(),
             )
@@ -216,7 +216,7 @@ impl Vector {
     #[getter]
     pub fn lon(&self) -> PyResult<f64> {
         if self.frame != PyFrames::Ecliptic {
-            return Err(NEOSpyError::ValueError(
+            return Err(Error::ValueError(
                 "Cannot compute Longitude as the frame is not ecliptic. Change frame to ecliptic."
                     .into(),
             )

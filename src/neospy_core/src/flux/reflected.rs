@@ -1,7 +1,7 @@
 use super::sun::solar_flux_black_body;
 use crate::{
     constants::{AU_KM, C_V},
-    prelude::NEOSpyError,
+    prelude::{Error, NeosResult},
 };
 
 use nalgebra::Vector3;
@@ -117,7 +117,7 @@ impl HGParams {
         c_hg: Option<f64>,
         vis_albedo: Option<f64>,
         diam: Option<f64>,
-    ) -> Result<Self, NEOSpyError> {
+    ) -> NeosResult<Self> {
         let (h_mag, vis_albedo, diam, c_hg) = Self::fill(h_mag, vis_albedo, diam, c_hg)?;
         Ok(Self {
             desig,
@@ -151,11 +151,11 @@ impl HGParams {
         vis_albedo: Option<f64>,
         diam: Option<f64>,
         c_hg: Option<f64>,
-    ) -> Result<(f64, Option<f64>, Option<f64>, f64), NEOSpyError> {
+    ) -> NeosResult<(f64, Option<f64>, Option<f64>, f64)> {
         if h_mag.is_none() && (vis_albedo.is_none() || diam.is_none()) {
-            return Err(NEOSpyError::ValueError(
+            Err(Error::ValueError(
                 "h_mag must be defined unless both vis_albedo and diam are provided.".into(),
-            ));
+            ))?;
         }
         // H mag is either defined, or computable.
 
@@ -188,9 +188,9 @@ impl HGParams {
             let expected_diam = c_hg / albedo.sqrt() * (10f64).powf(-0.2 * h_mag);
             if let Some(diam) = diam {
                 if (expected_diam - diam).abs() > 1e-8 {
-                    return Err(NEOSpyError::ValueError(
+                    Err(Error::ValueError(
                         format!("Provided diameter doesn't match with computed diameter. {expected_diam} != {diam}"),
-                    ));
+                    ))?;
                 }
             }
             return Ok((h_mag, Some(albedo), Some(expected_diam), c_hg));

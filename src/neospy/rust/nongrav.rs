@@ -1,4 +1,4 @@
-use neospy_core::{errors::NEOSpyError, propagation::NonGravModel};
+use neospy_core::{errors::Error, propagation::NonGravModel};
 use pyo3::{pyclass, pymethods, PyResult};
 
 /// Non-gravitational force models.
@@ -25,7 +25,7 @@ impl PyNonGravModel {
     #[allow(clippy::new_without_default)]
     #[new]
     pub fn new() -> PyResult<Self> {
-        Err(NEOSpyError::ValueError("Non-gravitational force models need to be constructed using either the new_dust, new_comet, or new_asteroid methods.".into()))?
+        Err(Error::ValueError("Non-gravitational force models need to be constructed using either the new_dust, new_comet, or new_asteroid methods.".into()))?
     }
 
     /// Create a new non-gravitational forces Dust model.

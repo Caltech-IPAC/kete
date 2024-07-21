@@ -1,7 +1,7 @@
 //! # Orbital Elements
 //! This allows conversion to and from cometary orbital elements to [`ExactState`].
 use crate::constants::GMS_SQRT;
-use crate::prelude::{Desig, Frame, NEOSpyError, State};
+use crate::prelude::{Desig, Frame, NeosResult, State};
 use crate::propagation::{compute_eccentric_anomaly, compute_true_anomaly};
 
 use nalgebra::Vector3;
@@ -173,7 +173,7 @@ impl CometElements {
     /// Convert cometary elements to an [`ExactState`] if possible.
     ///
     /// Center ID is set to 10.
-    pub fn try_to_state(&self) -> Result<State, NEOSpyError> {
+    pub fn try_to_state(&self) -> NeosResult<State> {
         let [pos, vel] = self.to_pos_vel()?;
         Ok(State::new(
             self.desig.to_owned(),
@@ -187,7 +187,7 @@ impl CometElements {
 
     /// Convert orbital elements into a cartesian coordinate position and velocity.
     /// Units are in AU and AU/Day.
-    fn to_pos_vel(&self) -> Result<[[f64; 3]; 2], NEOSpyError> {
+    fn to_pos_vel(&self) -> NeosResult<[[f64; 3]; 2]> {
         let elliptical = self.eccentricity < 0.9999;
         let hyperbolic = self.eccentricity > 1.0001;
         let parabolic = !elliptical & !hyperbolic;
@@ -263,7 +263,7 @@ impl CometElements {
         Ok([pos, vel])
     }
     /// Compute the eccentric anomaly for the cometary elements.
-    pub fn eccentric_anomaly(&self) -> Result<f64, NEOSpyError> {
+    pub fn eccentric_anomaly(&self) -> NeosResult<f64> {
         compute_eccentric_anomaly(self.eccentricity, self.mean_anomaly(), self.peri_dist)
             .map(|x| x.rem_euclid(TAU))
     }
@@ -310,7 +310,7 @@ impl CometElements {
     /// Compute the True Anomaly
     /// The angular distance between perihelion and the current position as seen
     /// from the origin.
-    pub fn true_anomaly(&self) -> Result<f64, NEOSpyError> {
+    pub fn true_anomaly(&self) -> NeosResult<f64> {
         compute_true_anomaly(self.eccentricity, self.mean_anomaly(), self.peri_dist)
     }
 }

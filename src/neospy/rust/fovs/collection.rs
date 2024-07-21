@@ -71,7 +71,7 @@ impl FOVList {
             self.0.iter().map(|fov| fov.clone().unwrap()).collect();
 
         encode_into_std_write(fovs, &mut f, bincode::config::legacy())
-            .map_err(|_| NEOSpyError::IOError("Failed to write to file".into()))?;
+            .map_err(|_| Error::IOError("Failed to write to file".into()))?;
         Ok(())
     }
 
@@ -82,7 +82,7 @@ impl FOVList {
 
         let fovs: Vec<neospy_core::fov::FOV> =
             decode_from_std_read(&mut f, bincode::config::legacy())
-                .map_err(|_| NEOSpyError::IOError("Failed to read from file".into()))?;
+                .map_err(|_| Error::IOError("Failed to read from file".into()))?;
         let fovs: Vec<AllowedFOV> = fovs.into_iter().map(|x| x.into()).collect();
         Ok(FOVList(fovs))
     }
