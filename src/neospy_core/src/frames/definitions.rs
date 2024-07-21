@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::f64::consts::{PI, TAU};
 use std::fmt::{self, Debug, Display};
 
-use crate::prelude::NEOSpyError;
+use crate::prelude::{Error, NeosResult};
 
 /// Coordinate frames.
 ///
@@ -48,16 +48,16 @@ impl Frame {
         &self,
         mut vec: Vector3<f64>,
         target: Frame,
-    ) -> Result<Vector3<f64>, NEOSpyError> {
+    ) -> NeosResult<Vector3<f64>> {
         match self {
             Frame::Equatorial => {
                 vec = equatorial_to_ecliptic(&vec);
             }
             Frame::Ecliptic => {}
             Frame::EclipticNonInertial(_, _) => {
-                return Err(NEOSpyError::ValueError(
+                 Err(Error::ValueError(
                     "Cannot convert bare vector between non-inertial frames.  This may only be done with a State".into(),
-                ))
+                ))?
             }
             Frame::FK4 => {
                 vec = fk4_to_ecliptic(&vec);
@@ -65,7 +65,7 @@ impl Frame {
             Frame::Galactic => {
                 vec = galactic_to_ecliptic(&vec);
             }
-            Frame::Unknown(id) => return Err(NEOSpyError::UnknownFrame(*id)),
+            Frame::Unknown(id) =>  Err(Error::UnknownFrame(*id))?,
         }
 
         // new_vec is now in ecliptic.
@@ -75,9 +75,9 @@ impl Frame {
             }
             Frame::Ecliptic => {}
             Frame::EclipticNonInertial(_, _) => {
-                return Err(NEOSpyError::ValueError(
+                 Err(Error::ValueError(
                     "Cannot convert bare vector between non-inertial frames. This may only be done with a State.".into(),
-                ))
+                ))?
             }
             Frame::FK4 => {
                 vec = ecliptic_to_fk4(&vec);
@@ -85,7 +85,7 @@ impl Frame {
             Frame::Galactic => {
                 vec = ecliptic_to_galactic(&vec);
             }
-            Frame::Unknown(id) => return Err(NEOSpyError::UnknownFrame(id)),
+            Frame::Unknown(id) =>  Err(Error::UnknownFrame(id))?,
         }
         Ok(vec)
     }

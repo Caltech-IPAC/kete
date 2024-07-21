@@ -5,7 +5,7 @@ use std::str::FromStr;
 use lazy_static::lazy_static;
 use serde::Deserialize;
 
-use crate::prelude::NEOSpyError;
+use crate::prelude::{Error, NeosResult};
 
 /// Leap Second Information
 /// This is parsed from the contents of the `leap_second.dat` file.
@@ -19,16 +19,13 @@ pub struct LeapSecond {
 }
 
 impl FromStr for LeapSecond {
-    type Err = NEOSpyError;
+    type Err = Error;
 
     /// Load an LeapSecond from a single string.
-    fn from_str(row: &str) -> Result<Self, Self::Err> {
-        let (mjd, _, _, _, tai_m_utc) =
-            row.split_whitespace()
-                .next_tuple()
-                .ok_or(NEOSpyError::IOError(
-                    "Leap Second file incorrectly formatted.".into(),
-                ))?;
+    fn from_str(row: &str) -> NeosResult<Self> {
+        let (mjd, _, _, _, tai_m_utc) = row.split_whitespace().next_tuple().ok_or(
+            Error::IOError("Leap Second file incorrectly formatted.".into()),
+        )?;
 
         Ok(LeapSecond {
             mjd: mjd.parse()?,

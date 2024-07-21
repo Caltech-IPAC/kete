@@ -3,7 +3,7 @@
 
 use crate::fov::FOV;
 use crate::io::FileIO;
-use crate::prelude::{Frame, NEOSpyError, State};
+use crate::prelude::{Error, Frame, NeosResult, State};
 use serde::{Deserialize, Serialize};
 
 /// Collection of [`State`] at the same time.
@@ -31,9 +31,9 @@ impl SimultaneousStates {
     /// Create a new Exact SimultaneousStates
     /// Simultaneous States occur at the same JD, which is defined by either the time
     /// in the optional fov, or the time of the first state.
-    pub fn new_exact(mut states: Vec<State>, fov: Option<FOV>) -> Result<Self, NEOSpyError> {
+    pub fn new_exact(mut states: Vec<State>, fov: Option<FOV>) -> NeosResult<Self> {
         if states.is_empty() {
-            return Err(NEOSpyError::ValueError(
+            return Err(Error::ValueError(
                 "SimultaneousStates must contain at least one state.".into(),
             ));
         }
@@ -51,20 +51,16 @@ impl SimultaneousStates {
             .map(|state| state.try_change_frame_mut(frame))
             .all(|x| x.is_ok())
         {
-            return Err(NEOSpyError::ValueError("Failed to change frames".into()));
+            return Err(Error::ValueError("Failed to change frames".into()));
         };
         if !states
             .iter_mut()
             .all(|state: &mut State| state.center_id == center_id)
         {
-            return Err(NEOSpyError::ValueError(
-                "Center IDs do not match expected".into(),
-            ));
+            return Err(Error::ValueError("Center IDs do not match expected".into()));
         };
         if fov.is_none() && !states.iter_mut().all(|state: &mut State| state.jd == jd) {
-            return Err(NEOSpyError::ValueError(
-                "Epoch JDs do not match expected".into(),
-            ));
+            return Err(Error::ValueError("Epoch JDs do not match expected".into()));
         };
         Ok(SimultaneousStates {
             states,

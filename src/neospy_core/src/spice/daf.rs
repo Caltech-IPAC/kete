@@ -16,7 +16,7 @@ use super::binary::{
 use super::pck_segments::PckSegment;
 use super::spk_segments::SpkSegment;
 
-use crate::errors::NEOSpyError;
+use crate::errors::{Error, NeosResult};
 use std::fmt::Debug;
 use std::io::{Cursor, Read, Seek};
 use std::ops::Index;
@@ -137,27 +137,22 @@ pub struct DafFile {
 
 impl DafFile {
     /// Try to load a single record from the DAF.
-    pub fn try_load_record<T: Read + Seek>(
-        file: &mut T,
-        idx: u64,
-    ) -> Result<Box<[u8]>, NEOSpyError> {
+    pub fn try_load_record<T: Read + Seek>(file: &mut T, idx: u64) -> NeosResult<Box<[u8]>> {
         let _ = file.seek(std::io::SeekFrom::Start(1024 * (idx - 1)))?;
         read_bytes_exact(file, 1024)
     }
 
     /// Load the contents of a DAF file.
-    pub fn from_buffer<T: Read + Seek>(mut buffer: T) -> Result<Self, NEOSpyError> {
+    pub fn from_buffer<T: Read + Seek>(mut buffer: T) -> NeosResult<Self> {
         let bytes = Self::try_load_record(&mut buffer, 1)?;
         let daf_type: DAFType = bytes_to_string(&bytes[0..8]).as_str().into();
 
         let little_endian = match bytes_to_string(&bytes[88..96]).to_lowercase().as_str() {
             "ltl-ieee" => true,
             "big-ieee" => false,
-            _ => {
-                return Err(NEOSpyError::IOError(
-                    "Expected little or big endian in DAF file, found neither".into(),
-                ))
-            }
+            _ => Err(Error::IOError(
+                "Expected little or big endian in DAF file, found neither".into(),
+            ))?,
         };
 
         let n_doubles = bytes_to_i32(&bytes[8..12], little_endian)?;
@@ -206,7 +201,7 @@ impl DafFile {
     }
 
     /// Load DAF file from the specified filename.
-    pub fn from_file(filename: &str) -> Result<Self, NEOSpyError> {
+    pub fn from_file(filename: &str) -> NeosResult<Self> {
         let mut file = std::fs::File::open(filename)?;
         let mut buffer = Vec::new();
         let _ = file.read_to_end(&mut buffer)?;
@@ -218,7 +213,7 @@ impl DafFile {
     /// These are tuples containing a series of f64s and i32s along with arrays of data.
     /// The meaning of these values depends on the particular implementation of the DAF.
     ///
-    pub fn try_load_segments<T: Read + Seek>(&mut self, file: &mut T) -> Result<(), NEOSpyError> {
+    pub fn try_load_segments<T: Read + Seek>(&mut self, file: &mut T) -> NeosResult<()> {
         let summary_size = self.n_doubles + (self.n_ints + 1) / 2;
 
         let mut next_idx = self.init_summary_record_index;
@@ -293,11 +288,9 @@ impl DafArray {
         summary_floats: Box<[f64]>,
         summary_ints: Box<[i32]>,
         little_endian: bool,
-    ) -> Result<Self, NEOSpyError> {
+    ) -> NeosResult<Self> {
         if summary_floats.len() != 2 || summary_ints.len() != 6 {
-            return Err(NEOSpyError::IOError(
-                "SPK File incorrectly Formatted.".into(),
-            ));
+            Err(Error::IOError("SPK File incorrectly Formatted.".into()))?;
         }
         let array_start = summary_ints[4] as u64;
         let array_end = summary_ints[5] as u64;
@@ -317,11 +310,9 @@ impl DafArray {
         summary_floats: Box<[f64]>,
         summary_ints: Box<[i32]>,
         little_endian: bool,
-    ) -> Result<Self, NEOSpyError> {
+    ) -> NeosResult<Self> {
         if summary_floats.len() != 2 || summary_ints.len() != 5 {
-            return Err(NEOSpyError::IOError(
-                "PCK File incorrectly Formatted.".into(),
-            ));
+            Err(Error::IOError("PCK File incorrectly Formatted.".into()))?;
         }
         let array_start = summary_ints[3] as u64;
         let array_end = summary_ints[4] as u64;
@@ -343,7 +334,7 @@ impl DafArray {
         array_start: u64,
         array_end: u64,
         little_endian: bool,
-    ) -> Result<Self, NEOSpyError> {
+    ) -> NeosResult<Self> {
         let _ = buffer.seek(std::io::SeekFrom::Start(8 * (array_start - 1)))?;
 
         let n_floats = (array_end - array_start + 1) as usize;

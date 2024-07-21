@@ -2,7 +2,7 @@
 //!
 //! It is unlikely to be useful outside of reading these files.
 //!
-use crate::errors::NEOSpyError;
+use crate::{errors::Error, prelude::NeosResult};
 use nalgebra::DVector;
 
 /// Given a list of chebyshev polynomial coefficients, compute the value of the function
@@ -27,14 +27,14 @@ pub fn chebyshev3_evaluate_both(
     coefx: &[f64],
     coefy: &[f64],
     coefz: &[f64],
-) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
+) -> NeosResult<([f64; 3], [f64; 3])> {
     let n_coef = coefx.len();
 
     if n_coef < 2 {
-        return Err(NEOSpyError::IOError(
+        Err(Error::IOError(
             "File not formatted correctly. Chebyshev polynomial must be greater than order 2."
                 .into(),
-        ));
+        ))?;
     }
     let x2 = 2.0 * x;
 

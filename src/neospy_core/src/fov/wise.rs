@@ -1,5 +1,5 @@
 //! # WISE Fov definitions.
-use super::{Contains, FovLike, Frame, NEOSpyError, OnSkyRectangle, SkyPatch, FOV};
+use super::{Contains, FovLike, Frame, OnSkyRectangle, SkyPatch, FOV};
 use crate::constants::WISE_WIDTH;
 use crate::prelude::*;
 use nalgebra::Vector3;
@@ -68,7 +68,7 @@ impl FovLike for WiseCmos {
         1
     }
 
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
         self.observer.try_change_frame_mut(target_frame)?;
         self.patch = self.patch.try_frame_change(target_frame)?;
         Ok(())

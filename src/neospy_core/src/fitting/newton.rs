@@ -1,4 +1,4 @@
-use crate::errors::NEOSpyError;
+use crate::{errors::Error, prelude::NeosResult};
 
 /// Solve root using the Newton-Raphson method.
 ///
@@ -15,12 +15,7 @@ use crate::errors::NEOSpyError;
 /// ```
 ///
 #[inline(always)]
-pub fn newton_raphson<Func, Der>(
-    func: Func,
-    der: Der,
-    start: f64,
-    atol: f64,
-) -> Result<f64, NEOSpyError>
+pub fn newton_raphson<Func, Der>(func: Func, der: Der, start: f64, atol: f64) -> NeosResult<f64>
 where
     Func: Fn(f64) -> f64,
     Der: Fn(f64) -> f64,
@@ -43,16 +38,16 @@ where
 
         // Derivative is 0, cannot solve
         if d_eval.abs() < 1e-12 {
-            return Err(NEOSpyError::Convergence(
+            Err(Error::Convergence(
                 "Newton-Raphson root finding failed to converge due to zero derivative.".into(),
-            ));
+            ))?;
         }
 
         if !d_eval.is_finite() || !f_eval.is_finite() {
-            return Err(NEOSpyError::Convergence(
+            Err(Error::Convergence(
                 "Newton-Raphson root finding failed to converge due to non-finite evaluations"
                     .into(),
-            ));
+            ))?;
         }
 
         // 0.5 reduces the step size to slow down the rate of convergence.
@@ -64,9 +59,9 @@ where
         }
         x -= 0.5 * f_eval / d_eval;
     }
-    Err(NEOSpyError::Convergence(
+    Err(Error::Convergence(
         "Newton-Raphson root finding hit iteration limit without converging.".into(),
-    ))
+    ))?
 }
 
 #[cfg(test)]

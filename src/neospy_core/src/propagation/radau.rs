@@ -1,6 +1,7 @@
 /// Gauss-Radau Spacing Numerical Integrator
 /// This solves a second-order initial value problem.
-use crate::errors::NEOSpyError;
+use crate::errors::Error;
+use crate::prelude::NeosResult;
 use itertools::izip;
 use lazy_static::lazy_static;
 use nalgebra::allocator::Allocator;
@@ -15,10 +16,10 @@ pub type RadauFunc<'a, MType, D> = &'a dyn Fn(
     &OVector<f64, D>,
     &mut MType,
     bool,
-) -> Result<OVector<f64, D>, NEOSpyError>;
+) -> NeosResult<OVector<f64, D>>;
 
 /// Integrator will return a result of this type.
-pub type RadauResult<MType, D> = Result<(OVector<f64, D>, OVector<f64, D>, MType), NEOSpyError>;
+pub type RadauResult<MType, D> = NeosResult<(OVector<f64, D>, OVector<f64, D>, MType)>;
 
 const GAUSS_RADAU_SPACINGS: [f64; 8] = [
     0.0,
@@ -122,12 +123,12 @@ where
         time_init: f64,
         final_time: f64,
         metadata: MType,
-    ) -> Result<Self, NEOSpyError> {
+    ) -> NeosResult<Self> {
         let (dim, _) = state_init.shape_generic();
         if state_init.len() != state_der_init.len() {
-            return Err(NEOSpyError::ValueError(
+            Err(Error::ValueError(
                 "Input vectors must be the same length".into(),
-            ));
+            ))?;
         }
         let mut res = Self {
             func,
@@ -199,15 +200,13 @@ where
                     step_failures = 0;
                 }
                 Err(error) => match error {
-                    NEOSpyError::Impact(_, _) => return Err(error),
-                    NEOSpyError::DAFLimits(_) => return Err(error),
+                    Error::Impact(_, _) => Err(error)?,
+                    Error::DAFLimits(_) => Err(error)?,
                     _ => {
                         step_failures += 1;
                         next_step_size *= 0.7;
                         if step_failures > 10 {
-                            return Err(NEOSpyError::Convergence(
-                                "Radau failed to converge.".into(),
-                            ));
+                            Err(Error::Convergence("Radau failed to converge.".into()))?;
                         }
                     }
                 },
@@ -223,7 +222,7 @@ where
     /// This function will update the current b matrices to be correct for the
     /// step guess provided.
     ///
-    fn step(&mut self, step_size: f64) -> Result<f64, NEOSpyError> {
+    fn step(&mut self, step_size: f64) -> NeosResult<f64> {
         self.g_scratch.fill(0.0);
         self.state_scratch.fill(0.0);
         self.state_der_scratch.fill(0.0);
@@ -343,9 +342,7 @@ where
                         .clamp(MIN_RATIO, MIN_RATIO.recip()));
             }
         }
-        Err(NEOSpyError::Convergence(
-            "Radau step failed to converge".into(),
-        ))
+        Err(Error::Convergence("Radau step failed to converge".into()))?
     }
 }
 

@@ -248,7 +248,7 @@ impl PyNeatmParams {
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,
-            Err(_) => Err(neospy_core::errors::NEOSpyError::ValueError(
+            Err(_) => Err(neospy_core::errors::Error::ValueError(
                 "4 Albedos must be provided, one for each WISE band.".into(),
             ))?,
         };
@@ -282,7 +282,7 @@ impl PyNeatmParams {
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,
-            Err(_) => Err(neospy_core::errors::NEOSpyError::ValueError(
+            Err(_) => Err(neospy_core::errors::Error::ValueError(
                 "4 Albedos must be provided, one for each WISE band.".into(),
             ))?,
         };
@@ -532,7 +532,7 @@ impl PyFrmParams {
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,
-            Err(_) => Err(neospy_core::errors::NEOSpyError::ValueError(
+            Err(_) => Err(neospy_core::errors::Error::ValueError(
                 "4 Albedos must be provided, one for each WISE band.".into(),
             ))?,
         };
@@ -561,7 +561,7 @@ impl PyFrmParams {
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,
-            Err(_) => Err(neospy_core::errors::NEOSpyError::ValueError(
+            Err(_) => Err(neospy_core::errors::Error::ValueError(
                 "4 Albedos must be provided, one for each WISE band.".into(),
             ))?,
         };

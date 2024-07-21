@@ -4,9 +4,9 @@
 //! (usually performance related).
 
 use crate::constants::{MASSIVE_OBJECTS, MASSIVE_OBJECTS_EXTENDED};
-use crate::errors::NEOSpyError;
+use crate::errors::Error;
 use crate::frames::Frame;
-use crate::prelude::Desig;
+use crate::prelude::{Desig, NeosResult};
 use crate::spice::get_spk_singleton;
 use crate::state::State;
 use nalgebra::{DVector, Vector3};
@@ -49,7 +49,7 @@ pub fn propagate_two_body_radau(dt: f64, pos: &[f64; 3], vel: &[f64; 3]) -> ([f6
 ///
 /// This is a very poor approximation over more than a few minutes/hours, however it
 /// is very fast.
-pub fn propagate_linear(state: &State, jd_final: f64) -> Result<State, NEOSpyError> {
+pub fn propagate_linear(state: &State, jd_final: f64) -> NeosResult<State> {
     let dt = jd_final - state.jd;
     let mut pos: Vector3<f64> = state.pos.into();
     pos.iter_mut()
@@ -72,7 +72,7 @@ pub fn propagate_n_body_spk(
     jd_final: f64,
     include_extended: bool,
     a_terms: Option<NonGravModel>,
-) -> Result<State, NEOSpyError> {
+) -> NeosResult<State> {
     let center = state.center_id;
     let frame = state.frame;
     let spk = get_spk_singleton().try_read().unwrap();
@@ -123,7 +123,7 @@ pub fn propagate_n_body_spk(
 ///
 /// It is *strongly recommended* to use the `kepler.rs` code for this, as
 /// it will be much more computationally efficient.
-pub fn propagation_central(state: &State, jd_final: f64) -> Result<[[f64; 3]; 2], NEOSpyError> {
+pub fn propagation_central(state: &State, jd_final: f64) -> NeosResult<[[f64; 3]; 2]> {
     let pos: Vector3<f64> = state.pos.into();
     let vel: Vector3<f64> = state.vel.into();
     let (pos, vel, _meta) = RadauIntegrator::integrate(
@@ -139,16 +139,13 @@ pub fn propagation_central(state: &State, jd_final: f64) -> Result<[[f64; 3]; 2]
 
 /// Propagate using n-body mechanics but skipping SPK queries.
 /// This will propagate all planets and the Moon, so it may vary from SPK states slightly.
-pub fn propagation_n_body_vec(
-    states: Vec<State>,
-    jd_final: f64,
-) -> Result<Vec<[[f64; 3]; 2]>, NEOSpyError> {
+pub fn propagation_n_body_vec(states: Vec<State>, jd_final: f64) -> NeosResult<Vec<[[f64; 3]; 2]>> {
     let spk = get_spk_singleton().try_read().unwrap();
 
     if states.is_empty() {
-        return Err(NEOSpyError::ValueError(
+        Err(Error::ValueError(
             "State vector is empty, propagation cannot continue".into(),
-        ));
+        ))?;
     }
     let jd_init = states.first().unwrap().jd;
 
@@ -167,9 +164,9 @@ pub fn propagation_n_body_vec(
         spk.try_change_center(&mut state, 0)?;
         state.try_change_frame_mut(Frame::Ecliptic)?;
         if jd_init != state.jd {
-            return Err(NEOSpyError::ValueError(
+            Err(Error::ValueError(
                 "All input states must have the same JD".into(),
-            ));
+            ))?;
         }
         pos.append(&mut state.pos.into());
         vel.append(&mut state.vel.into());

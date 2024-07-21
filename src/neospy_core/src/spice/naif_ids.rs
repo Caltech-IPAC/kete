@@ -4,7 +4,7 @@
 use lazy_static::lazy_static;
 use serde::Deserialize;
 
-use crate::prelude::NEOSpyError;
+use crate::prelude::{Error, NeosResult};
 use std::str;
 use std::str::FromStr;
 
@@ -19,10 +19,10 @@ pub struct NaifId {
 }
 
 impl FromStr for NaifId {
-    type Err = NEOSpyError;
+    type Err = Error;
 
     /// Load an NaifId from a single string.
-    fn from_str(row: &str) -> Result<Self, Self::Err> {
+    fn from_str(row: &str) -> NeosResult<Self> {
         let id = i32::from_str(row[0..10].trim()).unwrap();
         let name = row[11..].trim().to_string();
         Ok(NaifId { id, name })

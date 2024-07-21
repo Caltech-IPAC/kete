@@ -16,8 +16,9 @@ use super::daf::DafArray;
 ///
 use super::interpolation::*;
 use super::{jd_to_spice_jd, spice_jds_to_jd};
-use crate::errors::NEOSpyError;
+use crate::errors::Error;
 use crate::frames::Frame;
+use crate::prelude::NeosResult;
 use std::fmt::Debug;
 
 #[derive(Debug)]
@@ -27,13 +28,13 @@ pub enum PckSegmentType {
 
 impl PckSegmentType {
     /// Load PCK Segment data from an array.
-    pub fn from_array(segment_type: i32, array: DafArray) -> Result<Self, NEOSpyError> {
+    pub fn from_array(segment_type: i32, array: DafArray) -> NeosResult<Self> {
         match segment_type {
             2 => Ok(PckSegmentType::Type2(array.into())),
-            v => Err(NEOSpyError::IOError(format!(
+            v => Err(Error::IOError(format!(
                 "SPK Segment type {:?} not supported.",
                 v
-            ))),
+            )))?,
         }
     }
 }
@@ -68,9 +69,9 @@ pub struct PckSegment {
 }
 
 impl TryFrom<DafArray> for PckSegment {
-    type Error = NEOSpyError;
+    type Error = Error;
 
-    fn try_from(array: DafArray) -> Result<PckSegment, Self::Error> {
+    fn try_from(array: DafArray) -> NeosResult<PckSegment> {
         let summary_floats = &array.summary_floats;
         let summary_ints = &array.summary_ints;
         let jd_start = spice_jds_to_jd(summary_floats[0]);
@@ -106,11 +107,11 @@ impl PckSegment {
 
     /// Return the [`Frame`] at the specified JD. If the requested time is not within
     /// the available range, this will fail.
-    pub fn try_get_orientation(&self, jd: f64) -> Result<Frame, NEOSpyError> {
+    pub fn try_get_orientation(&self, jd: f64) -> NeosResult<Frame> {
         if jd < self.jd_start || jd > self.jd_end {
-            return Err(NEOSpyError::DAFLimits(
+            Err(Error::DAFLimits(
                 "JD is not present in this record.".to_string(),
-            ));
+            ))?;
         }
 
         match &self.segment {
@@ -147,7 +148,7 @@ impl PckSegmentType2 {
     }
 
     /// Return the stored orientation, along with the rate of change of the orientation.
-    fn try_get_orientation(&self, segment: &PckSegment, jd: f64) -> Result<Frame, NEOSpyError> {
+    fn try_get_orientation(&self, segment: &PckSegment, jd: f64) -> NeosResult<Frame> {
         // Records in the segment contain information about the central position of the
         // north pole, as well as the position of the prime meridian. These values for
         // type 2 segments are stored as chebyshev polynomials of the first kind, in

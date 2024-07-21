@@ -94,7 +94,7 @@ impl FovLike for ZtfCcdQuad {
         1
     }
 
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
         self.observer.try_change_frame_mut(target_frame)?;
         self.patch = self.patch.try_frame_change(target_frame)?;
         Ok(())
@@ -127,11 +127,11 @@ impl ZtfField {
     /// Construct a new ZtfField from a list of ccd quads.
     /// These ccd quads must be from the same field and having matching value as
     /// appropriate.
-    pub fn new(ccd_quads: Vec<ZtfCcdQuad>) -> Result<Self, NEOSpyError> {
+    pub fn new(ccd_quads: Vec<ZtfCcdQuad>) -> NeosResult<Self> {
         if ccd_quads.is_empty() {
-            return Err(NEOSpyError::ValueError(
+            Err(Error::ValueError(
                 "Ztf Field must contains ZtfCcdQuads".into(),
-            ));
+            ))?;
         }
 
         let first = ccd_quads.first().unwrap();
@@ -149,9 +149,9 @@ impl ZtfField {
                 || ccd.imgtypecode != imgtypecode
                 || ccd.observer().jd != observer.jd
             {
-                return Err(NEOSpyError::ValueError(
+                Err(Error::ValueError(
                     "All ZtfCcdQuads must have matching values except CCD ID etc.".into(),
-                ));
+                ))?;
             }
         }
         Ok(Self {
@@ -174,7 +174,7 @@ impl FovLike for ZtfField {
         &self.observer
     }
 
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
         let _ = self
             .ccd_quads
             .iter_mut()

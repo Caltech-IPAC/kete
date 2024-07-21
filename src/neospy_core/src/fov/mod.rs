@@ -105,7 +105,7 @@ impl FOV {
     }
 
     /// Change the frame of this FOV
-    pub fn try_frame_change_mut(&mut self, target_frame: Frame) -> Result<(), NEOSpyError> {
+    pub fn try_frame_change_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
         match self {
             FOV::Wise(fov) => fov.try_frame_change_mut(target_frame),
             FOV::NeosCmos(fov) => fov.try_frame_change_mut(target_frame),

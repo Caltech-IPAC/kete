@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use neospy_core::{
-    errors::NEOSpyError,
+    errors::Error,
     propagation,
     spice::{self, get_spk_singleton},
     state::State,
@@ -53,7 +53,7 @@ pub fn propagation_n_body_spk_py(
     let non_gravs = non_gravs.unwrap_or(vec![None; states.len()]);
 
     if states.len() != non_gravs.len() {
-        Err(NEOSpyError::ValueError(
+        Err(Error::ValueError(
             "non_gravs must be the same length as states.".into(),
         ))?;
     }
@@ -95,7 +95,7 @@ pub fn propagation_n_body_spk_py(
                     || state.vel.iter().any(|x| !x.is_finite())
                 {
                     if !suppress_errors {
-                        Err(NEOSpyError::ValueError("Input state contains NaNs.".into()))?;
+                        Err(Error::ValueError("Input state contains NaNs.".into()))?;
                     };
                     return Ok(State::new_nan(state.desig, jd, state.frame, center).into());
                 }
@@ -115,7 +115,7 @@ pub fn propagation_n_body_spk_py(
                         if !suppress_errors {
                             Err(er)?
                         } else {
-                            if let neospy_core::errors::NEOSpyError::Impact(id, time) = er {
+                            if let neospy_core::errors::Error::Impact(id, time) = er {
                                 let time_full: Time<TDB> = Time::new(time);
                                 eprintln!(
                                     "Impact detected between {:?} <-> {} at time {} ({})",

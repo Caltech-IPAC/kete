@@ -3,10 +3,10 @@
 //! such as the solar system.
 //!
 
-use crate::constants::*;
-use crate::errors::NEOSpyError;
+use crate::errors::Error;
 use crate::fitting::newton_raphson;
 use crate::state::State;
+use crate::{constants::*, prelude::NeosResult};
 use nalgebra::{ComplexField, Vector3};
 use std::f64::consts::TAU;
 
@@ -18,18 +18,14 @@ use std::f64::consts::TAU;
 /// * `mean_anomaly` - Mean anomaly.
 /// * `peri_dist` - Perihelion Distance in AU, only used for parabolic orbits.
 ///
-pub fn compute_eccentric_anomaly(
-    ecc: f64,
-    mean_anom: f64,
-    peri_dist: f64,
-) -> Result<f64, NEOSpyError> {
+pub fn compute_eccentric_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> NeosResult<f64> {
     match ecc {
-        ecc if !ecc.is_finite() => Err(NEOSpyError::ValueError(
+        ecc if !ecc.is_finite() => Err(Error::ValueError(
             "Eccentricity must be a finite value".into(),
-        )),
-        ecc if ecc < 0.0 => Err(NEOSpyError::ValueError(
+        ))?,
+        ecc if ecc < 0.0 => Err(Error::ValueError(
             "Eccentricity must be greater than 0".into(),
-        )),
+        ))?,
         ecc if ecc < 1e-6 => Ok(mean_anom),
         ecc if ecc < 0.9999 => {
             // Elliptical
@@ -65,7 +61,7 @@ pub fn compute_eccentric_anomaly(
 /// * `mean_anomaly` - Mean anomaly, between 0 and 2 pi.
 /// * `peri_dist` - Perihelion Distance in AU, only used for parabolic orbits.
 ///
-pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> Result<f64, NEOSpyError> {
+pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> NeosResult<f64> {
     let ecc_anom = compute_eccentric_anomaly(ecc, mean_anom, peri_dist)?;
 
     let anom = match ecc {
@@ -89,16 +85,12 @@ pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> Result<
 /// * `true_anomaly` - true anomaly, between 0 and 2 pi.
 /// * `peri_dist` - Perihelion Distance in AU, only used for parabolic orbits.
 ///
-pub fn eccentric_anomaly_from_true(
-    ecc: f64,
-    true_anom: f64,
-    peri_dist: f64,
-) -> Result<f64, NEOSpyError> {
+pub fn eccentric_anomaly_from_true(ecc: f64, true_anom: f64, peri_dist: f64) -> NeosResult<f64> {
     let ecc_anom = match ecc {
-        ecc if !ecc.is_finite() => Err(NEOSpyError::ValueError(
+        ecc if !ecc.is_finite() => Err(Error::ValueError(
             "Eccentricity must be a finite value".into(),
         ))?,
-        ecc if ecc < 0.0 => Err(NEOSpyError::ValueError(
+        ecc if ecc < 0.0 => Err(Error::ValueError(
             "Eccentricity must be greater than 0".into(),
         ))?,
         e if e < 1e-6 => true_anom,
@@ -176,12 +168,7 @@ fn g_2(s: f64, beta: f64) -> f64 {
 /// * `v0` - Velocity with respect to the central body (AU/day)
 /// * `rv0` - R vector dotted with the V vector, not normalized.
 ///
-fn solve_kepler_universal(
-    mut dt: f64,
-    r0: f64,
-    v0: f64,
-    rv0: f64,
-) -> Result<(f64, f64), NEOSpyError> {
+fn solve_kepler_universal(mut dt: f64, r0: f64, v0: f64, rv0: f64) -> NeosResult<(f64, f64)> {
     // beta is GMS / semi_major
     let beta = 2.0 * GMS / r0 - v0.powi(2);
     let b_sqrt = beta.abs().sqrt();
@@ -233,7 +220,7 @@ fn solve_kepler_universal(
             newton_raphson(f, d, GMS_SQRT * beta.abs() * dt, 1e-11)
         }
     }
-    .map_err(|_| NEOSpyError::Convergence("Failed to solve universal kepler equation".into()))?;
+    .map_err(|_| Error::Convergence("Failed to solve universal kepler equation".into()))?;
     Ok((res, beta))
 }
 
@@ -261,12 +248,12 @@ pub fn analytic_2_body(
     pos: &Vector3<f64>,
     vel: &Vector3<f64>,
     depth: Option<usize>,
-) -> Result<(Vector3<f64>, Vector3<f64>), NEOSpyError> {
+) -> NeosResult<(Vector3<f64>, Vector3<f64>)> {
     let mut depth = depth.to_owned().unwrap_or(0);
     if depth >= 10 {
-        return Err(NEOSpyError::Convergence(
+        Err(Error::Convergence(
             "Two body recursion depth reached.".into(),
-        ));
+        ))?;
     } else {
         depth += 1;
     }
@@ -278,9 +265,7 @@ pub fn analytic_2_body(
     let rv0 = pos.dot(vel);
 
     if rv0.is_nan() || rv0.is_infinite() {
-        return Err(NEOSpyError::Convergence(
-            "Input included infinity or NAN.".into(),
-        ));
+        Err(Error::Convergence("Input included infinity or NAN.".into()))?;
     }
 
     match solve_kepler_universal(time, r0, v0, rv0) {
@@ -310,7 +295,7 @@ pub fn analytic_2_body(
 /// recommended to use a center of the Sun (10) for this computation.
 ///
 /// This is the fastest method for getting a relatively good estimate of the orbits.
-pub fn propagate_two_body(state: &State, jd_final: f64) -> Result<State, NEOSpyError> {
+pub fn propagate_two_body(state: &State, jd_final: f64) -> NeosResult<State> {
     let (pos, vel) = analytic_2_body(
         jd_final - state.jd,
         &state.pos.into(),

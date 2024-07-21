@@ -9,7 +9,7 @@
 ///
 use super::daf::{DAFType, DafFile};
 use super::pck_segments::PckSegment;
-use crate::errors::NEOSpyError;
+use crate::errors::{Error, NeosResult};
 use crate::frames::Frame;
 
 use std::io::Cursor;
@@ -34,13 +34,13 @@ pub type PckSingleton = RwLock<PckCollection>;
 impl PckCollection {
     /// Given an PCK filename, load all the segments present inside of it.
     /// These segments are added to the PCK singleton in memory.
-    pub fn load_file(&mut self, filename: &str) -> Result<(), NEOSpyError> {
+    pub fn load_file(&mut self, filename: &str) -> NeosResult<()> {
         let file = DafFile::from_file(filename)?;
         if !matches!(file.daf_type, DAFType::Pck) {
-            return Err(NEOSpyError::IOError(format!(
+            Err(Error::IOError(format!(
                 "File {:?} is not a PCK formatted file.",
                 filename
-            )));
+            )))?;
         }
         self.segments
             .extend(file.segments.into_iter().map(|x| x.pck()));
@@ -49,17 +49,17 @@ impl PckCollection {
 
     /// Get the raw orientation from the loaded PCK files.
     /// This orientation will have the frame of what was originally present in the file.
-    pub fn try_get_orientation(&self, id: isize, jd: f64) -> Result<Frame, NEOSpyError> {
+    pub fn try_get_orientation(&self, id: isize, jd: f64) -> NeosResult<Frame> {
         for segment in self.segments.iter() {
             if id == segment.center_id && segment.contains(jd) {
                 return segment.try_get_orientation(jd);
             }
         }
 
-        Err(NEOSpyError::DAFLimits(format!(
+        Err(Error::DAFLimits(format!(
             "Object ({}) does not have an PCK record for the target JD.",
             id
-        )))
+        )))?
     }
 
     /// Delete all segments in the PCK singleton, equivalent to unloading all files.

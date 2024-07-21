@@ -15,9 +15,9 @@
 use super::interpolation::*;
 use super::{jd_to_spice_jd, spice_jds_to_jd, DafArray};
 use crate::constants::AU_KM;
-use crate::errors::NEOSpyError;
+use crate::errors::Error;
 use crate::frames::Frame;
-use crate::prelude::Desig;
+use crate::prelude::{Desig, NeosResult};
 use crate::state::State;
 use crate::time::scales::TDB;
 use crate::time::Time;
@@ -36,14 +36,14 @@ pub enum SpkSegmentType {
 
 impl SpkSegmentType {
     /// Create a Segment from a DafArray, the segment type must be specified.
-    pub fn from_array(segment_type: i32, array: DafArray) -> Result<Self, NEOSpyError> {
+    pub fn from_array(segment_type: i32, array: DafArray) -> NeosResult<Self> {
         match segment_type {
             1 => Ok(SpkSegmentType::Type1(array.into())),
             2 => Ok(SpkSegmentType::Type2(array.into())),
             13 => Ok(SpkSegmentType::Type13(array.into())),
             10 => Ok(SpkSegmentType::Type10(array.into())),
             21 => Ok(SpkSegmentType::Type21(array.into())),
-            v => Err(NEOSpyError::IOError(format!(
+            v => Err(Error::IOError(format!(
                 "SPK Segment type {:?} not supported.",
                 v
             ))),
@@ -104,9 +104,9 @@ impl From<SpkSegment> for DafArray {
 }
 
 impl TryFrom<DafArray> for SpkSegment {
-    type Error = NEOSpyError;
+    type Error = Error;
 
-    fn try_from(value: DafArray) -> Result<SpkSegment, Self::Error> {
+    fn try_from(value: DafArray) -> NeosResult<SpkSegment> {
         let summary_floats = &value.summary_floats;
         let summary_ints = &value.summary_ints;
         let jd_start = spice_jds_to_jd(summary_floats[0]);
@@ -143,10 +143,11 @@ impl SpkSegment {
 
     /// Return the [`State`] object at the specified JD. If the requested time is
     /// not within the available range, this will fail.
-    pub fn try_get_state(&self, jd: f64) -> Result<State, NEOSpyError> {
+    #[inline(always)]
+    pub fn try_get_state(&self, jd: f64) -> NeosResult<State> {
         // this is faster than calling contains, probably because the || instead of &&
         if jd < self.jd_start || jd > self.jd_end {
-            return Err(NEOSpyError::DAFLimits(
+            return Err(Error::DAFLimits(
                 "JD is not present in this record.".to_string(),
             ));
         }
@@ -182,10 +183,12 @@ pub struct SpkSegmentType1 {
 }
 
 impl SpkSegmentType1 {
+    #[inline(always)]
     fn get_record(&self, idx: usize) -> &[f64] {
         unsafe { self.array.data.get_unchecked(idx * 71..(idx + 1) * 71) }
     }
 
+    #[inline(always)]
     fn get_times(&self) -> &[f64] {
         unsafe {
             self.array
@@ -194,11 +197,8 @@ impl SpkSegmentType1 {
         }
     }
 
-    fn try_get_pos_vel(
-        &self,
-        _: &SpkSegment,
-        jd: f64,
-    ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
+    #[inline(always)]
+    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> NeosResult<([f64; 3], [f64; 3])> {
         // Records are laid out as so:
         //
         // Size      Description
@@ -242,9 +242,9 @@ impl SpkSegmentType1 {
             let f = func_vec[idx];
             if f == 0.0 {
                 // don't divide by 0 below, file was built incorrectly.
-                return Err(NEOSpyError::IOError(
+                Err(Error::IOError(
                     "SPK File contains segments of type 1 has invalid contents.".into(),
-                ));
+                ))?;
             }
 
             fc[idx] = tp / f;
@@ -327,6 +327,7 @@ struct Type2RecordView<'a> {
 }
 
 impl SpkSegmentType2 {
+    #[inline(always)]
     fn get_record(&self, idx: usize) -> Type2RecordView {
         unsafe {
             let vals = self
@@ -344,11 +345,8 @@ impl SpkSegmentType2 {
         }
     }
 
-    fn try_get_pos_vel(
-        &self,
-        segment: &SpkSegment,
-        jd: f64,
-    ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
+    #[inline(always)]
+    fn try_get_pos_vel(&self, segment: &SpkSegment, jd: f64) -> NeosResult<([f64; 3], [f64; 3])> {
         let jd = jd_to_spice_jd(jd);
         let jd_start = jd_to_spice_jd(segment.jd_start);
         let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
@@ -414,11 +412,13 @@ pub struct SpkSegmentType10 {
 
 #[allow(unused)]
 impl SpkSegmentType10 {
+    #[inline(always)]
     fn get_times(&self) -> &[f64] {
         self.array.get_reference_items()
     }
 
     /// Return the SGP4 record stored within the spice kernel.
+    #[inline(always)]
     fn get_record(&self, idx: usize) -> Constants {
         let rec = self.array.get_packet::<15>(idx);
         let [_, _, _, b_star, inclination, right_ascension, eccentricity, argument_of_perigee, mean_anomaly, kozai_mean_motion, epoch, _, _, _, _] =
@@ -453,11 +453,8 @@ impl SpkSegmentType10 {
         .expect("Failed to load orbit values")
     }
 
-    fn try_get_pos_vel(
-        &self,
-        _: &SpkSegment,
-        jd: f64,
-    ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
+    #[inline(always)]
+    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> NeosResult<([f64; 3], [f64; 3])> {
         // TODO: this does not yet implement the interpolation between two neighboring states
         // which is present in the cSPICE implementation.
         // This currently matches the cspice implementation to within about 20km, where the error
@@ -554,6 +551,7 @@ struct Type13RecordView<'a> {
 }
 
 impl SpkSegmentType13 {
+    #[inline(always)]
     fn get_record(&self, idx: usize) -> Type13RecordView {
         unsafe {
             let rec = self.array.data.get_unchecked(idx * 6..(idx + 1) * 6);
@@ -564,6 +562,7 @@ impl SpkSegmentType13 {
         }
     }
 
+    #[inline(always)]
     fn get_times(&self) -> &[f64] {
         unsafe {
             self.array
@@ -572,11 +571,8 @@ impl SpkSegmentType13 {
         }
     }
 
-    fn try_get_pos_vel(
-        &self,
-        _: &SpkSegment,
-        jd: f64,
-    ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
+    #[inline(always)]
+    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> NeosResult<([f64; 3], [f64; 3])> {
         let jd = jd_to_spice_jd(jd);
         let times = self.get_times();
         let start_idx: isize = match times.binary_search_by(|probe| probe.total_cmp(&jd)) {
@@ -640,6 +636,7 @@ impl From<DafArray> for SpkSegmentType21 {
 }
 
 impl SpkSegmentType21 {
+    #[inline(always)]
     fn get_record(&self, idx: usize) -> &[f64] {
         unsafe {
             self.array
@@ -648,6 +645,7 @@ impl SpkSegmentType21 {
         }
     }
 
+    #[inline(always)]
     fn get_times(&self) -> &[f64] {
         unsafe {
             self.array.data.get_unchecked(
@@ -656,11 +654,8 @@ impl SpkSegmentType21 {
         }
     }
 
-    fn try_get_pos_vel(
-        &self,
-        _: &SpkSegment,
-        jd: f64,
-    ) -> Result<([f64; 3], [f64; 3]), NEOSpyError> {
+    #[inline(always)]
+    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> NeosResult<([f64; 3], [f64; 3])> {
         // Records are laid out as so:
         //
         // Size      Description
@@ -704,7 +699,7 @@ impl SpkSegmentType21 {
         for f in func_vec.iter().take(kq_max1 - 2) {
             if *f == 0.0 {
                 // don't divide by 0 below, file was built incorrectly.
-                return Err(NEOSpyError::IOError(
+                return Err(Error::IOError(
                     "SPK File contains segments of type 21 has invalid contents.".into(),
                 ));
             }
@@ -853,19 +848,19 @@ impl GenericSegment {
 }
 
 impl TryFrom<DafArray> for GenericSegment {
-    type Error = NEOSpyError;
+    type Error = Error;
 
-    fn try_from(array: DafArray) -> Result<Self, Self::Error> {
+    fn try_from(array: DafArray) -> NeosResult<Self> {
         // The very last value of this array is an int (cast to f64) which indicates the number
         // of meta-data values.
 
         let n_meta = array[array.len() - 1] as usize;
 
         if n_meta < 15 {
-            return Err(NEOSpyError::IOError(
+            Err(Error::IOError(
                 "PSK File not correctly formatted. There are fewer values found than expected."
                     .into(),
-            ));
+            ))?;
         }
         // there are guaranteed to be 15 meta data values.
         let (

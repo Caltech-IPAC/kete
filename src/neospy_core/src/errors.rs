@@ -4,11 +4,14 @@
 /// Define all errors which may be raise by this crate, as well as optionally provide
 /// conversion to pyo3 error types which allow for the errors to be raised in Python.
 use chrono::ParseError;
-use std::{error::Error, fmt, io};
+use std::{error, fmt, io};
+
+/// neospy specific result.
+pub type NeosResult<T> = Result<T, Error>;
 
 /// Possible Errors which may be raised by this crate.
 #[derive(Debug, Clone)]
-pub enum NEOSpyError {
+pub enum Error {
     /// Numerical method did not converge within the algorithms limits.
     Convergence(String),
 
@@ -28,27 +31,27 @@ pub enum NEOSpyError {
     Impact(i64, f64),
 }
 
-impl Error for NEOSpyError {}
+impl error::Error for Error {}
 
-impl fmt::Display for NEOSpyError {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            NEOSpyError::Convergence(s) => {
+            Error::Convergence(s) => {
                 write!(f, "{}", s)
             }
-            NEOSpyError::ValueError(s) => {
+            Error::ValueError(s) => {
                 write!(f, "{}", s)
             }
-            NEOSpyError::DAFLimits(s) => {
+            Error::DAFLimits(s) => {
                 write!(f, "{}", s)
             }
-            NEOSpyError::UnknownFrame(_) => {
+            Error::UnknownFrame(_) => {
                 write!(f, "This reference frame is not supported.")
             }
-            NEOSpyError::IOError(s) => {
+            Error::IOError(s) => {
                 write!(f, "{}", s)
             }
-            NEOSpyError::Impact(s, t) => {
+            Error::Impact(s, t) => {
                 write!(f, "Propagation detected an impact with {} at time {}", s, t)
             }
         }
@@ -59,22 +62,22 @@ impl fmt::Display for NEOSpyError {
 use pyo3::{exceptions, PyErr};
 
 #[cfg(feature = "pyo3")]
-impl From<NEOSpyError> for PyErr {
-    fn from(err: NEOSpyError) -> PyErr {
+impl From<Error> for PyErr {
+    fn from(err: Error) -> PyErr {
         match err {
-            NEOSpyError::Convergence(s) => PyErr::new::<exceptions::PyValueError, _>(s),
+            Error::Convergence(s) => PyErr::new::<exceptions::PyValueError, _>(s),
 
-            NEOSpyError::ValueError(s) => PyErr::new::<exceptions::PyValueError, _>(s),
+            Error::ValueError(s) => PyErr::new::<exceptions::PyValueError, _>(s),
 
-            NEOSpyError::DAFLimits(s) => PyErr::new::<exceptions::PyValueError, _>(s),
+            Error::DAFLimits(s) => PyErr::new::<exceptions::PyValueError, _>(s),
 
-            NEOSpyError::UnknownFrame(_) => {
+            Error::UnknownFrame(_) => {
                 PyErr::new::<exceptions::PyValueError, _>("This reference frame is not supported.")
             }
 
-            NEOSpyError::IOError(s) => PyErr::new::<exceptions::PyValueError, _>(s),
+            Error::IOError(s) => PyErr::new::<exceptions::PyValueError, _>(s),
 
-            NEOSpyError::Impact(s, t) => PyErr::new::<exceptions::PyValueError, _>(format!(
+            Error::Impact(s, t) => PyErr::new::<exceptions::PyValueError, _>(format!(
                 "Propagation detected an impact with {} at time {}",
                 s, t
             )),
@@ -82,25 +85,25 @@ impl From<NEOSpyError> for PyErr {
     }
 }
 
-impl From<io::Error> for NEOSpyError {
+impl From<io::Error> for Error {
     fn from(error: io::Error) -> Self {
-        NEOSpyError::IOError(error.to_string())
+        Error::IOError(error.to_string())
     }
 }
 
-impl From<std::num::ParseIntError> for NEOSpyError {
+impl From<std::num::ParseIntError> for Error {
     fn from(value: std::num::ParseIntError) -> Self {
-        NEOSpyError::IOError(value.to_string())
+        Error::IOError(value.to_string())
     }
 }
-impl From<std::num::ParseFloatError> for NEOSpyError {
+impl From<std::num::ParseFloatError> for Error {
     fn from(value: std::num::ParseFloatError) -> Self {
-        NEOSpyError::IOError(value.to_string())
+        Error::IOError(value.to_string())
     }
 }
 
-impl From<ParseError> for NEOSpyError {
+impl From<ParseError> for Error {
     fn from(value: ParseError) -> Self {
-        NEOSpyError::IOError(value.to_string())
+        Error::IOError(value.to_string())
     }
 }
