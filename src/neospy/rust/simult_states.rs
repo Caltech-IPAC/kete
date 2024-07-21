@@ -28,7 +28,9 @@ impl<'py> FromPyObject<'py> for PySimultaneousStates {
         if let Ok(states) = ob.extract::<Vec<PyState>>() {
             return PySimultaneousStates::new(states, None);
         }
-        ob.extract::<PySimultaneousStates>()
+        Ok(PySimultaneousStates(
+            ob.downcast_exact::<PySimultaneousStates>()?.get().0.clone(),
+        ))
     }
 }
 

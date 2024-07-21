@@ -5,6 +5,17 @@ ZTF Related Functions and Data.
 from functools import lru_cache
 import os
 from collections import defaultdict
+import matplotlib.pyplot as plt
+import warnings
+
+from astropy.io import fits
+from astropy.wcs import WCS
+from astropy.visualization import (
+    PowerDistStretch,
+    AsymmetricPercentileInterval,
+    ImageNormalize,
+)
+
 
 from .cache import cached_file_download, cache_path
 from .fov import ZtfCcdQuad, ZtfField, FOVList
@@ -159,6 +170,67 @@ def file_frac_day_split(filefracday):
     day = int(filefracday[6:8])
     frac_day = int(filefracday[8:])
     return (year, month, day, frac_day)
+
+
+def plot_ztf_fov(
+    fov: ZtfCcdQuad,
+    cmap="grey",
+    products="sci",
+    im_type="sciimg.fits",
+    force_download=False,
+):
+    """
+    Given a ztf FOV, plot the associated frame.
+
+    This returns the associate WCS which is constructed.
+
+    Parameters
+    ----------
+    fov :
+        A single CCD Quad FOV.
+    cmap :
+        Colormap of the plot.
+    products :
+        Which data product to fetch.
+    im_type :
+        Image extension, this must match the products variable.
+    force_download :
+        Optionally force a re-download if the file already exists in the cache.
+    """
+    file = fetch_ZTF_file(
+        fov.field,
+        fov.filefracday,
+        fov.filtercode,
+        fov.ccdid,
+        fov.imgtypecode,
+        fov.qid,
+        products,
+        im_type,
+        force_download,
+    )
+
+    frame = fits.open(file)[0]
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore")
+        wcs = WCS(frame.header)
+
+    if not plt.get_fignums():
+        plt.figure(dpi=300, figsize=(6, 6), facecolor="w")
+
+    ax = plt.subplot(projection=wcs)
+
+    norm = ImageNormalize(
+        frame.data,
+        interval=AsymmetricPercentileInterval(10, 99.5),
+        stretch=PowerDistStretch(0.25),
+    )
+
+    ax.imshow(frame.data, origin="lower", norm=norm, cmap=cmap)
+    ax.set_xlabel("RA")
+    ax.set_ylabel("DEC")
+    ax.set_aspect("equal", adjustable="box")
+    return wcs
 
 
 def fetch_ZTF_file(
