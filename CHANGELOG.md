@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Optimizations to SPICE kernel queries leading to a 13% speedup in orbit propagation,
+- Optimizations to SPICE kernel queries leading to a 20% speedup in orbit propagation,
   along with >43% speedup in state queries from the spice kernels. Speedup from orbit
   propagation comes directly from the spice kernel optimization.
 - Moved python wrappers over propagation into the rust backend entirely.
