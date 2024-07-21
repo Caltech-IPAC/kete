@@ -22,16 +22,17 @@ use crate::{
 ///     A field of view from which to subselect objects which are visible.
 /// dt: float
 ///     Length of time in days where 2-body mechanics is a good approximation.
+/// include_asteroids: bool
+///     Include the 5 largest asteroids during the computation.
 #[pyfunction]
-#[pyo3(name = "fov_state_check", signature = (obj_state, fovs, dt_limit=None))]
+#[pyo3(name = "fov_state_check", signature = (obj_state, fovs, dt_limit=3.0, include_asteroids=false))]
 pub fn fov_checks_py(
     py: Python<'_>,
     obj_state: PySimultaneousStates,
     fovs: FOVListLike,
-    dt_limit: Option<f64>,
+    dt_limit: f64,
+    include_asteroids: bool,
 ) -> PyResult<Vec<PySimultaneousStates>> {
-    let dt_limit = dt_limit.unwrap_or(3.0);
-
     let fovs = fovs.into_sorted_vec_fov();
 
     // This is only here for a check to verify the states are valid
@@ -41,7 +42,6 @@ pub fn fov_checks_py(
     let mut big_jd = jd;
     let mut states = pop.states;
     let mut big_step_states = states.clone();
-
     let mut visible = Vec::new();
     for fov in fovs.into_iter() {
         // Take large steps which are 10x the smaller steps, this helps long term numerical stability
@@ -49,7 +49,7 @@ pub fn fov_checks_py(
             big_jd = fov.observer().jd;
             big_step_states = big_step_states
                 .into_par_iter()
-                .filter_map(|state| propagate_n_body_spk(state, jd, true, None).ok())
+                .filter_map(|state| propagate_n_body_spk(state, jd, include_asteroids, None).ok())
                 .collect();
         };
         // Take small steps based off of the large steps.
@@ -60,12 +60,12 @@ pub fn fov_checks_py(
             jd = fov.observer().jd;
             states = states
                 .into_par_iter()
-                .filter_map(|state| propagate_n_body_spk(state, jd, true, None).ok())
+                .filter_map(|state| propagate_n_body_spk(state, jd, include_asteroids, None).ok())
                 .collect();
         };
 
         let vis: Vec<PySimultaneousStates> = fov
-            .check_visible(&states, dt_limit)
+            .check_visible(&states, dt_limit, include_asteroids)
             .into_iter()
             .filter_map(|pop| pop.map(|p| PySimultaneousStates(Box::new(p))))
             .collect();

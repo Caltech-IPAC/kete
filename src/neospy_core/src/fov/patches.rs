@@ -286,7 +286,7 @@ impl SkyPatch for SphericalCone {
             .abs();
         match dist {
             // if d is less than the angle, it is inside cone
-            d if d < self.angle => Contains::Inside,
+            d if d <= self.angle => Contains::Inside,
 
             // outside of the cone, but how badly?
             d => {
