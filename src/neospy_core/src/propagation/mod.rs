@@ -3,7 +3,7 @@
 //! There are multiple levels of precision available, each with different pros/cons
 //! (usually performance related).
 
-use crate::constants::{MASSIVE_OBJECTS, MASSIVE_OBJECTS_EXTENDED};
+use crate::constants::{MASSES, PLANETS};
 use crate::errors::Error;
 use crate::frames::Frame;
 use crate::prelude::{Desig, NeosResult};
@@ -81,9 +81,9 @@ pub fn propagate_n_body_spk(
 
     let mass_list = {
         if include_extended {
-            MASSIVE_OBJECTS_EXTENDED
+            MASSES
         } else {
-            MASSIVE_OBJECTS
+            PLANETS
         }
     };
 
@@ -153,8 +153,8 @@ pub fn propagate_n_body_vec(states: Vec<State>, jd_final: f64) -> NeosResult<Vec
     let mut vel: Vec<f64> = Vec::new();
     let mut desigs: Vec<Desig> = Vec::new();
 
-    for (id, _mass, _radius) in MASSIVE_OBJECTS.iter() {
-        let planet = spk.try_get_state(*id, jd_init, 0, Frame::Ecliptic)?;
+    for obj in PLANETS.iter() {
+        let planet = spk.try_get_state(obj.naif_id, jd_init, 0, Frame::Ecliptic)?;
         pos.append(&mut planet.pos.into());
         vel.append(&mut planet.vel.into());
         desigs.push(planet.desig.to_owned());
@@ -174,7 +174,7 @@ pub fn propagate_n_body_vec(states: Vec<State>, jd_final: f64) -> NeosResult<Vec
     }
     let meta = AccelVecMeta {
         non_grav_a: None,
-        massive_obj: MASSIVE_OBJECTS,
+        massive_obj: PLANETS,
     };
 
     let (pos, vel, _) = {

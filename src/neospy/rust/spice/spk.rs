@@ -1,5 +1,5 @@
 use neospy_core::spice::{get_spk_singleton, try_name_from_id};
-use pyo3::{pyfunction, PyResult};
+use pyo3::{pyfunction, PyResult, Python};
 
 use crate::frame::PyFrames;
 use crate::state::PyState;
@@ -8,12 +8,13 @@ use crate::time::PyTime;
 /// Load all specified files into the SPK shared memory singleton.
 #[pyfunction]
 #[pyo3(name = "spk_load")]
-pub fn spk_load_py(filenames: Vec<String>) -> PyResult<()> {
+pub fn spk_load_py(py: Python<'_>, filenames: Vec<String>) -> PyResult<()> {
     let mut singleton = get_spk_singleton().write().unwrap();
     if filenames.len() > 100 {
         eprintln!("Loading {} spk files...", filenames.len());
     }
     for filename in filenames.iter() {
+        py.check_signals()?;
         let load = (*singleton).load_file(filename);
         if let Err(err) = load {
             eprintln!("{} failed to load. {}", filename, err);

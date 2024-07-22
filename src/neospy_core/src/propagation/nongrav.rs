@@ -101,14 +101,14 @@ impl NonGravModel {
 
     /// Compute the non-gravitational acceleration vector when provided the position
     /// and velocity vector with respect to the sun.
-    pub fn accel_vec(&self, pos: &Vector3<f64>, vel: &Vector3<f64>) -> Vector3<f64> {
+    pub fn apply_accel(&self, accel: &mut Vector3<f64>, pos: &Vector3<f64>, vel: &Vector3<f64>) {
         match self {
             Self::Dust { beta } => {
                 let pos_norm = pos.normalize();
                 let r_dot = &pos_norm.dot(vel);
                 let norm2_inv = pos.norm_squared().recip();
                 let scaling = GMS * beta * norm2_inv;
-                scaling
+                *accel += scaling
                     * ((1.0 - r_dot * C_AU_PER_DAY_INV_SQUARED) * pos_norm
                         - vel * C_AU_PER_DAY_INV_SQUARED)
             }
@@ -128,10 +128,9 @@ impl NonGravModel {
                 let scale = alpha * rr0.powf(-m) * (1.0 + rr0.powf(*n)).powf(-k);
                 let t_vec = (vel - pos_norm * vel.dot(&pos_norm)).normalize();
                 let n_vec = t_vec.cross(&pos_norm).normalize();
-                let mut accel = pos_norm * (scale * a1);
-                accel += t_vec * (scale * a2);
-                accel += n_vec * (scale * a3);
-                accel
+                *accel += pos_norm * (scale * a1);
+                *accel += t_vec * (scale * a2);
+                *accel += n_vec * (scale * a3);
             }
         }
     }
