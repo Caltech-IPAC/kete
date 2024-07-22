@@ -139,7 +139,7 @@ pub fn propagation_central(state: &State, jd_final: f64) -> NeosResult<[[f64; 3]
 
 /// Propagate using n-body mechanics but skipping SPK queries.
 /// This will propagate all planets and the Moon, so it may vary from SPK states slightly.
-pub fn propagation_n_body_vec(states: Vec<State>, jd_final: f64) -> NeosResult<Vec<[[f64; 3]; 2]>> {
+pub fn propagate_n_body_vec(states: Vec<State>, jd_final: f64) -> NeosResult<Vec<State>> {
     let spk = get_spk_singleton().try_read().unwrap();
 
     if states.is_empty() {
@@ -189,7 +189,7 @@ pub fn propagation_n_body_vec(states: Vec<State>, jd_final: f64) -> NeosResult<V
     };
     let sun_pos = pos.rows(0, 3);
     let sun_vel = vel.rows(0, 3);
-    let mut final_states: Vec<[[f64; 3]; 2]> = Vec::new();
+    let mut final_states: Vec<State> = Vec::new();
     for (idx, desig) in desigs.into_iter().enumerate() {
         let pos_chunk = pos.rows(idx * 3, 3) - sun_pos;
         let vel_chunk = vel.rows(idx * 3, 3) - sun_vel;
@@ -201,7 +201,7 @@ pub fn propagation_n_body_vec(states: Vec<State>, jd_final: f64) -> NeosResult<V
             Frame::Ecliptic,
             10,
         );
-        final_states.push([state.pos, state.vel]);
+        final_states.push(state);
     }
     Ok(final_states)
 }

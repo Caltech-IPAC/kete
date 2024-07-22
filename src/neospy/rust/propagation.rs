@@ -136,3 +136,50 @@ pub fn propagation_n_body_spk_py(
 
     Ok(res)
 }
+
+/// Propagate the provided :class:`~neospy.State` using N body mechanics to the
+/// specified times, no approximations are made, this can be very CPU intensive.
+///
+/// This does not compute light delay, however it does include corrections for general
+/// relativity due to the Sun.
+///
+/// Parameters
+/// ----------
+/// states:
+///     The initial states, this is a list of multiple State objects.
+/// jd:
+///     A JD to propagate the initial states to.
+/// include_asteroids:
+///     If this is true, the computation will include the largest 5 asteroids.
+///     The asteroids are: Ceres, Pallas, Interamnia, Hygiea, and Vesta.
+/// non_gravs:
+///     A list of non-gravitational terms for each object. If provided, then every
+///     object must have an associated :class:`~NonGravModel` or `None`.
+/// suppress_errors:
+///     If True, errors during propagation will return NaN for the relevant state
+///     vectors, but propagation will continue.
+///
+/// Returns
+/// -------
+/// Iterable
+///     A :class:`~neospy.State` at the new time.
+#[pyfunction]
+#[pyo3(name = "propagate_n_body_vec", signature = (states, jd_final, non_gravs=None))]
+pub fn propagation_n_body_py(
+    states: Vec<PyState>,
+    jd_final: PyTime,
+    non_gravs: Option<Vec<Option<PyNonGravModel>>>,
+) -> PyResult<Vec<PyState>> {
+    let states: Vec<State> = states.into_iter().map(|x| x.0).collect();
+    let non_gravs = non_gravs.unwrap_or(vec![None; states.len()]);
+
+    if states.len() != non_gravs.len() {
+        Err(Error::ValueError(
+            "non_gravs must be the same length as states.".into(),
+        ))?;
+    }
+    let jd = jd_final.jd();
+    let res = propagation::propagate_n_body_vec(states, jd)
+        .map(|x| x.into_iter().map(PyState::from).collect::<Vec<_>>())?;
+    Ok(res)
+}
