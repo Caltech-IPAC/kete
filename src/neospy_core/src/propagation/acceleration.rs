@@ -102,6 +102,108 @@ pub struct AccelSPKMeta<'a> {
     pub massive_obj: &'a [(i64, f64, f64)],
 }
 
+/// Add the effects of general relativistic motion to an acceleration vector
+#[inline(always)]
+pub fn apply_gr_correction(
+    accel: &mut Vector3<f64>,
+    rel_pos: &Vector3<f64>,
+    rel_vel: &Vector3<f64>,
+    mass: &f64,
+) {
+    let r_v = 4.0 * rel_pos.dot(rel_vel);
+
+    let rel_v2: f64 = rel_vel.norm_squared();
+    let r = rel_pos.norm();
+
+    let gr_const: f64 = mass * GMS * C_AU_PER_DAY_INV_SQUARED * r.powi(-3);
+    let c: f64 = 4. * mass * GMS / r - rel_v2;
+    *accel += gr_const * (c * rel_pos + r_v * rel_vel);
+}
+
+/// Calculate the effects of the J2 term
+///
+/// Z is the z component of the unit vector.
+#[inline(always)]
+pub fn j2_correction(
+    rel_pos: &Vector3<f64>,
+    z: &f64,
+    radius: &f64,
+    j2: &f64,
+    mass: &f64,
+) -> Vector3<f64> {
+    let z_squared = 5.0 * z.powi(2);
+    let coef = j2 * GMS * mass * rel_pos.norm_squared().powi(-5) * 1.5 * radius.powi(2);
+    Vector3::<f64>::new(
+        -rel_pos.x * coef * (z_squared - 1.0),
+        -rel_pos.y * coef * (z_squared - 1.0),
+        rel_pos.z * coef * (z_squared - 3.0),
+    )
+}
+
+/// Add the effects of newtonian acceleration to the acceleration vector.
+#[inline(always)]
+pub fn apply_newton_accel(accel: &mut Vector3<f64>, rel_pos: &Vector3<f64>, mass: &f64) {
+    let r3_inv = rel_pos.norm().powi(-3);
+    *accel -= rel_pos * (r3_inv * *mass * GMS);
+}
+
+/// Add the effects of newtonian acceleration to the acceleration vector.
+#[inline(always)]
+pub fn apply_planet_accel(
+    accel: &mut Vector3<f64>,
+    rel_pos: &Vector3<f64>,
+    rel_vel: &Vector3<f64>,
+    id: &i64,
+    mass: &f64,
+    radius: &f64,
+    model: &Option<NonGravModel>,
+) {
+    apply_newton_accel(accel, rel_pos, mass);
+
+    // Corrections for the Sun
+    if *id == 10 {
+        // GR Correction
+        apply_gr_correction(accel, rel_pos, rel_vel, mass);
+
+        // J2 for the Sun
+        let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos.normalize());
+        *accel += frames::ecliptic_to_equatorial(&j2_correction(
+            rel_pos,
+            &rel_pos_norm_eclip.z,
+            radius,
+            &SUN_J2,
+            mass,
+        ));
+
+        // non-gravitational forces
+        if let Some(model) = model {
+            *accel += model.accel_vec(rel_pos, rel_vel)
+        }
+
+    // Corrections for Jupiter
+    } else if *id == 5 {
+        // GR Correction
+        apply_gr_correction(accel, rel_pos, rel_vel, mass);
+
+        // J2 for Jupiter
+        // https://www.nature.com/articles/nature25776
+        // Jupiter's pole is 2.3 degrees off of the ecliptic, below is an approximation of this.
+        let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos.normalize());
+        *accel += frames::ecliptic_to_equatorial(&j2_correction(
+            rel_pos,
+            &rel_pos_norm_eclip.z,
+            radius,
+            &JUPITER_J2,
+            mass,
+        ));
+
+    // Corrections for Earth
+    } else if *id == 399 {
+        // J2 for the Earth
+        *accel += j2_correction(rel_pos, &rel_pos.normalize().z, radius, &EARTH_J2, mass);
+    }
+}
+
 /// Compute the accel on an object which experiences acceleration due to all massive
 /// objects contained within the Spice Kernel SPKs. This uses the planets and the Moon,
 /// and applies a General Relativity correction for the Sun and Jupiter.
@@ -144,7 +246,7 @@ pub fn spk_accel(
     for (id, mass, radius) in meta.massive_obj.iter() {
         let state = spk.try_get_state(*id, time, 0, Frame::Equatorial)?;
         let rel_pos: Vector3<f64> = pos - Vector3::from(state.pos);
-        let rel_pos_norm = rel_pos.normalize();
+        let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
         let r = rel_pos.norm();
 
         if exact_eval {
@@ -157,69 +259,15 @@ pub fn spk_accel(
         if r <= *radius {
             Err(Error::Impact(*id, time))?;
         }
-
-        let r2_inv = r.powi(-2);
-        accel -= rel_pos_norm * (r2_inv * *mass * GMS);
-
-        // Corrections for the Sun
-        if *id == 10 {
-            let r3_inv = r.powi(-3);
-            let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
-
-            let r_v = 4.0 * rel_pos.dot(&rel_vel);
-
-            let rel_v2: f64 = rel_vel.norm_squared();
-
-            // GR Correction
-            let gr_const: f64 = mass * C_AU_PER_DAY_INV_SQUARED * r3_inv * GMS;
-            let c: f64 = 4. * mass * GMS / r - rel_v2;
-            accel += gr_const * (c * rel_pos + r_v * rel_vel);
-
-            // J2 for the Sun
-            let coef = SUN_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
-            let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos_norm);
-            let z2 = 5.0 * rel_pos_norm_eclip.z.powi(2);
-            accel[0] -= rel_pos.x * coef * (z2 - 1.0);
-            accel[1] -= rel_pos.y * coef * (z2 - 1.0);
-            accel[2] -= rel_pos.z * coef * (z2 - 3.0);
-
-            // non-gravitational forces
-            if let Some(model) = &meta.non_grav_a {
-                accel += model.accel_vec(&rel_pos, &rel_vel)
-            }
-
-        // Corrections for Jupiter
-        } else if *id == 5 {
-            // GR Correction
-            let r3_inv = r.powi(-3);
-            let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
-
-            let r_v = 4.0 * rel_pos.dot(&rel_vel);
-
-            let rel_v2: f64 = rel_vel.norm_squared();
-            let gr_const: f64 = mass * C_AU_PER_DAY_INV_SQUARED * r3_inv * GMS;
-            let c: f64 = 4. * mass * GMS / r - rel_v2;
-            accel += gr_const * (c * rel_pos + r_v * rel_vel);
-
-            // J2 for Jupiter
-            // https://www.nature.com/articles/nature25776
-            // Jupiter's pole is 2.3 degrees off of the ecliptic, below is an approximation of this.
-            let coef = JUPITER_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
-            let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos_norm);
-            let z2 = 5.0 * rel_pos_norm_eclip.z.powi(2);
-            accel[0] -= rel_pos.x * coef * (z2 - 1.0);
-            accel[1] -= rel_pos.y * coef * (z2 - 1.0);
-            accel[2] -= rel_pos.z * coef * (z2 - 3.0);
-
-        // Corrections for Earth
-        } else if *id == 399 {
-            // J2 for the Earth
-            let coef = EARTH_J2 * GMS * *mass * r.powi(-5) * 1.5 * radius.powi(2);
-            let z2 = 5.0 * rel_pos_norm.z.powi(2);
-            accel[0] -= rel_pos.x * coef * (z2 - 1.0);
-            accel[1] -= rel_pos.y * coef * (z2 - 1.0);
-            accel[2] -= rel_pos.z * coef * (z2 - 3.0);
-        }
+        apply_planet_accel(
+            &mut accel,
+            &rel_pos,
+            &rel_vel,
+            id,
+            mass,
+            radius,
+            &meta.non_grav_a,
+        );
     }
     Ok(accel)
 }
