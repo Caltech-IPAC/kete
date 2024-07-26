@@ -168,6 +168,20 @@ impl OnSkyRectangle {
         }
     }
 
+    /// Return the 4 corners of the patch.
+    pub fn corners(&self) -> [Vector3<f64>; 4] {
+        (0..4)
+            .map(|idx| {
+                let idy = (idx + 1) % 4;
+                let a = Vector3::<f64>::from(self.edge_normals[idx]);
+                let b = Vector3::<f64>::from(self.edge_normals[idy]);
+                a.cross(&b)
+            })
+            .collect::<Vec<_>>()
+            .try_into()
+            .unwrap()
+    }
+
     /// Latitudinal width of the patch, the assumes the patch is rectangular.
     pub fn lat_width(&self) -> f64 {
         let pointing = self.pointing();

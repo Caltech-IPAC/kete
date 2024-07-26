@@ -195,6 +195,17 @@ impl PyWiseCmos {
         self.0.rotation.to_degrees()
     }
 
+    /// Corners of this FOV
+    #[getter]
+    pub fn corners(&self) -> Vec<Vector> {
+        self.0
+            .patch
+            .corners()
+            .into_iter()
+            .map(|x| Vector::new(x.into(), self.0.patch.frame.into()))
+            .collect()
+    }
+
     fn __repr__(&self) -> String {
         format!(
             "WiseCmos(pointing={}, rotation={}, observer={}, frame_num={}, scan_id={:?})",
@@ -267,6 +278,17 @@ impl PyGenericRectangle {
     #[getter]
     pub fn lat_width(&self) -> f64 {
         self.0.lat_width().to_degrees()
+    }
+
+    /// Corners of this FOV
+    #[getter]
+    pub fn corners(&self) -> Vec<Vector> {
+        self.0
+            .patch
+            .corners()
+            .into_iter()
+            .map(|x| Vector::new(x.into(), self.0.patch.frame.into()))
+            .collect()
     }
 
     fn __repr__(&self) -> String {
@@ -454,6 +476,17 @@ impl PyNeosCmos {
     #[getter]
     pub fn rotation(&self) -> f64 {
         self.0.rotation.to_degrees()
+    }
+
+    /// Corners of this FOV
+    #[getter]
+    pub fn corners(&self) -> Vec<Vector> {
+        self.0
+            .patch
+            .corners()
+            .into_iter()
+            .map(|x| Vector::new(x.into(), self.0.patch.frame.into()))
+            .collect()
     }
 
     fn __repr__(&self) -> String {
@@ -760,6 +793,17 @@ impl PyZtfCcdQuad {
     #[getter]
     pub fn fid(&self) -> u64 {
         self.0.fid
+    }
+
+    /// Corners of this FOV
+    #[getter]
+    pub fn corners(&self) -> Vec<Vector> {
+        self.0
+            .patch
+            .corners()
+            .into_iter()
+            .map(|x| Vector::new(x.into(), self.0.patch.frame.into()))
+            .collect()
     }
 
     fn __repr__(&self) -> String {
