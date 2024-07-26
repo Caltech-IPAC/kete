@@ -1,0 +1,1 @@
+data/ztf_frames/ztf_20200723164595_000752_zg_c02_o_q3_sciimg.fits filter=lfs diff=lfs merge=lfs -text
