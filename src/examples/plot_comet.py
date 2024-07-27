@@ -1,6 +1,6 @@
 """
-Annotate a Comet plot
-=====================
+Annotated Comet
+===============
 
 Given a specific FITs file containing a comet, annotate the plot with orbital
 information, such as diection of motion.
@@ -100,12 +100,105 @@ def plot_vectors(wcs, state, fov, x=0.2, y=0.2):
     plot_vector(wcs, vec, east_vec, r"E", c="grey", x=x, y=y, ls="--", lw=0.1)
 
 
+def plot_syndyne(wcs, state, fov, beta, back_days=90, day_step=1, **kwargs):
+    """
+    Plot a single syndyne line for the provided beta value.
+    """
+    # create a non-grav model for the dust which will be used for propagation/
+    model = neospy.propagation.NonGravModel.new_dust(beta)
+
+    # working backward, calculate the position of the comet at each time step
+    dust_state = neospy.propagate_n_body([state], fov.observer.jd - back_days)[0]
+    dust_states = []
+    for jd in np.arange(dust_state.jd, fov.observer.jd, day_step):
+        dust_state = neospy.propagate_n_body([dust_state], jd)[0]
+        dust_states.append(dust_state)
+
+    # Now treat all of those points as though they are release dust, and
+    # propagated to the current epoch.
+    cur_state = neospy.propagate_n_body(
+        dust_states, fov.observer.jd, non_gravs=[model] * len(dust_states)
+    )
+    # apply a light delay correction
+    cur_state = neospy.propagate_two_body(cur_state, fov.observer.jd, fov.observer.pos)
+
+    # Setup plotting
+    pos = [(x.pos - fov.observer.pos).as_equatorial for x in cur_state]
+    ras = [x.ra for x in pos]
+    decs = [x.dec for x in pos]
+    shape = wcs.array_shape
+    pix = []
+    for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
+        if not np.isfinite(x) or not np.isfinite(y):
+            continue
+        pix.append([x, y])
+    plt.xlim(0, shape[0])
+    plt.ylim(0, shape[1])
+    plt.plot(*np.transpose(pix), **kwargs)
+
+
+def plot_synchrone(
+    wcs, state, fov, days_back, beta_max=1, beta_min=1e-5, beta_steps=100, **kwargs
+):
+    """
+    Plot a single sychrone line for the provided release day.
+    """
+    # Sample beta values evenly in log space.
+    betas = np.logspace(np.log10(beta_min), np.log10(beta_max), beta_steps)
+
+    # build non-grav models for each beta
+    models = [neospy.propagation.NonGravModel.new_dust(beta) for beta in betas]
+
+    # propagate the comet back to the release date
+    dust_state = neospy.propagate_n_body([state], fov.observer.jd - days_back)[0]
+    dust_states = [dust_state] * len(betas)
+
+    # release dust and propagate foward to the current epoch.
+    cur_state = neospy.propagate_n_body(dust_states, fov.observer.jd, non_gravs=models)
+    # apply a light delay correction
+    cur_state = neospy.propagate_two_body(cur_state, fov.observer.jd, fov.observer.pos)
+
+    # setup plotting
+    pos = [(x.pos - fov.observer.pos).as_equatorial for x in cur_state]
+    ras = [x.ra for x in pos]
+    decs = [x.dec for x in pos]
+    shape = wcs.array_shape
+    pix = []
+    for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
+        if not np.isfinite(x) or not np.isfinite(y):
+            continue
+        pix.append([x, y])
+    plt.xlim(0, shape[0])
+    plt.ylim(0, shape[1])
+    plt.plot(*np.transpose(pix), **kwargs)
+
+
 # Plot the final results
 plt.figure(dpi=200)
 wcs = neospy.ztf.plot_ztf_fov(vis.fov)
+plt.title("Comet NEOWISE - C/2020 F3")
 vec = vis.obs_vecs()[0].as_equatorial
 neospy.irsa.annotate_plot(wcs, vec.ra, vec.dec, px_gap=0, length=25)
 plot_vectors(frame_wcs, vis[0], vis.fov, y=0.85)
+
+# Add syndyne lines
+plot_syndyne(wcs, vis[0], fov, 0.002, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
+plot_syndyne(wcs, vis[0], fov, 0.004, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
+plot_syndyne(wcs, vis[0], fov, 0.01, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
+plot_syndyne(wcs, vis[0], fov, 0.04, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
+plot_syndyne(wcs, vis[0], fov, 0.2, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
+plot_syndyne(wcs, vis[0], fov, 1, back_days=10, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
+
+# Add synchrone lines
+plot_synchrone(wcs, vis[0], fov, 25, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6)
+plot_synchrone(wcs, vis[0], fov, 20, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6)
+plot_synchrone(wcs, vis[0], fov, 15, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6)
+plot_synchrone(wcs, vis[0], fov, 10, 0.5, ls="--", c=(0, 0.5, 1), lw=0.6)
+plot_synchrone(wcs, vis[0], fov, 5, 1.0, ls="--", c=(0, 0.5, 1), lw=0.6)
+
+# Add a synchrone for basically the maximum possible release line
+plot_synchrone(wcs, vis[0], fov, 0.01, 2000000.0, ls="--", c=(1, 0.5, 1), lw=0.6)
+
 # for some reason astropy for this frame is plotting the y-axis inverted
 # this just un-inverts it.
 plt.gca().invert_yaxis()
