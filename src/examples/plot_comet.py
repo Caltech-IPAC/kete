@@ -144,13 +144,13 @@ def plot_synchrone(
     Plot a single sychrone line for the provided release day.
     """
     # Sample beta values evenly in log space.
-    betas = np.logspace(np.log10(beta_min), np.log10(beta_max), beta_steps)
+    betas = np.logspace(np.log10(beta_min), np.log10(beta_max), beta_steps)[::-1]
 
     # build non-grav models for each beta
     models = [neospy.propagation.NonGravModel.new_dust(beta) for beta in betas]
 
     # propagate the comet back to the release date
-    dust_state = neospy.propagate_n_body([state], fov.observer.jd - days_back)[0]
+    dust_state = neospy.propagate_n_body([state], fov.observer.jd + days_back)[0]
     dust_states = [dust_state] * len(betas)
 
     # release dust and propagate foward to the current epoch.
@@ -176,28 +176,94 @@ def plot_synchrone(
 # Plot the final results
 plt.figure(dpi=200)
 wcs = neospy.ztf.plot_ztf_fov(vis.fov)
-plt.title("Comet NEOWISE - C/2020 F3")
-vec = vis.obs_vecs()[0].as_equatorial
-neospy.irsa.annotate_plot(wcs, vec.ra, vec.dec, px_gap=0, length=25)
+plt.title("Comet NEOWISE - C/2020 F3\n")
+
+# plot syndynes
+for beta in [0.002, 0.004, 0.01, 0.04, 0.2]:
+    plot_syndyne(
+        wcs,
+        vis[0],
+        fov,
+        beta,
+        day_step=0.1,
+        lw=0.6,
+        c=(1, 0.0, 0.3),
+        label=f"{beta:0.2g}",
+    )
+plot_syndyne(
+    wcs,
+    vis[0],
+    fov,
+    1,
+    back_days=10,
+    day_step=0.1,
+    lw=0.6,
+    c=(1, 0.0, 0.3),
+    label=f"{1:0.2g}",
+)
+
+
+# plot synchrones
+for days in [-10, -15, -20, -25]:
+    plot_synchrone(
+        wcs, vis[0], fov, days, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6, label=str(days)
+    )
+plot_synchrone(wcs, vis[0], fov, -5, 0.8, ls="--", c=(0, 0.5, 1), lw=0.6, label=-5)
+
+plot_synchrone(
+    wcs,
+    vis[0],
+    fov,
+    0.01,
+    1200000.0,
+    ls="--",
+    beta_steps=2000,
+    c=(0, 0.5, 1),
+    lw=0.6,
+    label=0,
+)
+
+# Fancy plotting of labels around the edge
+shape = wcs.array_shape
+xvals = []
+for line in plt.gca().get_lines():
+    idx = np.argmax(
+        (line._y > 0)
+        & (line._y < wcs.array_shape[1])
+        & (line._x > 0)
+        & (line._x < wcs.array_shape[0])
+    )
+    edge = np.argmin(
+        [
+            abs(line._x[idx]),
+            abs(line._x[idx] - shape[0]),
+            abs(line._y[idx]),
+            abs(line._y[idx] - shape[1]),
+        ]
+    )
+    offset = 30
+    if edge == 0:
+        label_pos = [0 - offset, line._y[idx]]
+        ha = "right"
+        va = "center"
+    elif edge == 1:
+        label_pos = [shape[0] + offset, line._y[idx]]
+        ha = "left"
+        va = "center"
+    elif edge == 2:
+        label_pos = [line._x[idx], 0 - offset]
+        ha = "center"
+        va = "bottom"
+    elif edge == 3:
+        label_pos = [line._x[idx], shape[0] + offset]
+        ha = "center"
+        va = "top"
+    plt.text(
+        *label_pos, line.get_label(), va=va, ha=ha, fontsize=6, color=line.get_color()
+    )
+
+# add vectors
 plot_vectors(frame_wcs, vis[0], vis.fov, y=0.85)
-
-# Add syndyne lines
-plot_syndyne(wcs, vis[0], fov, 0.002, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
-plot_syndyne(wcs, vis[0], fov, 0.004, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
-plot_syndyne(wcs, vis[0], fov, 0.01, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
-plot_syndyne(wcs, vis[0], fov, 0.04, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
-plot_syndyne(wcs, vis[0], fov, 0.2, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
-plot_syndyne(wcs, vis[0], fov, 1, back_days=10, day_step=0.1, lw=0.6, c=(1, 0.0, 0.3))
-
-# Add synchrone lines
-plot_synchrone(wcs, vis[0], fov, 25, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6)
-plot_synchrone(wcs, vis[0], fov, 20, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6)
-plot_synchrone(wcs, vis[0], fov, 15, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6)
-plot_synchrone(wcs, vis[0], fov, 10, 0.5, ls="--", c=(0, 0.5, 1), lw=0.6)
-plot_synchrone(wcs, vis[0], fov, 5, 1.0, ls="--", c=(0, 0.5, 1), lw=0.6)
-
-# Add a synchrone for basically the maximum possible release line
-plot_synchrone(wcs, vis[0], fov, 0.01, 2000000.0, ls="--", c=(1, 0.5, 1), lw=0.6)
 
 # for some reason astropy for this frame is plotting the y-axis inverted
 # this just un-inverts it.
