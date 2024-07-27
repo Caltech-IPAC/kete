@@ -552,6 +552,7 @@ def fetch_WISE_fovs(phase):
     phase :
         A mission phase object.
     """
+    phase = MISSION_PHASES[phase]
     dir_path = os.path.join(cache_path(), "fovs")
     filename = os.path.join(dir_path, f"wise_{phase.name}_fovs.bin")
 

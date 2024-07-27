@@ -209,7 +209,9 @@ def plot_ztf_fov(
         force_download,
     )
 
-    frame = fits.open(file)[0]
+    frame = fetch_frame_from_fov(
+        fov, products=products, im_type=im_type, force_download=force_download
+    )
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
@@ -233,12 +235,48 @@ def plot_ztf_fov(
     return wcs
 
 
+def fetch_frame_from_fov(
+    fov: ZtfCcdQuad,
+    products="sci",
+    im_type="sciimg.fits",
+    force_download=False,
+):
+    """
+    Given a ztf FOV, return the FITs file associated with it.
+
+    This downloads the fits file into the cache.
+
+    Parameters
+    ----------
+    fov :
+        A single CCD Quad FOV.
+    products :
+        Which data product to fetch.
+    im_type :
+        Image extension, this must match the products variable.
+    force_download :
+        Optionally force a re-download if the file already exists in the cache.
+    """
+    file = fetch_ZTF_file(
+        fov.field,
+        fov.filefracday,
+        fov.filtercode,
+        fov.ccdid,
+        fov.imgtypecode,
+        fov.qid,
+        products,
+        im_type,
+        force_download,
+    )
+    return fits.open(file)[0]
+
+
 def fetch_ZTF_file(
     field,
     filefracday,
-    filter_code,
+    filtercode,
     ccdid,
-    image_type_code,
+    imgtypecode,
     qid,
     products="sci",
     im_type="sciimg.fits",
@@ -254,10 +292,12 @@ def fetch_ZTF_file(
         Field identifier number, integer between 1 and ~2200.
     filefracday :
         String describing the fraction of a day, a record keeping string based on time.
-    filter_code :
+    filtercode :
         Which filter was used for the exposure.
     ccdid :
         The CCD identified. (1-16)
+    imgtypecode:
+        Image type code.
     qid :
         Which quad of the ccd was used. (1-4)
     products :
@@ -280,7 +320,7 @@ def fetch_ZTF_file(
     path = f"{year}/{month_day}/{frac_day}/"
     file = (
         f"ztf_{filefracday}_{field}_"
-        f"{filter_code}_c{ccdid}_{image_type_code}_q{qid}_{im_type}"
+        f"{filtercode}_c{ccdid}_{imgtypecode}_q{qid}_{im_type}"
     )
 
     url = ztf_base + path + file
