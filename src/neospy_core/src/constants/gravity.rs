@@ -41,6 +41,7 @@ pub const JUPITER_J2: f64 = 0.014696572;
 
 /// Known massive objects
 pub const MASSES: &[GravParams] = &[
+    // Sun
     GravParams {
         naif_id: 10,
         mass: GMS,
@@ -58,6 +59,7 @@ pub const MASSES: &[GravParams] = &[
         mass: 2.44783828779694e-06 * GMS,
         radius: 4.04537843465442e-05,
     },
+    // Earth
     GravParams {
         naif_id: 399,
         mass: 3.00348961546514e-06 * GMS,
@@ -131,10 +133,22 @@ pub const MASSES: &[GravParams] = &[
     },
 ];
 
+/// Earth-Moon Barycenter
+pub const EM_BARY: GravParams = GravParams {
+    naif_id: 3,
+    mass: (3.00348961546514e-06 + 3.69430335010988e-08) * GMS,
+    radius: 2.219283e-6,
+};
+
 /// Known planet masses, Sun through Neptune, including the Moon
 pub const PLANETS: &[GravParams] = &[
     MASSES[0], MASSES[1], MASSES[2], MASSES[3], MASSES[4], MASSES[5], MASSES[6], MASSES[7],
     MASSES[8], MASSES[9],
+];
+
+/// Known planet masses, Sun through Neptune, Excluding the moon
+pub const SIMPLE_PLANETS: &[GravParams] = &[
+    MASSES[0], MASSES[1], MASSES[2], EM_BARY, MASSES[5], MASSES[6], MASSES[7], MASSES[8], MASSES[9],
 ];
 
 /// Gravitational model for a basic object

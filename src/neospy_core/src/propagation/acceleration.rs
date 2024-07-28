@@ -91,7 +91,7 @@ pub struct AccelSPKMeta<'a> {
     /// If this is not provided, only standard gravitational model is applied.
     /// If these values are provided, then the effects of the A terms are added in
     /// addition to standard forces.
-    pub non_grav_a: Option<NonGravModel>,
+    pub non_grav_model: Option<NonGravModel>,
 
     /// The list of massive objects to apply during SPK computation.
     /// This list contains the ID of the object in the SPK along with the mass and
@@ -161,7 +161,7 @@ pub fn spk_accel(
         grav_params.add_acceleration(&mut accel, &rel_pos, &rel_vel);
 
         if grav_params.naif_id == 10 {
-            if let Some(non_grav) = &meta.non_grav_a {
+            if let Some(non_grav) = &meta.non_grav_model {
                 non_grav.apply_accel(&mut accel, &rel_pos, &rel_vel)
             }
         }
@@ -338,7 +338,7 @@ mod tests {
             &[0.0, 0.0, 1.0].into(),
             &mut AccelSPKMeta {
                 close_approach: None,
-                non_grav_a: None,
+                non_grav_model: None,
                 massive_obj: MASSES,
             },
             false,

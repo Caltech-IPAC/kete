@@ -3,7 +3,7 @@
 //! There are multiple levels of precision available, each with different pros/cons
 //! (usually performance related).
 
-use crate::constants::{MASSES, PLANETS};
+use crate::constants::{MASSES, PLANETS, SIMPLE_PLANETS};
 use crate::errors::Error;
 use crate::frames::Frame;
 use crate::prelude::{Desig, NeosResult};
@@ -71,7 +71,7 @@ pub fn propagate_n_body_spk(
     mut state: State,
     jd_final: f64,
     include_extended: bool,
-    a_terms: Option<NonGravModel>,
+    non_grav_model: Option<NonGravModel>,
 ) -> NeosResult<State> {
     let center = state.center_id;
     let frame = state.frame;
@@ -89,7 +89,7 @@ pub fn propagate_n_body_spk(
 
     let metadata = AccelSPKMeta {
         close_approach: None,
-        non_grav_a: a_terms,
+        non_grav_model,
         massive_obj: mass_list,
     };
 
@@ -139,7 +139,11 @@ pub fn propagation_central(state: &State, jd_final: f64) -> NeosResult<[[f64; 3]
 
 /// Propagate using n-body mechanics but skipping SPK queries.
 /// This will propagate all planets and the Moon, so it may vary from SPK states slightly.
-pub fn propagate_n_body_vec(states: Vec<State>, jd_final: f64) -> NeosResult<Vec<State>> {
+pub fn propagate_n_body_vec(
+    states: Vec<State>,
+    jd_final: f64,
+    non_gravs: Option<Vec<NonGravModel>>,
+) -> NeosResult<Vec<State>> {
     let spk = get_spk_singleton().try_read().unwrap();
 
     if states.is_empty() {
@@ -147,13 +151,23 @@ pub fn propagate_n_body_vec(states: Vec<State>, jd_final: f64) -> NeosResult<Vec
             "State vector is empty, propagation cannot continue".into(),
         ))?;
     }
+
+    if let Some(non_gravs) = &non_gravs {
+        if non_gravs.len() != states.len() {
+            Err(Error::ValueError(
+                "Number of non-grav models doesnt match the number of provided objects.".into(),
+            ))?;
+        }
+    }
+
     let jd_init = states.first().unwrap().jd;
+    let mass_list = SIMPLE_PLANETS;
 
     let mut pos: Vec<f64> = Vec::new();
     let mut vel: Vec<f64> = Vec::new();
     let mut desigs: Vec<Desig> = Vec::new();
 
-    for obj in PLANETS.iter() {
+    for obj in mass_list.iter() {
         let planet = spk.try_get_state(obj.naif_id, jd_init, 0, Frame::Ecliptic)?;
         pos.append(&mut planet.pos.into());
         vel.append(&mut planet.vel.into());
@@ -173,8 +187,8 @@ pub fn propagate_n_body_vec(states: Vec<State>, jd_final: f64) -> NeosResult<Vec
         desigs.push(state.desig.to_owned());
     }
     let meta = AccelVecMeta {
-        non_gravs: None,
-        massive_obj: PLANETS,
+        non_gravs,
+        massive_obj: mass_list,
     };
 
     let (pos, vel, _) = {

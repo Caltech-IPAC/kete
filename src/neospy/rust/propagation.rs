@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use neospy_core::{
     errors::Error,
-    propagation,
+    propagation::{self, NonGravModel},
     spice::{self, get_spk_singleton},
     state::State,
     time::{scales::TDB, Time},
@@ -168,18 +168,14 @@ pub fn propagation_n_body_spk_py(
 pub fn propagation_n_body_py(
     states: Vec<PyState>,
     jd_final: PyTime,
-    non_gravs: Option<Vec<Option<PyNonGravModel>>>,
+    non_gravs: Option<Vec<PyNonGravModel>>,
 ) -> PyResult<Vec<PyState>> {
     let states: Vec<State> = states.into_iter().map(|x| x.0).collect();
-    let non_gravs = non_gravs.unwrap_or(vec![None; states.len()]);
+    let non_gravs: Option<Vec<NonGravModel>> =
+        non_gravs.map(|x| x.into_iter().map(|x| x.0).collect());
 
-    if states.len() != non_gravs.len() {
-        Err(Error::ValueError(
-            "non_gravs must be the same length as states.".into(),
-        ))?;
-    }
     let jd = jd_final.jd();
-    let res = propagation::propagate_n_body_vec(states, jd)
+    let res = propagation::propagate_n_body_vec(states, jd, non_gravs)
         .map(|x| x.into_iter().map(PyState::from).collect::<Vec<_>>())?;
     Ok(res)
 }
