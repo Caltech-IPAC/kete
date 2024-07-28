@@ -74,7 +74,7 @@ pub const MASSES: &[GravParams] = &[
     // Mars Barycenter
     GravParams {
         naif_id: 4,
-        mass: 3.69430335010988e-08 * GMS,
+        mass: 3.22715608291416e-07 * GMS,
         radius: 1.16138016662292e-05,
     },
     // Jupiter
