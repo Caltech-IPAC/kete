@@ -152,9 +152,6 @@ pub fn propagation_n_body_spk_py(
 /// non_gravs:
 ///     A list of non-gravitational terms for each object. If provided, then every
 ///     object must have an associated :class:`~NonGravModel`.
-/// suppress_errors:
-///     If True, errors during propagation will return NaN for the relevant state
-///     vectors, but propagation will continue.
 ///
 /// Returns
 /// -------
