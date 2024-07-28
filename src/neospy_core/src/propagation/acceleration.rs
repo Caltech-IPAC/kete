@@ -22,9 +22,8 @@
 use crate::prelude::NeosResult;
 use crate::spice::get_spk_singleton;
 use crate::{constants::*, errors::Error, frames::Frame, propagation::nongrav::NonGravModel};
-use itertools::Itertools;
 use nalgebra::allocator::Allocator;
-use nalgebra::{DefaultAllocator, Dim, Matrix, Matrix3, OMatrix, OVector, Vector3, U1, U2};
+use nalgebra::{DefaultAllocator, Dim, Matrix, Matrix3, OVector, Vector3, U1, U2};
 use std::ops::AddAssign;
 
 /// Metadata object used by the [`central_accel`] function below.
@@ -146,23 +145,24 @@ pub fn spk_accel(
         let state = spk.try_get_state(id, time, 0, Frame::Equatorial)?;
         let rel_pos: Vector3<f64> = pos - Vector3::from(state.pos);
         let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
-        let r = rel_pos.norm();
 
         if exact_eval {
+            let r = rel_pos.norm();
             if let Some(close_approach) = meta.close_approach.as_mut() {
                 if close_approach.2 == r {
                     *close_approach = (id, r, time);
                 }
             }
-        }
-        if r <= radius {
-            Err(Error::Impact(id, time))?;
+
+            if r <= radius {
+                Err(Error::Impact(id, time))?;
+            }
         }
         grav_params.add_acceleration(&mut accel, &rel_pos, &rel_vel);
 
         if grav_params.naif_id == 10 {
             if let Some(non_grav) = &meta.non_grav_a {
-                non_grav.apply_accel(&mut accel, &state.pos.into(), &state.vel.into())
+                non_grav.apply_accel(&mut accel, &rel_pos, &rel_vel)
             }
         }
     }
@@ -171,15 +171,12 @@ pub fn spk_accel(
 
 /// Metadata for the [`vec_accel`] function defined below.
 #[derive(Debug)]
-pub struct AccelVecMeta<'a, D: Dim>
-where
-    DefaultAllocator: Allocator<D, U2>,
-{
+pub struct AccelVecMeta<'a> {
     /// `A` terms of the non-gravitational forces.
     /// If this is not provided, only standard gravitational model is applied.
     /// If these values are provided, then the effects of the A terms are added in
     /// addition to standard forces.
-    pub non_grav_a: Option<OMatrix<f64, D, U2>>,
+    pub non_gravs: Option<Vec<NonGravModel>>,
 
     /// The list of massive objects to apply during SPK computation.
     /// This list contains the ID of the object in the SPK along with the mass and
@@ -204,7 +201,7 @@ pub fn vec_accel<D: Dim>(
     time: f64,
     pos: &OVector<f64, D>,
     vel: &OVector<f64, D>,
-    meta: &mut AccelVecMeta<D>,
+    meta: &mut AccelVecMeta,
     _exact_eval: bool,
 ) -> NeosResult<OVector<f64, D>>
 where
@@ -214,67 +211,43 @@ where
     // (x, y, z, x, y, z, ...
 
     let n_objects = pos.len() / 3;
+    let n_massive = meta.massive_obj.len();
 
     let (dim, _) = pos.shape_generic();
     let mut accel = Matrix::zeros_generic(dim, U1);
 
+    let mut accel_working = Vector3::zeros();
+
     for idx in 0..n_objects {
-        let pos_idx = pos.rows(idx * 3, 3);
+        let pos_idx = pos.fixed_rows::<3>(idx * 3);
+        let vel_idx = vel.fixed_rows::<3>(idx * 3);
 
         for (idy, grav_params) in meta.massive_obj.iter().enumerate() {
             if idx == idy {
                 continue;
             }
-            let id = grav_params.naif_id;
+            accel_working.fill(0.0);
             let radius = grav_params.radius;
-            let mass = grav_params.mass;
-            let pos_idy = pos.rows(idy * 3, 3);
+            let pos_idy = pos.fixed_rows::<3>(idy * 3);
+            let vel_idy = vel.fixed_rows::<3>(idy * 3);
+
             let rel_pos = pos_idx - pos_idy;
-            let rel_pos_norm = rel_pos.normalize();
-            let r = rel_pos.norm();
+            let rel_vel = vel_idx - vel_idy;
 
-            if r <= radius {
-                Err(Error::Impact(id, time))?;
+            if rel_pos.norm() <= radius {
+                Err(Error::Impact(grav_params.naif_id, time))?;
             }
+            grav_params.add_acceleration(&mut accel_working, &rel_pos, &rel_vel);
 
-            let r2_inv = r.powi(-2);
-            accel
-                .rows_mut(idx * 3, 3)
-                .add_assign(-&rel_pos_norm * r2_inv * mass);
-
-            // if it is the sun or jupiter, apply a correction for GR
-            if id == 10 || id == 5 {
-                let vel_idx = vel.rows(idx * 3, 3);
-                let vel_idy = vel.rows(idy * 3, 3);
-                let r3_inv = r.powi(-3);
-                let rel_vel = vel_idx - vel_idy;
-
-                let r_v = 4.0 * rel_pos.dot(&rel_vel);
-
-                let rel_v2: f64 = rel_vel.norm_squared();
-                let gr_const: f64 = mass * C_AU_PER_DAY_INV_SQUARED * r3_inv;
-                let c: f64 = 4. * mass / r - rel_v2;
-
-                accel
-                    .rows_mut(idx * 3, 3)
-                    .add_assign(gr_const * (c * rel_pos + r_v * &rel_vel));
-
-                // Add non-grav forces if defined.
-                if id == 10 {
-                    if let Some(a_matrix) = meta.non_grav_a.as_ref() {
-                        let a_row = a_matrix.row(idx);
-                        let (a1, a2) = a_row.iter().collect_tuple().unwrap();
-                        accel
-                            .rows_mut(idx * 3, 3)
-                            .add_assign(&rel_pos_norm * r2_inv * mass * *a1);
-                        accel
-                            .rows_mut(idx * 3, 3)
-                            .add_assign(rel_vel.normalize() * mass * *a2);
-                    }
+            if (grav_params.naif_id == 10) & (idx > n_massive) {
+                if let Some(non_grav) = &meta.non_gravs {
+                    non_grav[idx - n_massive].apply_accel(&mut accel_working, &rel_pos, &rel_vel);
                 }
             }
+            accel.fixed_rows_mut::<3>(idx * 3).add_assign(accel_working);
         }
     }
+
     Ok(accel)
 }
 
@@ -348,7 +321,7 @@ mod tests {
             &pos.into(),
             &vel.into(),
             &mut AccelVecMeta {
-                non_grav_a: None,
+                non_gravs: None,
                 massive_obj: MASSES,
             },
             false,

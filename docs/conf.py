@@ -63,7 +63,7 @@ html_theme = "sphinx_rtd_theme"
 
 # -- Sphinx gallery settings --------------------------------------------------
 sphinx_gallery_conf = {
-    "run_stale_examples": False,
+    "run_stale_examples": True,
     "filename_pattern": "",
     "examples_dirs": ["../src/examples"],
 }

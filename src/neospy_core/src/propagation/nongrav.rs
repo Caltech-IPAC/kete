@@ -101,6 +101,7 @@ impl NonGravModel {
 
     /// Compute the non-gravitational acceleration vector when provided the position
     /// and velocity vector with respect to the sun.
+    #[inline(always)]
     pub fn apply_accel(&self, accel: &mut Vector3<f64>, pos: &Vector3<f64>, vel: &Vector3<f64>) {
         match self {
             Self::Dust { beta } => {

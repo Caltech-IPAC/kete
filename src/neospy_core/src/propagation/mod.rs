@@ -173,7 +173,7 @@ pub fn propagate_n_body_vec(states: Vec<State>, jd_final: f64) -> NeosResult<Vec
         desigs.push(state.desig.to_owned());
     }
     let meta = AccelVecMeta {
-        non_grav_a: None,
+        non_gravs: None,
         massive_obj: PLANETS,
     };
 

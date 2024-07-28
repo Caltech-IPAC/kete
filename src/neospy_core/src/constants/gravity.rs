@@ -162,7 +162,7 @@ impl GravParams {
         // Basic newtonian gravity
         let mass = self.mass;
         let r3_inv = rel_pos.norm().powi(-3);
-        *accel -= rel_pos * (r3_inv * mass);
+        *accel -= &(rel_pos * (r3_inv * mass));
 
         // Special cases for different objects
         match self.naif_id {
@@ -199,9 +199,9 @@ impl GravParams {
                 ));
             }
             399 => {
-                *accel += &j2_correction(
+                *accel += j2_correction(
                     rel_pos,
-                    &rel_pos.normalize().z,
+                    &rel_pos.normalize()[2],
                     &self.radius,
                     &EARTH_J2,
                     &mass,
@@ -228,9 +228,9 @@ pub fn j2_correction(
     let z_squared = 5.0 * z.powi(2);
     let coef = j2 * GMS * mass * rel_pos.norm_squared().powi(-5) * 1.5 * radius.powi(2);
     Vector3::<f64>::new(
-        -rel_pos.x * coef * (z_squared - 1.0),
-        -rel_pos.y * coef * (z_squared - 1.0),
-        rel_pos.z * coef * (z_squared - 3.0),
+        -rel_pos[0] * coef * (z_squared - 1.0),
+        -rel_pos[1] * coef * (z_squared - 1.0),
+        rel_pos[2] * coef * (z_squared - 3.0),
     )
 }
 
