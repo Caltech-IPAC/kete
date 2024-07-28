@@ -149,12 +149,9 @@ pub fn propagation_n_body_spk_py(
 ///     The initial states, this is a list of multiple State objects.
 /// jd:
 ///     A JD to propagate the initial states to.
-/// include_asteroids:
-///     If this is true, the computation will include the largest 5 asteroids.
-///     The asteroids are: Ceres, Pallas, Interamnia, Hygiea, and Vesta.
 /// non_gravs:
 ///     A list of non-gravitational terms for each object. If provided, then every
-///     object must have an associated :class:`~NonGravModel` or `None`.
+///     object must have an associated :class:`~NonGravModel`.
 /// suppress_errors:
 ///     If True, errors during propagation will return NaN for the relevant state
 ///     vectors, but propagation will continue.
