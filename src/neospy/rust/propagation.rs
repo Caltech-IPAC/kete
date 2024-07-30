@@ -143,12 +143,20 @@ pub fn propagation_n_body_spk_py(
 /// This does not compute light delay, however it does include corrections for general
 /// relativity due to the Sun.
 ///
+/// This returns two lists, one contains the states of the objects at the end of the
+/// integration, the other list contains the states of the planets at the end of the
+/// integration.
+///
 /// Parameters
 /// ----------
 /// states:
 ///     The initial states, this is a list of multiple State objects.
 /// jd:
 ///     A JD to propagate the initial states to.
+/// planet_states:
+///     Optional list of the planet's states at the same time as the provided states.
+///     If this is not provided, the planets positions are loaded from the Spice kernels
+///     if that information is available.
 /// non_gravs:
 ///     A list of non-gravitational terms for each object. If provided, then every
 ///     object must have an associated :class:`~NonGravModel`.
