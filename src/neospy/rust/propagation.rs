@@ -158,18 +158,27 @@ pub fn propagation_n_body_spk_py(
 /// Iterable
 ///     A :class:`~neospy.State` at the new time.
 #[pyfunction]
-#[pyo3(name = "propagate_n_body_vec", signature = (states, jd_final, non_gravs=None))]
+#[pyo3(name = "propagate_n_body_vec", signature = (states, jd_final, planet_states=None, non_gravs=None))]
 pub fn propagation_n_body_py(
     states: Vec<PyState>,
     jd_final: PyTime,
+    planet_states: Option<Vec<PyState>>,
     non_gravs: Option<Vec<PyNonGravModel>>,
-) -> PyResult<Vec<PyState>> {
+) -> PyResult<(Vec<PyState>, Vec<PyState>)> {
     let states: Vec<State> = states.into_iter().map(|x| x.0).collect();
+    let planet_states: Option<Vec<State>> =
+        planet_states.map(|s| s.into_iter().map(|x| x.0).collect());
     let non_gravs: Option<Vec<NonGravModel>> =
         non_gravs.map(|x| x.into_iter().map(|x| x.0).collect());
 
     let jd = jd_final.jd();
-    let res = propagation::propagate_n_body_vec(states, jd, non_gravs)
-        .map(|x| x.into_iter().map(PyState::from).collect::<Vec<_>>())?;
-    Ok(res)
+    let res = propagation::propagate_n_body_vec(states, jd, planet_states, non_gravs).map(
+        |(planets, states)| {
+            (
+                planets.into_iter().map(PyState::from).collect::<Vec<_>>(),
+                states.into_iter().map(PyState::from).collect::<Vec<_>>(),
+            )
+        },
+    );
+    Ok(res?)
 }
