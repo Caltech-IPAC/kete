@@ -261,7 +261,7 @@ pub fn apply_gr_correction(
     let rel_v2: f64 = rel_vel.norm_squared();
     let r = rel_pos.norm();
 
-    let gr_const: f64 = mass * GMS * C_AU_PER_DAY_INV_SQUARED * r.powi(-3);
-    let c: f64 = 4. * mass * GMS / r - rel_v2;
+    let gr_const: f64 = mass * C_AU_PER_DAY_INV_SQUARED * r.powi(-3);
+    let c: f64 = 4. * mass / r - rel_v2;
     *accel += gr_const * (c * rel_pos + r_v * rel_vel);
 }
