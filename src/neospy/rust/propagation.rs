@@ -163,22 +163,41 @@ pub fn propagation_n_body_py(
     states: Vec<PyState>,
     jd_final: PyTime,
     planet_states: Option<Vec<PyState>>,
-    non_gravs: Option<Vec<PyNonGravModel>>,
+    non_gravs: Option<Vec<Option<PyNonGravModel>>>,
 ) -> PyResult<(Vec<PyState>, Vec<PyState>)> {
     let states: Vec<State> = states.into_iter().map(|x| x.0).collect();
     let planet_states: Option<Vec<State>> =
         planet_states.map(|s| s.into_iter().map(|x| x.0).collect());
-    let non_gravs: Option<Vec<NonGravModel>> =
-        non_gravs.map(|x| x.into_iter().map(|x| x.0).collect());
+
+    let non_gravs = non_gravs.unwrap_or(vec![None; states.len()]);
+    let non_gravs: Vec<Option<NonGravModel>> =
+        non_gravs.into_iter().map(|y| y.map(|z| z.0)).collect();
 
     let jd = jd_final.jd();
-    let res = propagation::propagate_n_body_vec(states, jd, planet_states, non_gravs).map(
-        |(planets, states)| {
-            (
-                planets.into_iter().map(PyState::from).collect::<Vec<_>>(),
-                states.into_iter().map(PyState::from).collect::<Vec<_>>(),
-            )
-        },
-    );
-    Ok(res?)
+    let res = states
+        .into_iter()
+        .zip(non_gravs.into_iter())
+        .collect_vec()
+        .par_chunks(100)
+        .map(|chunk| {
+            let (chunk_state, chunk_nongrav): (Vec<State>, Vec<Option<NonGravModel>>) =
+                chunk.iter().cloned().collect();
+
+            propagation::propagate_n_body_vec(chunk_state, jd, planet_states.clone(), chunk_nongrav)
+                .map(|(states, planets)| {
+                    (
+                        states.into_iter().map(PyState::from).collect::<Vec<_>>(),
+                        planets.into_iter().map(PyState::from).collect::<Vec<_>>(),
+                    )
+                })
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let mut final_states = Vec::new();
+    let mut final_planets = Vec::new();
+    for (mut state, planet) in res.into_iter() {
+        final_states.append(&mut state);
+        final_planets = planet;
+    }
+    Ok((final_states, final_planets))
 }

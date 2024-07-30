@@ -176,7 +176,7 @@ pub struct AccelVecMeta<'a> {
     /// If this is not provided, only standard gravitational model is applied.
     /// If these values are provided, then the effects of the A terms are added in
     /// addition to standard forces.
-    pub non_gravs: Option<Vec<NonGravModel>>,
+    pub non_gravs: Vec<Option<NonGravModel>>,
 
     /// The list of massive objects to apply during SPK computation.
     /// This list contains the ID of the object in the SPK along with the mass and
@@ -240,8 +240,8 @@ where
             grav_params.add_acceleration(&mut accel_working, &rel_pos, &rel_vel);
 
             if (grav_params.naif_id == 10) & (idx > n_massive) {
-                if let Some(non_grav) = &meta.non_gravs {
-                    non_grav[idx - n_massive].apply_accel(&mut accel_working, &rel_pos, &rel_vel);
+                if let Some(non_grav) = &meta.non_gravs[idx - n_massive] {
+                    non_grav.apply_accel(&mut accel_working, &rel_pos, &rel_vel);
                 }
             }
             accel.fixed_rows_mut::<3>(idx * 3).add_assign(accel_working);
@@ -321,7 +321,7 @@ mod tests {
             &pos.into(),
             &vel.into(),
             &mut AccelVecMeta {
-                non_gravs: None,
+                non_gravs: vec![None],
                 massive_obj: MASSES,
             },
             false,

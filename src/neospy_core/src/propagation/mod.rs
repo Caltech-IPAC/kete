@@ -143,7 +143,7 @@ pub fn propagate_n_body_vec(
     states: Vec<State>,
     jd_final: f64,
     planet_states: Option<Vec<State>>,
-    non_gravs: Option<Vec<NonGravModel>>,
+    non_gravs: Vec<Option<NonGravModel>>,
 ) -> NeosResult<(Vec<State>, Vec<State>)> {
     if states.is_empty() {
         Err(Error::ValueError(
@@ -151,12 +151,10 @@ pub fn propagate_n_body_vec(
         ))?;
     }
 
-    if let Some(non_gravs) = &non_gravs {
-        if non_gravs.len() != states.len() {
-            Err(Error::ValueError(
-                "Number of non-grav models doesnt match the number of provided objects.".into(),
-            ))?;
-        }
+    if non_gravs.len() != states.len() {
+        Err(Error::ValueError(
+            "Number of non-grav models doesnt match the number of provided objects.".into(),
+        ))?;
     }
 
     let jd_init = states.first().unwrap().jd;
@@ -227,13 +225,13 @@ pub fn propagate_n_body_vec(
     };
     let sun_pos = pos.fixed_rows::<3>(0);
     let sun_vel = vel.fixed_rows::<3>(0);
-    let mut final_states: Vec<State> = Vec::new();
+    let mut all_states: Vec<State> = Vec::new();
     for (idx, desig) in desigs.into_iter().enumerate() {
         let pos = pos.fixed_rows::<3>(idx * 3) - sun_pos;
         let vel = vel.fixed_rows::<3>(idx * 3) - sun_vel;
         let state = State::new(desig, jd_final, pos, vel, Frame::Ecliptic, 10);
-        final_states.push(state);
+        all_states.push(state);
     }
-    let final_planets = final_states.split_off(SIMPLE_PLANETS.len());
-    Ok((final_planets, final_states))
+    let final_states = all_states.split_off(SIMPLE_PLANETS.len());
+    Ok((final_states, all_states))
 }
