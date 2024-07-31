@@ -10,11 +10,17 @@ import numpy as np
 
 from .vector import State
 from . import spice
-from ._core import NonGravModel, propagate_n_body, propagate_two_body
+from ._core import (
+    NonGravModel,
+    propagate_n_body,
+    propagate_n_body_long,
+    propagate_two_body,
+)
 
 
 __all__ = [
     "propagate_n_body",
+    "propagate_n_body_long",
     "propagate_two_body",
     "NonGravModel",
     "moid",
