@@ -11,8 +11,7 @@
 //!
 //! Where `x` and its derivative `x_der` are vectors. This also accepts a mutable
 //! reference to a metadata collection. Metadata may include things like object
-//! specific orbit parameters such as the non-grav A terms, or keep track of close
-//!
+//! specific orbit parameters such as the non-grav terms, or keep track of close
 //!
 //! `exact_eval` is a bool which is passed when the integrator is passing values where
 //! the `x` and `x_der` are being evaluated at true locations. IE: where the integrator
@@ -23,7 +22,7 @@ use crate::prelude::NeosResult;
 use crate::spice::get_spk_singleton;
 use crate::{constants::*, errors::Error, frames::Frame, propagation::nongrav::NonGravModel};
 use nalgebra::allocator::Allocator;
-use nalgebra::{DefaultAllocator, Dim, Matrix, Matrix3, OVector, Vector3, U1, U2};
+use nalgebra::{DefaultAllocator, Dim, Matrix3, OVector, Vector3, U1, U2};
 use std::ops::AddAssign;
 
 /// Metadata object used by the [`central_accel`] function below.
@@ -87,10 +86,9 @@ pub struct AccelSPKMeta<'a> {
     /// This records the ID of the object, time, and distance in AU.
     pub close_approach: Option<(i64, f64, f64)>,
 
-    /// `A` terms of the non-gravitational forces.
+    /// The non-gravitational forces.
     /// If this is not provided, only standard gravitational model is applied.
-    /// If these values are provided, then the effects of the A terms are added in
-    /// addition to standard forces.
+    /// If this are provided, then the effects of the Non-Grav terms are added.
     pub non_grav_model: Option<NonGravModel>,
 
     /// The list of massive objects to apply during SPK computation.
@@ -162,7 +160,7 @@ pub fn spk_accel(
 
         if grav_params.naif_id == 10 {
             if let Some(non_grav) = &meta.non_grav_model {
-                non_grav.apply_accel(&mut accel, &rel_pos, &rel_vel)
+                non_grav.add_acceleration(&mut accel, &rel_pos, &rel_vel)
             }
         }
     }
@@ -172,10 +170,9 @@ pub fn spk_accel(
 /// Metadata for the [`vec_accel`] function defined below.
 #[derive(Debug)]
 pub struct AccelVecMeta<'a> {
-    /// `A` terms of the non-gravitational forces.
+    /// The non-gravitational forces.
     /// If this is not provided, only standard gravitational model is applied.
-    /// If these values are provided, then the effects of the A terms are added in
-    /// addition to standard forces.
+    /// If these values are provided, then the effects of the Non-Grav terms are added.
     pub non_gravs: Vec<Option<NonGravModel>>,
 
     /// The list of massive objects to apply during SPK computation.
@@ -202,7 +199,7 @@ pub fn vec_accel<D: Dim>(
     pos: &OVector<f64, D>,
     vel: &OVector<f64, D>,
     meta: &mut AccelVecMeta,
-    _exact_eval: bool,
+    exact_eval: bool,
 ) -> NeosResult<OVector<f64, D>>
 where
     DefaultAllocator: Allocator<D> + Allocator<D, U2>,
@@ -214,7 +211,7 @@ where
     let n_massive = meta.massive_obj.len();
 
     let (dim, _) = pos.shape_generic();
-    let mut accel = Matrix::zeros_generic(dim, U1);
+    let mut accel = OVector::<f64, D>::zeros_generic(dim, U1);
 
     let mut accel_working = Vector3::zeros();
 
@@ -234,14 +231,14 @@ where
             let rel_pos = pos_idx - pos_idy;
             let rel_vel = vel_idx - vel_idy;
 
-            if rel_pos.norm() <= radius {
+            if exact_eval & (rel_pos.norm() <= radius) {
                 Err(Error::Impact(grav_params.naif_id, time))?;
             }
             grav_params.add_acceleration(&mut accel_working, &rel_pos, &rel_vel);
 
             if (grav_params.naif_id == 10) & (idx > n_massive) {
                 if let Some(non_grav) = &meta.non_gravs[idx - n_massive] {
-                    non_grav.apply_accel(&mut accel_working, &rel_pos, &rel_vel);
+                    non_grav.add_acceleration(&mut accel_working, &rel_pos, &rel_vel);
                 }
             }
             accel.fixed_rows_mut::<3>(idx * 3).add_assign(accel_working);

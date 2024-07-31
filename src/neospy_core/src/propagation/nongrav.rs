@@ -81,7 +81,7 @@ impl NonGravModel {
     }
 
     /// Construct a new non-grav dust model.
-    pub fn new_dust_raw(beta: f64) -> Self {
+    pub fn new_dust(beta: f64) -> Self {
         Self::Dust { beta }
     }
 
@@ -102,7 +102,12 @@ impl NonGravModel {
     /// Compute the non-gravitational acceleration vector when provided the position
     /// and velocity vector with respect to the sun.
     #[inline(always)]
-    pub fn apply_accel(&self, accel: &mut Vector3<f64>, pos: &Vector3<f64>, vel: &Vector3<f64>) {
+    pub fn add_acceleration(
+        &self,
+        accel: &mut Vector3<f64>,
+        pos: &Vector3<f64>,
+        vel: &Vector3<f64>,
+    ) {
         match self {
             Self::Dust { beta } => {
                 let pos_norm = pos.normalize();
