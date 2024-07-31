@@ -168,7 +168,7 @@ pub fn propagate_n_body_vec(
         let mut planet_states = Vec::with_capacity(SIMPLE_PLANETS.len());
         for obj in SIMPLE_PLANETS.iter() {
             let planet = spk
-                .try_get_state(obj.naif_id, jd_init, 10, Frame::Ecliptic)
+                .try_get_state(obj.naif_id, jd_init, 10, Frame::Equatorial)
                 .expect("Failed to find state for the provided initial jd");
             planet_states.push(planet);
         }
@@ -192,7 +192,7 @@ pub fn propagate_n_body_vec(
     }
 
     for mut state in states.into_iter() {
-        state.try_change_frame_mut(Frame::Ecliptic)?;
+        state.try_change_frame_mut(Frame::Equatorial)?;
         if jd_init != state.jd {
             Err(Error::ValueError(
                 "All input states must have the same JD".into(),
@@ -229,7 +229,7 @@ pub fn propagate_n_body_vec(
     for (idx, desig) in desigs.into_iter().enumerate() {
         let pos = pos.fixed_rows::<3>(idx * 3) - sun_pos;
         let vel = vel.fixed_rows::<3>(idx * 3) - sun_vel;
-        let state = State::new(desig, jd_final, pos, vel, Frame::Ecliptic, 10);
+        let state = State::new(desig, jd_final, pos, vel, Frame::Equatorial, 10);
         all_states.push(state);
     }
     let final_states = all_states.split_off(SIMPLE_PLANETS.len());
