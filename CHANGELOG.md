@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added support for long term integrations, on the scale of less than a mega-year.
+
 ### Changed
 
 - Optimizations to SPICE kernel queries leading to a 20% speedup in orbit propagation,
@@ -16,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved python wrappers over propagation into the rust backend entirely.
 - Simplified polymorphic support in the rust wrappers, removing some intermediate
   objects which were over-complicating the interface.
+- Refactored the computation of gravitational forces, improving maintainability.
 
 ### Fixed
 

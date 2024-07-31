@@ -137,15 +137,29 @@ pub fn propagation_n_body_spk_py(
     Ok(res)
 }
 
+/// It is *STRONGLY* recommended to use `propagate_n_body` instead of this function
+/// wherever possible. This function is specifically meant for kilo-year or longer
+/// simulations, it is slower and less accurate than `propagate_n_body`, but that
+/// function only works for as long as there are SPICE kernels for the planets
+/// available.
+///
+/// This is designed to not require SPICE kernels to function, and is meant for long
+/// term simulations on the other of less than a mega-year. It is not recommended
+/// for orbits longer than this.
+///
+/// Propagation using this will treat the Earth and Moon as a single object for
+/// performance reasons.
+///
 /// Propagate the provided :class:`~neospy.State` using N body mechanics to the
-/// specified times, no approximations are made, this can be very CPU intensive.
+/// specified times, very few approximations are made, this can be very CPU intensive.
 ///
 /// This does not compute light delay, however it does include corrections for general
 /// relativity due to the Sun.
 ///
-/// This returns two lists, one contains the states of the objects at the end of the
-/// integration, the other list contains the states of the planets at the end of the
-/// integration.
+/// This returns two lists of states:
+/// - First one contains the states of the objects at the end of the integration
+/// - Second contains the states of the planets at the end of the integration, which may
+///   be used as input for continuing the integration.
 ///
 /// Parameters
 /// ----------
@@ -160,19 +174,25 @@ pub fn propagation_n_body_spk_py(
 /// non_gravs:
 ///     A list of non-gravitational terms for each object. If provided, then every
 ///     object must have an associated :class:`~NonGravModel`.
+/// batch_size:
+///     Number of objects to propagate at once with the planets. This is used to break
+///     up the simulation for multi-core support. It additionally has effects on the
+///     integrator stepsize which is difficult to predict before running. This can be
+///     manually tuned for increased performance, it should have no other effects than
+///     performance.
 ///
 /// Returns
 /// -------
 /// Iterable
 ///     A :class:`~neospy.State` at the new time.
 #[pyfunction]
-#[pyo3(name = "propagate_n_body_vec", signature = (states, jd_final, planet_states=None, non_gravs=None, chunking=10))]
+#[pyo3(name = "propagate_n_body_long", signature = (states, jd_final, planet_states=None, non_gravs=None, batch_size=10))]
 pub fn propagation_n_body_py(
     states: Vec<PyState>,
     jd_final: PyTime,
     planet_states: Option<Vec<PyState>>,
     non_gravs: Option<Vec<Option<PyNonGravModel>>>,
-    chunking: usize,
+    batch_size: usize,
 ) -> PyResult<(Vec<PyState>, Vec<PyState>)> {
     let states: Vec<State> = states.into_iter().map(|x| x.0).collect();
     let planet_states: Option<Vec<State>> =
@@ -187,7 +207,7 @@ pub fn propagation_n_body_py(
         .into_iter()
         .zip(non_gravs.into_iter())
         .collect_vec()
-        .par_chunks(chunking)
+        .par_chunks(batch_size)
         .map(|chunk| {
             let (chunk_state, chunk_nongrav): (Vec<State>, Vec<Option<NonGravModel>>) =
                 chunk.iter().cloned().collect();
