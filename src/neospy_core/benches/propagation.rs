@@ -54,6 +54,16 @@ fn prop_n_body_radau(state: State, dt: f64) {
     propagation::propagate_n_body_spk(state, jd, false, None).unwrap();
 }
 
+fn prop_n_body_vec_radau(mut state: State, dt: f64) {
+    let spk = get_spk_singleton().read().unwrap();
+    spk.try_change_center(&mut state, 10).unwrap();
+    state.try_change_frame_mut(Frame::Ecliptic).unwrap();
+    let states = vec![state.clone(); 100];
+    let non_gravs = vec![None; 100];
+    let jd = state.jd + dt;
+    propagation::propagate_n_body_vec(states, jd, None, non_gravs).unwrap();
+}
+
 fn prop_n_body_radau_par(state: State, dt: f64) {
     let states: Vec<State> = (0..100).map(|_| state.clone()).collect();
     let _tmp: Vec<State> = states
@@ -114,6 +124,24 @@ pub fn n_body_prop(c: &mut Criterion) {
         });
     }
 }
+pub fn n_body_prop_vec(c: &mut Criterion) {
+    let mut nbody_group = c.benchmark_group("N-Body Vec");
+
+    for state in [
+        CIRCULAR.clone(),
+        ELLIPTICAL.clone(),
+        PARABOLIC.clone(),
+        HYPERBOLIC.clone(),
+    ] {
+        let name = match &state.desig {
+            Desig::Name(n) => n,
+            _ => panic!(),
+        };
+        nbody_group.bench_with_input(BenchmarkId::new("Single", name), &state, |b, s| {
+            b.iter(|| prop_n_body_vec_radau(black_box(s.clone()), black_box(-500.0)))
+        });
+    }
+}
 
 pub fn two_body_analytic(c: &mut Criterion) {
     let mut twobody_group = c.benchmark_group("2-Body-Analytic");
@@ -136,5 +164,5 @@ pub fn two_body_analytic(c: &mut Criterion) {
 
 criterion_group!(name=benches;
                  config = Criterion::default().with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
-                 targets=two_body_analytic, n_body_prop, two_body_numeric);
+                 targets=n_body_prop_vec, two_body_analytic, n_body_prop, two_body_numeric);
 criterion_main!(benches);
