@@ -2,7 +2,7 @@ use nalgebra::Vector3;
 
 use crate::frames;
 
-use super::C_AU_PER_DAY_INV_SQUARED;
+use super::{AU_KM, C_AU_PER_DAY_INV_SQUARED};
 
 /// Standard Gravitational Constants of the Sun
 /// AU^3 / (Day^2 * Solar Mass)
@@ -75,7 +75,7 @@ pub const MASSES: &[GravParams] = &[
     GravParams {
         naif_id: 4,
         mass: 3.22715608291416e-07 * GMS,
-        radius: 1.16138016662292e-05,
+        radius: 2.27021279387769e-05,
     },
     // Jupiter
     GravParams {
@@ -137,7 +137,8 @@ pub const MASSES: &[GravParams] = &[
 pub const EM_BARY: GravParams = GravParams {
     naif_id: 3,
     mass: (3.00348961546514e-06 + 3.69430335010988e-08) * GMS,
-    radius: 2.219283e-6,
+    // earth - moon distance
+    radius: 385_000.0 / AU_KM,
 };
 
 /// Known planet masses, Sun through Neptune, including the Moon
