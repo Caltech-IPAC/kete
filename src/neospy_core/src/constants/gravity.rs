@@ -240,7 +240,7 @@ pub fn j2_correction(
     mass: &f64,
 ) -> Vector3<f64> {
     let z_squared = 5.0 * z.powi(2);
-    let coef = j2 * GMS * mass * rel_pos.norm_squared().powi(-5) * 1.5 * radius.powi(2);
+    let coef = j2 * mass * rel_pos.norm_squared().powi(-5) * 1.5 * radius.powi(2);
     Vector3::<f64>::new(
         -rel_pos[0] * coef * (z_squared - 1.0),
         -rel_pos[1] * coef * (z_squared - 1.0),
