@@ -166,12 +166,13 @@ pub fn propagation_n_body_spk_py(
 /// Iterable
 ///     A :class:`~neospy.State` at the new time.
 #[pyfunction]
-#[pyo3(name = "propagate_n_body_vec", signature = (states, jd_final, planet_states=None, non_gravs=None))]
+#[pyo3(name = "propagate_n_body_vec", signature = (states, jd_final, planet_states=None, non_gravs=None, chunking=10))]
 pub fn propagation_n_body_py(
     states: Vec<PyState>,
     jd_final: PyTime,
     planet_states: Option<Vec<PyState>>,
     non_gravs: Option<Vec<Option<PyNonGravModel>>>,
+    chunking: usize,
 ) -> PyResult<(Vec<PyState>, Vec<PyState>)> {
     let states: Vec<State> = states.into_iter().map(|x| x.0).collect();
     let planet_states: Option<Vec<State>> =
@@ -186,7 +187,7 @@ pub fn propagation_n_body_py(
         .into_iter()
         .zip(non_gravs.into_iter())
         .collect_vec()
-        .par_chunks(100)
+        .par_chunks(chunking)
         .map(|chunk| {
             let (chunk_state, chunk_nongrav): (Vec<State>, Vec<Option<NonGravModel>>) =
                 chunk.iter().cloned().collect();
