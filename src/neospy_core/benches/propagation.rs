@@ -1,4 +1,6 @@
 extern crate criterion;
+use std::time::Duration;
+
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use lazy_static::lazy_static;
 use neospy_core::prelude::*;
@@ -97,7 +99,7 @@ pub fn two_body_numeric(c: &mut Criterion) {
             _ => panic!(),
         };
         twobody_num_group.bench_with_input(BenchmarkId::new("Single", name), &state, |b, s| {
-            b.iter(|| prop_2_body_radau(s.clone(), black_box(1000.0)))
+            b.iter(|| prop_2_body_radau(black_box(s.clone()), black_box(1000.0)))
         });
     }
 }
@@ -116,7 +118,7 @@ pub fn n_body_prop(c: &mut Criterion) {
             _ => panic!(),
         };
         nbody_group.bench_with_input(BenchmarkId::new("Single", name), &state, |b, s| {
-            b.iter(|| prop_n_body_radau(s.clone(), black_box(1000.0)))
+            b.iter(|| prop_n_body_radau(black_box(s.clone()), black_box(1000.0)))
         });
 
         nbody_group.bench_with_input(BenchmarkId::new("Parallel", name), &state, |b, s| {
@@ -125,7 +127,7 @@ pub fn n_body_prop(c: &mut Criterion) {
     }
 }
 pub fn n_body_prop_vec(c: &mut Criterion) {
-    let mut nbody_group = c.benchmark_group("N-Body Vec");
+    let mut nbody_group = c.benchmark_group("N-Body-Vec");
 
     for state in [
         CIRCULAR.clone(),
@@ -138,7 +140,7 @@ pub fn n_body_prop_vec(c: &mut Criterion) {
             _ => panic!(),
         };
         nbody_group.bench_with_input(BenchmarkId::new("Single", name), &state, |b, s| {
-            b.iter(|| prop_n_body_vec_radau(black_box(s.clone()), black_box(-500.0)))
+            b.iter(|| prop_n_body_vec_radau(black_box(s.clone()), black_box(1000.0)))
         });
     }
 }
@@ -163,6 +165,6 @@ pub fn two_body_analytic(c: &mut Criterion) {
 }
 
 criterion_group!(name=benches;
-                 config = Criterion::default().with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
+                 config = Criterion::default().sample_size(30).measurement_time(Duration::from_secs(15)).with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
                  targets=n_body_prop_vec, two_body_analytic, n_body_prop, two_body_numeric);
 criterion_main!(benches);
