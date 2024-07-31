@@ -188,10 +188,9 @@ impl GravParams {
                 apply_gr_correction(accel, rel_pos, rel_vel, &mass);
 
                 // J2 correction
-                let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos.normalize());
+                let rel_pos_eclip = frames::equatorial_to_ecliptic(rel_pos);
                 *accel += frames::ecliptic_to_equatorial(&j2_correction(
-                    rel_pos,
-                    &rel_pos_norm_eclip.z,
+                    &rel_pos_eclip,
                     &radius,
                     &JUPITER_J2,
                     &mass,
@@ -204,24 +203,15 @@ impl GravParams {
                 apply_gr_correction(accel, rel_pos, rel_vel, &mass);
 
                 // J2 correction
-                let rel_pos_norm_eclip = frames::equatorial_to_ecliptic(&rel_pos.normalize());
+                let rel_pos_eclip = frames::equatorial_to_ecliptic(rel_pos);
                 *accel += frames::ecliptic_to_equatorial(&j2_correction(
-                    rel_pos,
-                    &rel_pos_norm_eclip.z,
+                    &rel_pos_eclip,
                     &radius,
                     &SUN_J2,
                     &mass,
                 ));
             }
-            399 => {
-                *accel += j2_correction(
-                    rel_pos,
-                    &rel_pos.normalize()[2],
-                    &self.radius,
-                    &EARTH_J2,
-                    &mass,
-                )
-            }
+            399 => *accel += j2_correction(rel_pos, &self.radius, &EARTH_J2, &mass),
             _ => {
                 // no additional forces beyond newtonian mechanics
             }
@@ -233,18 +223,13 @@ impl GravParams {
 ///
 /// Z is the z component of the unit vector.
 #[inline(always)]
-pub fn j2_correction(
-    rel_pos: &Vector3<f64>,
-    z: &f64,
-    radius: &f64,
-    j2: &f64,
-    mass: &f64,
-) -> Vector3<f64> {
-    let z_squared = 5.0 * z.powi(2);
-    let coef = j2 * mass * rel_pos.norm_squared().powi(-5) * 1.5 * radius.powi(2);
+pub fn j2_correction(rel_pos: &Vector3<f64>, radius: &f64, j2: &f64, mass: &f64) -> Vector3<f64> {
+    let r = rel_pos.norm();
+    let z_squared = 5.0 * (rel_pos.z / r).powi(2);
+    let coef = -j2 * mass * r.powi(5).sqrt() * 1.5 * radius.powi(2);
     Vector3::<f64>::new(
-        -rel_pos[0] * coef * (z_squared - 1.0),
-        -rel_pos[1] * coef * (z_squared - 1.0),
+        rel_pos[0] * coef * (z_squared - 1.0),
+        rel_pos[1] * coef * (z_squared - 1.0),
         rel_pos[2] * coef * (z_squared - 3.0),
     )
 }
