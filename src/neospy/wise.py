@@ -430,8 +430,8 @@ def fetch_frame(scan_id, frame_num=None, band=None, as_fits=True, im_type="int")
 _reorg_msg = (
     " The organization of wise cached frames has changed, it is recommended"
     " to delete the old cache files with the shell command: \n"
-    f"rm {cache_path("wise_frames")}/*.fits\n"
-    "This only has to be done once. Frames are now stored in subfolders "
+    f"rm {cache_path("wise_frames")}/*.fits"
+    "\nThis only has to be done once. Frames are now stored in subfolders "
     "based on the scan group number. This allows for many more files to be"
     " saved locally before there are filesystem issues."
 )
