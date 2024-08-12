@@ -175,7 +175,7 @@ def plot_synchrone(
 
 # Plot the final results
 plt.figure(dpi=200)
-wcs = neospy.ztf.plot_ztf_fov(vis.fov)
+wcs = neospy.ztf.plot_frame(vis.fov)
 plt.title("Comet NEOWISE - C/2020 F3\n")
 
 # plot syndynes
