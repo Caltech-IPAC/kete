@@ -17,7 +17,7 @@ from astropy.visualization import (
 )
 
 
-from .cache import cached_file_download, cache_path
+from .cache import download_file, cache_path
 from .fov import ZtfCcdQuad, ZtfField, FOVList
 from .time import Time
 from .irsa import query_irsa_tap
@@ -172,7 +172,7 @@ def file_frac_day_split(filefracday):
     return (year, month, day, frac_day)
 
 
-def plot_ztf_fov(
+def plot_frame(
     fov: ZtfCcdQuad,
     cmap="grey",
     products="sci",
@@ -197,17 +197,6 @@ def plot_ztf_fov(
     force_download :
         Optionally force a re-download if the file already exists in the cache.
     """
-    file = fetch_ZTF_file(
-        fov.field,
-        fov.filefracday,
-        fov.filtercode,
-        fov.ccdid,
-        fov.imgtypecode,
-        fov.qid,
-        products,
-        im_type,
-        force_download,
-    )
 
     frame = fetch_frame_from_fov(
         fov, products=products, im_type=im_type, force_download=force_download
@@ -240,7 +229,7 @@ def fetch_frame_from_fov(
     products="sci",
     im_type="sciimg.fits",
     force_download=False,
-):
+) -> fits.hdu.image.PrimaryHDU:
     """
     Given a ztf FOV, return the FITs file associated with it.
 
@@ -325,6 +314,6 @@ def fetch_ZTF_file(
 
     url = ztf_base + path + file
 
-    return cached_file_download(
-        url, force_download=force_download, subfolder="ztf_frames"
+    return download_file(
+        url, force_download=force_download, auto_zip=True, subfolder="ztf_frames"
     )

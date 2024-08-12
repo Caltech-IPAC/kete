@@ -11,9 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added support for long term integrations, on the scale of less than a mega-year.
+- Added clear deprecation tooling, which helps indicate how to update neospy when a
+  function's signature changes or is removed.
+- Added default plotting tools for fits files, which make decent scaling guesses for
+  ZTF and WISE frames. This includes annotation and zooming functions.
 
 ### Changed
 
+- Cached files are now zipped if possible after download.
+- Cached WISE frames are sorted by folders by the last 2 digits of the scan id, this
+  helps when downloading thousands of frames.
+- Combined `fetch_WISE_frame` and `cache_WISE_frame` functions into `fetch_frame`.
+- Renamed `cached_gzip_json_download` to `download_json`.
+- Renamed `cached_file_download` to `download_file`.
 - Optimizations to SPICE kernel queries leading to a 20% speedup in orbit propagation,
   along with >43% speedup in state queries from the spice kernels. Speedup from orbit
   propagation comes directly from the spice kernel optimization.
@@ -25,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed documentation on Time which was not being displayed correctly in python.
+
+### Removed
+
+- `cached_zip_download` was deprecated, this was automatically unzipping folders.
 
 
 ## [0.2.4] - 2024 - 7 - 15

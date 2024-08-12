@@ -2,27 +2,20 @@ from __future__ import annotations
 
 
 import os
-import shutil
 from collections import namedtuple
-from functools import lru_cache
-import tempfile
+from functools import lru_cache, partial
 from typing import Optional, Union
-import warnings
-import requests
 import matplotlib.pyplot as plt
 import numpy as np
 
 from astropy.io import fits
-from astropy.wcs import WCS
-from astropy.units import degree
-from astropy.coordinates import SkyCoord
-
 
 from . import spice
-from .cache import cache_path
+from .cache import cache_path, download_file
 from .time import Time
 from .vector import Vector
-from .irsa import IRSA_URL, query_irsa_tap
+from .irsa import IRSA_URL, query_irsa_tap, plot_fits_image, zoom_plot, annotate_plot
+from .deprecation import rename
 
 from ._core import (
     WiseCmos,
@@ -365,90 +358,112 @@ def mission_phase_from_scan(scan_id: str) -> Optional[MissionPhase]:
     return None
 
 
-def cache_WISE_frame(scan_id, frame_num, band=3, im_type="int"):
+def _scan_frame(scan_id, frame_num=None, band=None):
     """
-    Download and save a WISE frame to the cache, unless the file already exists.
-
-    Returns the cached filepath of the file.
+    Convert input from either a WiseCmos object or (scan id, frame num) into
+    the scan id and frame number. This is a convenience function so that either of
+    these objects can be passed as input.
     """
-    scan_id = str(scan_id)
-    frame_num = f"{frame_num:03d}"
-    scan_grp = str(scan_id[-2:])
-    band = f"w{band:1d}"
-    ext = "fits" if im_type == "int" else "fits.gz"
-    filename = f"{scan_id}{frame_num}-{band}-{im_type}-1b.{ext}"
-
-    dir_path = os.path.join(cache_path(), "wise_frames")
-    full_path = os.path.join(dir_path, filename)
-
-    if not os.path.isfile(full_path):
-        if not os.path.isdir(dir_path):
-            os.makedirs(dir_path)
-
-        phase = mission_phase_from_scan(scan_id)
-        url = f"{phase.frame_url}{scan_grp}/{scan_id}/{frame_num}/{filename}"
-        res = requests.get(url, timeout=30)
-        if res.status_code == 404:
-            raise ValueError(
-                f"scan {scan_id}  frame {frame_num}  {band}  {im_type} was not found."
-            )
-        if res.status_code != 200:
-            raise ValueError(res.content.decode())
-
-        with tempfile.NamedTemporaryFile("wb") as f:
-            f.write(res.content)
-            shutil.copyfile(f.name, full_path)
-
-    return full_path
+    if isinstance(scan_id, WiseCmos):
+        if band is None and frame_num in [1, 2, 3, 4]:
+            band = frame_num
+        frame_num = scan_id.frame_num
+        scan_id = scan_id.scan_id
+    elif frame_num is None:
+        raise ValueError(
+            "Frame Number must be provided if the first arg is not a FOV object."
+        )
+    return scan_id, frame_num, band
 
 
-def fetch_WISE_frame(scan_id, frame_num, band=3, im_type="int", cache=True):
+def fetch_frame(scan_id, frame_num=None, band=None, as_fits=True, im_type="int"):
     """
-    Fetch a WISE image directly from the IPAC server, returning a FITS image.
+    Fetch the WISE FITs frame, if it is not present in the cache, download it first.
 
-    WISE Frames are stored in 3 `im_type` flavors:
-    - 'int' - Intensity frames.
-    - 'unc' - Uncertainty frames (these are saved as `.fits.gz` files)
-    - 'msk' - Mask frames (these are saved as `.fits.gz` files)
+    This can return either an Astropy FITs file object, or the path to the downloaded
+    file.
 
-    If `cache` is `True`, then the image is stored in the image cache directory.
+    Parameters
+    ----------
+    scan_id :
+        The scan id of the desired frames, or a WISE FOV object, if this is
+        provided, then frame number does not have to be provided.
+    frame_num :
+        The frame number of the desired frames.
+    band :
+        Band number of the target frame/scan combination.
+    as_fits :
+        Should the file path or an Astropy FITs object be returned.
+    im_type :
+        Which image type should be returned,
+        `int` for intensity is typical, `mask` for the mask file.
     """
-
-    ext = "fits" if im_type == "int" else "fits.gz"
-
-    if cache:
-        path = cache_WISE_frame(scan_id, frame_num, band=band, im_type="int")
-        return fits.open(path)[0]
+    scan_id, frame_num, band = _scan_frame(scan_id, frame_num, band)
 
     scan_id = str(scan_id)
-    frame_num = f"{frame_num:03d}"
-    scan_grp = str(scan_id[-2:])
-    band = f"w{band:1d}"
-
-    filename = f"{scan_id}{frame_num}-{band}-{im_type}-1b.{ext}"
-
+    frame_num = int(frame_num)
     phase = mission_phase_from_scan(scan_id)
-    url = f"{phase.frame_url}{scan_grp}/{scan_id}/{frame_num}/{filename}"
-    res = requests.get(url, timeout=30)
 
-    with tempfile.NamedTemporaryFile("wb") as f:
-        f.write(res.content)
-        try:
-            fit = fits.open(f.name)[0]
-        except OSError as exc:
-            raise ValueError(
-                "Failed to load frame at url ", url, phase, res.content
-            ) from exc
-    return fit
+    # if no band is provided, assume 3 if possible, 2 otherwise
+    if band is None:
+        band = 3 if 3 in phase.bands else 2
+    if band not in phase.bands:
+        raise ValueError(f"Band {band} not present in this mission phase")
+
+    # format the url
+    frame_num = f"{frame_num:03d}"
+    scan_group = str(scan_id[-2:])
+    band = f"w{band:1d}"
+    ext = "fits" if im_type == "int" else "fits.gz"
+    filename = f"{scan_id}{frame_num}-{band}-{im_type}-1b.{ext}"
+    url = f"{phase.frame_url}{scan_group}/{scan_id}/{frame_num}/{filename}"
+
+    subfolder = os.path.join("wise_frames", scan_group)
+
+    file_path = download_file(url, auto_zip=True, subfolder=subfolder)
+    if as_fits:
+        return fits.open(file_path)[0]
+    else:
+        return file_path
+
+
+_reorg_msg = (
+    " The organization of wise cached frames has changed, it is recommended"
+    " to delete the old cache files with the shell command: \n"
+    f"rm {cache_path("wise_frames")}/*.fits\n"
+    "This only has to be done once. Frames are now stored in subfolders "
+    "based on the scan group number. This allows for many more files to be"
+    " saved locally before there are filesystem issues."
+)
+cache_WISE_frame = partial(
+    rename(
+        fetch_frame,
+        additional_msg=(
+            "Use `as_fits=False` with as an argument in the new function." + _reorg_msg
+        ),
+        deprecated_version="v0.2.4",
+        old_name="cache_WISE_frame",
+    ),
+    as_fits=False,
+)
+
+fetch_WISE_frame = rename(
+    fetch_frame,
+    additional_msg=_reorg_msg,
+    deprecated_version="v0.2.4",
+    old_name="fetch_WISE_frame",
+)
 
 
 def plot_frames(
     scan_id,
-    frame_num,
+    frame_num=None,
     ra: Optional[float | list[float]] = None,
     dec: Optional[float | list[float]] = None,
     zoom: Union[bool | float] = True,
     bands: Optional[list[int]] = None,
+    cmap="gray_r",
+    annotate=True,
 ):
     """
     Plot up to a 2x2 grid of images showing the W1, W2, W3, and W4 data for the
@@ -460,7 +475,8 @@ def plot_frames(
     Parameters
     ----------
     scan_id :
-        The scan id of the desired frames.
+        The scan id of the desired frames, or a WISE FOV object, if this is
+        provided, then frame number does not have to be provided.
     frame_num :
         The frame number of the desired frames.
     ra :
@@ -473,8 +489,14 @@ def plot_frames(
     bands :
         Bands of WISE to plot, if not provided this will plot all bands for the
         given mission phase.
+    annotate :
+        If ra/dec are provided, then the plot may be optionally annotated as well.
+        This may be any style which is accepted by the annotate function.
     """
-    ecolor = [None, "blue", "green", "#ff7700", "red"]
+    scan_id, frame_num, band = _scan_frame(scan_id, frame_num)
+
+    if zoom is True:
+        zoom = 50
 
     if bands is None:
         phase = mission_phase_from_scan(scan_id)
@@ -487,55 +509,40 @@ def plot_frames(
     plt.subplots_adjust(
         wspace=0.3, hspace=0.3, left=0.1, right=0.9, top=0.9, bottom=0.1
     )
+
+    if len(bands) == 4:
+        x_ind = [3, 4]
+    elif len(bands) == 2:
+        x_ind = [1, 2]
+    else:
+        x_ind = [2, 3]
+    subplot_y = 1 if len(bands) <= 2 else 2
+
     for band in bands:
-        try:
-            fit = fetch_WISE_frame(
-                scan_id,
-                frame_num,
-                band=band,
-            )
-        except OSError:
-            continue
-        data = np.nan_to_num(fit.data)
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
-            wcs = WCS(fit.header)
+        frame = fetch_frame(scan_id, frame_num, band)
 
-        ax = plt.subplot(2, 2, band, projection=wcs)
-
-        data_no_bkg = data - np.median(data)
-        # np.std below is doing a full frame std, which grabs the flux
-        # from stars and so is not a great estimate for W1 and W2
-        data_perc = np.percentile(data_no_bkg, [16, 84])
-        good_std = (data_perc[1] - data_perc[0]) / 2.0
-
-        ax.pcolormesh(np.clip(data_no_bkg / good_std, -3, 7), cmap="bone_r")
-        plt.gca().set_aspect("equal", adjustable="box")
-
-        if ra is not None and dec is not None:
-            loc = SkyCoord(ra=ra * degree, dec=dec * degree, frame="icrs")
-            pixloc = wcs.world_to_pixel(loc)
-            plt.scatter(
-                pixloc[0],
-                pixloc[1],
-                edgecolor=ecolor[band],
-                s=100,
-                linewidth=1,
-                facecolor="none",
-            )
-            if zoom and len(np.atleast_1d(ra).ravel()) > 1:
-                warnings.warn("More than one object found in file, cannot zoom.")
-            elif zoom:
-                if band == 4:
-                    # band 4's pixels are twice as big as the other three, so zoom more
-                    # to ensure the scene is the same
-                    pixspan = 37 * float(zoom)
-                else:
-                    pixspan = 75 * float(zoom)
-                plt.xlim(pixloc[0] - pixspan, pixloc[0] + pixspan)
-                plt.ylim(pixloc[1] - pixspan, pixloc[1] + pixspan)
-        plt.xlabel("RA")
-        plt.ylabel("Dec")
+        plt.subplot(2, subplot_y, band)
+        wcs = plot_fits_image(frame, percentiles=None, power_stretch=1, cmap=cmap)
+        if band not in [1, 3]:
+            plt.ylabel(" ")
+            plt.tick_params(axis="y", labelbottom=False)
+        if band not in x_ind:
+            plt.xlabel(" ")
+            plt.tick_params(axis="x", labelbottom=False)
+        if ra is not None:
+            actual_zoom = zoom / 2 if band == 4 else zoom
+            zoom_plot(wcs, ra, dec, zoom=actual_zoom)
+            if annotate:
+                style = "+" if annotate is True else annotate
+                annotate_plot(
+                    wcs,
+                    ra,
+                    dec,
+                    px_gap=actual_zoom / 4,
+                    length=actual_zoom / 4,
+                    lw=1.5,
+                    style=style,
+                )
         plt.title(f"W{band:1d}")
 
 

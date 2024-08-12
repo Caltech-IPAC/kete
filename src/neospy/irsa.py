@@ -13,6 +13,15 @@ import pandas as pd
 
 from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord
+from astropy.visualization import (
+    PowerDistStretch,
+    AsymmetricPercentileInterval,
+    ImageNormalize,
+    LinearStretch,
+    ZScaleInterval,
+)
+
+from .vector import Vector
 
 IRSA_URL = "https://irsa.ipac.caltech.edu"
 
@@ -171,7 +180,7 @@ def query_irsa_tap(
     return pd.read_csv(io.StringIO(result.text))
 
 
-def plot_fits_image(fit, vmin=-3, vmax=7, cmap="bone_r"):
+def plot_fits_image(fit, percentiles=(0.1, 99.95), power_stretch=0.5, cmap="gray"):
     """
     Plot a FITS image, returning a WCS object which may be used to plot future points
     correctly onto the current image.
@@ -187,36 +196,99 @@ def plot_fits_image(fit, vmin=-3, vmax=7, cmap="bone_r"):
     ----------
     fit:
         Fits file from Astropy.
-    vmin :
-        Minimum number of standard deviations below the median to plot.
-    vmax :
-        Maximum number of standard deviations above the median to plot.
+    percentiles :
+        Statistical percentile limit for which data to plot. By default this is set
+        to 0.1% and 99.95%. If this is set to `None`, then this uses Astropy's
+        `ZScaleInterval`.
+    power_stretch :
+        The scaling of the intensity of the plot is a power law, this defines the power
+        of that power law. By default plots are sqrt scaled. If this is set to 1, then
+        this becomes a linear scaling.
     cmap :
         Color map to use for the plot.
     """
-    data = np.nan_to_num(fit.data)
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
         wcs = WCS(fit.header)
 
     if not plt.get_fignums():
-        plt.figure(dpi=120, figsize=(6, 6), facecolor="w")
-    ax = plt.subplot(projection=wcs)
+        plt.figure(dpi=200, figsize=(6, 6), facecolor="w")
 
-    data_no_bkg = data - np.median(data)
-    # np.std below is doing a full frame std, which grabs the flux
-    # from stars and so is not a great estimate for W1 and W2
-    data_perc = np.percentile(data_no_bkg, [16, 84])
-    good_std = (data_perc[1] - data_perc[0]) / 2.0
+    # This is a little fancy footwork to get this to play nice with subplots
+    # This gets the current subplot geometry, pulls up the current axis and
+    # nukes it. Then in its place it inserts a new axis with the correct
+    # projection.
+    fig = plt.gcf()
+    rows, cols, start, _ = plt.gca().get_subplotspec().get_geometry()
+    fig.axes[start].remove()
+    ax = fig.add_subplot(rows, cols, start + 1, projection=wcs)
+    ax.set_aspect("equal", adjustable="box")
+    fig.axes[start] = ax
 
-    ax.pcolormesh(data_no_bkg / good_std, cmap=cmap, vmin=vmin, vmax=vmax)
-    plt.gca().set_aspect("equal", adjustable="box")
+    if power_stretch == 1:
+        stretch = LinearStretch()
+    else:
+        stretch = PowerDistStretch(power_stretch)
+
+    if percentiles is None:
+        interval = ZScaleInterval()
+    else:
+        interval = AsymmetricPercentileInterval(*percentiles)
+
+    norm = ImageNormalize(fit.data, interval=interval, stretch=stretch)
+    data = np.nan_to_num(fit.data, nan=np.nanpercentile(fit.data, 5))
+
+    ax.imshow(data, origin="lower", norm=norm, cmap=cmap)
+    ax.set_xlabel("RA")
+    ax.set_ylabel("DEC")
+    ax.set_aspect("equal", adjustable="box")
     return wcs
 
 
+def _ra_dec(ra, dec=None):
+    """
+    Given either a RA/Dec pair, or Vector, return an RA/Dec pair.
+    """
+    if isinstance(ra, Vector):
+        vec = ra.as_equatorial
+        ra = vec.ra
+        dec = vec.dec
+    return ra, dec
+
+
+def zoom_plot(wcs, ra, dec=None, zoom=100):
+    """
+    Given a WCS, zoom the current plot to the specified RA/Dec.
+
+    Parameters
+    ----------
+    wcs :
+        An Astropy World Coordinate system from the image.
+    ra :
+        The RA in degrees, can be a `Vector`, if so then dec is ignored.
+    dec :
+        The DEC in degrees.
+    zoom :
+        Optional zoom region in pixels
+    """
+    ra, dec = _ra_dec(ra, dec)
+    pix = wcs.world_to_pixel(SkyCoord(ra, dec, unit="deg"))
+    plt.gca().set_xlim(pix[0] - zoom, pix[0] + zoom)
+    plt.gca().set_ylim(pix[1] - zoom, pix[1] + zoom)
+
+
 def annotate_plot(
-    wcs, ra, dec, text=None, px_gap=70, length=50, lw=1, c="red", text_color="White"
+    wcs,
+    ra,
+    dec=None,
+    text=None,
+    px_gap=70,
+    length=50,
+    lw=1,
+    c="red",
+    text_color="White",
+    style="+",
 ):
     """
     Add an annotation for a point in a FITS plot, this requires a world coordinate
@@ -227,7 +299,7 @@ def annotate_plot(
     wcs :
         An Astropy World Coordinate system from the image.
     ra :
-        The RA in degrees.
+        The RA in degrees, can be a `Vector`, if so then dec is ignored.
     dec :
         The DEC in degrees.
     text :
@@ -237,17 +309,26 @@ def annotate_plot(
     length :
         Length of the bars in pixels.
     lw :
-        Line width of the bars.
+        Line width of the marker.
     c :
-        Color of the bars, uses matplotlib colors.
+        Color of the marker, uses matplotlib colors.
     text_color :
         If text is provided, this defines the text color.
+    style :
+        Style of marker, this can be either "o" or "+".
     """
+    ra, dec = _ra_dec(ra, dec)
     x, y = wcs.world_to_pixel(SkyCoord(ra, dec, unit="deg"))
     total = length + px_gap
-    plt.plot([x - total, x - px_gap], [y, y], c=c, lw=lw)
-    plt.plot([x + px_gap, x + total], [y, y], c=c, lw=lw)
-    plt.plot([x, x], [y - px_gap, y - total], c=c, lw=lw)
-    plt.plot([x, x], [y + px_gap, y + total], c=c, lw=lw)
+    if style == "+":
+        plt.plot([x - total, x - px_gap], [y, y], c=c, lw=lw)
+        plt.plot([x + px_gap, x + total], [y, y], c=c, lw=lw)
+        plt.plot([x, x], [y - px_gap, y - total], c=c, lw=lw)
+        plt.plot([x, x], [y + px_gap, y + total], c=c, lw=lw)
+    elif style == "o":
+        plt.scatter(x, y, fc="None", ec=c, s=5 * px_gap)
+    else:
+        raise ValueError("Style is not recognized, must be one of: ['o', '+']")
+
     if text:
         plt.text(x, y + px_gap / 2, "     " + text, c=text_color)
