@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Fixed
+
+- Field of View checks for states was optimized for multi-core processing on millions
+  of objects, leading to huge speed gains for large queries.
+
 ## [0.2.5] - 2024 - 8 - 12
 
 ### Added

@@ -2,11 +2,11 @@ use itertools::Itertools;
 use neospy_core::{
     errors::Error,
     propagation::{self, NonGravModel},
-    spice::{self, get_spk_singleton},
+    spice::{self},
     state::State,
     time::{scales::TDB, Time},
 };
-use pyo3::{pyfunction, PyErr, PyResult, Python};
+use pyo3::{pyfunction, PyResult, Python};
 use rayon::prelude::*;
 
 use crate::state::PyState;
@@ -76,24 +76,13 @@ pub fn propagation_n_body_spk_py(
         let mut proc_chunk = chunk
             .to_owned()
             .into_par_iter()
-            .map(|(mut state, model)| {
+            .map(|(state, model)| {
                 let model = model.map(|x| x.0);
-                let spk = get_spk_singleton().try_read().unwrap();
                 let center = state.center_id;
-                if let Err(e) = spk.try_change_center(&mut state, 0) {
-                    if !suppress_errors {
-                        Err(e)?;
-                    };
-                    return Ok::<PyState, PyErr>(
-                        State::new_nan(state.desig, jd, state.frame, center).into(),
-                    );
-                };
 
                 // if the input has a NAN in it, skip the propagation entirely and return
                 // the nans.
-                if state.pos.iter().any(|x| !x.is_finite())
-                    || state.vel.iter().any(|x| !x.is_finite())
-                {
+                if !state.is_finite() {
                     if !suppress_errors {
                         Err(Error::ValueError("Input state contains NaNs.".into()))?;
                     };
@@ -102,15 +91,7 @@ pub fn propagation_n_body_spk_py(
                 let desig = state.desig.clone();
                 let frame = state.frame;
                 match propagation::propagate_n_body_spk(state, jd, include_asteroids, model) {
-                    Ok(mut state) => {
-                        if let Err(er) = spk.try_change_center(&mut state, center) {
-                            if !suppress_errors {
-                                Err(er)?;
-                            }
-                            return Ok(State::new_nan(desig, jd, frame, center).into());
-                        };
-                        Ok(state.into())
-                    }
+                    Ok(state) => Ok(state.into()),
                     Err(er) => {
                         if !suppress_errors {
                             Err(er)?

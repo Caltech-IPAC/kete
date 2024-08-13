@@ -1,5 +1,5 @@
 use super::*;
-use neospy_core::propagation::propagate_n_body_spk;
+use neospy_core::{fov::FOV, propagation::propagate_n_body_spk};
 use pyo3::prelude::*;
 use rayon::prelude::*;
 
@@ -33,42 +33,76 @@ pub fn fov_checks_py(
     dt_limit: f64,
     include_asteroids: bool,
 ) -> PyResult<Vec<PySimultaneousStates>> {
-    let fovs = fovs.into_sorted_vec_fov();
-
-    // This is only here for a check to verify the states are valid
     let pop = obj_state.0;
 
+    let fovs = fovs.into_sorted_vec_fov();
+
+    // break the fovs into groups based upon the dt_limit
+    let mut fov_chunks: Vec<Vec<FOV>> = Vec::new();
+    let mut chunk: Vec<FOV> = Vec::new();
+    for fov in fovs.into_iter() {
+        if chunk.is_empty() {
+            chunk.push(fov);
+            continue;
+        };
+        let jd_start = chunk.first().unwrap().observer().jd;
+
+        // chunk is complete
+        if (fov.observer().jd - jd_start).abs() >= 2.0 * dt_limit {
+            fov_chunks.push(chunk);
+            chunk = vec![fov];
+        } else {
+            chunk.push(fov);
+        }
+    }
+    if !chunk.is_empty() {
+        fov_chunks.push(chunk);
+    }
     let mut jd = pop.jd;
     let mut big_jd = jd;
     let mut states = pop.states;
     let mut big_step_states = states.clone();
     let mut visible = Vec::new();
-    for fov in fovs.into_iter() {
+    for fovs in fov_chunks.into_iter() {
+        let jd_mean =
+            (fovs.last().unwrap().observer().jd + fovs.first().unwrap().observer().jd) / 2.0;
+
         // Take large steps which are 10x the smaller steps, this helps long term numerical stability
-        if (fov.observer().jd - big_jd).abs() >= dt_limit * 50.0 {
-            big_jd = fov.observer().jd;
+        if (jd_mean - big_jd).abs() >= dt_limit * 50.0 {
+            big_jd = jd_mean;
             big_step_states = big_step_states
                 .into_par_iter()
                 .filter_map(|state| propagate_n_body_spk(state, jd, include_asteroids, None).ok())
                 .collect();
         };
         // Take small steps based off of the large steps.
-        if (fov.observer().jd - jd).abs() >= dt_limit {
-            if (jd - big_jd) >= dt_limit * 25.0 {
+        if (jd_mean - jd).abs() >= dt_limit {
+            if (jd - big_jd).abs() >= dt_limit * 25.0 {
                 states.clone_from(&big_step_states);
             }
-            jd = fov.observer().jd;
+            jd = jd_mean;
             states = states
                 .into_par_iter()
                 .filter_map(|state| propagate_n_body_spk(state, jd, include_asteroids, None).ok())
                 .collect();
         };
 
-        let vis: Vec<PySimultaneousStates> = fov
-            .check_visible(&states, dt_limit, include_asteroids)
-            .into_iter()
-            .filter_map(|pop| pop.map(|p| PySimultaneousStates(Box::new(p))))
-            .collect();
+        let vis: Vec<PySimultaneousStates> = fovs
+            .par_chunks(100)
+            .flat_map(|chunk| {
+                chunk
+                    .iter()
+                    .cloned()
+                    .flat_map(|fov| {
+                        fov.check_visible(&states, dt_limit, include_asteroids)
+                            .into_iter()
+                            .filter_map(|pop| pop.map(|p| PySimultaneousStates(Box::new(p))))
+                            .collect::<Vec<_>>()
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+
         if !vis.is_empty() {
             visible.push(vis);
         }

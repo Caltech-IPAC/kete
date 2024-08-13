@@ -140,7 +140,7 @@ pub trait FovLike: Sync + Sized {
         let obs_state = self.observer();
 
         let final_states: Vec<(usize, State)> = states
-            .into_par_iter()
+            .iter()
             .filter_map(|state: &State| {
                 // assuming linear motion, how far can the object have moved relative
                 // to the observer? Then add a factor of 2 for safety
