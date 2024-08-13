@@ -131,7 +131,7 @@ impl State {
 
     /// Are all values finite.
     pub fn is_finite(&self) -> bool {
-        !(self.pos.iter().any(|x| x.is_finite())
+        !(self.pos.iter().any(|x| !x.is_finite())
             || self.vel.iter().any(|x| !x.is_finite())
             || !self.jd.is_finite())
     }

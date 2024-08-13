@@ -51,12 +51,13 @@ pub fn fov_checks_py(
         if (fov.observer().jd - jd_start).abs() >= 2.0 * dt_limit {
             fov_chunks.push(chunk);
             chunk = vec![fov];
+        } else {
+            chunk.push(fov);
         }
     }
     if !chunk.is_empty() {
         fov_chunks.push(chunk);
     }
-    dbg!(fov_chunks.len());
     let mut jd = pop.jd;
     let mut big_jd = jd;
     let mut states = pop.states;
@@ -91,9 +92,9 @@ pub fn fov_checks_py(
             .flat_map(|chunk| {
                 chunk
                     .iter()
+                    .cloned()
                     .flat_map(|fov| {
-                        fov.clone()
-                            .check_visible(&states, dt_limit, include_asteroids)
+                        fov.check_visible(&states, dt_limit, include_asteroids)
                             .into_iter()
                             .filter_map(|pop| pop.map(|p| PySimultaneousStates(Box::new(p))))
                             .collect::<Vec<_>>()
