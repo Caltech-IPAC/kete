@@ -166,7 +166,7 @@ impl PyTime {
     /// Modified Julian Date in UTC scaled time.
     #[getter]
     pub fn utc_mjd(&self) -> f64 {
-        self.0.utc().jd
+        self.0.utc().mjd()
     }
 
     /// Time in the UTC ISO time format.
