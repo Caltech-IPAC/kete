@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+### Added
+
+- Added an Omni-Directional Field of View.
+- Added a "getting started" example.
+
 ### Fixed
 
 - Field of View checks for states was optimized for multi-core processing on millions
