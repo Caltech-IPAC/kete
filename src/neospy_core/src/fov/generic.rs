@@ -94,12 +94,56 @@ impl FovLike for GenericRectangle {
 
 /// Generic rectangular FOV
 #[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct OmniDirectional {
+    observer: State,
+}
+
+impl OmniDirectional {
+    /// Create a new Omni-Directional FOV
+    pub fn new(observer: State) -> Self {
+        Self { observer }
+    }
+}
+
+impl FovLike for OmniDirectional {
+    #[inline]
+    fn get_fov(&self, index: usize) -> FOV {
+        if index != 0 {
+            panic!("FOV only has a single patch")
+        }
+        FOV::OmniDirectional(self.clone())
+    }
+
+    #[inline]
+    fn observer(&self) -> &State {
+        &self.observer
+    }
+
+    #[inline]
+    fn contains(&self, _obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
+        (0, Contains::Inside)
+    }
+
+    #[inline]
+    fn n_patches(&self) -> usize {
+        1
+    }
+
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
+        self.observer.try_change_frame_mut(target_frame)?;
+        Ok(())
+    }
+}
+
+/// Generic rectangular FOV
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct GenericCone {
     observer: State,
 
     /// Patch of sky
     pub patch: SphericalCone,
 }
+
 impl GenericCone {
     /// Create a new Generic Conic FOV
     pub fn new(pointing: Vector3<f64>, angle: f64, observer: State) -> Self {

@@ -29,6 +29,7 @@ move out of frame.
 
    code_structure
    installation
+   auto_examples/getting_started
    tutorials/index
    auto_examples/index
    api/api
