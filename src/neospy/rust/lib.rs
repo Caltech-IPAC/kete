@@ -45,6 +45,7 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<fovs::PyZtfField>()?;
     m.add_class::<fovs::PyGenericRectangle>()?;
     m.add_class::<fovs::PyGenericCone>()?;
+    m.add_class::<fovs::PyOmniDirectional>()?;
     m.add_class::<fovs::FOVList>()?;
 
     m.add_class::<flux::PyNeatmParams>()?;

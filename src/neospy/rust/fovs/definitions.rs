@@ -50,6 +50,11 @@ pub struct PyGenericRectangle(pub fov::GenericRectangle);
 #[derive(Clone, Debug)]
 pub struct PyGenericCone(pub fov::GenericCone);
 
+/// Omni Directional field of view.
+#[pyclass(module = "neospy", frozen, name = "OmniDirectionalFOV")]
+#[derive(Clone, Debug)]
+pub struct PyOmniDirectional(pub fov::OmniDirectional);
+
 /// Field of views supported by the python interface
 #[derive(Clone, FromPyObject)]
 #[allow(clippy::upper_case_acronyms)]
@@ -61,6 +66,7 @@ pub enum AllowedFOV {
     NEOSVisit(PyNeosVisit),
     Rectangle(PyGenericRectangle),
     Cone(PyGenericCone),
+    OmniDirectional(PyOmniDirectional),
 }
 
 impl AllowedFOV {
@@ -73,6 +79,7 @@ impl AllowedFOV {
             AllowedFOV::ZTFField(fov) => fov.0.observer().jd,
             AllowedFOV::NEOSVisit(fov) => fov.0.observer().jd,
             AllowedFOV::Cone(fov) => fov.0.observer().jd,
+            AllowedFOV::OmniDirectional(fov) => fov.0.observer().jd,
         }
     }
 
@@ -86,6 +93,7 @@ impl AllowedFOV {
             AllowedFOV::ZTFField(fov) => fov.0.get_fov(idx),
             AllowedFOV::NEOSVisit(fov) => fov.0.get_fov(idx),
             AllowedFOV::Cone(fov) => fov.0.get_fov(idx),
+            AllowedFOV::OmniDirectional(fov) => fov.0.get_fov(idx),
         }
     }
 
@@ -98,6 +106,7 @@ impl AllowedFOV {
             AllowedFOV::ZTFField(fov) => fov::FOV::ZtfField(fov.0),
             AllowedFOV::NEOSVisit(fov) => fov::FOV::NeosVisit(fov.0),
             AllowedFOV::Cone(fov) => fov::FOV::GenericCone(fov.0),
+            AllowedFOV::OmniDirectional(fov) => fov::FOV::OmniDirectional(fov.0),
         }
     }
 
@@ -110,6 +119,7 @@ impl AllowedFOV {
             AllowedFOV::ZTFField(fov) => fov.__repr__(),
             AllowedFOV::NEOSVisit(fov) => fov.__repr__(),
             AllowedFOV::Cone(fov) => fov.__repr__(),
+            AllowedFOV::OmniDirectional(fov) => fov.__repr__(),
         }
     }
 }
@@ -124,6 +134,7 @@ impl IntoPy<PyObject> for AllowedFOV {
             Self::ZTFField(fov) => fov.into_py(py),
             Self::NEOSVisit(fov) => fov.into_py(py),
             Self::Cone(fov) => fov.into_py(py),
+            Self::OmniDirectional(fov) => fov.into_py(py),
         }
     }
 }
@@ -138,6 +149,7 @@ impl From<fov::FOV> for AllowedFOV {
             fov::FOV::ZtfField(fov) => AllowedFOV::ZTFField(PyZtfField(fov)),
             fov::FOV::NeosVisit(fov) => AllowedFOV::NEOSVisit(PyNeosVisit(fov)),
             fov::FOV::GenericCone(fov) => AllowedFOV::Cone(PyGenericCone(fov)),
+            fov::FOV::OmniDirectional(fov) => AllowedFOV::OmniDirectional(PyOmniDirectional(fov)),
         }
     }
 }
@@ -342,6 +354,24 @@ impl PyGenericCone {
             self.angle(),
             self.observer().__repr__(),
         )
+    }
+}
+
+#[pymethods]
+impl PyOmniDirectional {
+    #[new]
+    pub fn new(observer: PyState) -> Self {
+        PyOmniDirectional(fov::OmniDirectional::new(observer.0))
+    }
+
+    /// The observer State.
+    #[getter]
+    pub fn observer(&self) -> PyState {
+        self.0.observer().clone().into()
+    }
+
+    fn __repr__(&self) -> String {
+        format!("OmniDirectional(observer={})", self.observer().__repr__(),)
     }
 }
 

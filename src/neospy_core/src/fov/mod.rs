@@ -43,6 +43,9 @@ pub enum FOV {
 
     /// NEOS Visit.
     NeosVisit(NeosVisit),
+
+    /// Omni-Directional FOV.
+    OmniDirectional(OmniDirectional),
 }
 
 impl FOV {
@@ -61,6 +64,7 @@ impl FOV {
             FOV::GenericRectangle(fov) => fov.check_visible(states, dt_limit, include_asteroids),
             FOV::ZtfField(fov) => fov.check_visible(states, dt_limit, include_asteroids),
             FOV::NeosVisit(fov) => fov.check_visible(states, dt_limit, include_asteroids),
+            FOV::OmniDirectional(fov) => fov.check_visible(states, dt_limit, include_asteroids),
         }
     }
 
@@ -74,6 +78,7 @@ impl FOV {
             FOV::GenericRectangle(fov) => fov.observer(),
             FOV::ZtfField(fov) => fov.observer(),
             FOV::NeosVisit(fov) => fov.observer(),
+            FOV::OmniDirectional(fov) => fov.observer(),
         }
     }
 
@@ -87,6 +92,7 @@ impl FOV {
             FOV::GenericRectangle(fov) => fov.check_spks(obj_ids),
             FOV::ZtfField(fov) => fov.check_spks(obj_ids),
             FOV::NeosVisit(fov) => fov.check_spks(obj_ids),
+            FOV::OmniDirectional(fov) => fov.check_spks(obj_ids),
         }
     }
 
@@ -101,6 +107,7 @@ impl FOV {
             FOV::GenericRectangle(fov) => fov.check_statics(pos),
             FOV::ZtfField(fov) => fov.check_statics(pos),
             FOV::NeosVisit(fov) => fov.check_statics(pos),
+            FOV::OmniDirectional(fov) => fov.check_statics(pos),
         }
     }
 
@@ -114,6 +121,7 @@ impl FOV {
             FOV::GenericCone(fov) => fov.try_frame_change_mut(target_frame),
             FOV::GenericRectangle(fov) => fov.try_frame_change_mut(target_frame),
             FOV::ZtfField(fov) => fov.try_frame_change_mut(target_frame),
+            FOV::OmniDirectional(fov) => fov.try_frame_change_mut(target_frame),
         }
     }
 }

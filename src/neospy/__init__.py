@@ -44,6 +44,7 @@ from .fov import (
     WiseCmos,
     NeosCmos,
     NeosVisit,
+    OmniDirectionalFOV,
     ZtfCcdQuad,
     ZtfField,
 )
@@ -84,6 +85,7 @@ __all__ = [
     "fov_state_check",
     "fov_static_check",
     "RectangleFOV",
+    "OmniDirectionalFOV",
     "ConeFOV",
     "WiseCmos",
     "NeosVisit",
