@@ -21,6 +21,7 @@ Units of position are in AU and velocity is AU / Day.
 
 import neospy
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Lets construct an object circular orbit
 # Recall that an object in circular orbit has a speed of sqrt(GM / r) where r is the
@@ -181,3 +182,35 @@ visible
 obs_vecs = visible.obs_vecs()[0]
 obs_vecs = obs_vecs.as_equatorial
 obs_vecs.ra, obs_vecs.dec
+
+# %%
+# Plotting Planets
+# ----------------
+#
+# Here is a basic example of using neospy to plot an orbit.
+
+plt.figure(dpi=150)
+jd = neospy.Time.now().jd
+plt.gca().set_aspect('equal', 'box')
+
+# plot the planets orbits
+for i, planet in enumerate(["Mercury", "Venus", "Earth", "Mars", "Jupiter"]):
+    plan = neospy.spice.get_state(planet, jd)
+    plt.scatter(plan.pos.x, plan.pos.y, color=f"C{i}", s=10)
+    jds = np.linspace(jd - plan.elements.orbital_period, jd, 100)
+    pos = np.array([neospy.spice.get_state(planet, jd).pos for jd in jds]).T
+    plt.plot(pos[0], pos[1], color="black", alpha=0.2)
+
+# plot the orbit of eros, using 2 body mechanics to plot the previous orbit
+eros = neospy.HorizonsProperties.fetch("Eros").state
+eros = neospy.propagate_two_body([eros], jd)[0]
+plt.scatter(eros.pos.x, eros.pos.y, c='black', s=10)
+jds = np.linspace(jd - eros.elements.orbital_period, jd, 100)
+pos = np.array([neospy.propagate_two_body([eros], jd)[0].pos for jd in jds]).T
+plt.plot(pos[0], pos[1], c='C0', alpha=0.2)
+
+plt.xlabel("Ecliptic X (au)")
+plt.ylabel("Ecliptic Y (au)")
+plt.scatter(0, 0, color="red")
+plt.tight_layout()
+plt.show()
