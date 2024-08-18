@@ -1,3 +1,4 @@
+use neospy_core::errors::Error;
 use neospy_core::io::FileIO;
 use neospy_core::simult_states;
 use pyo3::exceptions;
@@ -25,12 +26,18 @@ impl From<simult_states::SimultaneousStates> for PySimultaneousStates {
 
 impl<'py> FromPyObject<'py> for PySimultaneousStates {
     fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
-        if let Ok(states) = ob.extract::<Vec<PyState>>() {
-            return PySimultaneousStates::new(states, None);
+        match ob.downcast_exact::<PySimultaneousStates>() {
+            Ok(downcast) => Ok(PySimultaneousStates(downcast.get().0.clone())),
+            Err(_) => {
+                if let Ok(states) = ob.extract::<Vec<PyState>>() {
+                    PySimultaneousStates::new(states, None)
+                } else {
+                    Err(Error::ValueError(
+                        "Input could not be converted to a SimultaneousStates".into(),
+                    ))?
+                }
+            }
         }
-        Ok(PySimultaneousStates(
-            ob.downcast_exact::<PySimultaneousStates>()?.get().0.clone(),
-        ))
     }
 }
 
