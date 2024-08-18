@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Field of View checks for states was optimized for multi-core processing on millions
   of objects, leading to huge speed gains for large queries.
+- Fixed a bug where saving lists of SimultaneousStates had a bug where field of view
+  information was not being saved correctly.
 
 ## [0.2.5] - 2024 - 8 - 12
 
