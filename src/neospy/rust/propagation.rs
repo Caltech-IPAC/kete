@@ -191,7 +191,7 @@ pub fn propagation_n_body_py(
         .par_chunks(batch_size)
         .map(|chunk| {
             let (chunk_state, chunk_nongrav): (Vec<State>, Vec<Option<NonGravModel>>) =
-                chunk.iter().cloned().collect();
+                chunk.iter().cloned().unzip();
 
             propagation::propagate_n_body_vec(chunk_state, jd, planet_states.clone(), chunk_nongrav)
                 .map(|(states, planets)| {

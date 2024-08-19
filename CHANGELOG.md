@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of objects, leading to huge speed gains for large queries.
 - Fixed a bug where saving lists of SimultaneousStates had a bug where field of view
   information was not being saved correctly.
+- Fixed incompatibility with older versions of the rust compiler, working back to
+  at least v1.75.0
+
 
 ## [0.2.5] - 2024 - 8 - 12
 
