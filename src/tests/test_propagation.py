@@ -105,8 +105,9 @@ class TestTwoBodyPropagation:
             assert np.allclose(calculated.pos, should_be.pos)
 
 
-@pytest.mark.parametrize("planet", [None, "Earth", "Mercury"])
-def test_moid(planet):
+@pytest.mark.parametrize("planet", [(None, 1.58), ("Earth", 1.58), ("Mercury", 2.18)])
+def test_moid(planet, ceres_traj):
+    planet, ceres_moid = planet
     if planet is None:
         state = None
         vs = spice.get_state("Earth", 2461161.5)
@@ -115,3 +116,6 @@ def test_moid(planet):
         vs = state
 
     assert np.isclose(moid(vs, state), 0)
+
+    ceres = ceres_traj[0]
+    assert np.isclose(moid(ceres, state), ceres_moid, atol=1e-2)

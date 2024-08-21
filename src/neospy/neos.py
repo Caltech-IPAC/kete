@@ -21,4 +21,4 @@ COLOR_CORR = [
     [400.0, 1.05708, 0.95284],
     [500.0, 1.01897, 0.96149],
 ]
-"""Expected color correction required for black body sources"""
+"""Expected color correction required for black body sources at 300k"""
