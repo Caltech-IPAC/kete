@@ -5,8 +5,11 @@
 
 use crate::errors::Error;
 use crate::fitting::newton_raphson;
+use crate::prelude::CometElements;
 use crate::state::State;
 use crate::{constants::*, prelude::NeosResult};
+use argmin::solver::neldermead::NelderMead;
+use core::f64;
 use nalgebra::{ComplexField, Vector3};
 use std::f64::consts::TAU;
 
@@ -311,6 +314,88 @@ pub fn propagate_two_body(state: &State, jd_final: f64) -> NeosResult<State> {
         state.frame,
         state.center_id,
     ))
+}
+
+use argmin::core::{CostFunction, Error as ArgminErr, Executor};
+struct MoidCost {
+    state_a: State,
+
+    state_b: State,
+}
+
+impl CostFunction for MoidCost {
+    type Param = Vec<f64>;
+    type Output = f64;
+
+    fn cost(&self, param: &Self::Param) -> Result<Self::Output, ArgminErr> {
+        let dt_a = param.first().unwrap();
+        let dt_b = param.last().unwrap();
+
+        let s0 = propagate_two_body(&self.state_a, self.state_a.jd + dt_a)?;
+        let s1 = propagate_two_body(&self.state_b, self.state_b.jd + dt_b)?;
+
+        Ok((Vector3::from(s0.pos) - Vector3::from(s1.pos)).norm())
+    }
+}
+
+/// Compute the MOID between two states in au.
+/// MOID = Minimum Orbital Intersection Distance
+pub fn moid(mut state_a: State, mut state_b: State) -> NeosResult<f64> {
+    state_a.try_change_frame_mut(crate::frames::Frame::Ecliptic)?;
+    state_b.try_change_frame_mut(crate::frames::Frame::Ecliptic)?;
+
+    let elements_a = CometElements::from_state(&state_a);
+    state_a = propagate_two_body(&state_a, elements_a.peri_time)?;
+    let elements_b = CometElements::from_state(&state_b);
+    state_b = propagate_two_body(&state_b, elements_b.peri_time)?;
+
+    const N_STEPS: i32 = 50;
+
+    let state_a_step_size = match elements_a.orbital_period() {
+        p if p.is_finite() => p / N_STEPS as f64,
+        _ => 300.0 / N_STEPS as f64,
+    };
+    let state_b_step_size = match elements_b.orbital_period() {
+        p if p.is_finite() => p / N_STEPS as f64,
+        _ => 300.0 / N_STEPS as f64,
+    };
+
+    let mut states_b: Vec<State> = Vec::with_capacity(N_STEPS as usize);
+    let mut states_a: Vec<State> = Vec::with_capacity(N_STEPS as usize);
+
+    for idx in (-N_STEPS)..N_STEPS {
+        states_a.push(propagate_two_body(
+            &state_a,
+            state_a.jd + idx as f64 * state_a_step_size,
+        )?);
+        states_b.push(propagate_two_body(
+            &state_b,
+            state_b.jd + idx as f64 * state_b_step_size,
+        )?);
+    }
+    let mut best = (f64::INFINITY, state_a.clone(), state_b.clone());
+    for s0 in &states_a {
+        for s1 in &states_b {
+            let d = (Vector3::from(s0.pos) - Vector3::from(s1.pos)).norm();
+            if d < best.0 {
+                best = (d, s0.clone(), s1.clone());
+            }
+        }
+    }
+
+    let cost = MoidCost {
+        state_a: best.1,
+        state_b: best.2,
+    };
+
+    let solver = NelderMead::new(vec![vec![-15.0, -15.0], vec![15.0, -15.0], vec![0.0, 15.0]]);
+
+    let res = Executor::new(cost, solver)
+        .configure(|state| state.max_iters(1000))
+        .run()
+        .unwrap();
+
+    Ok(res.state().get_best_cost())
 }
 
 #[cfg(test)]

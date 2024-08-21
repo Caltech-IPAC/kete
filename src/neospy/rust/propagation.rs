@@ -1,8 +1,8 @@
 use itertools::Itertools;
 use neospy_core::{
     errors::Error,
-    propagation::{self, NonGravModel},
-    spice::{self},
+    propagation::{self, moid, NonGravModel},
+    spice::{self, get_spk_singleton},
     state::State,
     time::{scales::TDB, Time},
 };
@@ -11,6 +11,32 @@ use rayon::prelude::*;
 
 use crate::state::PyState;
 use crate::{nongrav::PyNonGravModel, time::PyTime};
+
+/// Compute the MOID between the input state and an optional second state.
+/// If the second state is not provided, default to Earth.
+///
+/// Returns the MOID in units of au.
+///
+/// Parameters
+/// ----------
+/// state_a:
+///     State of the first object.
+/// state_b:
+///     Optional state of the second object, defaults to Earth.
+#[pyfunction]
+#[pyo3(name = "moid", signature = (state_a, state_b=None))]
+pub fn moid_py(state_a: PyState, state_b: Option<PyState>) -> PyResult<f64> {
+    let state_b =
+        state_b
+            .map(|x| x.0)
+            .unwrap_or(get_spk_singleton().read().unwrap().try_get_state(
+                399,
+                state_a.0.jd,
+                10,
+                state_a.0.frame,
+            )?);
+    Ok(moid(state_a.0, state_b)?)
+}
 
 /// Propagate the provided :class:`~neospy.State` using N body mechanics to the
 /// specified times, no approximations are made, this can be very CPU intensive.

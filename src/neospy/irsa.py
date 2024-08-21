@@ -289,6 +289,9 @@ def annotate_plot(
     c="red",
     text_color="White",
     style="+",
+    text_dx=0,
+    text_dy=0,
+    text_fs=None,
 ):
     """
     Add an annotation for a point in a FITS plot, this requires a world coordinate
@@ -315,7 +318,13 @@ def annotate_plot(
     text_color :
         If text is provided, this defines the text color.
     style :
-        Style of marker, this can be either "o" or "+".
+        Style of marker, this can be either "o", "+", or "L".
+    text_dx :
+        Offset of the text x location in pixels.
+    text_dy :
+        Offset of the text y location in pixels.
+    text_fs :
+        Text font size.
     """
     ra, dec = _ra_dec(ra, dec)
     x, y = wcs.world_to_pixel(SkyCoord(ra, dec, unit="deg"))
@@ -325,10 +334,13 @@ def annotate_plot(
         plt.plot([x + px_gap, x + total], [y, y], c=c, lw=lw)
         plt.plot([x, x], [y - px_gap, y - total], c=c, lw=lw)
         plt.plot([x, x], [y + px_gap, y + total], c=c, lw=lw)
+    if style == "L":
+        plt.plot([x + px_gap, x + total], [y, y], c=c, lw=lw)
+        plt.plot([x, x], [y + px_gap, y + total], c=c, lw=lw)
     elif style == "o":
-        plt.scatter(x, y, fc="None", ec=c, s=5 * px_gap)
+        plt.scatter(x, y, fc="None", ec=c, s=5 * px_gap, lw=lw)
     else:
-        raise ValueError("Style is not recognized, must be one of: ['o', '+']")
+        raise ValueError("Style is not recognized, must be one of: o, +, L")
 
     if text:
-        plt.text(x, y + px_gap / 2, "     " + text, c=text_color)
+        plt.text(x + text_dx, y + text_dy, text, c=text_color, fontsize=text_fs)

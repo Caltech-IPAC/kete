@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added an Omni-Directional Field of View.
 - Added a "getting started" example.
 
+### Changed
+
+- Optimized the `moid` computation, improving performance by over 30x.
+
 ### Fixed
 
 - Field of View checks for states was optimized for multi-core processing on millions
