@@ -23,7 +23,7 @@ pub struct Covariance {
     cov_matrix: Vec<Vec<f64>>,
 }
 
-impl neospy_core::io::FileIO for Covariance {}
+impl FileIO for Covariance {}
 
 #[pymethods]
 impl Covariance {
@@ -78,21 +78,21 @@ impl Covariance {
             let eccentricity = *hash.get("eccentricity").ok_or(Error::ValueError(
                 "Covariance missing 'eccentricity'".into(),
             ))?;
-            let peri_dist = *hash.get("peri_dist").ok_or(Error::ValueError(
-                "Covariance missing 'peri_dist'".into(),
-            ))?;
-            let peri_time = *hash.get("peri_time").ok_or(Error::ValueError(
-                "Covariance missing 'peri_time'".into(),
-            ))?;
+            let peri_dist = *hash
+                .get("peri_dist")
+                .ok_or(Error::ValueError("Covariance missing 'peri_dist'".into()))?;
+            let peri_time = *hash
+                .get("peri_time")
+                .ok_or(Error::ValueError("Covariance missing 'peri_time'".into()))?;
             let lon_of_ascending = *hash.get("lon_of_ascending").ok_or(Error::ValueError(
                 "Covariance missing 'lon_of_ascending'".into(),
             ))?;
-            let peri_arg = *hash.get("peri_arg").ok_or(Error::ValueError(
-                "Covariance missing 'peri_arg'".into(),
-            ))?;
-            let inclination = *hash.get("inclination").ok_or(Error::ValueError(
-                "Covariance missing 'inclination'".into(),
-            ))?;
+            let peri_arg = *hash
+                .get("peri_arg")
+                .ok_or(Error::ValueError("Covariance missing 'peri_arg'".into()))?;
+            let inclination = *hash
+                .get("inclination")
+                .ok_or(Error::ValueError("Covariance missing 'inclination'".into()))?;
             let elem = PyCometElements::new(
                 desig,
                 epoch,

@@ -34,7 +34,7 @@ impl FOVListLike {
 }
 
 #[pyclass(module = "neospy", sequence)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct FOVList(pub Vec<AllowedFOV>);
 
 #[pymethods]
@@ -70,7 +70,7 @@ impl FOVList {
         let fovs: Vec<neospy_core::fov::FOV> =
             self.0.iter().map(|fov| fov.clone().unwrap()).collect();
 
-        encode_into_std_write(fovs, &mut f, bincode::config::legacy())
+        let _ = encode_into_std_write(fovs, &mut f, bincode::config::legacy())
             .map_err(|_| Error::IOError("Failed to write to file".into()))?;
         Ok(())
     }

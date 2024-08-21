@@ -13,26 +13,26 @@ pub enum PyFrames {
 }
 
 /// Provide a mapping from the python mapping above to the backend frames
-impl From<PyFrames> for neospy_core::frames::Frame {
+impl From<PyFrames> for Frame {
     fn from(value: PyFrames) -> Self {
         match value {
-            PyFrames::Ecliptic => neospy_core::frames::Frame::Ecliptic,
-            PyFrames::Equatorial => neospy_core::frames::Frame::Equatorial,
-            PyFrames::Galactic => neospy_core::frames::Frame::Galactic,
-            PyFrames::FK4 => neospy_core::frames::Frame::FK4,
-            PyFrames::Undefined => neospy_core::frames::Frame::Unknown(0),
+            PyFrames::Ecliptic => Frame::Ecliptic,
+            PyFrames::Equatorial => Frame::Equatorial,
+            PyFrames::Galactic => Frame::Galactic,
+            PyFrames::FK4 => Frame::FK4,
+            PyFrames::Undefined => Frame::Unknown(0),
         }
     }
 }
 
 /// Provide a mapping from the python mapping above to the backend frames
-impl From<neospy_core::frames::Frame> for PyFrames {
-    fn from(value: neospy_core::frames::Frame) -> Self {
+impl From<Frame> for PyFrames {
+    fn from(value: Frame) -> Self {
         match value {
-            neospy_core::frames::Frame::Ecliptic => PyFrames::Ecliptic,
-            neospy_core::frames::Frame::Equatorial => PyFrames::Equatorial,
-            neospy_core::frames::Frame::FK4 => PyFrames::FK4,
-            neospy_core::frames::Frame::Galactic => PyFrames::Galactic,
+            Frame::Ecliptic => PyFrames::Ecliptic,
+            Frame::Equatorial => PyFrames::Equatorial,
+            Frame::FK4 => PyFrames::FK4,
+            Frame::Galactic => PyFrames::Galactic,
             _ => PyFrames::Undefined,
         }
     }
@@ -50,7 +50,7 @@ pub fn frame_change_py(
     states
         .into_iter()
         .map(|vec| {
-            std::convert::Into::<Frame>::into(input_frame)
+            Into::<Frame>::into(input_frame)
                 .try_vec_frame_change(vec.into(), output_frame.into())
                 .unwrap()
                 .into()

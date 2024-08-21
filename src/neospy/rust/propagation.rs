@@ -122,7 +122,7 @@ pub fn propagation_n_body_spk_py(
                         if !suppress_errors {
                             Err(er)?
                         } else {
-                            if let neospy_core::errors::Error::Impact(id, time) = er {
+                            if let Error::Impact(id, time) = er {
                                 let time_full: Time<TDB> = Time::new(time);
                                 eprintln!(
                                     "Impact detected between {:?} <-> {} at time {} ({})",

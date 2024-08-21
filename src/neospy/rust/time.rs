@@ -31,6 +31,7 @@ use pyo3::prelude::*;
 ///     Accepts 'tdb', 'tai', 'utc', and 'tt', but they are converted to TDB
 ///     immediately.
 #[pyclass(frozen, module = "neospy", name = "Time")]
+#[derive(Debug)]
 pub struct PyTime(Time<TDB>);
 
 impl<'py> FromPyObject<'py> for PyTime {

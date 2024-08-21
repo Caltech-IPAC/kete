@@ -25,7 +25,7 @@ impl Vector {
 }
 
 /// Polymorphic support
-#[derive(FromPyObject)]
+#[derive(Debug, FromPyObject)]
 pub enum VectorLike {
     Vec(Vector),
     Arr([f64; 3]),
@@ -259,7 +259,7 @@ impl Vector {
 
     /// Return the vector in the target frame, regardless of starting frame.
     pub fn change_frame(&self, target_frame: PyFrames) -> Self {
-        let new_dat = std::convert::Into::<Frame>::into(self.frame)
+        let new_dat = Into::<Frame>::into(self.frame)
             .try_vec_frame_change(self.raw.into(), target_frame.into())
             .unwrap();
         Self::new(new_dat.into(), target_frame)
