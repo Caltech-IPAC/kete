@@ -62,7 +62,7 @@ pub struct HorizonsProperties {
     covariance: Option<Covariance>,
 }
 
-impl neospy_core::io::FileIO for HorizonsProperties {}
+impl FileIO for HorizonsProperties {}
 
 #[pymethods]
 impl HorizonsProperties {
@@ -117,27 +117,23 @@ impl HorizonsProperties {
             epoch: self
                 .epoch
                 .ok_or(prelude::Error::ValueError("No Epoch defined".into()))?,
-            eccentricity: self.eccentricity.ok_or(prelude::Error::ValueError(
-                "No Eccentricity defined".into(),
-            ))?,
+            eccentricity: self
+                .eccentricity
+                .ok_or(prelude::Error::ValueError("No Eccentricity defined".into()))?,
             inclination: self
                 .inclination
-                .ok_or(prelude::Error::ValueError(
-                    "No Inclination defined".into(),
-                ))?
+                .ok_or(prelude::Error::ValueError("No Inclination defined".into()))?
                 .to_radians(),
             peri_arg: self
                 .peri_arg
-                .ok_or(prelude::Error::ValueError(
-                    "No peri_arg defined".into(),
-                ))?
+                .ok_or(prelude::Error::ValueError("No peri_arg defined".into()))?
                 .to_radians(),
-            peri_dist: self.peri_dist.ok_or(prelude::Error::ValueError(
-                "No peri_dist defined".into(),
-            ))?,
-            peri_time: self.peri_time.ok_or(prelude::Error::ValueError(
-                "No peri_time defined".into(),
-            ))?,
+            peri_dist: self
+                .peri_dist
+                .ok_or(prelude::Error::ValueError("No peri_dist defined".into()))?,
+            peri_time: self
+                .peri_time
+                .ok_or(prelude::Error::ValueError("No peri_time defined".into()))?,
             lon_of_ascending: self
                 .lon_of_ascending
                 .ok_or(prelude::Error::ValueError(

@@ -1,6 +1,6 @@
 use neospy_core::errors::Error;
 use neospy_core::io::FileIO;
-use neospy_core::simult_states;
+use neospy_core::simult_states::SimultaneousStates;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::{pyclass, pymethods, PyResult};
@@ -16,10 +16,10 @@ use crate::{fovs::AllowedFOV, frame::PyFrames, state::PyState};
 ///
 #[pyclass(module = "neospy", frozen, sequence, name = "SimultaneousStates")]
 #[derive(Debug)]
-pub struct PySimultaneousStates(pub Box<simult_states::SimultaneousStates>);
+pub struct PySimultaneousStates(pub Box<SimultaneousStates>);
 
-impl From<simult_states::SimultaneousStates> for PySimultaneousStates {
-    fn from(value: simult_states::SimultaneousStates) -> Self {
+impl From<SimultaneousStates> for PySimultaneousStates {
+    fn from(value: SimultaneousStates) -> Self {
         Self(Box::new(value))
     }
 }
@@ -64,8 +64,10 @@ impl PySimultaneousStates {
     pub fn new(states: Vec<PyState>, fov: Option<AllowedFOV>) -> PyResult<Self> {
         let states: Vec<_> = states.into_iter().map(|x| x.0).collect();
         let fov = fov.map(|x| x.unwrap());
-        Ok(simult_states::SimultaneousStates::new_exact(states, fov)
-            .map(|x| PySimultaneousStates(Box::new(x)))?)
+        Ok(
+            SimultaneousStates::new_exact(states, fov)
+                .map(|x| PySimultaneousStates(Box::new(x)))?,
+        )
     }
 
     /// The FOV if it exists.
@@ -101,14 +103,14 @@ impl PySimultaneousStates {
     /// Load a single SimultaneousStates from a file.
     #[staticmethod]
     pub fn load(filename: String) -> PyResult<Self> {
-        Ok(PySimultaneousStates(Box::new(
-            neospy_core::simult_states::SimultaneousStates::load(filename)?,
-        )))
+        Ok(PySimultaneousStates(Box::new(SimultaneousStates::load(
+            filename,
+        )?)))
     }
 
     /// Save a single SimultaneousStates to a file.
     pub fn save(&self, filename: String) -> PyResult<()> {
-        self.0.save(filename)?;
+        let _ = self.0.save(filename)?;
         Ok(())
     }
 
@@ -171,9 +173,7 @@ impl PySimultaneousStates {
     #[pyo3(name = "save_list")]
     pub fn py_save_list(vec: Vec<Self>, filename: String) -> PyResult<()> {
         let vec: Vec<_> = vec.into_iter().map(|x| *x.0).collect();
-        Ok(neospy_core::simult_states::SimultaneousStates::save_vec(
-            &vec, filename,
-        )?)
+        Ok(SimultaneousStates::save_vec(&vec, filename)?)
     }
 
     /// Load a list from a binary file.
@@ -182,7 +182,7 @@ impl PySimultaneousStates {
     #[staticmethod]
     #[pyo3(name = "load_list")]
     pub fn py_load_list(filename: String) -> PyResult<Vec<Self>> {
-        let res = neospy_core::simult_states::SimultaneousStates::load_vec(filename)?;
+        let res = SimultaneousStates::load_vec(filename)?;
         Ok(res.into_iter().map(|x| Self(Box::new(x))).collect())
     }
 }

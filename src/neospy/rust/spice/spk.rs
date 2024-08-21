@@ -84,7 +84,7 @@ pub fn spk_state_py(id: i64, jd: PyTime, center: i64, frame: PyFrames) -> PyResu
     let jd = jd.jd();
     let spk = get_spk_singleton().try_read().unwrap();
     let mut state = spk.try_get_state(id, jd, center, frame.into())?;
-    state.try_naif_id_to_name();
+    let _ = state.try_naif_id_to_name();
     Ok(PyState(state))
 }
 

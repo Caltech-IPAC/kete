@@ -56,7 +56,7 @@ pub struct PyGenericCone(pub fov::GenericCone);
 pub struct PyOmniDirectional(pub fov::OmniDirectional);
 
 /// Field of views supported by the python interface
-#[derive(Clone, FromPyObject)]
+#[derive(Debug, Clone, FromPyObject)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum AllowedFOV {
     WISE(PyWiseCmos),
