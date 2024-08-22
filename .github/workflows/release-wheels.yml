@@ -11,38 +11,27 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build_wheels:
-    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
+    name: Build wheel for py${{ matrix.python }}-${{ matrix.platform_id }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       # Ensure that a wheel builder finishes even if another fails
       fail-fast: false
       matrix:
+        python: [310, 311, 312]
+        os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           # Window 64 bit
-          - os: windows-2019
-            python: 310
-            platform_id: win_amd64
-          - os: windows-2019
-            python: 311
+          - os: windows-latest
             platform_id: win_amd64
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
-            python: 310
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 311
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
           # MacOS - latest is now arm64, no longer x86_64
           - os: macos-latest
-            python: 310
-            platform_id: macosx_arm64
-          - os: macos-latest
-            python: 311
             platform_id: macosx_arm64
     steps:
       - uses: actions/checkout@v4
@@ -50,9 +39,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - run: cargo test --all-features
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: "3.12"
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip setuptools
@@ -74,6 +63,6 @@ jobs:
           CIBW_BUILD_VERBOSITY: 1
           CONDA_HOME: /usr/local/miniconda
         run: python3 -m cibuildwheel --output-dir wheelhouse
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
