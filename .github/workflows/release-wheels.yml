@@ -6,6 +6,8 @@ name: Release-Wheels
 on:
   push:
     tags: 'v[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
+    branches: [ "main" ]
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -18,31 +20,19 @@ jobs:
       # Ensure that a wheel builder finishes even if another fails
       fail-fast: false
       matrix:
+        python: [310, 311, 312]
         include:
           # Window 64 bit
           - os: windows-2019
-            python: 310
-            platform_id: win_amd64
-          - os: windows-2019
-            python: 311
             platform_id: win_amd64
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
-            python: 310
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 311
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
           # MacOS - latest is now arm64, no longer x86_64
           - os: macos-latest
-            python: 310
-            platform_id: macosx_arm64
-          - os: macos-latest
-            python: 311
             platform_id: macosx_arm64
     steps:
       - uses: actions/checkout@v4
