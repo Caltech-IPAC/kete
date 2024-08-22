@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build_wheels:
-    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
+    name: Build wheel for py${{ matrix.python }}-${{ matrix.platform_id }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -21,6 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         python: [310, 311, 312]
+        os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           # Window 64 bit
           - os: windows-latest
@@ -42,7 +43,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: "3.12"
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip setuptools
