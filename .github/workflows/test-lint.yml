@@ -27,7 +27,7 @@ jobs:
       with:
         lfs: true
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.9"
     - name: Test with cargo
@@ -64,7 +64,7 @@ jobs:
           echo "::warning title=Invalid file permissions automatically fixed::$line"
         done
     - name: Upload Docs artifact
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v4
       with:
         name: "docs"
         path:
