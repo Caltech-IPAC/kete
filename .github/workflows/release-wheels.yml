@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build_wheels:
-    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
-    runs-on: ${{ matrix.os }}
+    name: Build wheel for cp${{ matrix.python }}-${{ matrix.include.platform_id }}-${{ matrix.include.manylinux_image }}
+    runs-on: ${{ matrix.include.os }}
     timeout-minutes: 30
     strategy:
       # Ensure that a wheel builder finishes even if another fails
@@ -49,10 +49,10 @@ jobs:
           python3 -m pip install cibuildwheel
       - name: Build wheels
         env:
-          CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
+          CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.include.platform_id }}
           CIBW_ARCHS: all
-          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
-          CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
+          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.include.manylinux_image }}
+          CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.include.manylinux_image }}
           CIBW_TEST_SKIP: "*-macosx_arm64"
           CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH" CARGO_TERM_COLOR="always"'
           CIBW_ENVIRONMENT_WINDOWS: 'PATH="$UserProfile\.cargo\bin;$PATH"'
