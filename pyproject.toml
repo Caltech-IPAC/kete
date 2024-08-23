@@ -1,7 +1,7 @@
 [project]
 name = "apohele"
-version = "0.2.5"
-description = "NEO Surveyor Simulation Tools"
+version = "0.2.6"
+description = "Solar System Survey Simulation Tools"
 readme = "README.md"
 authors = [{name = "Dar Dahlen", email = "ddahlen@ipac.caltech.edu"},
            {name = "Joe Masiero", email = "jmasiero@ipac.caltech.edu"},

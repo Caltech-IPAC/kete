@@ -6,10 +6,8 @@ import json
 import logging
 import urllib
 import os
-import zipfile
 import shutil
 from urllib3.util.retry import Retry
-from .deprecation import rename, deprecated
 
 
 CACHE_DIR = os.getenv("apohele_CACHE_DIR", "~/.apohele/")
@@ -27,9 +25,6 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "cache_path",
-    "cached_file_download",
-    "cached_gzip_json_download",
-    "cached_zip_download",
     "get_cache_size",
 ]
 
@@ -140,38 +135,3 @@ def download_json(url, force_download=False, subfolder=""):
     with gzip.open(filename, "rb") as f:
         raw_data = f.read().decode()
     return json.loads(raw_data)
-
-
-@deprecated(
-    deprecated_version="v0.2.4",
-    additional_msg=" This will be removed in v0.2.5",
-)
-def cached_zip_download(url, force_download=False, subfolder=""):
-    """
-    Download a zipped file to the cache directory and unzip it in place.
-    Returning the path to the folder where it is unzipped.
-
-    This operation is cached, so requesting the same URL will result in the previously
-    fetched results being returned. Setting force_download to true will force the cached
-    file to be re-downloaded.
-    """
-    filename = download_file(url, force_download, subfolder=subfolder)
-    parent_dir, file = os.path.split(filename)
-    zipfile.ZipFile(filename).extractall(parent_dir)
-    return os.path.join(parent_dir, file.replace(".zip", ""))
-
-
-cached_gzip_json_download = download_json
-rename(
-    download_json,
-    deprecated_version="v0.2.4",
-    additional_msg=" Cached files are now always gzipped.",
-    old_name="cached_gzip_json_download",
-)
-
-
-cached_file_download = rename(
-    download_file,
-    deprecated_version="v0.2.4",
-    old_name="cached_file_download",
-)
