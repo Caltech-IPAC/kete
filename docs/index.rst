@@ -1,7 +1,7 @@
 NEO Surveyor Simulation Tools
 =============================
 
-NEOSpy is a collection of tools which enable the simulation of ground or spaced based
+apohele is a collection of tools which enable the simulation of ground or spaced based
 surveys of minor planets. Included here are:
 
    - Orbit propagation code capable of accurately calculating the orbits for many
@@ -18,7 +18,7 @@ Many of these tools are independent from one another, and can be combined in man
 to answer questions. There are a collection of worked examples below which demonstrate
 some of the capabilities.
 
-It is recommended that the background reading section be covered before using NEOSpy,
+It is recommended that the background reading section be covered before using apohele,
 as it is very important to understand the coordinate frames and reference times used.
 Conversions such as UTC <-> TDB time can result in over a minute of difference in the
 position of minor planets, which for fast moving objects is long enough that they may

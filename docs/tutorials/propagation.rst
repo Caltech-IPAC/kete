@@ -3,7 +3,7 @@ Orbit Propagation
 
 Orbit propagation can be an immensely complicated topic, spanning from two-body
 Keplerian motion, to models of gravitational fields including thousands of terms. Being
-able to pick the correct amount of precision required is difficult, and NEOSpy makes a
+able to pick the correct amount of precision required is difficult, and apohele makes a
 number of judicious choices which are reasonable for the vast majority of cases.
 
 What follows is a discussion of the pros-cons of various models of gravitational forces,
@@ -93,7 +93,7 @@ for this is that it can be computationally expensive. If we wish to predict the 
 of minor planets for NEOWISE frames as an example, which are captured every 10-15
 seconds, it would be wildly inefficient. Over the course of a few minutes objects motion
 can be modeled as linear, over hours (even days) the two-body approximation is often
-good enough. As a result of this, NEOSpy has tools for adaptively changing the
+good enough. As a result of this, apohele has tools for adaptively changing the
 approximation used in order to get good computational performance. The typical method is
 to use a full N-Body simulation to get the highest precision, then use that solution for
 the next day or so (adjustable) with two-body mechanics to query hundreds of times.

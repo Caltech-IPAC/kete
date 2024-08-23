@@ -1,11 +1,11 @@
 import pytest
-import neospy
+import apohele
 
 
 @pytest.fixture(scope="session")
 def ceres_properties():
     """HorizonsObjectProperties built from Ceres"""
-    return neospy.HorizonsProperties(
+    return apohele.HorizonsProperties(
         desig="Ceres",
         group=None,
         vis_albedo=0.09,
@@ -32,13 +32,13 @@ def test_object_properties(ceres_properties):
 
 @pytest.mark.horizons
 def test_fetch_horizons():
-    obj = neospy.HorizonsProperties.fetch("Ceres")
+    obj = apohele.HorizonsProperties.fetch("Ceres")
     _ = obj.state
     _ = obj.elements
 
 
 @pytest.mark.horizons
 def test_cache_horizons():
-    jd = neospy.Time.j2000().jd
-    neospy.horizons.fetch_spice_kernel("phaethon", jd, jd + 365, update_cache=True)
-    neospy.horizons.fetch_spice_kernel("phaethon", jd, jd + 365, update_cache=False)
+    jd = apohele.Time.j2000().jd
+    apohele.horizons.fetch_spice_kernel("phaethon", jd, jd + 365, update_cache=True)
+    apohele.horizons.fetch_spice_kernel("phaethon", jd, jd + 365, update_cache=False)

@@ -3,25 +3,25 @@ interface
 
 Below are APIs to external organizations and web interfaces. These are provided
 primarily to make it easier to fetch data from these various sources for analysis with
-NEOSpy.
+apohele.
 
 Minor Planet Center (MPC)
 -------------------------
 
-.. automodule:: neospy.mpc
+.. automodule:: apohele.mpc
    :members:
    :inherited-members:
 
 IPAC - IRSA
 -----------
 
-.. automodule:: neospy.irsa
+.. automodule:: apohele.irsa
    :members:
    :inherited-members:
 
 JPL Horizons
 ------------
 
-.. automodule:: neospy.horizons
+.. automodule:: apohele.horizons
    :members:
    :inherited-members:

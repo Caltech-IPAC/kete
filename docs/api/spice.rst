@@ -23,6 +23,6 @@ used for numerical integrations when the correct flags are set.
 PCK Files which enable coordinate transformations between Earths surface and the
 common inertial frames.
 
-.. automodule:: neospy.spice
+.. automodule:: apohele.spice
    :members:
    :inherited-members:

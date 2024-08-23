@@ -7,7 +7,7 @@ part of a spherical asteroid in both models, and plots the results.
 The geometry is such that the sun is 1 AU away from the asteroid along the X-axis.
 """
 
-import neospy
+import apohele
 import numpy as np
 import matplotlib as mpl
 import matplotlib.cm as cm
@@ -24,9 +24,9 @@ vis_albedo = 0.05
 beaming = 1.4
 
 # Define the geometry
-geom = neospy.shape.TriangleEllipsoid(12)
+geom = apohele.shape.TriangleEllipsoid(12)
 obj2sun = np.array([1, 0, 0])
-# Note: The TriangleEllipsoid geometry is not used by default in the neospy code.
+# Note: The TriangleEllipsoid geometry is not used by default in the apohele code.
 # This is because its facet normals tend to be slightly correlated with one another.
 # These correlations can be eliminated by setting the number of facets high enough,
 # but for a low facet count, the FibonacciLattice converges to the exact answer
@@ -36,20 +36,20 @@ obj2sun = np.array([1, 0, 0])
 
 # Compute the temperature at the subsolar point on the object.
 # Note that FRM uses a beaming = pi
-neatm_subsolar_temp = neospy.flux.sub_solar_temperature(
+neatm_subsolar_temp = apohele.flux.sub_solar_temperature(
     -obj2sun, vis_albedo, g_phase, emissivity, beaming
 )
-frm_subsolar_temp = neospy.flux.sub_solar_temperature(
+frm_subsolar_temp = apohele.flux.sub_solar_temperature(
     -obj2sun, vis_albedo, g_phase, emissivity
 )
 
 # Compute the FRM and NEATM facet temperatures for the object
-neatm_facet_temps = neospy.flux.neatm_facet_temps(
+neatm_facet_temps = apohele.flux.neatm_facet_temps(
     geom.normals,
     neatm_subsolar_temp,
     obj2sun,
 )
-frm_facet_temps = neospy.flux.frm_facet_temps(
+frm_facet_temps = apohele.flux.frm_facet_temps(
     geom.normals,
     frm_subsolar_temp,
     obj2sun,

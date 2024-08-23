@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from neospy import constants, Vector, conversion
+from apohele import constants, Vector, conversion
 
-from neospy.flux import (
+from apohele.flux import (
     black_body_flux,
     sub_solar_temperature,
     hg_apparent_flux,

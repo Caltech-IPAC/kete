@@ -1,6 +1,6 @@
 constants
 =========
 
-.. automodule:: neospy.constants
+.. automodule:: apohele.constants
    :members:
    :inherited-members:

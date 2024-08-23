@@ -1,10 +1,10 @@
 vectors/states/frames
 =====================
 
-Units used throughout NEOSpy are distance in au, and time in Days TDB scaled.
+Units used throughout apohele are distance in au, and time in Days TDB scaled.
 
 Coordinate frames match the coordinate frames used by cSPICE.
 
-.. automodule:: neospy.vector
+.. automodule:: apohele.vector
    :members: Vector
    :inherited-members:

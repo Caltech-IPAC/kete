@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from neospy import (
+from apohele import (
     constants,
     spice,
     propagate_two_body,
@@ -10,7 +10,7 @@ from neospy import (
     State,
     Time,
 )
-from neospy.propagation import NonGravModel
+from apohele.propagation import NonGravModel
 
 
 @pytest.fixture(scope="session")

@@ -1,4 +1,4 @@
-from neospy.time import Time
+from apohele.time import Time
 
 
 class TestTime:

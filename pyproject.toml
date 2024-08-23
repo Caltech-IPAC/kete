@@ -1,5 +1,5 @@
 [project]
-name = "neospy"
+name = "apohele"
 version = "0.2.5"
 description = "NEO Surveyor Simulation Tools"
 readme = "README.md"
@@ -19,7 +19,7 @@ dependencies = ["astropy>=5.3.4",
                 ]
 
 [project.urls]
-homepage = "https://github.com/IPAC-SW/neospy"
+homepage = "https://github.com/IPAC-SW/apohele"
 
 [build-system]
 requires = ["maturin>=1.0",
@@ -29,7 +29,7 @@ build-backend = "maturin"
 
 [tool.maturin]
 python-source = "src"
-module-name = "neospy._core"
+module-name = "apohele._core"
 
 [project.optional-dependencies]
 dev = ["black>=23.1.0",
@@ -60,12 +60,12 @@ markers = [
 
 # Options for the coverage report.
 [tool.coverage.run]
-omit = ["*/neospy/mpc.py",
-        "*/neospy/irsa.py",
-        "*/neospy/wise.py",
-        "*/neospy/ztf.py",
-        "*/neospy/horizons.py",
-        "*/neospy/data/*",
+omit = ["*/apohele/mpc.py",
+        "*/apohele/irsa.py",
+        "*/apohele/wise.py",
+        "*/apohele/ztf.py",
+        "*/apohele/horizons.py",
+        "*/apohele/data/*",
         "*/examples/*",]
 
 # See https://github.com/psf/black/blob/main/pyproject.toml for more details
@@ -82,7 +82,7 @@ exclude = '''
 '''
 
 [tool.pylint.imports]
-ignored-modules=["_core", "neospy._core"]
+ignored-modules=["_core", "apohele._core"]
 
 [tool.mypy]
 plugins = "numpy.typing.mypy_plugin"

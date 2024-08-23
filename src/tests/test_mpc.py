@@ -1,5 +1,5 @@
 import pytest
-from neospy import mpc
+from apohele import mpc
 
 
 @pytest.mark.parametrize(

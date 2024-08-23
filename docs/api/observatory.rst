@@ -4,18 +4,18 @@ observatories
 
 NEOS
 ----
-.. automodule:: neospy.neos
+.. automodule:: apohele.neos
    :members:
    :inherited-members:
 
 WISE
 ----
-.. automodule:: neospy.wise
+.. automodule:: apohele.wise
    :members:
    :inherited-members:
 
 ZTF
 ---
-.. automodule:: neospy.ztf
+.. automodule:: apohele.ztf
    :members:
    :inherited-members:

@@ -11,7 +11,7 @@ First we do some setup, including importing many needed packages.
 
 .. code-block:: python
 
-    import neospy
+    import apohele
     import matplotlib.pyplot as plt
     import numpy as np
     import datetime
@@ -35,25 +35,25 @@ calculated from the corners of the frame.
     frame = fits.open("data/01772a127-w3-int-1b.fits.gz")[0]
 
     # Here we compute a State of the observer, this could also be constructed
-    # using spice kernels using neospy.spice.state
-    sc_pos = neospy.Vector([frame.header['SUN2SCX'],
+    # using spice kernels using apohele.spice.state
+    sc_pos = apohele.Vector([frame.header['SUN2SCX'],
                             frame.header['SUN2SCY'],
                             frame.header['SUN2SCZ']],
-                        neospy.Frames.Equatorial)
-    sc_vel = neospy.Vector([frame.header['SCVELX'],
+                        apohele.Frames.Equatorial)
+    sc_vel = apohele.Vector([frame.header['SCVELX'],
                             frame.header['SCVELY'],
                             frame.header['SCVELZ']],
-                        neospy.Frames.Equatorial)
+                        apohele.Frames.Equatorial)
 
     # Load the time
     time = datetime.datetime.fromisoformat(frame.header['DATIME'])
     # add utc timezone to date
     time = time.replace(tzinfo=datetime.timezone.utc)
     # now it is correctly formatted, load it
-    time_jd = neospy.Time.from_iso(time.isoformat()).jd
+    time_jd = apohele.Time.from_iso(time.isoformat()).jd
 
     # Now there is a final state of the observer
-    sc_state = neospy.State("WISE", time_jd, sc_pos, sc_vel)
+    sc_state = apohele.State("WISE", time_jd, sc_pos, sc_vel)
 
 
     # Build the corner position of the FOV in RA/DEC, and build those into vectors
@@ -66,17 +66,17 @@ calculated from the corners of the frame.
     dx, dy = frame_wcs.pixel_shape
     for x, y in zip([0, 0, dx, dx], [0, dy, dy, 0]):
         coord = frame_wcs.pixel_to_world(x, y).icrs
-        corners.append(neospy.Vector.from_ra_dec(coord.ra.deg, coord.dec.deg))
+        corners.append(apohele.Vector.from_ra_dec(coord.ra.deg, coord.dec.deg))
 
     # Build a generic FOV from the corners and the state of the observer
-    fov = neospy.fov.RectangleFOV.from_corners(corners, sc_state)
+    fov = apohele.fov.RectangleFOV.from_corners(corners, sc_state)
 
 
 MPC Orbit Data
 --------------
 
 Next we must collect orbit information from the Minor Planet Center (MPC).
-We will load all known objects from their database, convert them to a Neospy State,
+We will load all known objects from their database, convert them to a apohele State,
 and propagate those states to the epoch near the FITs file epoch we opened.
 
 
@@ -89,13 +89,13 @@ and propagate those states to the epoch near the FITs file epoch we opened.
 .. code-block:: python
 
     # Load orbit data from the MPC
-    mpc_obs = neospy.mpc.fetch_known_orbit_data()
+    mpc_obs = apohele.mpc.fetch_known_orbit_data()
 
     # Convert that data to State objects.
-    mpc_states = neospy.mpc.table_to_states(mpc_obs)
+    mpc_states = apohele.mpc.table_to_states(mpc_obs)
 
     # It takes a while to propagate 1.5 million asteroids 14 years...
-    mpc_states = neospy.propagate_n_body(mpc_states, time_jd)
+    mpc_states = apohele.propagate_n_body(mpc_states, time_jd)
 
 
 Geometry Checks
@@ -108,7 +108,7 @@ one, and then immediately take the single result back out.
 
 .. code-block:: python
 
-    visible_obj = neospy.fov_state_check(mpc_states, [fov])[0]
+    visible_obj = apohele.fov_state_check(mpc_states, [fov])[0]
 
 
 Results
@@ -167,13 +167,13 @@ Note again this is only showing the first 20 of 181.
 .. code-block:: python
 
     plt.figure(dpi=300)
-    wcs = neospy.irsa.plot_fits_image(frame, cmap='grey')
+    wcs = apohele.irsa.plot_fits_image(frame, cmap='grey')
     for state in list(visible_obj)[:n_show]:
         vec = (state.pos - visible_obj.fov.observer.pos).as_equatorial
-        neospy.irsa.annotate_plot(wcs, vec.ra, vec.dec, state.desig, px_gap=10, length=10)
+        apohele.irsa.annotate_plot(wcs, vec.ra, vec.dec, state.desig, px_gap=10, length=10)
     plt.xlabel("RA")
     plt.ylabel("DEC")
-    plt.title(f"NEOWISE Frame on Ecliptic\n{neospy.Time(time_jd).iso}");
+    plt.title(f"NEOWISE Frame on Ecliptic\n{apohele.Time(time_jd).iso}");
     plt.savefig("data/kona.png")
     plt.close()
 

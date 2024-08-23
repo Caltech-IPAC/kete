@@ -1,7 +1,7 @@
 population
 ==========
 
-.. automodule:: neospy.population
+.. automodule:: apohele.population
    :members:
    :inherited-members:
    :no-undoc-members:

@@ -1,5 +1,5 @@
 import numpy as np
-from neospy import population, power_law
+from apohele import population, power_law
 
 
 def test_population():

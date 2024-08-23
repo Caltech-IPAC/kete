@@ -1,9 +1,9 @@
 Code Organization
 =================
 
-Goals of NEOSpy
----------------
-NEOSpy is a collection of tools for calculating the orbits and expected fluxes for minor
+Goals of Apohele
+----------------
+Apohele is a collection of tools for calculating the orbits and expected fluxes for minor
 planets specifically for the purpose of estimating which objects are visible in current,
 past, or future sky surveys.  Specifically the goal is that these calculations may be
 performed on the full set of all known asteroids in a reasonable amount of time on a
@@ -13,7 +13,7 @@ Propagation
 ~~~~~~~~~~~
 There are a number of existing tools which enable the propagation of orbits for
 many millions or billions of years, but these typically are designed for a comparatively
-small number of objects (perhaps 10-100 thousand), whereas NEOSpy's design intent is
+small number of objects (perhaps 10-100 thousand), whereas Apohele's design intent is
 10-100 million objects over the course of decades. The total compute approximately
 scales like::
 
@@ -37,7 +37,7 @@ decades at this point, and is often used to keep track of the ephemeris of plane
 satellites (both natural and artificial), asteroids, and comets. Essentially the motion
 of anything in the Solar System can be encoded in some flavor of SPICE kernel. The
 primary downside of using cSPICE is that there is no native support for multi-core cpu
-queries (an artifact of the age of the code). NEOSpy has native multi-core support for
+queries (an artifact of the age of the code). Apohele has native multi-core support for
 the majority of all commonly used SPICE kernels.
 
 
@@ -57,13 +57,13 @@ Rust has a number of advantages over existing languages, it's performance is typ
 comparable to C++/C, however due to the structure of the language it is less prone to
 the most common type of errors to do with memory allocation and management. In addition
 to this, Rust has excellent native multi-core support, especially for embarrassingly
-parallel problems such as the orbit propagation required for NEOSpy.
+parallel problems such as the orbit propagation required for apohele.
 
-NEOSpy Core
-~~~~~~~~~~~
+apohele Core
+~~~~~~~~~~~~
 The Rust core of the library, which does the underlying orbit and flux calculations is
 written entirely without any reference to Python. This core part is available as
-`neospy_core`, and programming can be done entirely within Rust for tools which do not
+`apohele_core`, and programming can be done entirely within Rust for tools which do not
 require the Python wrapper. This design was chosen so that systems tools which would
 benefit from orbit computation can be written without having to have Python installed.
 It is important to note that if performance is a concern, then removing the Python is an
@@ -74,14 +74,14 @@ Core Python Wrapper
 The Rust library described above then has Python wrappers written over it, allowing
 users to call these compiled tools inside of Python. In order to do this, some
 boiler-plate code is required to glue these independent parts together. This is where
-the `rust` folder inside of NEOSpy comes from. Inside of this folder there are rust
+the `rust` folder inside of apohele comes from. Inside of this folder there are rust
 files which are mostly a one-to-one mapping to their respective counterparts inside of
-the `neospy_core`. Ideally there should be no 'business' logic contained within these
+the `apohele_core`. Ideally there should be no 'business' logic contained within these
 wrappers, and they should largely exist to provide convenient mappings from the Python
 concepts to the Rust internal organization.
 
-NEOSpy Python
-~~~~~~~~~~~~~
+Apohele Python
+~~~~~~~~~~~~~~
 The remaining part of the code which is strictly Python is mostly quality of life
 functions, plotting, and web query code. There is little to no mathematics or physics
 contained within the Python.

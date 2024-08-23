@@ -1,8 +1,8 @@
 cache
 =====
 
-Tools to interact with NEOSpy's Cache folder.
+Tools to interact with apohele's Cache folder.
 
-.. automodule:: neospy.cache
+.. automodule:: apohele.cache
    :members:
    :inherited-members:

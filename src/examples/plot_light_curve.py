@@ -5,13 +5,13 @@ Plot a Light Curve
 This is an example plot of a light curve using NEATM.
 """
 
-import neospy
+import apohele
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 # Using ceres as a source for a state vector
-state = neospy.spice.get_state("ceres", 2460000.5)
+state = apohele.spice.get_state("ceres", 2460000.5)
 
 # Various input values
 albedo = 0.1
@@ -28,19 +28,19 @@ rotation_rate = 3.2
 dts = np.linspace(0, 10, 30)
 
 # Construct an object which is twice the radius in they y axis.
-geom = neospy.shape.TriangleEllipsoid(30, x_scale=1, y_scale=2, z_scale=1)
-normals = [neospy.Vector(norm) for norm in geom.normals]
+geom = apohele.shape.TriangleEllipsoid(30, x_scale=1, y_scale=2, z_scale=1)
+normals = [apohele.Vector(norm) for norm in geom.normals]
 
 # Pick an axis of rotation
-axis_of_rotation = neospy.Vector.from_lat_lon(90, 0)
+axis_of_rotation = apohele.Vector.from_lat_lon(90, 0)
 
 jd = state.jd
 fluxes = []
 
 for dt in dts:
     # Find the observer and object positions some time in the future.
-    earth_pos = neospy.spice.get_state("Earth", jd + dt).pos
-    final_pos = neospy.propagate_two_body([state], jd + dt, earth_pos)[0].pos
+    earth_pos = apohele.spice.get_state("Earth", jd + dt).pos
+    final_pos = apohele.propagate_two_body([state], jd + dt, earth_pos)[0].pos
 
     obj2obs = final_pos - earth_pos
 
@@ -52,13 +52,13 @@ for dt in dts:
         ]
     )
 
-    ss_temp = neospy.flux.sub_solar_temperature(
+    ss_temp = apohele.flux.sub_solar_temperature(
         -obj2obs, albedo, G, emissivity, beaming
     )
-    temps = neospy.flux.neatm_facet_temps(new_normals, ss_temp, obj2obs)
-    facet_fluxes = [neospy.flux.black_body_flux(t, wavelength) for t in temps]
+    temps = apohele.flux.neatm_facet_temps(new_normals, ss_temp, obj2obs)
+    facet_fluxes = [apohele.flux.black_body_flux(t, wavelength) for t in temps]
     facet_fluxes = np.array(facet_fluxes) * geom.areas
-    flux = neospy.flux.lambertian_flux(
+    flux = apohele.flux.lambertian_flux(
         facet_fluxes, geom.normals, -obj2obs, diameter, emissivity
     )
     fluxes.append(flux)

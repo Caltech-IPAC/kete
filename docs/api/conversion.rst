@@ -1,6 +1,6 @@
 conversion
 ==========
 
-.. automodule:: neospy.conversion
+.. automodule:: apohele.conversion
    :members:
    :inherited-members:

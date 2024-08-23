@@ -15,7 +15,7 @@ import numpy as np
 
 from labellines import labelLines
 
-import neospy
+import apohele
 
 
 # %%
@@ -37,15 +37,15 @@ cutoff = 20
 # Calculating elevations over one night
 # -------------------------------------
 
-jd_start = neospy.Time.from_iso(start_time.isoformat()).jd
+jd_start = apohele.Time.from_iso(start_time.isoformat()).jd
 jd_end = jd_start + 1
 
 # Fetch orbital elements from horizons
 states = [
-    neospy.HorizonsProperties.fetch(str(name), update_name=True).state
+    apohele.HorizonsProperties.fetch(str(name), update_name=True).state
     for name in object_names
 ]
-states = neospy.propagate_n_body(states, jd_start)
+states = apohele.propagate_n_body(states, jd_start)
 
 
 # step through time in 1 minute increments
@@ -59,18 +59,18 @@ moon_elevation = []
 for subrange in steps:
     # for each time step, calculate the elevation and sun elevation
     jd_step = jd_start + subrange
-    approx_state = neospy.propagate_two_body(states, jd_step)
-    sun2obs = neospy.spice.mpc_code_to_ecliptic(site, jd_step).pos
-    earth2obs = neospy.spice.mpc_code_to_ecliptic(site, jd_step, center="399").pos
+    approx_state = apohele.propagate_two_body(states, jd_step)
+    sun2obs = apohele.spice.mpc_code_to_ecliptic(site, jd_step).pos
+    earth2obs = apohele.spice.mpc_code_to_ecliptic(site, jd_step, center="399").pos
     sun_elevation.append(90 - earth2obs.angle_between(-sun2obs))
 
-    moon = neospy.spice.get_state("Moon", jd_step)
-    obs2obj = neospy.Vector(moon.pos - sun2obs)
+    moon = apohele.spice.get_state("Moon", jd_step)
+    obs2obj = apohele.Vector(moon.pos - sun2obs)
     moon_elevation.append(90 - earth2obs.angle_between(obs2obj))
 
     cur_elev = []
     for state in approx_state:
-        obs2obj = neospy.Vector(state.pos - sun2obs)
+        obs2obj = apohele.Vector(state.pos - sun2obs)
         cur_elev.append(90 - earth2obs.angle_between(obs2obj))
 
     elevation.append(cur_elev)
@@ -98,9 +98,9 @@ sort_idx = np.argsort(np.argmax(np.array(elevation).T, axis=1))[::-1]
 elevation = elevation[:, sort_idx]
 object_names = np.array(object_names)[sort_idx]
 
-dates_utc = [neospy.Time(t + jd_start).to_datetime() for t in steps]
+dates_utc = [apohele.Time(t + jd_start).to_datetime() for t in steps]
 dates = [t.astimezone(timezone) for t in dates_utc]
-moon_frac = neospy.spice.moon_illumination_frac(jd_start)
+moon_frac = apohele.spice.moon_illumination_frac(jd_start)
 
 # Find the time closest to midnight
 midnight = dates[np.argmax([d.hour + d.minute for d in dates])]
@@ -177,7 +177,7 @@ ymin, ymax = plt.gca().get_ylim()
 ax2 = plt.twinx()
 ax2.set_ylim(ymin, ymax)
 elev_ticks = np.arange(10, 91, 10)
-airmass = [f"{x:0.3g}" for x in neospy.conversion.compute_airmass(90 - elev_ticks)]
+airmass = [f"{x:0.3g}" for x in apohele.conversion.compute_airmass(90 - elev_ticks)]
 
 ax2.set_yticks(elev_ticks, airmass)
 plt.ylabel("Airmass")

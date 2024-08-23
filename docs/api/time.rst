@@ -1,7 +1,7 @@
 Time
 ====
 
-.. automodule:: neospy.time
+.. automodule:: apohele.time
    :members:
    :inherited-members:
 

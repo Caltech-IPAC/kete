@@ -1,0 +1,51 @@
+[package]
+name = "apohele_core"
+version = "0.2.5"
+edition = "2021"
+
+[lib]
+name = "apohele_core"
+
+[dependencies]
+argmin = "*"
+argmin-math = "*"
+itertools = "^0.13.0"
+kdtree = "^0.7.0"
+lazy_static = "^1.5.0"
+nalgebra = {version = "^0.33.0"}
+pathfinding = "^4.10.0"
+pyo3 = { version =  "^0.22.1", optional=true}
+rayon = "^1.10.0"
+serde = { version = "^1.0.203", features = ["derive"] }
+crossbeam = "^0.8.4"
+chrono = "0.4.38"
+sgp4 = "2.2.0"
+
+# bincode is pinned to ensure backward compatability with saved files, all updates to
+# this version need to be validated that they are forward compatable.
+bincode = {version = "2.0.0-rc.3", features=["derive", "serde"]}
+
+
+[dev-dependencies]
+criterion = { version = "*", features = ["html_reports"] }
+
+# pprof is used for flame graphs, this is failing on windows currently so only
+# linux and mac are supported here.
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+pprof = { version = "0.13", features = ["flamegraph", "criterion"] }
+
+# macos needs the frame-pointer flag, however this doesn't function on linux
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+pprof = { version = "0.13", features = ["flamegraph", "criterion", "frame-pointer"] }
+
+[[bench]]
+name = "propagation"
+harness = false
+
+[[bench]]
+name = "spice"
+harness = false
+
+[[bench]]
+name = "thermal"
+harness = false

@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "neospy"
+project = "apohele"
 copyright = "2024, Caltech IPAC"
 author = "Dar Dahlen"
 
@@ -73,10 +73,10 @@ keep_warnings = True
 # -- doctest settings ----------------------------------------------------------
 
 doctest_global_setup = """
-import neospy
+import apohele
 import matplotlib.pyplot as plt
 import numpy as np
-from neospy import *
+from apohele import *
 """
 
 # -- Nitpick settings ----------------------------------------------------------

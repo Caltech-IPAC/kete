@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added support for long term integrations, on the scale of less than a mega-year.
-- Added clear deprecation tooling, which helps indicate how to update neospy when a
+- Added clear deprecation tooling, which helps indicate how to update apohele when a
   function's signature changes or is removed.
 - Added default plotting tools for fits files, which make decent scaling guesses for
   ZTF and WISE frames. This includes annotation and zooming functions.
@@ -90,7 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved the downloading of Horizons spice kernels from `SpiceKernel` to `horizons`.
 - Renamed all field of view checking functions to similar names: `fov_static_check`,
   `fov_state_check`, and `fov_spice_check`. These functions are exposed at the base
-  level of neospy.
+  level of apohele.
 - Moved much of the python documentation into the rust wrappers, and removed the
   remaining empty python files. Part of the rewrite involved moving and renaming many
   functions.
@@ -148,7 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added support for downloading ZTF full fields FOV information into the neospy cache.
+- Added support for downloading ZTF full fields FOV information into the apohele cache.
 - Added simple lookup for observatory ecliptic state using MPC observatory codes.
 - Added 'Tutorials' to the documentation, these are larger worked examples which do not
   build at the same time as the standard docs. They are designed to be examples which
@@ -204,17 +204,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Initial Release
 
 
-- Initial version release of NEOSpy!
-- NEOSpy's primary goal is to enable simulations of NEOs, however it also supports any 
+- Initial version release of apohele!
+- apohele's primary goal is to enable simulations of NEOs, however it also supports any 
   asteroid or comet. Included are n-body orbit propagation tools, thermal and optical
   modeling, tools for computing what minor planets can be seen by an observer.
   Along with many helpful interfaces to web tools such as JPL Horizons or IPAC's IRSA.
 
 
-[Unreleased]: https://github.com/IPAC-SW/neospy/tree/main
-[0.2.5]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.5
-[0.2.4]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.4
-[0.2.3]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.3
-[0.2.2]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.2
-[0.2.1]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.1
-[0.2.0]: https://github.com/IPAC-SW/neospy/releases/tag/v0.2.0
+[Unreleased]: https://github.com/IPAC-SW/apohele/tree/main
+[0.2.5]: https://github.com/IPAC-SW/apohele/releases/tag/v0.2.5
+[0.2.4]: https://github.com/IPAC-SW/apohele/releases/tag/v0.2.4
+[0.2.3]: https://github.com/IPAC-SW/apohele/releases/tag/v0.2.3
+[0.2.2]: https://github.com/IPAC-SW/apohele/releases/tag/v0.2.2
+[0.2.1]: https://github.com/IPAC-SW/apohele/releases/tag/v0.2.1
+[0.2.0]: https://github.com/IPAC-SW/apohele/releases/tag/v0.2.0

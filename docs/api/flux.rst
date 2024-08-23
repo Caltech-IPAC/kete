@@ -1,7 +1,7 @@
 flux
 ====
 
-.. automodule:: neospy.flux
+.. automodule:: apohele.flux
    :members:
    :inherited-members:
 
@@ -9,6 +9,6 @@ flux
 shape
 -----
 
-.. automodule:: neospy.shape
+.. automodule:: apohele.shape
    :members:
    :inherited-members:

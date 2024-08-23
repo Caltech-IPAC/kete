@@ -2,7 +2,7 @@
 Getting Started
 ===============
 
-Neospy has a few foundational concepts which are important to understand. The most
+apohele has a few foundational concepts which are important to understand. The most
 important concepts are related to geometry:
 
 - Frames - Reference frame, such as Ecliptic, Equatorial, Galactic.
@@ -18,7 +18,7 @@ Units of position are in AU and velocity is AU / Day.
 # Basic Geometry
 # --------------
 
-import neospy
+import apohele
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -26,14 +26,14 @@ import matplotlib.pyplot as plt
 # Recall that an object in circular orbit has a speed of sqrt(GM / r) where r is the
 # radius of the orbit.
 r = 1
-epoch = neospy.Time.j2000()
-speed = np.sqrt(neospy.constants.SUN_GM / r)
-pos = neospy.Vector([0, r, 0], frame=neospy.Frames.Equatorial)
-vel = neospy.Vector([-speed, 0, 0], frame=neospy.Frames.Equatorial)
+epoch = apohele.Time.j2000()
+speed = np.sqrt(apohele.constants.SUN_GM / r)
+pos = apohele.Vector([0, r, 0], frame=apohele.Frames.Equatorial)
+vel = apohele.Vector([-speed, 0, 0], frame=apohele.Frames.Equatorial)
 
 # We now make a State, representing the full information for an object in orbit of the
 # sun.
-state = neospy.State("Circular", epoch, pos, vel)
+state = apohele.State("Circular", epoch, pos, vel)
 state
 
 # %%
@@ -45,12 +45,12 @@ pos.as_equatorial, pos.as_ecliptic
 # Creation of vectors also have a few convenient helper functions:
 
 # On sky position of the andromeda galaxy
-ra = neospy.conversion.ra_hms_to_degrees("0 42 44")
-dec = neospy.conversion.dec_dms_to_degrees("+41 16 9")
-vec = neospy.Vector.from_ra_dec(ra, dec)
+ra = apohele.conversion.ra_hms_to_degrees("0 42 44")
+dec = apohele.conversion.dec_dms_to_degrees("+41 16 9")
+vec = apohele.Vector.from_ra_dec(ra, dec)
 
 # Change to galactic frame, and print the elevation and azimuth
-vec = vec.change_frame(neospy.Frames.Galactic)
+vec = vec.change_frame(apohele.Frames.Galactic)
 vec.el, vec.az
 
 # %%
@@ -69,26 +69,26 @@ vec.el, vec.az
 # We have just seen an example of the first way, lets explore the other ways.
 
 # Grabbing the state of the Moon.
-# Neospy includes spice kernels for all of the planets, the Moon, Pluto and 5 asteroids:
+# apohele includes spice kernels for all of the planets, the Moon, Pluto and 5 asteroids:
 # Ceres, Pallas, Vesta, Hygiea, Interamnia
-jd = neospy.Time.from_ymd(2020, 1, 1).jd
-moon = neospy.spice.get_state("Moon", jd)
+jd = apohele.Time.from_ymd(2020, 1, 1).jd
+moon = apohele.spice.get_state("Moon", jd)
 
 # Grabbing a state from JPL Horizons
 # Note that the epoch of this state is the epoch of fit from Horizons.
-eros = neospy.HorizonsProperties.fetch("Eros").state
+eros = apohele.HorizonsProperties.fetch("Eros").state
 
 # Grabbing a state from the MPC
 # This is more expensive, as the MPC lookup involves downloading a full copy of the MPC
 # database. This database contains more than a million asteroids. This gets returned as
 # a pandas dataframe.
-orb_file = neospy.mpc.fetch_known_orbit_data()
+orb_file = apohele.mpc.fetch_known_orbit_data()
 subset = orb_file[orb_file["name"] == "Eros"]
 
 # Note that in this case the tool converts all objects in the provided table into states
 # which means it will always return a list of states, so below we get a list containing
 # a single state.
-states = neospy.mpc.table_to_states(subset)
+states = apohele.mpc.table_to_states(subset)
 states
 
 # %%
@@ -96,7 +96,7 @@ states
 # -------------
 #
 # The state(s) which are constructed above usually do not have an epoch which is useful.
-# Luckily, neospy has tools for propagating the states forward and backward in time to
+# Luckily, apohele has tools for propagating the states forward and backward in time to
 # whichever epoch is desired. There are 2 workhorse functions related to orbit
 # propagation:
 #
@@ -116,17 +116,17 @@ states
 # Lets grab the state of a few asteroids:
 names = ["Eros", "Bennu", "Ryugu"]
 
-orb_file = neospy.mpc.fetch_known_orbit_data()
+orb_file = apohele.mpc.fetch_known_orbit_data()
 subset = orb_file[[name in names for name in orb_file["name"]]]
 
 # This now contains 3 states:
-states = neospy.mpc.table_to_states(subset)
+states = apohele.mpc.table_to_states(subset)
 
 # Lets propagate these states to the current epoch
-now = neospy.Time.now().jd
+now = apohele.Time.now().jd
 
-states_now_exact = neospy.propagate_n_body(states, now)
-states_now_kepler = neospy.propagate_two_body(states, now)
+states_now_exact = apohele.propagate_n_body(states, now)
+states_now_kepler = apohele.propagate_two_body(states, now)
 states_now_exact
 
 # %%
@@ -140,13 +140,13 @@ states_now_exact
 # - Using an MPC Observatory code
 # - Using Earth based latitude/longitude and altitude as one would find on a map.
 
-now = neospy.Time.now().jd
+now = apohele.Time.now().jd
 
 # lookup the observers position in the solar system from a given observatory code/name.
-observer_a = neospy.spice.mpc_code_to_ecliptic("Palomar Mountain", now)
+observer_a = apohele.spice.mpc_code_to_ecliptic("Palomar Mountain", now)
 
 # lookup the observer position from an earth location, this is IPAC, at 100m altitude.
-observer_b = neospy.spice.earth_pos_to_ecliptic(now, 33.133278, 241.87206, 0.1, "IPAC")
+observer_b = apohele.spice.earth_pos_to_ecliptic(now, 33.133278, 241.87206, 0.1, "IPAC")
 observer_b
 
 # %%
@@ -154,17 +154,17 @@ observer_b
 # observer. There are many different possible FOVs, the conceptually simplest one is an
 # omni-directional field of view:
 
-fov = neospy.OmniDirectionalFOV(observer_a)
+fov = apohele.OmniDirectionalFOV(observer_a)
 fov
 
 # %%
 # We can now compute the observed position of objects in this FOV:
 
-state = neospy.HorizonsProperties.fetch("Eros").state
+state = apohele.HorizonsProperties.fetch("Eros").state
 
 # This accepts many states and many FOVs at once, it is the most efficient when all the
 # requested states and FOVs are provided at the same time.
-visible = neospy.fov_state_check([state], [fov])[0]
+visible = apohele.fov_state_check([state], [fov])[0]
 visible
 
 # %%
@@ -186,26 +186,26 @@ obs_vecs.ra, obs_vecs.dec
 # Plotting Planets
 # ----------------
 #
-# Here is a basic example of using neospy to plot an orbit.
+# Here is a basic example of using apohele to plot an orbit.
 
 plt.figure(dpi=150)
-jd = neospy.Time.now().jd
+jd = apohele.Time.now().jd
 plt.gca().set_aspect("equal", "box")
 
 # plot the planets orbits
 for i, planet in enumerate(["Mercury", "Venus", "Earth", "Mars", "Jupiter"]):
-    plan = neospy.spice.get_state(planet, jd)
+    plan = apohele.spice.get_state(planet, jd)
     plt.scatter(plan.pos.x, plan.pos.y, color=f"C{i}", s=10)
     jds = np.linspace(jd - plan.elements.orbital_period, jd, 100)
-    pos = np.array([neospy.spice.get_state(planet, jd).pos for jd in jds]).T
+    pos = np.array([apohele.spice.get_state(planet, jd).pos for jd in jds]).T
     plt.plot(pos[0], pos[1], color="black", alpha=0.2)
 
 # plot the orbit of eros, using 2 body mechanics to plot the previous orbit
-eros = neospy.HorizonsProperties.fetch("Eros").state
-eros = neospy.propagate_two_body([eros], jd)[0]
+eros = apohele.HorizonsProperties.fetch("Eros").state
+eros = apohele.propagate_two_body([eros], jd)[0]
 plt.scatter(eros.pos.x, eros.pos.y, c="black", s=10)
 jds = np.linspace(jd - eros.elements.orbital_period, jd, 100)
-pos = np.array([neospy.propagate_two_body([eros], jd)[0].pos for jd in jds]).T
+pos = np.array([apohele.propagate_two_body([eros], jd)[0].pos for jd in jds]).T
 plt.plot(pos[0], pos[1], c="C0", alpha=0.2)
 
 plt.xlabel("Ecliptic X (au)")

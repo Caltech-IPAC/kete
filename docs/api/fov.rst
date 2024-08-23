@@ -3,6 +3,6 @@ fov
 
 Field of View
 
-.. automodule:: neospy.fov
+.. automodule:: apohele.fov
    :members:
    :inherited-members:

@@ -10,7 +10,7 @@ Color bands correspond to NEO Surveyor IR observation bands NC1 and NC2 respecti
 
 import numpy as np
 import matplotlib.pyplot as plt
-import neospy
+import apohele
 
 
 def flux_per_wavelength(
@@ -44,16 +44,16 @@ def flux_per_wavelength(
     """
 
     # Calculate the geometry, the observer is placed 1 AU from the sun.
-    sun2sc = neospy.Vector([1.0, 0, 0])
+    sun2sc = apohele.Vector([1.0, 0, 0])
 
     alpha = np.pi - phase - solar_elong
     peri_dist = sun2sc.r / np.sin(phase) * np.sin(solar_elong)
 
-    sun2obj = neospy.Vector([np.cos(alpha) * peri_dist, np.sin(alpha) * peri_dist, 0])
+    sun2obj = apohele.Vector([np.cos(alpha) * peri_dist, np.sin(alpha) * peri_dist, 0])
 
     fluxes = []
     for wave in wavelength:
-        flux = neospy.flux.neatm_flux(
+        flux = apohele.flux.neatm_flux(
             sun2obj,
             sun2sc,
             v_albedo=v_albedo,
@@ -63,7 +63,7 @@ def flux_per_wavelength(
             wavelength=wave,
             emissivity=0.9,
         )
-        refl_flux = neospy.flux.hg_apparent_flux(
+        refl_flux = apohele.flux.hg_apparent_flux(
             sun2obj,
             sun2sc,
             g_param=0.15,
