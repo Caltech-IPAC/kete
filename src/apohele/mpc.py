@@ -9,7 +9,7 @@ import numpy as np
 from . import conversion, constants
 from .time import Time
 from .vector import Vector, Frames, CometElements
-from .cache import cached_gzip_json_download
+from .cache import download_json
 
 from . import _core
 
@@ -494,7 +494,7 @@ def fetch_known_packed_designations(force_download=False):
     Ceres has 4 entries, which all map to '00001'.
     """
     # download the data from the MPC
-    packed_ids = cached_gzip_json_download(
+    packed_ids = download_json(
         "https://minorplanetcenter.net/Extended_Files/mpc_ids_packed.json.gz",
         force_download,
     )
@@ -536,7 +536,7 @@ def fetch_known_designations(force_download=False):
     Ceres has 4 entries, which all map to '1'.
     """
     # download the data from the MPC
-    known_ids = cached_gzip_json_download(
+    known_ids = download_json(
         "https://minorplanetcenter.net/Extended_Files/mpc_ids.json.gz",
         force_download,
     )
@@ -577,7 +577,7 @@ def fetch_known_packed_to_full_names(force_download=False):
     Ceres has 4 entries, since it has 4 unique packed designations.
     """
     orb = fetch_known_orbit_data(force_download=force_download)
-    packed_ids = cached_gzip_json_download(
+    packed_ids = download_json(
         "https://minorplanetcenter.net/Extended_Files/mpc_ids_packed.json.gz",
         force_download,
     )
@@ -648,7 +648,7 @@ def fetch_known_orbit_data(url=None, force_download=False):
     """
     if url is None:
         url = "https://minorplanetcenter.net/Extended_Files/mpcorb_extended.json.gz"
-    objs = cached_gzip_json_download(url, force_download)
+    objs = download_json(url, force_download)
     objects = []
     for obj in objs:
         # "Principal_design" is always a preliminary designation
@@ -691,7 +691,7 @@ def fetch_known_comet_orbit_data(force_download=False):
     MPC. Object names are set to the packed normalized MPC representation.
     """
     url = "https://minorplanetcenter.net/Extended_Files/cometels.json.gz"
-    objs = cached_gzip_json_download(url, force_download)
+    objs = download_json(url, force_download)
     objects = []
     for comet in objs:
         name = pack_comet_designation(comet.get("Designation_and_name").split("(")[0])
@@ -841,7 +841,7 @@ class MPCObservation:
 
         # Download the database of unnumbered observations from the MPC
         url = "https://www.minorplanetcenter.net/iau/ECS/MPCAT-OBS/UnnObs.txt.gz"
-        path = apohele.data.cached_file_download(url)
+        path = apohele.data.download_file(url)
 
         # Fetch all lines from the file which contain C51 (WISE) observatory code.
         obs_code = "C51".encode()

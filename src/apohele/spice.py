@@ -8,7 +8,7 @@ import numpy as np
 from .time import Time
 from . import _core
 from .constants import AU_KM
-from .cache import cached_file_download, cache_path
+from .cache import download_file, cache_path
 from .vector import Frames, State
 
 __all__ = [
@@ -211,7 +211,7 @@ def kernel_fetch_from_url(url, force_download: bool = False):
     """
     Download the target url into the cache folder of spice kernels.
     """
-    cached_file_download(url, force_download=force_download, subfolder="kernels")
+    download_file(url, force_download=force_download, subfolder="kernels")
 
 
 def kernel_reload(filenames: Optional[list[str]] = None, include_cache=False):
