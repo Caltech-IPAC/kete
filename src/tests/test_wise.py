@@ -1,4 +1,4 @@
-from neospy.wise import (
+from kete.wise import (
     MISSION_PHASES,
     mission_phase_from_jd,
     mission_phase_from_scan,

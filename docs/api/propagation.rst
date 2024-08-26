@@ -1,6 +1,6 @@
 propagation
 ===========
 
-.. automodule:: neospy.propagation
+.. automodule:: kete.propagation
    :members:
    :inherited-members:

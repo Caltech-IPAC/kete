@@ -1,7 +1,7 @@
 flux
 ====
 
-.. automodule:: neospy.flux
+.. automodule:: kete.flux
    :members:
    :inherited-members:
 
@@ -9,6 +9,6 @@ flux
 shape
 -----
 
-.. automodule:: neospy.shape
+.. automodule:: kete.shape
    :members:
    :inherited-members:

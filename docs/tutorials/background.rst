@@ -5,10 +5,10 @@ Coordinate Frames
 -----------------
 
 Coordinate frames define the X/Y/Z axis required to represent position and velocity.
-In NEOSpy, coordinate frames only define the direction of the X/Y/Z axis, and not the
+In kete, coordinate frames only define the direction of the X/Y/Z axis, and not the
 origin of the coordinate system. This is to say, these frames are only relative
 definitions, and the object from which they are relative to must also be kept track of.
-Additionally, all coordinate frames within NEOSpy are treated as inertial, meaning there
+Additionally, all coordinate frames within kete are treated as inertial, meaning there
 is no funny business regarding accelerating frames such as a rocket.
 
 .. image:: ../data/background_frames.png
@@ -47,14 +47,14 @@ use deep sky reference points. The current modern standard is the ICRF reference
 were defined using measurements from the GAIA mission. Historically there are older
 reference sets, such as FK5, which perform the same function with less precision.
 
-NEOSpy uses the Ecliptic Frame, at the J2000 Reference point, with units of AU and
+kete uses the Ecliptic Frame, at the J2000 Reference point, with units of AU and
 AU/Day. These largely match the definitions used by JPL Horizons and the MPC.
 
 Time
 ----
 Keeping track of time is a famously difficult problem. Unfortunately when observing
 solar system objects which are flying by the observer, getting the time correct turns
-out to be extremely important. First, let's pick a unit of time to use, NEOSpy uses
+out to be extremely important. First, let's pick a unit of time to use, kete uses
 Days. Trouble immediately arises as time is observer-dependent, observers on the ground
 experience a different rate of time than those outside of the solar system. This is
 typically called the time Scale, the time scale which the Minor Planet Center and JPL
@@ -120,7 +120,7 @@ ones). Since it is not possible to predict the location of leap seconds, plannin
 dependent operations in the future have the added complexity that they may have an
 additional second added in after planning has occurred.
 
-NEOSpy uses the TDB Scaling, with JD as the 0 point for timekeeping, however there is a
+kete uses the TDB Scaling, with JD as the 0 point for timekeeping, however there is a
 `Time` object which enables conversion to and from several time-keeping system.
 
 Asteroid Names
@@ -138,7 +138,7 @@ do not have Permanent ones.
 
 An additional confusion that occurs is that these Permanent and Provisional each have
 two ways of being written. Due to historical reasons, these designations had to be able
-to be packed into a reduced-length text string. In NEOSpy, these two are referred to as
+to be packed into a reduced-length text string. In kete, these two are referred to as
 Packed or Unpacked designations. There is a strict 1-to-1 mapping from the packed to the
 unpacked.
 

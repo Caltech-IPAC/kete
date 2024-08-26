@@ -1,12 +1,12 @@
 import numpy as np
-import neospy
+import kete
 
 SUN2OBS = [0, 1, 0]
 SUN2OBJ = [1, 1, 0]
 
 
 def test_neos_neatm_model():
-    model = neospy.flux.NeatmParams.new_neos(
+    model = kete.flux.NeatmParams.new_neos(
         "visible",
         vis_albedo=0.3,
         band_albedos=[0.3, 0.3],
@@ -21,7 +21,7 @@ def test_neos_neatm_model():
 
 
 def test_neos_frm_model():
-    model = neospy.flux.FrmParams.new_neos(
+    model = kete.flux.FrmParams.new_neos(
         "visible",
         vis_albedo=0.3,
         band_albedos=[0.3, 0.3],
@@ -35,7 +35,7 @@ def test_neos_frm_model():
 
 
 def test_wise_neatm_model():
-    model = neospy.flux.NeatmParams.new_wise(
+    model = kete.flux.NeatmParams.new_wise(
         "visible",
         vis_albedo=0.3,
         band_albedos=[0.3, 0.3, 0.3, 0.3],

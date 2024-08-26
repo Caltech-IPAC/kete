@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.cm as cm
 
-import neospy
+import kete
 
 # Compute the temperatures of each facet of an object and plot it in 3d
 # Set the physical parameters used for the simulation
@@ -20,16 +20,16 @@ wavelength = 11560.8
 beaming = 1.4
 
 # Define the geometry
-geom = neospy.shape.TriangleEllipsoid(40)
+geom = kete.shape.TriangleEllipsoid(40)
 obj2sun = np.array([1, 0, 0])
 
 # Compute the temperature at the subsolar point on the object.
-subsolar_temp = neospy.flux.sub_solar_temperature(
+subsolar_temp = kete.flux.sub_solar_temperature(
     -obj2sun, vis_albedo, g_phase, emissivity, beaming
 )
 
 # Compute the NEATM facet temperatures for the object
-facet_temps = neospy.flux.neatm_facet_temps(
+facet_temps = kete.flux.neatm_facet_temps(
     geom.normals,
     subsolar_temp,
     obj2sun,
@@ -79,8 +79,8 @@ plt.savefig("data/NEATM_heating.png")
 plt.figure(dpi=150, figsize=(6, 5))
 ax = plt.subplot(111, projection="3d")
 
-facet_flux = [neospy.flux.black_body_flux(t, wavelength) for t in facet_temps]
-obs2obj = -neospy.Vector.from_lat_lon(ax.elev, ax.azim)
+facet_flux = [kete.flux.black_body_flux(t, wavelength) for t in facet_temps]
+obs2obj = -kete.Vector.from_lat_lon(ax.elev, ax.azim)
 
 facet_flux = np.array(facet_flux) / np.max(facet_flux)
 

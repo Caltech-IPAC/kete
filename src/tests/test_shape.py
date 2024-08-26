@@ -1,9 +1,9 @@
-import neospy
+import kete
 import numpy as np
 
 
 def test_triangle_ellipsoid():
-    geom = neospy.shape.TriangleEllipsoid(6)
+    geom = kete.shape.TriangleEllipsoid(6)
 
     norms = geom.normals
     assert len(norms) > 100

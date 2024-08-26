@@ -5,11 +5,11 @@ Orbit computation and on sky positions.
 Given a set of orbital elements, compute the on-sky position of an object.
 """
 
-import neospy
+import kete
 
 # %% Loading orbital elements
 # Define an object through cometary orbital elements:
-elements = neospy.CometElements(
+elements = kete.CometElements(
     desig="Ceres",
     epoch=2460200.5,
     eccentricity=0.0789,
@@ -24,7 +24,7 @@ elements = neospy.CometElements(
 state = elements.state
 
 # States for objects may also be queried from JPL Horizons
-# state = neospy.HorizonsProperties.fetch("Ceres").state
+# state = kete.HorizonsProperties.fetch("Ceres").state
 
 print("State information from orbital elements:\n")
 print(state)
@@ -34,18 +34,18 @@ print(state)
 # state.as_equatorial, state.as_ecliptic, state.as_galactic, state.as_fk4
 
 # %% Pick an observing time:
-# By default, neospy uses TDB scaled JD time, the Time object automatically handles
+# By default, kete uses TDB scaled JD time, the Time object automatically handles
 # conversions to and from this scaling:
-jd = neospy.Time.from_ymd(2024, 6, 1.5).jd
+jd = kete.Time.from_ymd(2024, 6, 1.5).jd
 
 # Currently the state of the object above is not at this date
 # lets perform orbit propagation to bring it to this date:
-state = neospy.propagate_n_body([state], jd)[0]
+state = kete.propagate_n_body([state], jd)[0]
 
 
 # %% Observatory Information
 # Lets try to make an observation of ceres from the ground
-obs_info = neospy.mpc.find_obs_code("Palomar Mountain")
+obs_info = kete.mpc.find_obs_code("Palomar Mountain")
 
 # Location of palomar mountain in lat/lon/elevation
 print(
@@ -56,7 +56,7 @@ print("lat, lon, elevation, Obs code, and name")
 print(obs_info)
 
 # Load the position of the observer in the solar system:
-observer = neospy.spice.mpc_code_to_ecliptic("Palomar Mountain", jd)
+observer = kete.spice.mpc_code_to_ecliptic("Palomar Mountain", jd)
 
 
 # %% Propagation and Orbit calculations
@@ -71,7 +71,7 @@ print(observer_to_object)
 # Note that in general the two-body approximation will result in incorrect
 # position calculations when propagation time exceeds a few days.
 # But its an excellent approximation over the minutes time scale.
-light_delay_state = neospy.propagate_two_body([state], state.jd, observer.pos)[0]
+light_delay_state = kete.propagate_two_body([state], state.jd, observer.pos)[0]
 
 print("\nThe light delayed position of the object vs the instantaneous:")
 print(light_delay_state.pos)
@@ -84,7 +84,7 @@ observer_to_object = (light_delay_state.pos - observer.pos).as_equatorial
 
 
 # %% RA/Dec calculations
-print(f"\nAt {neospy.Time(jd).iso} UTC from the {obs_info[-1]} observatory")
+print(f"\nAt {kete.Time(jd).iso} UTC from the {obs_info[-1]} observatory")
 print(
     f"{state.desig} is visible at:\n"
     f"{observer_to_object.ra_hms} RA  {observer_to_object.dec_dms} DEC"

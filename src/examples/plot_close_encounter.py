@@ -6,7 +6,7 @@ This will open an interactive 3d plot of the solar system with the object plotte
 between the specified dates.
 """
 
-import neospy
+import kete
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -15,9 +15,9 @@ import numpy as np
 # ^^^^^^
 #
 # Select the object of interest, and the times to plot the trajectory
-obj = neospy.HorizonsProperties.fetch("'Oumuamua")
-jd_start = neospy.Time.from_ymd(2016, 1, 1).jd
-jd_end = neospy.Time.from_ymd(2018, 1, 1).jd
+obj = kete.HorizonsProperties.fetch("'Oumuamua")
+jd_start = kete.Time.from_ymd(2016, 1, 1).jd
+jd_end = kete.Time.from_ymd(2018, 1, 1).jd
 
 # Select the scale of the X/Y/Z axis
 zoom = 1.2
@@ -36,10 +36,10 @@ earth_pos = []
 earth_r = []
 last_state = obj.state
 for jd in jds:
-    last_state = neospy.propagate_two_body([last_state], jd)[0]
+    last_state = kete.propagate_two_body([last_state], jd)[0]
     obj_pos.append(last_state.pos)
-    earth_pos.append(neospy.spice.get_state("Earth", jd).pos)
-    earth_r.append(neospy.Vector(obj_pos[-1] - earth_pos[-1]).r)
+    earth_pos.append(kete.spice.get_state("Earth", jd).pos)
+    earth_r.append(kete.Vector(obj_pos[-1] - earth_pos[-1]).r)
 
 # Find the time where the closest encounter with the earth
 jd_center = jds[np.argmin(earth_r)]
@@ -55,10 +55,10 @@ plt.title(
 ax.plot(pos[0], pos[1], pos[2], alpha=0.5, color="black")
 ax.scatter(pos_center.x, pos_center.y, pos_center.z, s=5, color="black")
 for i, planet in enumerate(["Mercury", "Venus", "Earth", "Mars", "Jupiter"]):
-    states = [neospy.spice.get_state(planet, jd).pos for jd in jds]
+    states = [kete.spice.get_state(planet, jd).pos for jd in jds]
     pos = np.array(states).T
     ax.plot(pos[0], pos[1], pos[2], color=f"C{i}", alpha=0.5)
-    pos = neospy.spice.get_state(planet, jd_center).pos
+    pos = kete.spice.get_state(planet, jd_center).pos
     ax.scatter(pos.x, pos.y, pos.z, color=f"C{i}", s=5)
 ax.scatter(0, 0, 0, color="red")
 ax.set_xticks([-zoom, 0, zoom])
