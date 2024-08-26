@@ -10,7 +10,7 @@ on:
     branches: [ "main" ]
 
 env:
-  kete_CACHE_DIR: ${{ github.workspace }}/docs/data
+  KETE_CACHE_DIR: ${{ github.workspace }}/docs/data
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

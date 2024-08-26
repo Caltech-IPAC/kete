@@ -1,4 +1,4 @@
-# kete Core
+# Kete Core
 
 Library which supports calculations related to Minor Planets.
 
