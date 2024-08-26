@@ -61,9 +61,9 @@ kete which enable conversion to the Equatorial frame and to various flavors of t
 
 Many operations in kete result in downloading various files. These files are cached
 automatically, the directory where this cache is stored may be set by setting the
-environment variable `kete_CACHE_DIR`. The default directory is `~/.kete/`.
+environment variable `KETE_CACHE_DIR`. The default directory is `~/.kete/`.
 ``` bash
-export kete_CACHE_DIR="~/.kete/"
+export KETE_CACHE_DIR="~/.kete/"
 ```
 
 ### Development

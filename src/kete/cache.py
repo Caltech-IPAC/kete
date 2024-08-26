@@ -9,14 +9,14 @@ import os
 import shutil
 from urllib3.util.retry import Retry
 
-CACHE_DIR = os.getenv("kete_CACHE_DIR", "~/.kete/")
+CACHE_DIR = os.getenv("KETE_CACHE_DIR", "~/.kete/")
 """
 Cache directory location is set by this global variable.
 
 By default this puts cache information into the home directory under a hidden
 folder.
 
-This may be either set by the environmental variable `kete_CACHE_DIR` or
+This may be either set by the environmental variable `KETE_CACHE_DIR` or
 by changing this variable after importing kete.
 """
 
