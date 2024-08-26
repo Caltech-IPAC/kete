@@ -1,7 +1,7 @@
 Time
 ====
 
-.. automodule:: neospy.time
+.. automodule:: kete.time
    :members:
    :inherited-members:
 

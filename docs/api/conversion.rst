@@ -1,6 +1,6 @@
 conversion
 ==========
 
-.. automodule:: neospy.conversion
+.. automodule:: kete.conversion
    :members:
    :inherited-members:

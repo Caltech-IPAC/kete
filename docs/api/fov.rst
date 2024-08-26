@@ -3,6 +3,6 @@ fov
 
 Field of View
 
-.. automodule:: neospy.fov
+.. automodule:: kete.fov
    :members:
    :inherited-members:

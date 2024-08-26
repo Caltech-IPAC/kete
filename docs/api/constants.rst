@@ -1,6 +1,6 @@
 constants
 =========
 
-.. automodule:: neospy.constants
+.. automodule:: kete.constants
    :members:
    :inherited-members:

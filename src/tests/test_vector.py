@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from neospy.vector import Vector, Frames
+from kete.vector import Vector, Frames
 
 
 @pytest.fixture(scope="function")

@@ -5,7 +5,7 @@ Solar Spectrum
 Plot the true Solar spectrum vs a black body approximation.
 """
 
-import neospy
+import kete
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -22,21 +22,21 @@ dist_from_sun = 1.0
 # This is the 2000 ASTM Standard Extraterrestrial Spectrum Reference E-490-00:
 # https://www.nrel.gov/grid/solar-resource/spectra-astm-e490.html
 
-solar_flux = [neospy.flux.solar_flux(dist_from_sun, w) for w in wavelengths]
+solar_flux = [kete.flux.solar_flux(dist_from_sun, w) for w in wavelengths]
 
 
 # %%
 # Black Body
 # ----------
 # Compute black body for the sun from base principles.
-sun_r_au = neospy.constants.SUN_RADIUS_M / neospy.constants.AU_M
+sun_r_au = kete.constants.SUN_RADIUS_M / kete.constants.AU_M
 
 # black body radiation is Janskys / steradian, it needs to be integrated over the
 # steradian.
 black_body_flux = np.array(
     [
-        neospy.flux.black_body_flux(
-            temp=neospy.constants.SUN_TEMP,
+        kete.flux.black_body_flux(
+            temp=kete.constants.SUN_TEMP,
             wavelength=w,
         )
         for w in wavelengths

@@ -22,14 +22,14 @@ as defined exactly sunset and sunrise at the observers location.
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
-import neospy
+import kete
 
 # Inputs:
 # -------
-obj = neospy.HorizonsProperties.fetch("Eros", update_name=False)
+obj = kete.HorizonsProperties.fetch("Eros", update_name=False)
 
-start_time = neospy.Time.from_ymd(2023, 11, 1).jd
-end_time = neospy.Time.from_ymd(2024, 11, 1).jd
+start_time = kete.Time.from_ymd(2023, 11, 1).jd
+end_time = kete.Time.from_ymd(2024, 11, 1).jd
 
 # Observers position:
 site = "Palomar Mountain"
@@ -45,7 +45,7 @@ if obj.g_phase is None:
 if obj.h_mag is None:
     print("Horizons doesn't have an h mag for this object, no mags will be computed!")
 
-state = neospy.propagate_n_body([obj.state], start_time)[0]
+state = kete.propagate_n_body([obj.state], start_time)[0]
 
 mags = []
 solar_elon = []
@@ -55,16 +55,16 @@ sun_dist = []
 for t in times:
     # For each time, compute the geometry, then compute the mag as well as all of the
     # various angle and distance values.
-    state = neospy.propagate_n_body([state], t)[0]
-    sun2obs = neospy.spice.mpc_code_to_ecliptic(site, t).pos
-    earth2obs = neospy.spice.mpc_code_to_ecliptic(site, t, center="399").pos
+    state = kete.propagate_n_body([state], t)[0]
+    sun2obs = kete.spice.mpc_code_to_ecliptic(site, t).pos
+    earth2obs = kete.spice.mpc_code_to_ecliptic(site, t, center="399").pos
 
     sun2obj = state.pos
     obs2obj = -sun2obs + sun2obj
 
     # if we cannot compute mag, set the mag to NAN and keep moving
     if obj.h_mag is not None:
-        mag = neospy.flux.hg_apparent_mag(
+        mag = kete.flux.hg_apparent_mag(
             sun2obj=sun2obj, sun2obs=sun2obs, h_mag=obj.h_mag, g_param=g_phase
         )
         mag = np.clip(mag, -1000, 1000)
@@ -77,7 +77,7 @@ for t in times:
     phases.append((-sun2obj).angle_between(-obs2obj))
     dist.append(obs2obj.r)
 
-dates = [neospy.Time(t).to_datetime() for t in times]
+dates = [kete.Time(t).to_datetime() for t in times]
 plt.figure(dpi=150, figsize=(8, 5))
 
 plt.suptitle(f"{obj.desig}")
@@ -126,12 +126,12 @@ night_len = []
 for t in day_steps:
     elevation = []
 
-    state = neospy.propagate_n_body([state], t + substep_time / 2)[0]
+    state = kete.propagate_n_body([state], t + substep_time / 2)[0]
     nights = []
     for subrange in substeps:
-        approx_state = neospy.propagate_two_body([state], t + subrange)[0]
-        sun2obs = neospy.spice.mpc_code_to_ecliptic(site, t + subrange).pos
-        earth2obs = neospy.spice.mpc_code_to_ecliptic(
+        approx_state = kete.propagate_two_body([state], t + subrange)[0]
+        sun2obs = kete.spice.mpc_code_to_ecliptic(site, t + subrange).pos
+        earth2obs = kete.spice.mpc_code_to_ecliptic(
             site, t + subrange, center="399"
         ).pos
 
@@ -146,7 +146,7 @@ for t in day_steps:
     night_len.append(sum(nights) * substep_time)
     elevations.append(elevation)
 
-dates = [neospy.Time(t + step_size / 2).to_datetime() for t in day_steps]
+dates = [kete.Time(t + step_size / 2).to_datetime() for t in day_steps]
 for ang in [0, 15, 30, 45, 60, 75]:
     plt.plot(
         dates,

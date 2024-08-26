@@ -10,18 +10,18 @@ This can be thought of as an extended version of the KONA tutorial.
 WISE Fields of View
 -------------------
 
-A field of view is a patch of sky as seen from an observer. NEOSpy supports downloading
+A field of view is a patch of sky as seen from an observer. kete supports downloading
 these FOVs directly from IPACs IRSA data repository.
 
 
 .. code-block:: python
 
-    import neospy
+    import kete
 
     # During 2023 there were 2.369 million individual frames taken of both W1 and W2
     # bands, totalling just shy of 5 million individual frames.
     # This may take some time to download from IRSA.
-    fovs = neospy.wise.fetch_WISE_fovs('Reactivation_2023')
+    fovs = kete.wise.fetch_WISE_fovs('Reactivation_2023')
 
 Minor Planet Center Data
 ------------------------
@@ -32,19 +32,19 @@ Now we have to download the orbit data of NEOs from the Minor Planet Center (MPC
 .. code-block:: python
 
     # This is the orbit table from the MPC, this is over 100Mb, which also may take a
-    # minute to download. Note that NEOSpy caches these files after the first download.
+    # minute to download. Note that kete caches these files after the first download.
     # Future queries will use the cached copy unless `force_download=True` is set.
-    orb_table = neospy.mpc.fetch_known_orbit_data()
+    orb_table = kete.mpc.fetch_known_orbit_data()
 
     # Now we can down select these to just NEOs:
-    is_neo = neospy.population.neo(orb_table['peri_dist'], orb_table['ecc'])
+    is_neo = kete.population.neo(orb_table['peri_dist'], orb_table['ecc'])
     subset = orb_table[is_neo]
 
     # select only the numbered asteroids
     subset = subset[[str(n).isdigit() for n in subset.desig]]
 
     # Convert that table of values into cartesian state vectors:
-    states = neospy.mpc.table_to_states(subset)
+    states = kete.mpc.table_to_states(subset)
 
 
 Propagation
@@ -63,7 +63,7 @@ frame in the mission phase we have selected.
 
     # now we propagate the NEOs to that time, including the effects of the 5 largest
     # main belt asteroids to include more precision. This may take a few minutes.
-    states = neospy.propagate_n_body(states, jd, include_asteroids=True)
+    states = kete.propagate_n_body(states, jd, include_asteroids=True)
 
 Visibility Test
 ---------------
@@ -86,18 +86,18 @@ observable to NEOWISE during this mission phase.
     # were seen, and it drops empty FOVs.
 
     # Compute observable objects.
-    visible = neospy.fov_state_check(states, fovs)
+    visible = kete.fov_state_check(states, fovs)
 
 
 .. note::
 
     The outputs of this may be saved using the following:
     
-    ``neospy.SimultaneousStates.save_list(visible, "visible_wise_2023.bin")``
+    ``kete.SimultaneousStates.save_list(visible, "visible_wise_2023.bin")``
 
     The states may later be loaded using:
 
-    ``visible = neospy.SimultaneousStates.load_list("visible_wise_2023.bin")``
+    ``visible = kete.SimultaneousStates.load_list("visible_wise_2023.bin")``
 
 
 Computing Positions
@@ -117,7 +117,7 @@ Here is a codeblock which prints the first `n_show=100` objects.
     for vis in visible[:n_show]:
         for state in vis:
             vec = (state.pos - vis.fov.observer.pos).as_equatorial
-            mjd = neospy.Time(vis.fov.observer.jd).mjd
+            mjd = kete.Time(vis.fov.observer.jd).mjd
             print((f"{state.desig:<15s},{mjd:<15.6f},{vec.ra_hms:<15s},"
                    f"{vec.dec_dms:<15s},{vis.fov.scan_id}-{str(vis.fov.frame_num)}"))
 

@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import neospy
+import kete
 
-neospy.spice.kernel_reload(["./data/20000042.bsp"])
+kete.spice.kernel_reload(["./data/20000042.bsp"])
 
-jd_start = neospy.Time.from_ymd(1920, 1, 1).jd
-jd_end = neospy.Time.from_ymd(2020, 1, 1).jd
+jd_start = kete.Time.from_ymd(1920, 1, 1).jd
+jd_end = kete.Time.from_ymd(2020, 1, 1).jd
 
-state = neospy.spice.get_state("42", jd_end)
+state = kete.spice.get_state("42", jd_end)
 
 jds = np.logspace(np.log10(jd_end), np.log10(jd_end - 10), 1000)
 jds = np.concatenate(
@@ -21,23 +21,23 @@ error_line = []
 error_2body = []
 n_body_no_asteroids = []
 n_body_ast = []
-state = neospy.spice.get_state("42", jd_end)
+state = kete.spice.get_state("42", jd_end)
 for jd in jds:
-    jpl_pos = neospy.spice.get_state("42", jd).pos
+    jpl_pos = kete.spice.get_state("42", jd).pos
 
     line = state.pos + state.vel * (jd - state.jd)
-    error_line.append((jpl_pos - line).r * neospy.constants.AU_KM)
+    error_line.append((jpl_pos - line).r * kete.constants.AU_KM)
 
-    two_body = neospy.propagate_two_body([state], jd)[0].pos
-    error_2body.append((jpl_pos - two_body).r * neospy.constants.AU_KM)
+    two_body = kete.propagate_two_body([state], jd)[0].pos
+    error_2body.append((jpl_pos - two_body).r * kete.constants.AU_KM)
 
-    n_body_state = neospy.propagate_n_body([n_body_state], jd)[0]
-    n_body_no_asteroids.append((jpl_pos - n_body_state.pos).r * neospy.constants.AU_KM)
+    n_body_state = kete.propagate_n_body([n_body_state], jd)[0]
+    n_body_no_asteroids.append((jpl_pos - n_body_state.pos).r * kete.constants.AU_KM)
 
-    n_body_state_ast = neospy.propagate_n_body(
+    n_body_state_ast = kete.propagate_n_body(
         [n_body_state_ast], jd, include_asteroids=True
     )[0]
-    n_body_ast.append((jpl_pos - n_body_state_ast.pos).r * neospy.constants.AU_KM)
+    n_body_ast.append((jpl_pos - n_body_state_ast.pos).r * kete.constants.AU_KM)
 
 plt.figure(dpi=150)
 plt.plot(-(jds[0] - jds) / 365, error_2body, label="Two-Body Approximation")

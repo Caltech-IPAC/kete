@@ -8,7 +8,7 @@ matrix of the orbit fit.
 
 import matplotlib.pyplot as plt
 import numpy as np
-import neospy
+import kete
 
 # Inputs:
 # -------
@@ -23,18 +23,18 @@ n_samples = 1000
 
 # Calculating Samples
 # -------------------
-obj = neospy.HorizonsProperties.fetch(obj_name)
+obj = kete.HorizonsProperties.fetch(obj_name)
 g = obj.g_phase if obj.g_phase else 0.15
 
 # Sample time
-cur_jd = neospy.Time.now().jd
+cur_jd = kete.Time.now().jd
 jd_e = cur_jd + days_into_future
 jd_s = obj.epoch - 10
 jds = np.arange(jd_s, jd_e, time_step)
 
 # Sample the covariance matrix
 cov = np.array(obj.covariance.cov_matrix)
-samples = neospy.covariance.generate_sample_from_cov(n_samples, cov)
+samples = kete.covariance.generate_sample_from_cov(n_samples, cov)
 labels, values = zip(*obj.covariance.params)
 values = np.array(values)
 
@@ -44,15 +44,15 @@ states = [obj.state]
 for sample in samples:
     sample = sample + values
     params = dict(zip(labels, sample))
-    states.append(neospy.CometElements(obj.desig, obj.covariance.epoch, **params).state)
+    states.append(kete.CometElements(obj.desig, obj.covariance.epoch, **params).state)
 
 # Propagate the position of all states to all time steps, recording the V mags
 mags = []
 for jd in jds:
-    states = neospy.propagate_n_body(states, jd)
-    earth = neospy.spice.get_state("earth", jd)
+    states = kete.propagate_n_body(states, jd)
+    earth = kete.spice.get_state("earth", jd)
     m = [
-        neospy.flux.hg_apparent_mag(
+        kete.flux.hg_apparent_mag(
             sun2obj=x.pos, sun2obs=earth.pos, h_mag=obj.h_mag, g_param=g
         )
         for x in states
@@ -64,8 +64,8 @@ brightest_idx = np.argmin(np.median(mags, axis=1))
 brightest_jd = jds[brightest_idx]
 
 # position at lowest mag
-states = neospy.propagate_n_body(states, brightest_jd)
-earth = neospy.spice.get_state("earth", brightest_jd)
+states = kete.propagate_n_body(states, brightest_jd)
+earth = kete.spice.get_state("earth", brightest_jd)
 vecs = [(s.pos - earth.pos).as_equatorial for s in states]
 ras = np.array([v.ra for v in vecs])
 decs = np.array([v.dec for v in vecs])
@@ -83,7 +83,7 @@ plt.title("Apparent V-Mag Uncertainty")
 plt.plot(jds - cur_jd, mags, c="C0", alpha=0.05)
 
 plt.ylabel("V Mag")
-ymd_today = "-".join(f"{x:0.0f}" for x in neospy.Time(cur_jd).ymd)
+ymd_today = "-".join(f"{x:0.0f}" for x in kete.Time(cur_jd).ymd)
 plt.xlabel(f"Days from Today ({ymd_today})")
 
 plt.axvline(obj.epoch - cur_jd, ls="--", label="Epoch of fit", c="k")
@@ -103,7 +103,7 @@ plt.gca().invert_yaxis()
 idx_sort = np.argsort(ras)
 decs = decs[idx_sort]
 ras = np.unwrap(ras[idx_sort], period=360)
-ymd = "-".join(f"{x:0.0f}" for x in neospy.Time(brightest_jd).ymd)
+ymd = "-".join(f"{x:0.0f}" for x in kete.Time(brightest_jd).ymd)
 
 plt.subplot(1, 2, 2)
 plt.title(f"On-Sky Position at Lowest Mag\n{ymd}")

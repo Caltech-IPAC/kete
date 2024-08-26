@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import os
-from neospy.vector import CometElements, State, SimultaneousStates
+from kete.vector import CometElements, State, SimultaneousStates
 
 
 class TestlState:

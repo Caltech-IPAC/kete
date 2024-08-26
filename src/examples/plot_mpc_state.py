@@ -7,7 +7,7 @@ This will open an interactive 3d plot of the solar system.
 This plots all of the Hildas from the MPC, along with the last 90 days of their orbit.
 """
 
-import neospy
+import kete
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -15,19 +15,19 @@ import numpy as np
 zoom = 4.0
 
 # Fetch all known asteroid orbits
-orb = neospy.mpc.fetch_known_orbit_data()
+orb = kete.mpc.fetch_known_orbit_data()
 
 # Subset to the Hildas
 orb = orb[orb["group_name"] == "Hilda"]
 
 # convert the table of data to State objects
-states = neospy.mpc.table_to_states(orb)
+states = kete.mpc.table_to_states(orb)
 
 # Every object in the MPC orbit file has its own epoch of fit.
 # This means that some objects epochs may be months or years away from
 # others. In order to bring all of these objects to the same epoch, the
 # function below will propagate the states to the first state's epoch.
-states = neospy.propagate_two_body(states, states[0].jd)
+states = kete.propagate_two_body(states, states[0].jd)
 
 # Grab the positions from this subset
 pos = np.array([p.pos for p in states])
@@ -41,16 +41,16 @@ ax.scatter(pos[:, 0], pos[:, 1], pos[:, 2], s=0.1, alpha=0.5)
 # Plot the planets for 1 orbit each
 for i, planet in enumerate(["Mercury", "Venus", "Earth", "Mars", "Jupiter"]):
     jd = states[0].jd
-    plan = neospy.spice.get_state(planet, jd)
+    plan = kete.spice.get_state(planet, jd)
     ax.scatter(plan.pos.x, plan.pos.y, color=f"C{i}", s=10)
     jds = np.linspace(jd - plan.elements.orbital_period, jd, 100)
-    pos = np.array([neospy.spice.get_state(planet, jd).pos for jd in jds]).T
+    pos = np.array([kete.spice.get_state(planet, jd).pos for jd in jds]).T
     ax.plot(pos[0], pos[1], pos[2], color="black", alpha=0.2)
 
 for state in states:
     jd = states[0].jd
     jds = np.linspace(jd - 90, jd, 100)
-    pos = np.array([neospy.propagate_two_body([state], jd)[0].pos for jd in jds]).T
+    pos = np.array([kete.propagate_two_body([state], jd)[0].pos for jd in jds]).T
     ax.plot(pos[0], pos[1], pos[2], color="black", alpha=0.1, lw=0.2)
 
 ax.scatter(0, 0, 0, color="red")

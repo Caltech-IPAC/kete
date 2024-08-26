@@ -1,8 +1,8 @@
 cache
 =====
 
-Tools to interact with NEOSpy's Cache folder.
+Tools to interact with kete's Cache folder.
 
-.. automodule:: neospy.cache
+.. automodule:: kete.cache
    :members:
    :inherited-members:

@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
 
-from neospy import spice, State, Time, Frames
-from neospy.mpc import find_obs_code
-from neospy.spice import SpkInfo
+from kete import spice, State, Time, Frames
+from kete.mpc import find_obs_code
+from kete.spice import SpkInfo
 
 # Turn off flake8 checker for this file.
 # flake8: noqa

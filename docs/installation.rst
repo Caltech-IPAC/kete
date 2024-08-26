@@ -1,7 +1,7 @@
 Installation
 ============
 
-These instructions are the method to install NEOSpy from source, it assumes that you
+These instructions are the method to install kete from source, it assumes that you
 have already downloaded a copy of the source code.
 
 Requirements
@@ -24,5 +24,5 @@ command:
 
 .. code-block:: console
 
-    # cd /neospy/source/directory
+    # cd /kete/source/directory
     pip install .

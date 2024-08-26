@@ -32,25 +32,25 @@ In the original description of NEATM, all visible flux from the asteroid is due 
 black body thermal emission from the heated surface. However this neglects the fact
 that the Sun emits light in the IR as well. This Solar emission of IR is reflected from
 the surface, and for colder asteroids can contribute a significant fraction of the
-total flux. NEOSpy automatically includes this reflected light flux alongside the
+total flux. kete automatically includes this reflected light flux alongside the
 thermal emission.
 
-Below is an example of how to compute NEATM using NEOSpy, showing the relative
+Below is an example of how to compute NEATM using kete, showing the relative
 contribution of thermal and emitted fluxes.
 
 .. code-block:: python
 
-    import neospy
+    import kete
     import matplotlib.pyplot as plt
     import numpy as np
 
     # Using NEOS wavelengths
-    bands = neospy.neos.BANDS
+    bands = kete.neos.BANDS
 
     observer = [0, 1, 0]
 
     # Define the NEATM model parameters for an object
-    params = neospy.flux.NeatmParams(
+    params = kete.flux.NeatmParams(
         "Ceres",
         band_wavelength=bands,
         band_albedos=[0.1] * len(bands),
@@ -60,7 +60,7 @@ contribution of thermal and emitted fluxes.
     )
 
     # Define some observing geometry, this can be calculated using orbital
-    # propagation code in neospy.
+    # propagation code in kete.
     distances = np.linspace(0.1, 6, 1000)
     sun2obj_vecs = [[r, 0, 0] for r in distances]
     sun2obs_vecs = [observer] * len(sun2obj_vecs)

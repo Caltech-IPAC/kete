@@ -1,13 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import neospy
+import kete
 
 lon_steps = np.linspace(0, 360, 1000)
-equatorial = [neospy.Vector.from_ra_dec(step, 0) for step in lon_steps]
-ecliptic = [neospy.Vector.from_lat_lon(0, step) for step in lon_steps]
+equatorial = [kete.Vector.from_ra_dec(step, 0) for step in lon_steps]
+ecliptic = [kete.Vector.from_lat_lon(0, step) for step in lon_steps]
 galactic = [
-    neospy.Vector.from_el_az(0, step, 1, frame=neospy.Frames.Galactic)
-    for step in lon_steps
+    kete.Vector.from_el_az(0, step, 1, frame=kete.Frames.Galactic) for step in lon_steps
 ]
 
 vectors_frames = [equatorial, ecliptic, galactic]

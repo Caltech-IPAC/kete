@@ -3,20 +3,20 @@ Plotting Jupiter Trojans
 ========================
 """
 
-import neospy
+import kete
 import numpy as np
 import matplotlib.pyplot as plt
 
 # Load orbit data and select just the jupiter trojans
-orbs = neospy.mpc.fetch_known_orbit_data()
-subset = orbs[neospy.population.jup_trojan(orbs.peri_dist, orbs.ecc)]
+orbs = kete.mpc.fetch_known_orbit_data()
+subset = orbs[kete.population.jup_trojan(orbs.peri_dist, orbs.ecc)]
 
 # Construct the states and propagate them to a common epoch
-states = neospy.mpc.table_to_states(subset)
-states = neospy.propagate_n_body(states, states[0].jd)
+states = kete.mpc.table_to_states(subset)
+states = kete.propagate_n_body(states, states[0].jd)
 
 # Where is jupiter?
-jupiter = neospy.spice.get_state("Jupiter", states[0].jd)
+jupiter = kete.spice.get_state("Jupiter", states[0].jd)
 # found it!
 
 # Compute the positions, and relative longitudinal distance from jupiter

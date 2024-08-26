@@ -1,12 +1,12 @@
 
 [package]
 name = "_core"
-version = "0.2.5"
+version = "0.2.6"
 edition = "2021"
 
 
 [dependencies]
-neospy_core = { version = "*", path = "src/neospy_core", features=["pyo3"]}
+kete_core = { version = "*", path = "src/kete_core", features=["pyo3"]}
 pyo3 = { version =  "^0.22.1", features = ["extension-module"] }
 serde = { version = "^1.0.203", features = ["derive"] }
 nalgebra = {version = "^0.33.0"}
@@ -20,12 +20,12 @@ bincode = {version = "2.0.0-rc.3", features=["derive", "serde"]}
 
 [lib]
 name = "_core"
-path = "src/neospy/rust/lib.rs"
+path = "src/kete/rust/lib.rs"
 crate-type = ["cdylib"]
 
 [workspace]
-members = ["src/neospy_core"]
-default-members = ["src/neospy_core"]
+members = ["src/kete_core"]
+default-members = ["src/kete_core"]
 
 [profile.release]
 opt-level = 3

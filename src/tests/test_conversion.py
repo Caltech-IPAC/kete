@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
-from neospy import constants
-from neospy.conversion import (
+from kete import constants
+from kete.conversion import (
     compute_albedo,
     compute_diameter,
     compute_earth_radius,
