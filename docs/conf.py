@@ -13,8 +13,6 @@ author = "Dar Dahlen"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-html_favicon = "data/favicon.png"
-
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
@@ -59,6 +57,9 @@ napoleon_use_rtype = True
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
+html_logo = "_static/kete.svg"
+html_favicon = "_static/favicon.png"
 
 
 # -- Sphinx gallery settings --------------------------------------------------

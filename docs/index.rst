@@ -1,7 +1,7 @@
-NEO Surveyor Simulation Tools
-=============================
+Kete Solar System Object Survey Tools
+=====================================
 
-kete is a collection of tools which enable the simulation of ground or spaced based
+Kete is a collection of tools which enable the simulation of ground or spaced based
 surveys of minor planets. Included here are:
 
    - Orbit propagation code capable of accurately calculating the orbits for many
