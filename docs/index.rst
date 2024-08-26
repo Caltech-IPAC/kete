@@ -1,5 +1,5 @@
-Kete Solar System Object Survey Tools
-=====================================
+Kete Solar System Survey Tools
+==============================
 
 Kete is a collection of tools which enable the simulation of ground or spaced based
 surveys of minor planets. Included here are:
@@ -20,7 +20,7 @@ some of the capabilities.
 
 It is recommended that the background reading section be covered before using kete,
 as it is very important to understand the coordinate frames and reference times used.
-Conversions such as UTC <-> TDB time can result in over a minute of difference in the
+Conversions such as UTC to TDB time can result in over a minute of difference in the
 position of minor planets, which for fast moving objects is long enough that they may
 move out of frame.
 
