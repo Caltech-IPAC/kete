@@ -5,7 +5,8 @@ name: Release-Wheels
 
 on:
   push:
-    tags: 'v[0-9]+.[0-9]+.[0-9]+'
+    branches: [ "main" ]
+    # tags: 'v[0-9]+.[0-9]+.[0-9]+'
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -65,5 +66,5 @@ jobs:
         run: python3 -m cibuildwheel --output-dir wheelhouse
       - uses: actions/upload-artifact@v4
         with:
-          merge-multiple: true
++         name: wheel-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: ./wheelhouse/*.whl
