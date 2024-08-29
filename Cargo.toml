@@ -4,7 +4,6 @@ name = "_core"
 version = "0.3.0"
 edition = "2021"
 
-
 [dependencies]
 kete_core = { version = "*", path = "src/kete_core", features=["pyo3"]}
 pyo3 = { version =  "^0.22.1", features = ["extension-module"] }
@@ -29,3 +28,4 @@ default-members = ["src/kete_core"]
 
 [profile.release]
 opt-level = 3
+codegen-units = 1
