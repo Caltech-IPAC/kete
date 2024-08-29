@@ -334,7 +334,7 @@ def annotate_plot(
         plt.plot([x + px_gap, x + total], [y, y], c=c, lw=lw)
         plt.plot([x, x], [y - px_gap, y - total], c=c, lw=lw)
         plt.plot([x, x], [y + px_gap, y + total], c=c, lw=lw)
-    if style == "L":
+    elif style == "L":
         plt.plot([x + px_gap, x + total], [y, y], c=c, lw=lw)
         plt.plot([x, x], [y + px_gap, y + total], c=c, lw=lw)
     elif style == "o":
