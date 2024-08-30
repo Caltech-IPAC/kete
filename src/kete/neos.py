@@ -47,8 +47,7 @@ def sunshield_rotation(sun2obs, pointing):
     Parameters
     ----------
     sun2obs :
-        The vector from the spacecraft to the observer, units are arbitrary,
-        must be 1 dimensional.
+        The vector from the sun to the telescope, units are arbitrary.
     pointing :
         The vector along which the telescope is pointing, the spacecraft's
         Z-axis.
