@@ -1,13 +1,12 @@
 Code Organization
 =================
 
-Goals of kete
----------------
-kete is a collection of tools for calculating the orbits and expected fluxes for minor
-planets specifically for the purpose of estimating which objects are visible in current,
-past, or future sky surveys.  Specifically the goal is that these calculations may be
-performed on the full set of all known asteroids in a reasonable amount of time on a
-laptop. 
+Goals of Kete
+-------------
+Kete is a collection of tools for calculating the orbits and expected fluxes for minor
+planets for the purpose of estimating which objects are visible in current, past, or
+future sky surveys.  Specifically the goal is that these calculations may be performed
+on the full set of all known asteroids in a reasonable amount of time on a laptop. 
 
 Propagation
 ~~~~~~~~~~~
@@ -37,7 +36,7 @@ decades at this point, and is often used to keep track of the ephemeris of plane
 satellites (both natural and artificial), asteroids, and comets. Essentially the motion
 of anything in the Solar System can be encoded in some flavor of SPICE kernel. The
 primary downside of using cSPICE is that there is no native support for multi-core cpu
-queries (an artifact of the age of the code). kete has native multi-core support for
+queries (an artifact of the age of the code). Kete has native multi-core support for
 the majority of all commonly used SPICE kernels.
 
 
@@ -59,8 +58,8 @@ the most common type of errors to do with memory allocation and management. In a
 to this, Rust has excellent native multi-core support, especially for embarrassingly
 parallel problems such as the orbit propagation required for kete.
 
-kete Core
-~~~~~~~~~~~
+Kete Core
+~~~~~~~~~
 The Rust core of the library, which does the underlying orbit and flux calculations is
 written entirely without any reference to Python. This core part is available as
 `kete_core`, and programming can be done entirely within Rust for tools which do not
@@ -80,8 +79,8 @@ the `kete_core`. Ideally there should be no 'business' logic contained within th
 wrappers, and they should largely exist to provide convenient mappings from the Python
 concepts to the Rust internal organization.
 
-kete Python
-~~~~~~~~~~~~~
+Kete Python
+~~~~~~~~~~~
 The remaining part of the code which is strictly Python is mostly quality of life
 functions, plotting, and web query code. There is little to no mathematics or physics
 contained within the Python.
