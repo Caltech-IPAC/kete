@@ -60,9 +60,15 @@ def sunshield_rotation(sun2obs, pointing):
         rotated to place the sun shield between the telescope and the sun.
     """
     obs2sun = -np.array(sun2obs)
+    obs2sun /= np.linalg.norm(obs2sun)
 
     # normalize for safety
     pointing = np.array(pointing) / np.linalg.norm(pointing)
+
+    # NEOS has a restriction of no closer than 45 degrees during operation.
+    # This allows down to 44 for convenience
+    if np.degrees(np.arccos(np.dot(obs2sun, pointing))) < 44:
+        raise ValueError("Pointing vector is aiming too close to the Sun.")
 
     # The normal vector for the plane defined by the sun and pointing vectors.
     sun_plane_normal = np.cross(obs2sun, pointing)
