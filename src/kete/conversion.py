@@ -195,6 +195,55 @@ def compute_tisserand(
     )
 
 
+def bin_data(data, bin_size=2, method="mean"):
+    """
+    Bin data, reducing the size of a matrix.
+
+    Parameters
+    ----------
+    data:
+        2 dimensional array of data to be reduced.
+    bin_size:
+        Binning size, binning of data is applied to both directions of the data.
+        If the bin size is not a multiple of the shape of the data, the data is
+        trimmed until it is.
+    method:
+        Which function is used to produce a single final value from the bins.
+        This includes 'mean', 'median', 'min', 'max'. NANs are ignored.
+    """
+    funcs = {
+        "mean": np.nanmean,
+        "median": np.nanmedian,
+        "min": np.nanmin,
+        "max": np.nanmax,
+    }
+
+    # dont trust the user, check inputs
+    if bin_size <= 0 or int(bin_size) != bin_size:
+        raise ValueError("Bin size must be larger than 0 and an integer.")
+    bin_size = int(bin_size)
+    if method not in funcs:
+        raise ValueError("'method' must be one of: ", list(funcs.keys()))
+
+    data = np.asarray(data)
+    if data.ndim != 2:
+        raise ValueError("Array must be 2 dimensional.")
+
+    xdim, ydim = data.shape
+    if xdim % bin_size != 0:
+        xdim = (xdim // bin_size) * bin_size
+        logger.warning("x dimension is not a multiple of bin size, trimming to size.")
+        data = data[:xdim, :]
+    if ydim % bin_size != 0:
+        ydim = (ydim // bin_size) * bin_size
+        logger.warning("y dimension is not a multiple of bin size, trimming to size.")
+        data = data[:, :ydim]
+
+    reshaped = data.reshape(xdim // bin_size, bin_size, ydim // bin_size, bin_size)
+
+    return funcs[method](funcs[method](reshaped, axis=1), axis=2)
+
+
 def dec_degrees_to_dms(dec: NDArray) -> Union[str, list[str]]:
     """
     Convert a declination in degrees to a "degrees arcminutes arcseconds" string.

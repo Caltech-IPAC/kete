@@ -48,6 +48,7 @@ docs = ["sphinx",
         "sphinx-gallery",
         "sphinx_rtd_theme",
         "click",
+        "pytz",
         ]
 
 # Options for pytest

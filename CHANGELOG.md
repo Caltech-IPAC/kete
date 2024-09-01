@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `kete.RectangleFOV.from_wcs`, allowing the construction of a FOV from a given
+  Astropy WCS object.
+- Added `kete.conversion.bin_data`, which allows for binning matrix data such as images.
+- Added tutorial showing precovery of an asteroid from a 1950's glass plate observation
+  done at the Palomar Observatory.
 - Added sunshield rotation calculation for NEO Surveyor.
 
 

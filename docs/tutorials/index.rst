@@ -10,5 +10,6 @@ These are more in-depth worked examples.
    background
    propagation
    neatm
+   palomar
    kona
    wise

@@ -17,7 +17,7 @@ from ._core import (
     fov_state_check,
     fov_spk_check as _fov_spk_check,
 )
-from .vector import State
+from .vector import State, Vector
 from . import spice
 
 
@@ -55,3 +55,31 @@ def fov_spice_check(desigs: list[str], fovs) -> list[State]:
     """
     obj_ids = [spice.name_lookup(n)[1] for n in desigs]
     return _fov_spk_check(obj_ids, fovs)
+
+
+@staticmethod
+def _from_wcs(wcs, obs: State) -> RectangleFOV:
+    """
+    Construct a RectangleFOV from an astropy WCS along with an observer state.
+
+    parameters
+    ----------
+    wcs:
+        An astropy WCS, this must include the shape of the array.
+    obs:
+        The observer position
+    """
+    types = wcs.axis_type_names
+    if types == ["RA", "DEC"]:
+        x, y = wcs.array_shape
+        corners = wcs.pixel_to_world_values([0, 0, x, x], [0, y, y, 0])
+        vecs = [Vector.from_ra_dec(ra, dec) for ra, dec in zip(*corners)]
+    else:
+        raise NotImplementedError(
+            f"Support for WCS with frame {types} is not currently supported."
+        )
+    return RectangleFOV.from_corners(vecs, obs)
+
+
+# Monkey patch the rust class with a new constructor.
+RectangleFOV.from_wcs = _from_wcs
