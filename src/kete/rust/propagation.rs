@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use kete_core::{
     errors::Error,
     propagation::{self, moid, NonGravModel},
@@ -5,7 +6,6 @@ use kete_core::{
     state::State,
     time::{scales::TDB, Time},
 };
-use itertools::Itertools;
 use pyo3::{pyfunction, PyResult, Python};
 use rayon::prelude::*;
 
@@ -165,8 +165,9 @@ pub fn propagation_n_body_spk_py(
 ///
 /// This returns two lists of states:
 /// - First one contains the states of the objects at the end of the integration
-/// - Second contains the states of the planets at the end of the integration, which may
-///   be used as input for continuing the integration.
+/// - Second contains the states of the planets at the end of the integration.
+///
+/// The second set of states may be used as input for continuing the integration.
 ///
 /// Parameters
 /// ----------
