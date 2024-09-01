@@ -57,7 +57,6 @@ def fov_spice_check(desigs: list[str], fovs) -> list[State]:
     return _fov_spk_check(obj_ids, fovs)
 
 
-@staticmethod
 def _from_wcs(wcs, obs: State) -> RectangleFOV:
     """
     Construct a RectangleFOV from an astropy WCS along with an observer state.
@@ -82,4 +81,4 @@ def _from_wcs(wcs, obs: State) -> RectangleFOV:
 
 
 # Monkey patch the rust class with a new constructor.
-RectangleFOV.from_wcs = _from_wcs
+RectangleFOV.from_wcs = staticmethod(_from_wcs)
