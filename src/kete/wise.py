@@ -579,9 +579,8 @@ def fetch_WISE_fovs(phase):
         f"WHERE mjd >= {mjd_start} and mjd < {mjd_end}"
     )
 
-    # Adding 4.4 seconds for the offset due to W3/4 exposures taking 8.8 seconds
     jd = [
-        Time.from_mjd(mjd, scaling="utc").jd + 5.092592592592592e-05
+        Time.from_mjd(mjd, scaling="utc").jd
         for mjd in list(res.mjd)
     ]
     res["jd"] = jd
