@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed a time offset in the FOV's downloaded from IRSA WISE/NEOWISE. They were offset
   by 4.4 seconds.
+- Fixed rotation approximation in WISE/NEOWISE field of views which was causing a small
+  percentage of objects to not be found during FOV checks when they were close to the
+  edge of the field.
 
 
 ## [0.3.0] - 2024 - 8 - 28

@@ -1,6 +1,6 @@
-use nalgebra::Vector3;
 use kete_core::fov::{self, NeosBand};
 use kete_core::fov::{FovLike, SkyPatch};
+use nalgebra::Vector3;
 use pyo3::{exceptions, prelude::*};
 
 use crate::vector::VectorLike;
@@ -156,8 +156,8 @@ impl From<fov::FOV> for AllowedFOV {
 
 #[pymethods]
 impl PyWiseCmos {
-    #[new]
-    pub fn new(
+    #[staticmethod]
+    pub fn from_pointing(
         pointing: VectorLike,
         rotation: f64,
         observer: PyState,
@@ -173,6 +173,20 @@ impl PyWiseCmos {
             observer.0,
             frame_num,
             scan_id,
+        ))
+    }
+
+    #[new]
+    pub fn new(
+        corners: [VectorLike; 4],
+        observer: PyState,
+        frame_num: u64,
+        scan_id: String,
+    ) -> Self {
+        let corners: [Vector3<f64>; 4] = corners.map(|x| x.into_vec(observer.frame()));
+        let scan_id = scan_id.into();
+        PyWiseCmos(fov::WiseCmos::from_corners(
+            corners, observer.0, frame_num, scan_id,
         ))
     }
 
