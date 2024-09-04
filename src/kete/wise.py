@@ -579,10 +579,7 @@ def fetch_WISE_fovs(phase):
         f"WHERE mjd >= {mjd_start} and mjd < {mjd_end}"
     )
 
-    jd = [
-        Time.from_mjd(mjd, scaling="utc").jd
-        for mjd in list(res.mjd)
-    ]
+    jd = [Time.from_mjd(mjd, scaling="utc").jd for mjd in list(res.mjd)]
     res["jd"] = jd
 
     fovs = []
