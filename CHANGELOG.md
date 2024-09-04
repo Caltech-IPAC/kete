@@ -17,9 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   done at the Palomar Observatory.
 - Added sunshield rotation calculation for NEO Surveyor.
 
+### Fixed
+
+- Fixed a time offset in the FOV's downloaded from IRSA WISE/NEOWISE. They were offset
+  by 4.4 seconds.
+
 
 ## [0.3.0] - 2024 - 8 - 28
-
 
 ### Added
 

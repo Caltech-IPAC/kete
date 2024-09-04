@@ -874,27 +874,26 @@ class MPCObservation:
         """
         Create a list of MPCObservations from a list of single 80 char lines.
         """
-        lines = lines.copy()
-
-        jds = []
-        for line in lines:
-            year, month, day = line[15:32].strip().split()
-            jds.append(Time.from_ymd(int(year), int(month), float(day)).jd)
-
         found = []
-        while len(lines) > 0:
-            line = cls._read_first_line(lines.pop(0))
-            line["jd"] = jds.pop(0)
-            if line["note2"] in "WwQqVvRrXx":
+        idx = 0
+        unsupported = set("WwQqVvRrXx")
+        while True:
+            if idx >= len(lines):
+                break
+            line = cls._read_first_line(lines[idx])
+            idx += 1
+            if line["note2"] in unsupported:
                 # unsupported or deprecated observation types
                 continue
-            if line["note2"] == "s" or line["note2"] == "t":
-                raise ValueError("Second line of spacecraft observation found alone")
-            if line["note2"] == "S" or line["note2"] == "T":
-                if len(lines) == 0:
-                    raise ValueError("Missing second line of spacecraft observation.")
-                pos_line = lines.pop(0)
-                jds.pop(0)
+            elif line["note2"] == "s" or line["note2"] == "t":
+                logger.warning("Second line of spacecraft observation found alone")
+                continue
+            elif line["note2"] == "S" or line["note2"] == "T":
+                if idx >= len(lines):
+                    logger.warning("Missing second line of spacecraft observation.")
+                    break
+                pos_line = lines[idx]
+                idx += 1
                 if load_sc_pos:
                     line["sun2sc"] = cls._read_second_line(pos_line, line["jd"])
             found.append(cls(**line))
@@ -903,6 +902,9 @@ class MPCObservation:
     @staticmethod
     def _read_first_line(line):
         mag_band = line[65:71].strip()
+
+        year, month, day = line[15:32].strip().split()
+        jd = Time.from_ymd(int(year), int(month), float(day)).jd
         if len(mag_band) > 0:
             mag_band = mag_band.split(maxsplit=1)[0]
         contents = dict(
@@ -915,6 +917,7 @@ class MPCObservation:
             mag_band=mag_band,
             obs_code=line[77:80],
             sun2sc=None,
+            jd=jd,
         )
         return contents
 
