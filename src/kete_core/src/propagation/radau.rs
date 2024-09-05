@@ -180,7 +180,7 @@ where
                 integrator.metadata,
             ));
         }
-        let mut next_step_size: f64 = 1.0_f64.copysign(integrator.final_time - integrator.cur_time);
+        let mut next_step_size: f64 = 0.1_f64.copysign(integrator.final_time - integrator.cur_time);
 
         let mut step_failures = 0;
         loop {
@@ -190,7 +190,7 @@ where
             match integrator.step(next_step_size) {
                 Ok(s) => {
                     next_step_size = s;
-                    if integrator.cur_time == integrator.final_time {
+                    if (integrator.cur_time - integrator.final_time).abs() < 1e-12 {
                         return Ok((
                             integrator.cur_state,
                             integrator.cur_state_der,
