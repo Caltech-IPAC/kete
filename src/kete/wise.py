@@ -13,7 +13,7 @@ from astropy.io import fits
 from . import spice
 from .cache import cache_path, download_file
 from .time import Time
-from .vector import Vector
+from .vector import Vector, Frames
 from .irsa import IRSA_URL, query_irsa_tap, plot_fits_image, zoom_plot, annotate_plot
 from .deprecation import rename
 
@@ -570,7 +570,20 @@ def fetch_WISE_fovs(phase):
         return FOVList.load(filename)
 
     table = phase.frame_meta_table
-    cols = ["scan_id", "frame_num", "mjd", "ra", "dec"]
+    cols = [
+        "scan_id",
+        "frame_num",
+        "mjd",
+        "w1ra1",
+        "w1ra2",
+        "w1ra3",
+        "w1ra4",
+        "w1dec1",
+        "w1dec2",
+        "w1dec3",
+        "w1dec4",
+        "crota",
+    ]
     mjd_start = Time(phase.jd_start).mjd
     mjd_end = Time(phase.jd_end).mjd
 
@@ -583,13 +596,29 @@ def fetch_WISE_fovs(phase):
     res["jd"] = jd
 
     fovs = []
-    for row in res.itertuples():
+    for _, row in res.iterrows():
         state = spice.get_state("WISE", row.jd)
 
-        pointing = Vector.from_ra_dec(row.ra, row.dec).as_ecliptic
+        # Each band has a slightly different size on sky.
+        # Kete represents all bands simultaneously, so this information is not kept
+        # track of. In order to deal with this, here we load the W1 ra/dec, and then
+        # push the corners out by 1 arc-minute to act as a bit of a buffer region.
+
+        corners = []
+        for i in range(4):
+            corners.append(Vector.from_ra_dec(row[f"w1ra{i+1}"], row[f"w1dec{i+1}"]))
+
+        pointing = np.mean(corners, axis=0)
+        pointing = Vector(pointing, frame=Frames.Equatorial)
+
+        # shifting the corners out by 1 arc-minute
+        shifted_corners = []
+        for corner in corners:
+            rot_vec = np.cross(pointing, corner)
+            shifted_corners.append(corner.rotate_around(rot_vec, 1 / 60))
+
         fov = WiseCmos(
-            pointing,
-            0.0,
+            shifted_corners[::-1],
             state,
             row.frame_num,
             row.scan_id,

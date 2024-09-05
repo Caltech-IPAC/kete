@@ -1,4 +1,6 @@
 //! # WISE Fov definitions.
+use core::f64;
+
 use super::{Contains, FovLike, Frame, OnSkyRectangle, SkyPatch, FOV};
 use crate::constants::WISE_WIDTH;
 use crate::prelude::*;
@@ -39,6 +41,23 @@ impl WiseCmos {
             observer,
             frame_num,
             rotation,
+            scan_id,
+        }
+    }
+
+    /// Create a Wise fov from corners
+    pub fn from_corners(
+        corners: [Vector3<f64>; 4],
+        observer: State,
+        frame_num: u64,
+        scan_id: Box<str>,
+    ) -> Self {
+        let patch = OnSkyRectangle::from_corners(corners, observer.frame);
+        Self {
+            patch,
+            observer,
+            frame_num,
+            rotation: f64::NAN,
             scan_id,
         }
     }
