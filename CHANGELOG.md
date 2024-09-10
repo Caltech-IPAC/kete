@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added final SPICE kernels for the WISE mission, it now contains all positions from
+  all phases of operation. There is a gap for the years it was not operating.
 - Added `kete.RectangleFOV.from_wcs`, allowing the construction of a FOV from a given
   Astropy WCS object.
 - Added `kete.conversion.bin_data`, which allows for binning matrix data such as images.
