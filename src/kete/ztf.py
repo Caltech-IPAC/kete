@@ -2,20 +2,11 @@
 ZTF Related Functions and Data.
 """
 
-from functools import lru_cache
 import os
+import logging
+from functools import lru_cache
 from collections import defaultdict
-import matplotlib.pyplot as plt
-import warnings
-
 from astropy.io import fits
-from astropy.wcs import WCS
-from astropy.visualization import (
-    PowerDistStretch,
-    AsymmetricPercentileInterval,
-    ImageNormalize,
-)
-
 
 from .cache import download_file, cache_path
 from .fov import ZtfCcdQuad, ZtfField, FOVList
@@ -26,31 +17,15 @@ from .vector import Vector, State
 from . import spice
 
 
-__all__ = ["fetch_ZTF_file", "fetch_ZTF_fovs"]
+__all__ = ["fetch_ZTF_file", "fetch_ZTF_fovs", "fetch_frame"]
 
 SURVEY_START_JD = Time.from_ymd(2018, 3, 20).jd
 """First image in ZTF dataset."""
 
-ZTF_IRSA_TABLES = {
-    "ztf.ztf_current_meta_cal": "ZTF Calibration Metadata Table",
-    "ztf.ztf_current_meta_deep": "ZTF Deep Reference Images",
-    "ztf.ztf_current_meta_raw": "ZTF Raw Metadata Table",
-    "ztf.ztf_current_meta_ref": "ZTF Reference (coadd) Images",
-    "ztf.ztf_current_meta_sci": "ZTF Science Exposure Images",
-    "ztf.ztf_current_path_cal": "ZTF Calibration Product Paths",
-    "ztf.ztf_current_path_deep": "ZTF Deep Reference Product Paths",
-    "ztf.ztf_current_path_raw": "ZTF Raw Product Paths",
-    "ztf.ztf_current_path_ref": "ZTF Reference Product Paths",
-    "ztf.ztf_current_path_sci": "ZTF Science Product Paths",
-    "ztf_objects_dr16": "ZTF Data Release 16 Objects",
-    "ztf_objects_dr17": "ZTF Data Release 17 Objects",
-    "ztf_objects_dr18": "ZTF Data Release 18 Objects",
-    "ztf_objects_dr19": "ZTF Data Release 19 Objects",
-    "ztf_objects_dr20": "ZTF Data Release 20 Objects",
-}
+logger = logging.getLogger(__name__)
 
 
-@lru_cache(maxsize=3)
+@lru_cache(maxsize=2)
 def fetch_ZTF_fovs(year: int):
     """
     Load all FOVs taken during the specified mission year of ZTF.
@@ -65,7 +40,7 @@ def fetch_ZTF_fovs(year: int):
         Which year of ZTF, 2018 through 2024.
     """
     year = int(year)
-    if year not in [2018, 2019, 2020, 2021, 2022, 2023, 2024]:
+    if year not in range(2018, 2025):
         raise ValueError("Year must only be in the range 2018-2024")
     cache_dir = cache_path()
     dir_path = os.path.join(cache_dir, "fovs")
@@ -172,63 +147,12 @@ def file_frac_day_split(filefracday):
     return (year, month, day, frac_day)
 
 
-def plot_frame(
-    fov: ZtfCcdQuad,
-    cmap="grey",
-    products="sci",
-    im_type="sciimg.fits",
-    force_download=False,
-):
-    """
-    Given a ztf FOV, plot the associated frame.
-
-    This returns the associate WCS which is constructed.
-
-    Parameters
-    ----------
-    fov :
-        A single CCD Quad FOV.
-    cmap :
-        Colormap of the plot.
-    products :
-        Which data product to fetch.
-    im_type :
-        Image extension, this must match the products variable.
-    force_download :
-        Optionally force a re-download if the file already exists in the cache.
-    """
-
-    frame = fetch_frame_from_fov(
-        fov, products=products, im_type=im_type, force_download=force_download
-    )
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore")
-        wcs = WCS(frame.header)
-
-    if not plt.get_fignums():
-        plt.figure(dpi=300, figsize=(6, 6), facecolor="w")
-
-    ax = plt.subplot(projection=wcs)
-
-    norm = ImageNormalize(
-        frame.data,
-        interval=AsymmetricPercentileInterval(10, 99.5),
-        stretch=PowerDistStretch(0.25),
-    )
-
-    ax.imshow(frame.data, origin="lower", norm=norm, cmap=cmap)
-    ax.set_xlabel("RA")
-    ax.set_ylabel("DEC")
-    ax.set_aspect("equal", adjustable="box")
-    return wcs
-
-
-def fetch_frame_from_fov(
+def fetch_frame(
     fov: ZtfCcdQuad,
     products="sci",
     im_type="sciimg.fits",
     force_download=False,
+    retry=2,
 ) -> fits.hdu.image.PrimaryHDU:
     """
     Given a ztf FOV, return the FITs file associated with it.
@@ -257,7 +181,14 @@ def fetch_frame_from_fov(
         im_type,
         force_download,
     )
-    return fits.open(file)[0]
+    try:
+        return fits.open(file)[0]
+    except OSError as exc:
+        if retry == 0:
+            raise ValueError("Failed to fetch ZTF frame.") from exc
+        logger.info("ZTF file appears corrupted, attempting to fetch again.")
+        os.remove(file)
+        return fetch_frame(fov, products, im_type, force_download, retry - 1)
 
 
 def fetch_ZTF_file(

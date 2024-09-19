@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added final SPICE kernels for the WISE mission, it now contains all positions from
   all phases of operation. There is a gap for the years it was not operating.
+- Updated WISE mission phases to reflect the final data products about to be released.
+- Updated ZTF for the current release 22.
 - Added `kete.RectangleFOV.from_wcs`, allowing the construction of a FOV from a given
   Astropy WCS object.
 - Added `kete.conversion.bin_data`, which allows for binning matrix data such as images.
@@ -21,11 +23,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Time scaling bugs when loading times from both Horizons and the MPC were fixed, these
+  were causing offsets of about a minute in the loaded states. However it was shifting
+  both the perihelion time and the epoch time by the same amount, leading to only minor
+  effective errors.
 - Fixed a time offset in the FOV's downloaded from IRSA WISE/NEOWISE. They were offset
   by 4.4 seconds.
 - Fixed rotation approximation in WISE/NEOWISE field of views which was causing a small
   percentage of objects to not be found during FOV checks when they were close to the
   edge of the field.
+- Constant for the sqrt of GMS was incorrect by a small amount, this value was fixed.
+- IRSA username/password options are now being passed through correctly in WISE.
+
+### Removed
+
+- Removed `plot_frame` from ZTF, as a better version of this is available in kete.irsa.
+- Removed `cache_WISE_frame` and `fetch_WISE_frame` deprecated functions in WISE.
 
 
 ## [0.3.0] - 2024 - 8 - 28

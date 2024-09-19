@@ -214,32 +214,32 @@ impl CometElements {
 
         if elliptical {
             let (sin_e, cos_e) = ecc_anom.sin_cos();
-            let e_dot = (semi_major.powf(1.5) * (1.0 - self.eccentricity * cos_e)).recip();
+            let e_dot = semi_major.powf(1.5) * (1.0 - self.eccentricity * cos_e);
             let b = semi_major * (1.0 - self.eccentricity.powi(2)).sqrt();
 
             x = semi_major * (cos_e - self.eccentricity);
             y = b * sin_e;
-            x_dot = -semi_major * e_dot * sin_e * GMS_SQRT;
-            y_dot = b * e_dot * cos_e * GMS_SQRT;
+            x_dot = -semi_major / e_dot * sin_e * GMS_SQRT;
+            y_dot = b / e_dot * cos_e * GMS_SQRT;
         } else if hyperbolic {
             let sinh_h = ecc_anom.sinh();
             let cosh_h = ecc_anom.cosh();
             let b = -semi_major * (self.eccentricity.powi(2) - 1.0).sqrt();
 
-            let h_dot = (semi_major.abs().powf(1.5) * (1.0 - self.eccentricity * cosh_h)).recip();
+            let h_dot = semi_major.abs().powf(1.5) * (1.0 - self.eccentricity * cosh_h);
 
             x = semi_major * (cosh_h - self.eccentricity);
             y = b * sinh_h;
-            x_dot = -semi_major * h_dot * sinh_h * GMS_SQRT;
-            y_dot = -b * h_dot * cosh_h * GMS_SQRT;
+            x_dot = -semi_major / h_dot * sinh_h * GMS_SQRT;
+            y_dot = -b / h_dot * cosh_h * GMS_SQRT;
         } else {
             // Parabolic
-            let d_dot = (self.peri_dist + ecc_anom.powi(2) / 2.0).recip();
+            let d_dot = self.peri_dist + ecc_anom.powi(2) / 2.0;
 
             x = self.peri_dist - ecc_anom.powi(2) / 2.0;
             y = (2.0 * self.peri_dist).sqrt() * ecc_anom;
-            x_dot = -d_dot * ecc_anom * GMS_SQRT;
-            y_dot = d_dot * (2.0 * self.peri_dist).sqrt() * GMS_SQRT
+            x_dot = -ecc_anom / d_dot * GMS_SQRT;
+            y_dot = (2.0 * self.peri_dist).sqrt() / d_dot * GMS_SQRT;
         }
 
         let (s_w, c_w) = self.peri_arg.sin_cos();

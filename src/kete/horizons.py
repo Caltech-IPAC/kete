@@ -91,8 +91,12 @@ def fetch(name, update_name=True, cache=True, update_cache=False, exact_name=Fal
             ]
             if len(val) == 0:
                 continue
-            phys[kete_v] = val[0]
-        phys["epoch"] = float(props["orbit"]["epoch"])
+            if kete_v == "peri_time":
+                phys[kete_v] = Time(val[0], scaling="utc").jd
+            else:
+                phys[kete_v] = val[0]
+
+        phys["epoch"] = Time(float(props["orbit"]["epoch"]), scaling="utc").jd
         if "moid" in props["orbit"] and props["orbit"]["moid"] is not None:
             phys["moid"] = float(props["orbit"]["moid"])
         if "data_arc" in props["orbit"] and props["orbit"]["data_arc"] is not None:

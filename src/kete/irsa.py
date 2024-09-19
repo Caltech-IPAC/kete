@@ -146,7 +146,7 @@ def query_irsa_tap(
 
     phase_url = url.replace("results/result", "phase")
 
-    status = requests.get(phase_url, timeout=timeout)
+    status = requests.get(phase_url, timeout=timeout, auth=auth)
     status.raise_for_status()
 
     # Status results can have one of 4 outcomes:
@@ -164,7 +164,7 @@ def query_irsa_tap(
                 status.content.decode(),
             )
         time.sleep(delay)
-        status = requests.get(phase_url, timeout=timeout)
+        status = requests.get(phase_url, timeout=timeout, auth=auth)
         status.raise_for_status()
 
         # Increase time between queries until there is 30 seconds between.
@@ -175,7 +175,7 @@ def query_irsa_tap(
     if status.content.decode().upper() != "COMPLETED":
         raise ValueError("Job Failed: ", status.content.decode())
 
-    result = requests.get(url, timeout=timeout)
+    result = requests.get(url, timeout=timeout, auth=auth)
     result.raise_for_status()
     return pd.read_csv(io.StringIO(result.text))
 

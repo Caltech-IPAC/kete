@@ -10,7 +10,7 @@ pub const GMS: f64 = 0.00029591220828411956;
 
 /// Gaussian gravitational constant, equivalent to sqrt of GMS.
 /// AU^(3/2) per (Day sqrt(Solar Mass))
-pub const GMS_SQRT: f64 = 0.01720209894846;
+pub const GMS_SQRT: f64 = 0.01720209894996;
 
 /// Sun J2 Parameter
 ///

@@ -673,8 +673,8 @@ def fetch_known_orbit_data(url=None, force_download=False):
             incl=obj["i"],
             lon_node=obj["Node"],
             peri_arg=obj["Peri"],
-            peri_time=obj["Tp"],
-            epoch=obj["Epoch"],
+            peri_time=Time(obj["Tp"], scaling="utc").jd,
+            epoch=Time(obj["Epoch"], scaling="utc").jd,
             arc_len=arc_len,
             name=obj.get("Name", None),
         )
