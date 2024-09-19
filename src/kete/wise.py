@@ -2,8 +2,9 @@ from __future__ import annotations
 
 
 import os
+import logging
 from collections import namedtuple
-from functools import lru_cache, partial
+from functools import lru_cache
 from typing import Optional, Union
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,7 +16,6 @@ from .cache import cache_path, download_file
 from .time import Time
 from .vector import Vector, Frames
 from .irsa import IRSA_URL, query_irsa_tap, plot_fits_image, zoom_plot, annotate_plot
-from .deprecation import rename
 
 from ._core import (
     WiseCmos,
@@ -27,17 +27,19 @@ from ._core import (
 )
 
 __all__ = [
+    "fetch_frame",
+    "plot_frames",
     "MISSION_PHASES",
     "mission_phase_from_jd",
     "mission_phase_from_scan",
-    "plot_frames",
-    "fetch_WISE_frame",
     "MissionPhase",
     "w1_color_correction",
     "w2_color_correction",
     "w3_color_correction",
     "w4_color_correction",
 ]
+
+logger = logging.getLogger(__name__)
 
 # All constants below are indexed as follows W1 = [0], W2 = [1]. W3 = [2], W4 = [3]
 
@@ -88,29 +90,20 @@ functions for other bands.
 # W4 is almost a constant.
 # These fits perform much better than linear interpolation except near 100k.
 #
-# The values above were fit to polynomial equations as defined below, the results of
-# which were hard-coded into the rust backend to allow for fast computation.
-# These functions should not be referenced directly, as they also exist in the rust
-# code and are only left here for reference to how the rust was constructed.
-#
-# from numpy.polynomial import Polynomial
-# _COLOR_FITS = [
-#     Polynomial.fit(_COLOR_CORR[:, 0], 1 / _COLOR_CORR[:, 1], 4),
-#     Polynomial.fit(_COLOR_CORR[:, 0], 1 / _COLOR_CORR[:, 2], 4),
-#     Polynomial.fit(_COLOR_CORR[:, 0], 1 / _COLOR_CORR[:, 3], 4),
-#     Polynomial.fit(_COLOR_CORR[:, 0], 1 / _COLOR_CORR[:, 4], 4),
-# ]
+# The values above were fit to polynomial equations, the results of which were
+# hard-coded into the rust backend to allow for fast computation.
 
 
 SUN_COLOR_CORRECTION: list[float] = [1.0049, 1.0193, 1.0024, 1.0012]
 """
 Flux in the reflected light model should be scaled by these values.
+
+This corrects for the Sun's spectral difference to the calibrator.
 """
 
 ZERO_MAGS: list[float] = [306.681, 170.663, 29.0448, 8.2839]
 """
 Non-color corrected values for zero mag corrections in Janskys.
-Magnitude can then be computed via -2.5 log10(flux Jy / zero_point)
 """
 
 ZERO_MAGS_COLOR_CORRECTED: list[float] = [
@@ -119,7 +112,7 @@ ZERO_MAGS_COLOR_CORRECTED: list[float] = [
     1.08 * ZERO_MAGS[2],
     0.96 * ZERO_MAGS[3],
 ]
-"""Color Corrected Zero Mags in units of Jy"""
+"""Color Corrected Zero Mags in units of Jy."""
 
 BAND_WAVELENGTHS: list[float] = [3352.6, 4602.8, 11560.8, 22088.3]
 """Non-color corrected values for the effective central wavelength of the bands (nm)"""
@@ -212,10 +205,10 @@ MISSION_PHASES = {
         frame_meta_table="neowiser_p1bs_frm",
         source_table="neowiser_p1bs_psd",
     ),
-    "Reactivation_2023": MissionPhase(
-        name="Reactivation_2023",
-        jd_start=Time.from_ymd(2023, 1, 1).jd,
-        jd_end=Time.from_ymd(2023, 12, 13.121151733).jd,
+    "Reactivation_2024": MissionPhase(
+        name="Reactivation_2024",
+        jd_start=Time.from_ymd(2024, 1, 1).jd,
+        jd_end=Time.from_ymd(2024, 8, 1.291525).jd,
         bands=(1, 2),
         frame_url=IRSA_URL + "/ibe/data/wise/neowiser/p1bm_frm/",
         frame_meta_table="neowiser_p1bs_frm",
@@ -224,7 +217,7 @@ MISSION_PHASES = {
 }
 """Public released mission phases of WISE."""
 
-for year in range(2015, 2023):
+for year in range(2015, 2024):
     MISSION_PHASES[f"Reactivation_{year}"] = MissionPhase(
         name=f"Reactivation_{year}",
         jd_start=Time.from_ymd(year, 1, 1).jd,
@@ -340,6 +333,10 @@ def mission_phase_from_scan(scan_id: str) -> Optional[MissionPhase]:
             return MISSION_PHASES["Reactivation_2022"]
         elif scan_num <= 57041:
             return MISSION_PHASES["Reactivation_2023"]
+        elif scan_num <= 57626:
+            return MISSION_PHASES["Reactivation_2023"]
+        elif scan_num <= 64272:
+            return MISSION_PHASES["Reactivation_2024"]
         return None
     elif letter == "s":
         if scan_num <= 1615:
@@ -352,8 +349,10 @@ def mission_phase_from_scan(scan_id: str) -> Optional[MissionPhase]:
             return MISSION_PHASES["Reactivation_2021"]
         elif scan_num <= 46369:
             return MISSION_PHASES["Reactivation_2022"]
-        elif scan_num <= 56807:
+        elif scan_num <= 57519:
             return MISSION_PHASES["Reactivation_2023"]
+        elif scan_num <= 64267:
+            return MISSION_PHASES["Reactivation_2024"]
         return None
     return None
 
@@ -376,7 +375,9 @@ def _scan_frame(scan_id, frame_num=None, band=None):
     return scan_id, frame_num, band
 
 
-def fetch_frame(scan_id, frame_num=None, band=None, as_fits=True, im_type="int"):
+def fetch_frame(
+    scan_id, frame_num=None, band=None, as_fits=True, im_type="int", retry=2
+):
     """
     Fetch the WISE FITs frame, if it is not present in the cache, download it first.
 
@@ -413,47 +414,25 @@ def fetch_frame(scan_id, frame_num=None, band=None, as_fits=True, im_type="int")
     # format the url
     frame_num = f"{frame_num:03d}"
     scan_group = str(scan_id[-2:])
-    band = f"w{band:1d}"
+    band_str = f"w{band:1d}"
     ext = "fits" if im_type == "int" else "fits.gz"
-    filename = f"{scan_id}{frame_num}-{band}-{im_type}-1b.{ext}"
+    filename = f"{scan_id}{frame_num}-{band_str}-{im_type}-1b.{ext}"
     url = f"{phase.frame_url}{scan_group}/{scan_id}/{frame_num}/{filename}"
 
     subfolder = os.path.join("wise_frames", scan_group)
 
     file_path = download_file(url, auto_zip=True, subfolder=subfolder)
     if as_fits:
-        return fits.open(file_path)[0]
+        try:
+            return fits.open(file_path)[0]
+        except OSError as exc:
+            if retry == 0:
+                raise ValueError("Failed to fetch WISE frame.") from exc
+            logger.info("WISE file appears corrupted, attempting to fetch again.")
+            os.remove(file_path)
+            return fetch_frame(scan_id, frame_num, band, as_fits, im_type, retry - 1)
     else:
         return file_path
-
-
-_frame_path = cache_path("wise_frames")
-_reorg_msg = (
-    " The organization of wise cached frames has changed, it is recommended"
-    " to delete the old cache files with the shell command: \n"
-    f"rm {_frame_path}/*.fits"
-    "\nThis only has to be done once. Frames are now stored in subfolders "
-    "based on the scan group number. This allows for many more files to be"
-    " saved locally before there are filesystem issues."
-)
-cache_WISE_frame = partial(
-    rename(
-        fetch_frame,
-        additional_msg=(
-            "Use `as_fits=False` with as an argument in the new function." + _reorg_msg
-        ),
-        deprecated_version="v0.2.4",
-        old_name="cache_WISE_frame",
-    ),
-    as_fits=False,
-)
-
-fetch_WISE_frame = rename(
-    fetch_frame,
-    additional_msg=_reorg_msg,
-    deprecated_version="v0.2.4",
-    old_name="fetch_WISE_frame",
-)
 
 
 def plot_frames(
@@ -547,7 +526,7 @@ def plot_frames(
         plt.title(f"W{band:1d}")
 
 
-@lru_cache()
+@lru_cache(maxsize=2)
 def fetch_WISE_fovs(phase):
     """
     Load all FOVs taken during the specified mission phase of WISE.

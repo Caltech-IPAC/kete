@@ -19,7 +19,7 @@ def test_mission_phase_from_scan():
     for letter in "rs":
         scan_id = "10000" + letter
         assert mission_phase_from_scan(scan_id) == MISSION_PHASES["Reactivation_2019"]
-        scan_id = "57042" + letter
+        scan_id = "64273" + letter
         assert mission_phase_from_scan(scan_id) is None
 
     scan_id = "01000a"
