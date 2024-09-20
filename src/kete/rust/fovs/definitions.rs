@@ -196,6 +196,12 @@ impl PyWiseCmos {
         self.0.observer().clone().into()
     }
 
+    /// JD of the observer location.
+    #[getter]
+    pub fn jd(&self) -> f64 {
+        self.0.observer().jd
+    }
+
     /// Direction that the observer is looking.
     #[getter]
     pub fn pointing(&self) -> Vector {
@@ -285,6 +291,12 @@ impl PyGenericRectangle {
         self.0.observer().clone().into()
     }
 
+    /// JD of the observer location.
+    #[getter]
+    pub fn jd(&self) -> f64 {
+        self.0.observer().jd
+    }
+
     /// Direction that the observer is looking.
     #[getter]
     pub fn pointing(&self) -> Vector {
@@ -346,6 +358,12 @@ impl PyGenericCone {
         self.0.observer().clone().into()
     }
 
+    /// JD of the observer location.
+    #[getter]
+    pub fn jd(&self) -> f64 {
+        self.0.observer().jd
+    }
+
     /// Direction that the observer is looking.
     #[getter]
     pub fn pointing(&self) -> Vector {
@@ -382,6 +400,12 @@ impl PyOmniDirectional {
     #[getter]
     pub fn observer(&self) -> PyState {
         self.0.observer().clone().into()
+    }
+
+    /// JD of the observer location.
+    #[getter]
+    pub fn jd(&self) -> f64 {
+        self.0.observer().jd
     }
 
     fn __repr__(&self) -> String {
@@ -453,6 +477,12 @@ impl PyNeosCmos {
     #[getter]
     pub fn observer(&self) -> PyState {
         self.0.observer().clone().into()
+    }
+
+    /// JD of the observer location.
+    #[getter]
+    pub fn jd(&self) -> f64 {
+        self.0.observer().jd
     }
 
     /// Direction that the observer is looking.
@@ -642,6 +672,12 @@ impl PyNeosVisit {
         Vector::new(self.0.pointing().into(), self.0.observer().frame.into())
     }
 
+    /// JD of the observer location.
+    #[getter]
+    pub fn jd(&self) -> f64 {
+        self.0.observer().jd
+    }
+
     /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn side_id(&self) -> u16 {
@@ -777,9 +813,16 @@ impl PyZtfCcdQuad {
         ))
     }
 
+    /// State of the observer for this FOV.
     #[getter]
     pub fn observer(&self) -> PyState {
         self.0.observer().clone().into()
+    }
+
+    /// JD of the observer location.
+    #[getter]
+    pub fn jd(&self) -> f64 {
+        self.0.observer().jd
     }
 
     /// Metadata about where this FOV is in the Survey.
@@ -884,6 +927,12 @@ impl PyZtfField {
     #[getter]
     pub fn observer(&self) -> PyState {
         self.0.observer().clone().into()
+    }
+
+    /// JD of the observer location.
+    #[getter]
+    pub fn jd(&self) -> f64 {
+        self.0.observer().jd
     }
 
     /// Metadata about where this FOV is in the Survey.

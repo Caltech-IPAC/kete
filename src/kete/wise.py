@@ -585,7 +585,9 @@ def fetch_WISE_fovs(phase):
 
         corners = []
         for i in range(4):
-            corners.append(Vector.from_ra_dec(row[f"w1ra{i+1}"], row[f"w1dec{i+1}"]))
+            corners.append(
+                Vector.from_ra_dec(row[f"w1ra{i + 1}"], row[f"w1dec{i + 1}"])
+            )
 
         pointing = np.mean(corners, axis=0)
         pointing = Vector(pointing, frame=Frames.Equatorial)
