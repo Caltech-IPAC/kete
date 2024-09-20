@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   done at the Palomar Observatory.
 - Added sunshield rotation calculation for NEO Surveyor.
 
+### Changed
+
+- Building FOVs from corners, now will flip the corner ordering if the final FOV is
+  pointing in the opposite direction of the input corners. This means Rectangle FOVs
+  cannot be defined from corners with on sky angles greater than 180 degrees.
+
 ### Fixed
 
 - Time scaling bugs when loading times from both Horizons and the MPC were fixed, these
