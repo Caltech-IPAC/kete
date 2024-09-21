@@ -106,19 +106,19 @@ def plot_syndyne(wcs, state, fov, beta, back_days=90, day_step=1, **kwargs):
     model = kete.propagation.NonGravModel.new_dust(beta)
 
     # working backward, calculate the position of the comet at each time step
-    dust_state = kete.propagate_n_body([state], fov.observer.jd - back_days)[0]
+    dust_state = kete.propagate_n_body([state], fov.jd - back_days)[0]
     dust_states = []
-    for jd in np.arange(dust_state.jd, fov.observer.jd, day_step):
+    for jd in np.arange(dust_state.jd, fov.jd, day_step):
         dust_state = kete.propagate_n_body([dust_state], jd)[0]
         dust_states.append(dust_state)
 
     # Now treat all of those points as though they are release dust, and
     # propagated to the current epoch.
     cur_state = kete.propagate_n_body(
-        dust_states, fov.observer.jd, non_gravs=[model] * len(dust_states)
+        dust_states, fov.jd, non_gravs=[model] * len(dust_states)
     )
     # apply a light delay correction
-    cur_state = kete.propagate_two_body(cur_state, fov.observer.jd, fov.observer.pos)
+    cur_state = kete.propagate_two_body(cur_state, fov.jd, fov.observer.pos)
 
     # Setup plotting
     pos = [(x.pos - fov.observer.pos).as_equatorial for x in cur_state]
@@ -148,13 +148,13 @@ def plot_synchrone(
     models = [kete.propagation.NonGravModel.new_dust(beta) for beta in betas]
 
     # propagate the comet back to the release date
-    dust_state = kete.propagate_n_body([state], fov.observer.jd + days_back)[0]
+    dust_state = kete.propagate_n_body([state], fov.jd + days_back)[0]
     dust_states = [dust_state] * len(betas)
 
     # release dust and propagate foward to the current epoch.
-    cur_state = kete.propagate_n_body(dust_states, fov.observer.jd, non_gravs=models)
+    cur_state = kete.propagate_n_body(dust_states, fov.jd, non_gravs=models)
     # apply a light delay correction
-    cur_state = kete.propagate_two_body(cur_state, fov.observer.jd, fov.observer.pos)
+    cur_state = kete.propagate_two_body(cur_state, fov.jd, fov.observer.pos)
 
     # setup plotting
     pos = [(x.pos - fov.observer.pos).as_equatorial for x in cur_state]

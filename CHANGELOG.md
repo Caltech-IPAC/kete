@@ -19,7 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `kete.conversion.bin_data`, which allows for binning matrix data such as images.
 - Added tutorial showing precovery of an asteroid from a 1950's glass plate observation
   done at the Palomar Observatory.
-- Added sunshield rotation calculation for NEO Surveyor.
+- Added sun-shield rotation calculation for NEO Surveyor.
+- All FOV's now have the `.jd()` method which returns the JD of the observer state.
+
+### Changed
+
+- Building FOVs from corners, now will flip the corner ordering if the final FOV is
+  pointing in the opposite direction of the input corners. This means Rectangle FOVs
+  cannot be defined from corners with on sky angles greater than 180 degrees.
 
 ### Fixed
 

@@ -155,17 +155,31 @@ impl OnSkyRectangle {
     }
 
     /// Construct the patch from the 4 corners of the field of view.
-    /// Corners have to be provided in the clockwise order around the center of the FOV.
+    /// The corners have to be provided in order, either clockwise or counter-clockwise.
+    /// This only works for fields of view where the largest angle is less than 180 degrees,
+    /// if the field is wider than that, this will flip the field in the other direction.
     pub fn from_corners(corners: [Vector3<f64>; 4], frame: Frame) -> Self {
         let n1 = corners[0].cross(&corners[1]).normalize();
         let n2 = corners[1].cross(&corners[2]).normalize();
         let n3 = corners[2].cross(&corners[3]).normalize();
         let n4 = corners[3].cross(&corners[0]).normalize();
 
-        Self {
+        let mut new = Self {
             edge_normals: [n1.into(), n2.into(), n3.into(), n4.into()],
             frame,
-        }
+        };
+
+        // If the pointing vector is the wrong direction, we flip signs and re-order the edges.
+        // This will flip the pointing vector the correct way. This is equivalent to calling
+        // from corners with the reversed corner list.
+        if corners[0].dot(&new.pointing()).is_sign_negative() {
+            new.edge_normals
+                .iter_mut()
+                .for_each(|corner| corner.iter_mut().for_each(|v| *v *= -1.0));
+            new.edge_normals.reverse();
+        };
+
+        new
     }
 
     /// Return the 4 corners of the patch.
@@ -370,7 +384,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rectangular_patch_latlong() {
+    fn test_rectangular_patch_latlon() {
         let rot = (45f64).to_radians();
         let fov = OnSkyRectangle::new([1.0, 0.0, 0.0].into(), 0.0, 0.1, 0.2, Frame::Ecliptic);
         let fov_rot = OnSkyRectangle::new([1.0, 0.0, 0.0].into(), rot, 0.1, 0.2, Frame::Ecliptic);

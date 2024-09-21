@@ -186,7 +186,7 @@ the glass plate itself so not visible.
 
     wcs = kete.irsa.plot_fits_image(frame, percentiles=(40, 99))
     for idx in range(len(vis)):
-        vec = vis.obs_vecs()[idx]
+        vec = vis.obs_vecs[idx]
         kete.irsa.annotate_plot(wcs, vec, style='o', px_gap=10, text=vis[idx].desig)
     
     plt.title("Dec 6 1950 - Annotated")
@@ -210,12 +210,12 @@ position causes the alignment to match within the width of the blur.
 
     wcs = kete.irsa.plot_fits_image(frame, percentiles=(30, 99.9))
     kete.irsa.annotate_plot(wcs,
-                            vis.obs_vecs()[1],
+                            vis.obs_vecs[1],
                             style='L',
                             px_gap=5,
                             length=10,
                             text="    " + vis[1].desig)
-    kete.irsa.zoom_plot(wcs, vis.obs_vecs()[1])
+    kete.irsa.zoom_plot(wcs, vis.obs_vecs[1])
     plt.title(f"Dec 6 1950 - Annotated Zoom");
     plt.savefig("data/full_frame_annotated_zoom.png")
     plt.close()
