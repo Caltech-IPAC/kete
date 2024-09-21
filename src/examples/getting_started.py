@@ -178,7 +178,7 @@ visible
 # there is a function on the `SimultaneousState` which provides the vectors from the
 # observer to the objects.
 
-obs_vecs = visible.obs_vecs()[0]
+obs_vecs = visible.obs_vecs[0]
 obs_vecs = obs_vecs.as_equatorial
 obs_vecs.ra, obs_vecs.dec
 

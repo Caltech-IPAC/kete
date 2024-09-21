@@ -59,7 +59,7 @@ frame in the mission phase we have selected.
 .. code-block:: python
 
     # Time of the first exposure.
-    jd = fovs[0].observer.jd
+    jd = fovs[0].jd
 
     # now we propagate the NEOs to that time, including the effects of the 5 largest
     # main belt asteroids to include more precision. This may take a few minutes.
@@ -117,7 +117,7 @@ Here is a codeblock which prints the first `n_show=100` objects.
     for vis in visible[:n_show]:
         for state in vis:
             vec = (state.pos - vis.fov.observer.pos).as_equatorial
-            mjd = kete.Time(vis.fov.observer.jd).mjd
+            mjd = kete.Time(vis.fov.jd).mjd
             print((f"{state.desig:<15s},{mjd:<15.6f},{vec.ra_hms:<15s},"
                    f"{vec.dec_dms:<15s},{vis.fov.scan_id}-{str(vis.fov.frame_num)}"))
 

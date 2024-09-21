@@ -53,9 +53,14 @@ impl FOVList {
         self.0.len()
     }
 
-    pub fn __getitem__(&self, idx: isize) -> PyResult<AllowedFOV> {
-        if idx as usize >= self.0.len() {
-            return Err(PyErr::new::<exceptions::PyIndexError, _>(""));
+    pub fn __getitem__(&self, mut idx: isize) -> PyResult<AllowedFOV> {
+        if idx < 0 {
+            idx += self.0.len() as isize;
+        }
+        if (idx < 0) || (idx as usize >= self.__len__()) {
+            return Err(PyErr::new::<exceptions::PyIndexError, _>(
+                "index out of range",
+            ));
         }
         Ok(self.0[idx as usize].clone())
     }

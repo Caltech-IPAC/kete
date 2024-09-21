@@ -5,7 +5,7 @@ use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::{pyclass, pymethods, PyResult};
 
-use crate::vector::Vector;
+use crate::vector::{Vector, VectorLike};
 use crate::{fovs::AllowedFOV, frame::PyFrames, state::PyState};
 
 /// Representation of a collection of [`State`] at a single point in time.
@@ -118,23 +118,22 @@ impl PySimultaneousStates {
         self.0.states.len()
     }
 
-    pub fn __getitem__(&self, idx: usize) -> PyResult<PyState> {
-        if idx >= self.__len__() {
-            return Err(PyErr::new::<exceptions::PyIndexError, _>(""));
+    pub fn __getitem__(&self, mut idx: isize) -> PyResult<PyState> {
+        if idx < 0 {
+            idx += self.0.states.len() as isize;
         }
-        Ok(self.0.states[idx].clone().into())
+        if (idx < 0) || (idx as usize >= self.__len__()) {
+            return Err(PyErr::new::<exceptions::PyIndexError, _>(
+                "index out of range",
+            ));
+        }
+        Ok(self.0.states[idx as usize].clone().into())
     }
 
     /// If a FOV is present, calculate all vectors from the observer position to the
     /// position of the objects.
-    ///
-    /// Parameters
-    /// ----------
-    /// final_frame :
-    ///     Optional final reference frame. If not provided this will be the frame of
-    ///     the observer.
-    #[pyo3(signature = (final_frame=None))]
-    pub fn obs_vecs(&self, final_frame: Option<PyFrames>) -> PyResult<Vec<Vector>> {
+    #[getter]
+    pub fn obs_vecs(&self) -> PyResult<Vec<Vector>> {
         let fov = self
             .fov()
             .ok_or(PyErr::new::<exceptions::PyValueError, _>(
@@ -143,13 +142,11 @@ impl PySimultaneousStates {
             .unwrap();
         let obs = fov.observer();
 
-        let final_frame = final_frame.unwrap_or(obs.frame.into());
-
         let mut vecs = Vec::with_capacity(self.__len__());
         for state in &self.0.states {
             let diff = Vector::new(state.pos, state.frame.into())
-                .__sub__(crate::vector::VectorLike::Arr(obs.pos));
-            vecs.push(diff.change_frame(final_frame));
+                .__sub__(VectorLike::Vec(Vector::new(obs.pos, obs.frame.into())));
+            vecs.push(diff);
         }
         Ok(vecs)
     }
