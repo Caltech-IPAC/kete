@@ -1,5 +1,6 @@
 //! # Fitting
 //! Fitting tools, including root finding.
+mod lambert;
 mod newton;
 mod reduced_chi2;
 
