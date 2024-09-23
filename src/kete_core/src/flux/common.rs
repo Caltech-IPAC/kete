@@ -181,8 +181,9 @@ pub fn lambertian_flux(
 /// This is a helper function for [`lambertian_flux`], see that function for
 /// more description.
 ///
-/// This is broken out into its own function because of [`crate::flux::frm`] and
-/// [`crate::flux::neatm`] running over the same geometry for different wavelengths.
+/// This is broken out into its own function because of [`crate::flux::FrmParams`] and
+/// [`crate::flux::NeatmParams`] running over the same geometry for different
+/// wavelengths.
 /// This allows this to be computed once per geometry, but then multiple wavelengths
 /// be multiplied against it. This resulted in a 50% speedup in FRM and NEATM overall.
 #[inline(always)]

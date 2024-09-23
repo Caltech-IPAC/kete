@@ -102,7 +102,7 @@ impl Time<UTC> {
     ///
     /// Algorithm from:
     /// "A Machine Algorithm for Processing Calendar Dates"
-    /// https://doi.org/10.1145/364096.364097
+    /// <https://doi.org/10.1145/364096.364097>
     ///
     pub fn year_month_day(&self) -> (i64, u32, u32, f64) {
         let offset = self.jd + 0.5;
@@ -127,7 +127,7 @@ impl Time<UTC> {
     ///
     /// Algorithm from:
     /// "A Machine Algorithm for Processing Calendar Dates"
-    /// https://doi.org/10.1145/364096.364097
+    /// <https://doi.org/10.1145/364096.364097>
     ///
     pub fn from_year_month_day(year: i64, month: u32, day: u32, frac_day: f64) -> Self {
         let frac_day = frac_day - 0.5;

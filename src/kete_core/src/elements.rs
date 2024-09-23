@@ -1,5 +1,5 @@
 //! # Orbital Elements
-//! This allows conversion to and from cometary orbital elements to [`ExactState`].
+//! This allows conversion to and from cometary orbital elements to [`State`].
 use crate::constants::GMS_SQRT;
 use crate::prelude::{Desig, Frame, NeosResult, State};
 use crate::propagation::{compute_eccentric_anomaly, compute_true_anomaly};
@@ -170,7 +170,7 @@ impl CometElements {
         }
     }
 
-    /// Convert cometary elements to an [`ExactState`] if possible.
+    /// Convert cometary elements to an [`State`] if possible.
     ///
     /// Center ID is set to 10.
     pub fn try_to_state(&self) -> NeosResult<State> {

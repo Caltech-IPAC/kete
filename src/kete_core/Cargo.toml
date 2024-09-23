@@ -2,6 +2,9 @@
 name = "kete_core"
 version = "0.3.0"
 edition = "2021"
+readme = "README.md"
+license = "BSD-3-Clause"
+keywords = ["physics", "simulation", "astronomy"]
 
 [lib]
 name = "kete_core"
