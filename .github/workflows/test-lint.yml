@@ -11,6 +11,8 @@ on:
 
 env:
   KETE_CACHE_DIR: ${{ github.workspace }}/docs/data
+  RUSTFLAGS: "-D warnings"
+  RUSTDOCFLAGS: "-D warnings"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -33,6 +35,9 @@ jobs:
     - name: Test with cargo
       run: |
         cargo test
+    - name: Cargo Docs
+      run: |
+        cargo doc
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip setuptools black mypy types-requests numpy

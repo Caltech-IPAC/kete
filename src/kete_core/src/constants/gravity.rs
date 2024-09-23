@@ -35,7 +35,7 @@ pub const EARTH_J4: f64 = -0.00000161098761;
 /// Jupiter J2 Parameter
 ///
 /// "Measurement of Jupiter’s asymmetric gravity field"
-/// https://www.nature.com/articles/nature25776
+/// <https://www.nature.com/articles/nature25776>
 /// Nature 555, 220-220, 2018 March 8
 pub const JUPITER_J2: f64 = 0.014696572;
 

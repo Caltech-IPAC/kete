@@ -3,6 +3,9 @@
 name = "_core"
 version = "0.3.0"
 edition = "2021"
+readme = "README.md"
+license = "BSD-3-Clause"
+keywords = ["physics", "simulation", "astronomy"]
 
 [dependencies]
 kete_core = { version = "*", path = "src/kete_core", features=["pyo3"]}
