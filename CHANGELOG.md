@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Orbital elements calculations for True Anomaly and Eccentric Anomaly were numerically
+  unstable with nearly parabolic orbits.
 - Time scaling bugs when loading times from both Horizons and the MPC were fixed, these
   were causing offsets of about a minute in the loaded states. However it was shifting
   both the perihelion time and the epoch time by the same amount, leading to only minor

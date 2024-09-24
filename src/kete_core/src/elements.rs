@@ -2,7 +2,7 @@
 //! This allows conversion to and from cometary orbital elements to [`State`].
 use crate::constants::GMS_SQRT;
 use crate::prelude::{Desig, Frame, NeosResult, State};
-use crate::propagation::{compute_eccentric_anomaly, compute_true_anomaly};
+use crate::propagation::{compute_eccentric_anomaly, compute_true_anomaly, PARABOLIC_ECC_LIMIT};
 
 use nalgebra::Vector3;
 use std::f64::consts::TAU;
@@ -117,7 +117,7 @@ impl CometElements {
         };
 
         let peri_time: f64 = {
-            if (ecc - 1.0).abs() < 1e-8 {
+            if (ecc - 1.0).abs() < PARABOLIC_ECC_LIMIT {
                 // Parabolic
                 let mut true_anomaly = ecc_vec.angle(pos);
                 if vp_mag.is_sign_negative() {
@@ -126,7 +126,7 @@ impl CometElements {
                 let d = (true_anomaly / 2.0).tan();
                 let dt = (2f64.sqrt() * peri_dist.powf(1.5) / GMS_SQRT) * (d + d.powi(3) / 3.0);
                 epoch - dt
-            } else if ecc < 1e-8 {
+            } else if ecc < 1e-6 {
                 let semi_major = (2.0 / p_mag - v_mag2).recip();
                 let mean_motion = semi_major.abs().powf(-1.5) * GMS_SQRT;
                 // for circular cases mean_anomaly == true_anomaly
@@ -188,8 +188,8 @@ impl CometElements {
     /// Convert orbital elements into a cartesian coordinate position and velocity.
     /// Units are in AU and AU/Day.
     fn to_pos_vel(&self) -> NeosResult<[[f64; 3]; 2]> {
-        let elliptical = self.eccentricity < 0.9999;
-        let hyperbolic = self.eccentricity > 1.0001;
+        let elliptical = self.eccentricity < 1.0 - PARABOLIC_ECC_LIMIT;
+        let hyperbolic = self.eccentricity > 1.0 + PARABOLIC_ECC_LIMIT;
         let parabolic = !elliptical & !hyperbolic;
 
         // these handle parabolic in a non-standard way which allows for the
@@ -262,17 +262,22 @@ impl CometElements {
 
         Ok([pos, vel])
     }
+
     /// Compute the eccentric anomaly for the cometary elements.
     pub fn eccentric_anomaly(&self) -> NeosResult<f64> {
-        compute_eccentric_anomaly(self.eccentricity, self.mean_anomaly(), self.peri_dist)
-            .map(|x| x.rem_euclid(TAU))
+        compute_eccentric_anomaly(self.eccentricity, self.mean_anomaly(), self.peri_dist).map(|x| {
+            match self.eccentricity {
+                ecc if ecc > 1.0 - PARABOLIC_ECC_LIMIT => x,
+                _ => x.rem_euclid(TAU),
+            }
+        })
     }
 
     /// Compute the semi major axis in AU.
     /// NAN is returned if the orbit is parabolic.
     pub fn semi_major(&self) -> f64 {
         match self.eccentricity {
-            ecc if ((ecc - 1.0).abs() <= 1e-5) => f64::NAN,
+            ecc if ((ecc - 1.0).abs() <= PARABOLIC_ECC_LIMIT) => f64::NAN,
             ecc => self.peri_dist / (1.0 - ecc),
         }
     }
@@ -290,7 +295,7 @@ impl CometElements {
     /// Compute the mean motion in radians per day.
     pub fn mean_motion(&self) -> f64 {
         match self.eccentricity {
-            ecc if ((ecc - 1.0).abs() <= 1e-5) => {
+            ecc if ((ecc - 1.0).abs() <= PARABOLIC_ECC_LIMIT) => {
                 GMS_SQRT * 1.5 / 2f64.sqrt() / self.peri_dist.powf(1.5)
             }
             _ => GMS_SQRT / self.semi_major().abs().powf(1.5),
@@ -302,7 +307,7 @@ impl CometElements {
         let mm = self.mean_motion();
         let mean_anomaly = (self.epoch - self.peri_time) * mm;
         match self.eccentricity {
-            ecc if ecc < 0.9999 => mean_anomaly.rem_euclid(TAU),
+            ecc if ecc < 1.0 - PARABOLIC_ECC_LIMIT => mean_anomaly.rem_euclid(TAU),
             _ => mean_anomaly,
         }
     }
@@ -349,6 +354,19 @@ mod tests {
         };
         assert!((elem.true_anomaly().unwrap() - 1.198554792).abs() < 1e-6);
         assert!(elem.to_pos_vel().is_ok());
+
+        let elem = CometElements {
+            desig: Desig::Empty,
+            frame: Frame::Ecliptic,
+            epoch: 2455562.5,
+            eccentricity: 0.99999,
+            inclination: 2.792526803,
+            lon_of_ascending: 0.349065850,
+            peri_time: 2455369.7,
+            peri_arg: -0.8726646259,
+            peri_dist: 0.5,
+        };
+        assert!((elem.true_anomaly().unwrap() - 2.6071638616282553).abs() < 1e-6);
     }
 
     #[test]
