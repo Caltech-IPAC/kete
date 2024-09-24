@@ -265,8 +265,12 @@ impl CometElements {
 
     /// Compute the eccentric anomaly for the cometary elements.
     pub fn eccentric_anomaly(&self) -> NeosResult<f64> {
-        compute_eccentric_anomaly(self.eccentricity, self.mean_anomaly(), self.peri_dist)
-            .map(|x| x.rem_euclid(TAU))
+        compute_eccentric_anomaly(self.eccentricity, self.mean_anomaly(), self.peri_dist).map(|x| {
+            match self.eccentricity {
+                ecc if ecc > 1.0 - PARABOLIC_ECC_LIMIT => x,
+                _ => x.rem_euclid(TAU),
+            }
+        })
     }
 
     /// Compute the semi major axis in AU.
