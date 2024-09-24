@@ -13,6 +13,9 @@ use core::f64;
 use nalgebra::{ComplexField, Vector3};
 use std::f64::consts::TAU;
 
+/// How close to ecc=1 do we assume the orbit is parabolic
+pub const PARABOLIC_ECC_LIMIT: f64 = 1e-3;
+
 /// Compute the eccentric anomaly for all orbital classes.
 ///
 /// # Arguments
@@ -30,13 +33,13 @@ pub fn compute_eccentric_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> Ne
             "Eccentricity must be greater than 0".into(),
         ))?,
         ecc if ecc < 1e-6 => Ok(mean_anom),
-        ecc if ecc < 0.9999 => {
+        ecc if ecc < 1.0 - PARABOLIC_ECC_LIMIT => {
             // Elliptical
             let f = |ecc_anom: f64| -ecc * ecc_anom.sin() + ecc_anom - mean_anom.rem_euclid(TAU);
             let d = |ecc_anom: f64| 1.0 - 1.0 * ecc * ecc_anom.cos();
             Ok(newton_raphson(f, d, mean_anom.rem_euclid(TAU), 1e-11)?.rem_euclid(TAU))
         }
-        ecc if ecc < 1.0001 => {
+        ecc if ecc < 1.0 + PARABOLIC_ECC_LIMIT => {
             // Parabolic
             // Find the zero point of -mean_anom + peri_dist * ecc_anom + ecc_anom.powi(3) / 6.0
             // this is a simple cubic equation which can be solved analytically.
@@ -68,7 +71,9 @@ pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> NeosRes
     let ecc_anom = compute_eccentric_anomaly(ecc, mean_anom, peri_dist)?;
 
     let anom = match ecc {
-        e if (e - 1.0).abs() < 1e-6 => (ecc_anom / (2.0 * peri_dist).sqrt()).atan() * 2.0,
+        e if (e - 1.0).abs() < PARABOLIC_ECC_LIMIT => {
+            (ecc_anom / (2.0 * peri_dist).sqrt()).atan() * 2.0
+        }
         e if e < 1.0 => (((1.0 + ecc) / (1.0 - ecc)).sqrt() * (ecc_anom / 2.0).tan()).atan() * 2.0,
         e if e > 1.0 => {
             ((-(1.0 + ecc) / (1.0 - ecc)).sqrt() * (ecc_anom / 2.0).tanh()).atan() * 2.0
@@ -97,12 +102,12 @@ pub fn eccentric_anomaly_from_true(ecc: f64, true_anom: f64, peri_dist: f64) -> 
             "Eccentricity must be greater than 0".into(),
         ))?,
         e if e < 1e-6 => true_anom,
-        e if e < 0.9999 => {
+        e if e < 1.0 - PARABOLIC_ECC_LIMIT => {
             let (sin_true, cos_true) = true_anom.sin_cos();
             let t = (1.0 + ecc * cos_true).recip();
             ((1.0 - ecc.powi(2)).sqrt() * sin_true * t).atan2((ecc + cos_true) * t)
         }
-        e if e < 1.0001 => (0.5 * true_anom).tan() * (2.0 * peri_dist).sqrt(),
+        e if e < 1.0 + PARABOLIC_ECC_LIMIT => (0.5 * true_anom).tan() * (2.0 * peri_dist).sqrt(),
         _ => {
             let v = (-(1.0 - ecc) / (1.0 + ecc)).sqrt();
             ((true_anom * 0.5).tan() * v).atanh() * 2.0
