@@ -153,7 +153,7 @@ def fetch_frame(
     im_type="sciimg.fits",
     force_download=False,
     retry=2,
-) -> fits.hdu.image.PrimaryHDU:
+):
     """
     Given a ztf FOV, return the FITs file associated with it.
 
