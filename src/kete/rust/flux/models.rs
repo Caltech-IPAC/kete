@@ -171,6 +171,10 @@ impl PyModelResults {
 ///     Beaming parameter, defaults to `1.0`.
 /// g_param :
 ///     G phase coefficient, defaults to `0.15`.
+/// c_hg :
+///     The C_hg constant used to define the relationship between diameter, albedo, and
+///     H mag. This uses the default value defined in the constants, and is not
+///     recommended to be changed.
 /// emissivity:
 ///     Emissivity of the object, defaults to `0.9`.
 /// zero_mags:
@@ -226,6 +230,29 @@ impl PyNeatmParams {
 
     /// Create a new NeatmParams with WISE bands and zero magnitudes for 300k objects.
     /// This requires all 4 albedos to be provided.
+    ///
+    /// Parameters
+    /// ----------
+    /// desig :
+    ///     Name of the object.
+    /// band_albedos :
+    ///     List of albedoes of the object for each wavelength (0-1).
+    /// h_mag:
+    ///     H magnitude of the object in the HG system.
+    /// diam:
+    ///     Diameter of the object in km.
+    /// vis_albedo:
+    ///     Visible geometric albedo of the object.
+    /// beaming :
+    ///     Beaming parameter, defaults to `1.0`.
+    /// g_param :
+    ///     G phase coefficient, defaults to `0.15`.
+    /// c_hg :
+    ///     The C_hg constant used to define the relationship between diameter, albedo, and
+    ///     H mag. This uses the default value defined in the constants, and is not
+    ///     recommended to be changed.
+    /// emissivity:
+    ///     Emissivity of the object, defaults to `0.9`.
     #[staticmethod]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None,
@@ -260,6 +287,29 @@ impl PyNeatmParams {
 
     /// Create a new NeatmParams with NEOS bands and zero magnitudes.
     /// This requires 2 albedos to be provided, one for each band.
+    ///
+    /// Parameters
+    /// ----------
+    /// desig :
+    ///     Name of the object.
+    /// band_albedos :
+    ///     List of albedoes of the object for each wavelength (0-1).
+    /// h_mag:
+    ///     H magnitude of the object in the HG system.
+    /// diam:
+    ///     Diameter of the object in km.
+    /// vis_albedo:
+    ///     Visible geometric albedo of the object.
+    /// beaming :
+    ///     Beaming parameter, defaults to `1.0`.
+    /// g_param :
+    ///     G phase coefficient, defaults to `0.15`.
+    /// c_hg :
+    ///     The C_hg constant used to define the relationship between diameter, albedo, and
+    ///     H mag. This uses the default value defined in the constants, and is not
+    ///     recommended to be changed.
+    /// emissivity:
+    ///     Emissivity of the object, defaults to `0.9`.
     #[staticmethod]
     #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, beaming=None,
         g_param=None, c_hg=None, emissivity=None))]
@@ -460,6 +510,10 @@ impl PyNeatmParams {
 ///     Visible geometric albedo of the object.
 /// g_param :
 ///     G phase coefficient, defaults to `0.15`.
+/// c_hg :
+///     The C_hg constant used to define the relationship between diameter, albedo, and
+///     H mag. This uses the default value defined in the constants, and is not
+///     recommended to be changed.
 /// emissivity:
 ///     Emissivity of the object, defaults to `0.9`.
 /// zero_mags:
@@ -512,6 +566,27 @@ impl PyFrmParams {
 
     /// Create a new FrmParams with WISE bands and zero magnitudes for 300k objects.
     /// This requires all 4 albedos to be provided.
+    ///
+    /// Parameters
+    /// ----------
+    /// desig :
+    ///     Name of the object.
+    /// band_albedos :
+    ///     List of albedoes of the object for each wavelength (0-1).
+    /// h_mag:
+    ///     H magnitude of the object in the HG system.
+    /// diam:
+    ///     Diameter of the object in km.
+    /// vis_albedo:
+    ///     Visible geometric albedo of the object.
+    /// g_param :
+    ///     G phase coefficient, defaults to `0.15`.
+    /// c_hg :
+    ///     The C_hg constant used to define the relationship between diameter, albedo, and
+    ///     H mag. This uses the default value defined in the constants, and is not
+    ///     recommended to be changed.
+    /// emissivity:
+    ///     Emissivity of the object, defaults to `0.9`.
     #[staticmethod]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, g_param=None,
@@ -541,6 +616,27 @@ impl PyFrmParams {
 
     /// Create a new FrmParams with NEOS bands and zero magnitudes.
     /// This requires 2 albedos to be provided, one for each band.
+    ///
+    /// Parameters
+    /// ----------
+    /// desig :
+    ///     Name of the object.
+    /// band_albedos :
+    ///     List of albedoes of the object for each wavelength (0-1).
+    /// h_mag:
+    ///     H magnitude of the object in the HG system.
+    /// diam:
+    ///     Diameter of the object in km.
+    /// vis_albedo:
+    ///     Visible geometric albedo of the object.
+    /// g_param :
+    ///     G phase coefficient, defaults to `0.15`.
+    /// c_hg :
+    ///     The C_hg constant used to define the relationship between diameter, albedo, and
+    ///     H mag. This uses the default value defined in the constants, and is not
+    ///     recommended to be changed.
+    /// emissivity:
+    ///     Emissivity of the object, defaults to `0.9`.
     #[staticmethod]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, g_param=None,
