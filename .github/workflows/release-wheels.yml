@@ -67,3 +67,21 @@ jobs:
         with:
           name: wheel-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: ./wheelhouse/*.whl
+  publish-to-pypi:
+    name: Publish Python 🐍 distribution 📦 to PyPI
+    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    needs:
+    - build_wheels
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/kete
+    permissions:
+      id-token: write
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: wheel-cp*.whl
+        path: wheelhouse/
+    - name: Publish distribution 📦 to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
