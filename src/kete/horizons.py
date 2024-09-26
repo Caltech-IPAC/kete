@@ -102,7 +102,9 @@ def fetch(name, update_name=True, cache=True, update_cache=False, exact_name=Fal
         if "data_arc" in props["orbit"] and props["orbit"]["data_arc"] is not None:
             phys["arc_len"] = float(props["orbit"]["data_arc"])
         if props["orbit"]["covariance"] is not None:
-            cov_epoch = float(props["orbit"]["covariance"]["epoch"])
+            cov_epoch = Time(
+                float(props["orbit"]["covariance"]["epoch"]), scaling="utc"
+            ).jd
             mat = np.nan_to_num(
                 np.array(props["orbit"]["covariance"]["data"], dtype=float)
             )
@@ -116,6 +118,7 @@ def fetch(name, update_name=True, cache=True, update_cache=False, exact_name=Fal
                 elements = {
                     lab: phys[lookup_rev[lab]] for lab in labels if lab in lookup_rev
                 }
+            elements["tp"] = Time(elements.get("tp"), scaling="utc").jd
             params = [(lookup_rev.get(x, x), elements.get(x, np.nan)) for x in labels]
             phys["covariance"] = Covariance(name, cov_epoch, params, mat)
     else:
