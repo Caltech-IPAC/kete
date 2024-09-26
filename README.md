@@ -1,6 +1,7 @@
 # Kete
 
 ![Github Actions](https://github.com/IPAC-SW/kete/actions/workflows/test-lint.yml/badge.svg?branch=main)
+[![DOI](https://zenodo.org/badge/787588564.svg)](https://zenodo.org/badge/latestdoi/787588564)
 
 The repository for Kete, Solar System Survey Simulation Software.
 'Kete' comes from ancient greek mythology, meaning sea monsters, and is the root word
