@@ -20,6 +20,11 @@ MPC catalog at once, without having to do queries on specific objects. It has be
 used to simulate over 10 years of survey time for the NEO Surveyor mission using 10
 million main-belt and near-Earth asteroids.
 
+[Documentation](https://caltech-ipac.github.io/kete/)  
+   - [Examples](https://caltech-ipac.github.io/kete/auto_examples/index.html)
+   - [Tutorials](https://caltech-ipac.github.io/kete/tutorials/index.html)
+
+
 https://github.com/user-attachments/assets/a48491d8-9c15-4659-9022-1767a3aa1e94
 
 Here is a simulation of what the ZTF survey would observe during the entirety of 2023.
@@ -31,7 +36,17 @@ This took about 50 minutes on a desktop computer to compute, and about 40 minute
 to generate the movie.
 
 
+
+
 ## Installation
+
+Kete may be installed using pip:
+
+``` bash
+pip install kete
+```
+
+## Installation - From Source
 
 If kete is built from source, the rust compiler must be installed. Installation
 instructions may be found here: 

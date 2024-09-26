@@ -4,8 +4,13 @@
 name: Release-Wheels
 
 on:
+  release:
+    types: 
+      - published
   push:
     tags: 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+        
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -18,7 +23,7 @@ jobs:
       # Ensure that a wheel builder finishes even if another fails
       fail-fast: false
       matrix:
-        python: [310, 311, 312]
+        python: [39, 310, 311, 312]
         os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           # Window 64 bit
@@ -68,20 +73,21 @@ jobs:
           name: wheel-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: ./wheelhouse/*.whl
   publish-to-pypi:
-    name: Publish Python 🐍 distribution 📦 to PyPI
-    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    name: Publish Kete to PyPI
     needs:
-    - build_wheels
+      - build_wheels
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/kete
     permissions:
       id-token: write
-    - name: Download all the dists
-      uses: actions/download-artifact@v4
-      with:
-        name: wheel-cp*.whl
-        path: wheelhouse/
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheel-*
+          path: dist
+          merge-multiple: true
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
