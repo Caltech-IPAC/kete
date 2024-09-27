@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added worked example of calculating if an object is an Earth Trojan.
+
 ### Fixed
 
 - Epoch and Perihelion time conversion when loading JPL Horizons covariance matrices was
