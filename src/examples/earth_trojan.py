@@ -60,7 +60,10 @@ for shift in sigma_steps:
 
     energy_vals.append(total / m_steps)
 
-cur_energy = 3 * (elem_a.semi_major - 1) ** 2 / (8.0 * mass_planet) + energy_vals[0]
+cur_energy = (
+    3 * (elem_a.semi_major - elem_b.semi_major) ** 2 / (8.0 * mass_planet)
+    + energy_vals[0]
+)
 
 # energy vals start from the current positions and go a full orbit.
 # These may be unrolled so that the Earth is in the middle, the following
