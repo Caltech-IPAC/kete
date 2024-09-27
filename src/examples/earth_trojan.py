@@ -4,8 +4,8 @@ Earth Trojan 2010 TK7
 
 Following some of the analysis from the following papers:
 
-https://doi.org/10.1016/j.icarus.2008.10.018
-https://doi.org/10.1016/j.icarus.2010.05.012
+- `"2002 AA29: Earth's recurrent quasi-satellite?" - Paweł Wajer - Icarus - 2009 <https://doi.org/10.1016/j.icarus.2008.10.018>`_  
+- `"Dynamical evolution of Earth’s quasi-satellites: 2004 GU9 and 2006 FV35" - Paweł Wajer - Icarus - 2010 <https://doi.org/10.1016/j.icarus.2010.05.012>`_
 
 We can perform some dynamical analysis to see if the asteroid 2010 TK7 appears
 to be an Earth trojan.
@@ -13,7 +13,7 @@ to be an Earth trojan.
 The end result of this is a plot which shows the current energy level of the
 orbit, if the current position of the object is in a gravitational "low", and
 the energy line (in red) is below the height of the walls of that low point, then
-the object is at least temporarily trapped.
+the object is at least temporarily captured.
 
 """
 
