@@ -10,6 +10,7 @@ from . import _core
 from .constants import AU_KM
 from .cache import download_file, cache_path
 from .vector import Frames, State
+from ._core import state_to_earth_pos
 
 __all__ = [
     "SpkInfo",
@@ -23,6 +24,7 @@ __all__ = [
     "kernel_header_comments",
     "mpc_code_to_ecliptic",
     "earth_pos_to_ecliptic",
+    "state_to_earth_pos",
     "moon_illumination_frac",
 ]
 

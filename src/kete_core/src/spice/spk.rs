@@ -1,23 +1,23 @@
-/// Loading and reading of states from JPL SPK kernel files.
-///
-/// SPKs are intended to be loaded into a singleton which is accessible via the
-/// [`get_spk_singleton`] function defined below. This singleton is wrapped in a RwLock,
-/// meaning before its use it must by unwrapped. A vast majority of intended use cases
-/// will only be the read case.
-///
-/// Here is a small worked example:
-/// ```
-///     use kete_core::spice::get_spk_singleton;
-///     use kete_core::frames::Frame;
-///
-///     // get a read-only reference to the [`SegmentCollection`]
-///     let singleton = get_spk_singleton().try_read().unwrap();
-///
-///     // get the state of 399 (Earth) with respect to the Sun (10)
-///     let state = singleton.try_get_state(399, 2451545.0, 10, Frame::Ecliptic);
-/// ```
-///
-///
+//! Loading and reading of states from JPL SPK kernel files.
+//!
+//! SPKs are intended to be loaded into a singleton which is accessible via the
+//! [`get_spk_singleton`] function defined below. This singleton is wrapped in a RwLock,
+//! meaning before its use it must by unwrapped. A vast majority of intended use cases
+//! will only be the read case.
+//!
+//! Here is a small worked example:
+//! ```
+//!     use kete_core::spice::get_spk_singleton;
+//!     use kete_core::frames::Frame;
+//!
+//!     // get a read-only reference to the [`SegmentCollection`]
+//!     let singleton = get_spk_singleton().try_read().unwrap();
+//!
+//!     // get the state of 399 (Earth) with respect to the Sun (10)
+//!     let state = singleton.try_get_state(399, 2451545.0, 10, Frame::Ecliptic);
+//! ```
+//!
+//!
 use super::daf::DafFile;
 use super::{spk_segments::*, DAFType};
 use crate::errors::Error;

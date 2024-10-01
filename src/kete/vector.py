@@ -11,10 +11,20 @@ from ._core import (
     State,
     CometElements,
     SimultaneousStates,
+    wgs_lat_lon_to_ecef,
+    ecef_to_wgs_lat_lon,
 )
 
 
-__all__ = ["Frames", "Vector", "State", "CometElements", "SimultaneousStates"]
+__all__ = [
+    "Frames",
+    "Vector",
+    "State",
+    "CometElements",
+    "SimultaneousStates",
+    "wgs_lat_lon_to_ecef",
+    "ecef_to_wgs_lat_lon",
+]
 
 Vector.dec_dms = property(
     fget=lambda self: conversion.dec_degrees_to_dms(self.dec),

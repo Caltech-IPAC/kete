@@ -1,6 +1,6 @@
-/// List of NAIF ID values.
-/// This list is not comprehensive, but is more complete than the C-SPICE
-/// implementation.
+//! List of NAIF ID values.
+//! This list is not comprehensive, but is more complete than the C-SPICE
+//! implementation.
 use lazy_static::lazy_static;
 use serde::Deserialize;
 

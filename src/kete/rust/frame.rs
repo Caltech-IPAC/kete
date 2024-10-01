@@ -75,3 +75,21 @@ pub fn frame_change_py(
 pub fn wgs_lat_lon_to_ecef(lat: f64, lon: f64, h: f64) -> (f64, f64, f64) {
     geodetic_lat_lon_to_ecef(lat.to_radians(), lon.to_radians(), h)
 }
+
+/// Compute WCS84 Geodetic latitude/longitude/height from a ECEF position.
+///
+/// This returns the lat, lon, and height from the WGS84 oblate Earth.
+///
+/// Parameters
+/// ----------
+/// x :
+///     ECEF x position in km.
+/// y :
+///     ECEF y position in km.
+/// z :
+///     ECEF z position in km.
+#[pyfunction]
+#[pyo3(name = "ecef_to_wgs_lat_lon")]
+pub fn ecef_to_wgs_lat_lon(x: f64, y: f64, z: f64) -> (f64, f64, f64) {
+    ecef_to_geodetic_lat_lon(x, y, z)
+}
