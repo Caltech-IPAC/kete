@@ -158,6 +158,11 @@ impl Time<UTC> {
         let datetime = self.to_datetime()?;
         Ok(datetime.to_rfc3339())
     }
+
+    /// J2000 reference time.
+    pub fn j2000() -> Time<TDB> {
+        Time::<TDB>::new(2451545.0)
+    }
 }
 
 impl<T: TimeScale> Time<T> {

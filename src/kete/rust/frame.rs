@@ -93,3 +93,19 @@ pub fn wgs_lat_lon_to_ecef(lat: f64, lon: f64, h: f64) -> (f64, f64, f64) {
 pub fn ecef_to_wgs_lat_lon(x: f64, y: f64, z: f64) -> (f64, f64, f64) {
     ecef_to_geodetic_lat_lon(x, y, z)
 }
+
+/// Calculate the obliquity angle of the Earth at the specified time.
+///
+/// This is only valid for several centuries near J2000.
+///
+/// The equation is from the 2010 Astronomical Almanac.
+///
+/// Parameters
+/// ----------
+/// time:
+///     Calculate the obliquity angle of the Earth at the specified time.
+#[pyfunction]
+#[pyo3(name = "compute_obliquity")]
+pub fn calc_obliquity_py(time: f64) -> f64 {
+    calc_obliquity(time).to_degrees()
+}
