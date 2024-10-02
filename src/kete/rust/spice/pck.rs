@@ -1,10 +1,9 @@
-use kete_core::prelude::*;
+use kete_core::frames::ecef_to_geodetic_lat_lon;
 use kete_core::spice::{get_pck_singleton, get_spk_singleton};
+use kete_core::{constants, prelude::*};
 use pyo3::{pyfunction, PyResult};
 
-use crate::frame::PyFrames;
 use crate::state::PyState;
-use crate::vector::Vector;
 
 /// Load all specified files into the PCK shared memory singleton.
 #[pyfunction]
@@ -64,29 +63,35 @@ pub fn pck_earth_frame_py(
     Ok(PyState(state))
 }
 
-/// Convert a [`State`] to the Earth's surface reference frame.
+/// Convert a [`State`] to the Earth's surface lat/lon/height on the WGS84 reference.
 ///
 /// This requires the `earth_000101_*.pck` file to be loaded which contains the
 /// instantaneous earth frame information. The one provided by kete has dates from
-/// around 2000 to early 2024. New files may be downloaded from the NAIF website for
-/// additional precision or years of epoch. The current file is accurate to ~5 cm
-/// precision.
+/// around 2000 to early 2024, along with predicts into the future. New files may be
+/// downloaded from the NAIF website for additional precision or years of epoch.
 ///
 /// Parameters
 /// ----------
 /// state: State
-///     Convert a given state to an geocentered State.
+///     Convert the given state to latitude, longitude, and height in km on the WGS84
+///     reference.
 #[pyfunction]
-#[pyo3(name = "pck_state_to_frame")]
-pub fn pck_state_to_earth(state: PyState) -> PyResult<Vector> {
+#[pyo3(name = "state_to_earth_pos")]
+pub fn pck_state_to_earth(state: PyState) -> PyResult<(f64, f64, f64)> {
     let pcks = get_pck_singleton().try_read().unwrap();
     let state = state.change_center(399)?.as_ecliptic()?;
     let frame = pcks.try_get_orientation(3000, state.jd())?;
     let mut state = state.0;
 
     state.try_change_frame_mut(frame)?;
+    let [x, y, z] = state.pos;
+    let (lat, lon, height) = ecef_to_geodetic_lat_lon(
+        x * constants::AU_KM,
+        y * constants::AU_KM,
+        z * constants::AU_KM,
+    );
 
-    Ok(Vector::new(state.pos, PyFrames::Undefined))
+    Ok((lat.to_degrees(), lon.to_degrees(), height))
 }
 
 /// Reset the contents of the PCK shared memory to the default set of PCK kernels.

@@ -1,14 +1,14 @@
-/// Support for arbitrary DAF files
-/// DAF is a superset which includes SPK and PCK files.
-///
-/// DAF files are laid out in 1024 Byte "Records"
-/// - The first record is header information about the contents of the file.
-/// - The following N records are text comments.
-/// - Immediately following the comments there is a Summary Record.
-///
-/// These summary records contain the location information for all the contents
-/// of the DAF file.
-///
+//! Support for arbitrary DAF files
+//! DAF is a superset which includes SPK and PCK files.
+//!
+//! DAF files are laid out in 1024 Byte "Records"
+//! - The first record is header information about the contents of the file.
+//! - The following N records are text comments.
+//! - Immediately following the comments there is a Summary Record.
+//!
+//! These summary records contain the location information for all the contents
+//! of the DAF file.
+//!
 use super::binary::{
     bytes_to_f64, bytes_to_f64_vec, bytes_to_i32, bytes_to_i32_vec, bytes_to_string,
     read_bytes_exact, read_f64_vec, read_str,

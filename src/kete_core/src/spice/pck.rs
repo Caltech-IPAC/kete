@@ -1,12 +1,10 @@
-/// Loading and reading of states from JPL PCK kernel files.
-///
-/// PCKs are intended to be loaded into a singleton which is accessible via the
-/// [`get_pck_singleton`] function defined below. This singleton is wrapped in a RwLock,
-/// meaning before its use it must by unwrapped. A vast majority of intended use cases
-/// will only be the read case.
-/// ```
-///
-///
+//! Loading and reading of states from JPL PCK kernel files.
+//!
+//! PCKs are intended to be loaded into a singleton which is accessible via the
+//! [`get_pck_singleton`] function defined below. This singleton is wrapped in a RwLock,
+//! meaning before its use it must by unwrapped. A vast majority of intended use cases
+//! will only be the read case.
+//!
 use super::daf::{DAFType, DafFile};
 use super::pck_segments::PckSegment;
 use crate::errors::{Error, NeosResult};

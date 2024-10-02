@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added worked example of calculating if an object is an Earth Trojan.
+- Add Earth obliquity calculation.
+- Exposed WGS84 coordinate conversions in the python frontend.
 
 ### Fixed
 

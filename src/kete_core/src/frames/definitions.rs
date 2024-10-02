@@ -9,6 +9,7 @@ use std::f64::consts::{PI, TAU};
 use std::fmt::{self, Debug, Display};
 
 use crate::prelude::{Error, NeosResult};
+use crate::time::Time;
 
 /// Coordinate frames.
 ///
@@ -106,6 +107,22 @@ impl Display for Frame {
 ///     - https://en.wikipedia.org/wiki/Axial_tilt#Short_term
 ///     - https://ssd.jpl.nasa.gov/horizons/manual.html#defs
 const OBLIQUITY: f64 = 0.40909280422232897;
+
+/// Compute the angle of obliquity of Earth.
+///
+/// This is only valid for several centuries near J2000.
+///
+/// The equation here is from the 2010 Astronomical Almanac.
+///
+pub fn calc_obliquity(jd: f64) -> f64 {
+    // centuries from j2000
+    let c = (jd - Time::j2000().jd) / 365.25 / 100.0;
+    (23.439279444444444
+        + c * (-0.013010213611111
+            + c * (-5.08611111111111e-08
+                + c * (5.565e-07 - c * (1.6e-10 + -1.1777777777777779e-11 * c)))))
+        .to_radians()
+}
 
 lazy_static! {
     static ref ECLIPTIC_EQUATORIAL_ROT: Rotation3<f64> = {

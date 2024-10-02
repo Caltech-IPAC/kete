@@ -1,19 +1,19 @@
+//! Most users should interface with `pck.rs`, not this module.
+//!
+//! PCK Files are collections of `Segments`, which are ranges of times where the state
+//! of an object is recorded. These segments are typically made up of many individual
+//! `Records`, with an associated maximum and minimum time where they are valid for.
+//!
+//! There are unique structs for each possible segment type, not all are currently
+//! supported. Each segment type must implement the PCKSegment trait, which allows for
+//! the loading and querying of states contained within.
+//!
+//! <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/pck.html>
+//!
+//! There is a lot of repetition in this file, as many of the segment types have very
+//! similar internal structures.
+//!
 use super::daf::DafArray;
-/// Most users should interface with `pck.rs`, not this module.
-///
-/// PCK Files are collections of `Segments`, which are ranges of times where the state
-/// of an object is recorded. These segments are typically made up of many individual
-/// `Records`, with an associated maximum and minimum time where they are valid for.
-///
-/// There are unique structs for each possible segment type, not all are currently
-/// supported. Each segment type must implement the PCKSegment trait, which allows for
-/// the loading and querying of states contained within.
-///
-/// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/pck.html>
-///
-/// There is a lot of repetition in this file, as many of the segment types have very
-/// similar internal structures.
-///
 use super::interpolation::*;
 use super::{jd_to_spice_jd, spice_jds_to_jd};
 use crate::errors::Error;
