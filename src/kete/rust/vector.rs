@@ -10,6 +10,14 @@ use pyo3::prelude::*;
 use pyo3::{PyResult, Python};
 
 /// Vector class which is a vector along with a reference frame.
+///
+/// Parameters
+/// ----------
+/// raw : list
+///     3 floats which define the direction of the vector.
+/// frame :
+///     The frame of reference defining the coordinate frame of the vector, defaults
+///     to ecliptic.
 #[pyclass(sequence, frozen, module = "kete")]
 #[derive(Clone, Debug)]
 pub struct Vector {
@@ -283,6 +291,15 @@ impl Vector {
         self.raw[2]
     }
 
+    /// Rotate this vector around another vector by the provided angle.
+    ///
+    ///
+    /// Parameters
+    /// ----------
+    /// other : Vector
+    ///     The other vector to rotate around.
+    /// angle :
+    ///     The angle in degrees of the rotation.
     pub fn rotate_around(&self, other: VectorLike, angle: f64) -> Self {
         let self_vec = Vector3::from(self.raw);
         let other_vec = other.into_vec(self.frame());

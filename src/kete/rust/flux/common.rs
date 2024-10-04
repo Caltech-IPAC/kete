@@ -1,11 +1,11 @@
 use crate::{frame::PyFrames, vector::VectorLike};
 use itertools::Itertools;
-use nalgebra::UnitVector3;
 use kete_core::constants::{
     w1_color_correction, w2_color_correction, w3_color_correction, w4_color_correction, C_V,
 };
 use kete_core::flux::*;
 use kete_core::prelude::Error;
+use nalgebra::UnitVector3;
 use pyo3::{pyfunction, PyResult};
 
 /// Calculate the visible flux at the observer assuming a convex faceted object made up
@@ -262,6 +262,9 @@ pub fn neatm_thermal_py(
 }
 
 /// Calculate the flux from an object using the FRM thermal model in Jansky.
+///
+/// This is a slightly simplified FRM model, where the pole is assumed to be in the
+/// ecliptic Z direction.
 ///
 /// See :doc:`../auto_examples/plot_thermal_model`
 ///

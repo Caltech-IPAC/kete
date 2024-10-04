@@ -7,6 +7,21 @@ use pyo3::prelude::*;
 
 /// Representation of the state of an object at a specific moment in time.
 ///
+/// Parameters
+/// ----------
+/// desig : String
+///     Name of the object, optional.
+/// jd :
+///     The time of the state in TDB jd time, see :py:class:`kete.Time`.
+/// pos :
+///     Position of the object with respect to the center ID in au.
+/// vel :
+///     Velocity of the object with respect to the center ID in au / day.
+/// frame :
+///     The frame of reference defining the position and velocity vectors.
+/// center_id :
+///     The SPICE kernel ID which defines the central reference point, defaults to the
+///     Sun (10).
 #[pyclass(frozen, module = "kete", name = "State")]
 #[derive(Clone, Debug)]
 pub struct PyState(pub prelude::State);
