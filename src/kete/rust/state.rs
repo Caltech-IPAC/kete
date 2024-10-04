@@ -9,7 +9,7 @@ use pyo3::prelude::*;
 ///
 /// Parameters
 /// ----------
-/// desig : String
+/// desig : str
 ///     Name of the object, optional.
 /// jd :
 ///     The time of the state in TDB jd time, see :py:class:`kete.Time`.

@@ -48,13 +48,67 @@ pub struct PyNeosCmos(pub fov::NeosCmos);
 /// Field of view of a NEOS Visit.
 ///
 /// This is a collection of 4 :py:class:`NeosCmos` chips at the same moment in time.
-///         
-/// +------+-+------+-+------+-+------+   ^
-/// |  1   |g|  2   |g|  3   |g|  4   |   |
-/// |      |a|      |a|      |a|      |   y
-/// |      |p|      |p|      |p|      |   |
-/// +======+=+======+=+======+=+======+   _
-/// |- x ->
+///
+/// .. plot::
+///     :context: close-figs
+///     :include-source: false
+///
+///         import kete
+///         import matplotlib.pyplot as plt
+///
+///         obs = kete.spice.get_state("earth", kete.Time.j2000())
+///         vec = [0, 1, 0]
+///         fov = kete.fov.NeosVisit(7.2, 1.6, 0.1, vec, 0, obs, 0, 0, 0, 0, 0, 0, 1)
+///         plt.figure(figsize=(6, 2))             
+///         for chip in fov:
+///             corners = chip.corners
+///             corners.append(corners[0])
+///             plt.plot([x.lon for x in corners], [y.lat for y in corners], c="k")
+///         plt.gca().set_aspect("equal")
+///         plt.gca().set_axis_off()
+///         plt.annotate("0", [0.07, 0.8], xycoords="axes fraction")
+///         plt.annotate("1", [0.3, 0.8], xycoords="axes fraction")
+///         plt.annotate("2", [0.53, 0.8], xycoords="axes fraction")
+///         plt.annotate("3", [0.75, 0.8], xycoords="axes fraction")
+///         arrow = dict(facecolor="black", shrink=0.01, width=1, headwidth=5)
+///         plt.annotate(
+///             "X",
+///             [0.8, -0.07],
+///             xytext=(0.2, -0.07),
+///             xycoords="axes fraction",
+///             arrowprops=arrow,
+///             horizontalalignment="right",
+///             verticalalignment="center",
+///         )
+///         plt.annotate(
+///             "Y",
+///             [0.98, 0.9],
+///             xytext=(0.98, 0.1),
+///             xycoords="axes fraction",
+///             arrowprops=arrow,
+///             horizontalalignment="center",
+///             verticalalignment="center",
+///         )
+///         plt.annotate(
+///             "Gap",
+///             [0.265, 0.2],
+///             xytext=(0.18, 0.2),
+///             xycoords="axes fraction",
+///             arrowprops=arrow,
+///             horizontalalignment="center",
+///             verticalalignment="center",
+///         )
+///         plt.annotate(
+///             "",
+///             [0.28, 0.2],
+///             xytext=(0.34, 0.2),
+///             xycoords="axes fraction",
+///             arrowprops=arrow,
+///             horizontalalignment="center",
+///             verticalalignment="center",
+///         )
+///         plt.tight_layout()
+//
 ///
 /// Where the bottom is the sun shield.
 ///
