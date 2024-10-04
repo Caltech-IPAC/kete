@@ -15,13 +15,131 @@ use crate::{state::PyState, vector::Vector};
 pub struct PyWiseCmos(pub fov::WiseCmos);
 
 /// Field of view of a NEOS CMOS chip.
+///
+/// Parameters
+/// ----------
+/// pointing :
+///     Vector defining the center of the FOV.
+/// rotation :
+///     Rotation of the FOV in degrees.
+/// observer :
+///     State of the observer.
+/// side_id :
+///     Side ID indicating where we are in the survey.
+/// stack_id :
+///     Stack ID indicating where we are in the survey.
+/// quad_id :
+///     Quad ID indicating where we are in the survey.
+/// loop_id :
+///     Loop ID indicating where we are in the survey.
+/// subloop_id :
+///     Subloop ID indicating where we are in the survey.
+/// exposure_id :
+///     Exposure number indicating where we are in the survey.
+/// cmos_id :
+///     Which chip of the target band this represents.
+/// band :
+///     Band, can be either 1 or 2 to represent NC1/NC2.
 #[pyclass(module = "kete", frozen, name = "NeosCmos")]
 #[derive(Clone, Debug)]
 #[allow(clippy::upper_case_acronyms)]
-
 pub struct PyNeosCmos(pub fov::NeosCmos);
 
 /// Field of view of a NEOS Visit.
+///
+/// This is a collection of 4 :py:class:`NeosCmos` chips at the same moment in time.
+///
+/// .. plot::
+///     :context: close-figs
+///     :include-source: false
+///
+///         import kete
+///         import matplotlib.pyplot as plt
+///
+///         obs = kete.spice.get_state("earth", kete.Time.j2000())
+///         vec = [0, 1, 0]
+///         fov = kete.fov.NeosVisit(7.2, 1.6, 0.1, vec, 0, obs, 0, 0, 0, 0, 0, 0, 1)
+///         plt.figure(figsize=(6, 2))             
+///         for chip in fov:
+///             corners = chip.corners
+///             corners.append(corners[0])
+///             plt.plot([x.lon for x in corners], [y.lat for y in corners], c="k")
+///         plt.gca().set_aspect("equal")
+///         plt.gca().set_axis_off()
+///         plt.annotate("0", [0.07, 0.8], xycoords="axes fraction")
+///         plt.annotate("1", [0.3, 0.8], xycoords="axes fraction")
+///         plt.annotate("2", [0.53, 0.8], xycoords="axes fraction")
+///         plt.annotate("3", [0.75, 0.8], xycoords="axes fraction")
+///         arrow = dict(facecolor="black", shrink=0.01, width=1, headwidth=5)
+///         plt.annotate(
+///             "X",
+///             [0.8, -0.07],
+///             xytext=(0.2, -0.07),
+///             xycoords="axes fraction",
+///             arrowprops=arrow,
+///             horizontalalignment="right",
+///             verticalalignment="center",
+///         )
+///         plt.annotate(
+///             "Y",
+///             [0.98, 0.9],
+///             xytext=(0.98, 0.1),
+///             xycoords="axes fraction",
+///             arrowprops=arrow,
+///             horizontalalignment="center",
+///             verticalalignment="center",
+///         )
+///         plt.annotate(
+///             "Gap",
+///             [0.265, 0.2],
+///             xytext=(0.18, 0.2),
+///             xycoords="axes fraction",
+///             arrowprops=arrow,
+///             horizontalalignment="center",
+///             verticalalignment="center",
+///         )
+///         plt.annotate(
+///             "",
+///             [0.28, 0.2],
+///             xytext=(0.34, 0.2),
+///             xycoords="axes fraction",
+///             arrowprops=arrow,
+///             horizontalalignment="center",
+///             verticalalignment="center",
+///         )
+///         plt.tight_layout()
+//
+///
+/// Where the bottom is the sun shield.
+///
+/// Parameters
+/// ----------
+/// x_width :
+///     Width of the long axis of the Visit in degrees.
+/// y_width :
+///     Width of the short axis of the Visit in degrees.
+/// gap_angle :
+///     Width of the gap between chips in degrees.
+/// pointing :
+///     Vector defining the center of the FOV.
+/// rotation :
+///     Rotation of the FOV in degrees.
+/// observer :
+///     State of the observer.
+/// side_id :
+///     Side ID indicating where we are in the survey.
+/// stack_id :
+///     Stack ID indicating where we are in the survey.
+/// quad_id :
+///     Quad ID indicating where we are in the survey.
+/// loop_id :
+///     Loop ID indicating where we are in the survey.
+/// subloop_id :
+///     Subloop ID indicating where we are in the survey.
+/// exposure_id :
+///     Exposure number indicating where we are in the survey.
+/// band :
+///     Band, can be either 1 or 2 to represent NC1/NC2.
 #[pyclass(module = "kete", frozen, name = "NeosVisit")]
 #[derive(Clone, Debug)]
 #[allow(clippy::upper_case_acronyms)]
@@ -41,16 +159,51 @@ pub struct PyZtfCcdQuad(pub fov::ZtfCcdQuad);
 pub struct PyZtfField(pub fov::ZtfField);
 
 /// Generic Rectangular Field of view.
+///
+/// There are other constructors for this, for example the
+/// :py:meth:`~RectangleFOV.from_corners` which allows construction from the 4 corners
+/// of the field.
+///
+/// Parameters
+/// ----------
+/// pointing :
+///     Vector defining the center of the field of cone.
+/// rotation :
+///     The rotation of the field of view in degrees.
+/// observer :
+///     The state of the observer.
+/// lon_width :
+///     The longitudinal width of the rectangle in degrees.
+/// lat_width:
+///     The latitudinal width of the rectangle in degrees.
 #[pyclass(module = "kete", frozen, name = "RectangleFOV")]
 #[derive(Clone, Debug)]
 pub struct PyGenericRectangle(pub fov::GenericRectangle);
 
 /// Generic Cone field of view.
+///
+/// A cone directly out from the observer's location to a point on the sky.
+///
+/// Parameters
+/// ----------
+/// pointing :
+///     Vector defining the center of the field of cone.
+/// angle :
+///     The radius of the cone in degrees, from the center to the edge of the cone.
+/// observer :
+///     The state of the observer.
 #[pyclass(module = "kete", frozen, name = "ConeFOV")]
 #[derive(Clone, Debug)]
 pub struct PyGenericCone(pub fov::GenericCone);
 
 /// Omni Directional field of view.
+///
+/// This is a good choice when the exact field is not important.
+///
+/// Parameters
+/// ----------
+/// observer :
+///     State of the omniscient observer.
 #[pyclass(module = "kete", frozen, name = "OmniDirectionalFOV")]
 #[derive(Clone, Debug)]
 pub struct PyOmniDirectional(pub fov::OmniDirectional);
@@ -227,7 +380,7 @@ impl PyWiseCmos {
         self.0.rotation.to_degrees()
     }
 
-    /// Corners of this FOV
+    /// Corners of this FOV.
     #[getter]
     pub fn corners(&self) -> Vec<Vector> {
         self.0
@@ -271,14 +424,14 @@ impl PyGenericRectangle {
     }
 
     /// Construct a new Rectangle FOV from the corners.
-    /// The corners must be provided in clockwise order.
+    /// The corners must be provided in order, either clockwise or counter-clockwise.
     ///
     /// Parameters
     /// ----------
     /// corners :
-    ///     4 Vectors which represent the corners of the FOV, these must be provided in clockwise order.
+    ///     4 Vectors which represent the corners of the FOV, these must be provided in order.
     /// observer :
-    ///     Position of the observer as a State.
+    ///     The observer as a State, this defines the time and position of the observer.
     #[staticmethod]
     pub fn from_corners(corners: [VectorLike; 4], observer: PyState) -> Self {
         let corners: [Vector3<f64>; 4] = corners.map(|x| x.into_vec(observer.frame()));
@@ -298,6 +451,7 @@ impl PyGenericRectangle {
     }
 
     /// Direction that the observer is looking.
+    /// Average center of the FOV.
     #[getter]
     pub fn pointing(&self) -> Vector {
         Vector::new(
@@ -318,7 +472,7 @@ impl PyGenericRectangle {
         self.0.lat_width().to_degrees()
     }
 
-    /// Corners of this FOV
+    /// Corners of this FOV.
     #[getter]
     pub fn corners(&self) -> Vec<Vector> {
         self.0
@@ -416,32 +570,6 @@ impl PyOmniDirectional {
 #[pymethods]
 #[allow(clippy::too_many_arguments)]
 impl PyNeosCmos {
-    /// Construct a new NEOS FOV.
-    ///
-    /// Parameters
-    /// ----------
-    /// pointing :
-    ///     Vector defining the center of the FOV.
-    /// rotation :
-    ///     Rotation of the FOV in degrees.
-    /// observer :
-    ///     State of the observer.
-    /// side_id :
-    ///     Side ID indicating where we are in the survey.
-    /// stack_id :
-    ///     Stack ID indicating where we are in the survey.
-    /// quad_id :
-    ///     Quad ID indicating where we are in the survey.
-    /// loop_id :
-    ///     Loop ID indicating where we are in the survey.
-    /// subloop_id :
-    ///     Subloop ID indicating where we are in the survey.
-    /// exposure_id :
-    ///     Exposure number indicating where we are in the survey.
-    /// cmos_id :
-    ///     Which chip of the target band this represents.
-    /// band :
-    ///     Band, can be either 1 or 2 to represent NC1/NC2.
     #[new]
     pub fn new(
         pointing: VectorLike,
@@ -583,48 +711,6 @@ impl PyNeosCmos {
 #[pymethods]
 #[allow(clippy::too_many_arguments)]
 impl PyNeosVisit {
-    /// Construct a new NEOS Visit.
-    ///
-    /// This is a collection of 4 NeosCmos fields of view, representing the
-    /// 4 chips of each band.
-    ///         
-    /// +------+-+------+-+------+-+------+   ^
-    /// |  1   |g|  2   |g|  3   |g|  4   |   |
-    /// |      |a|      |a|      |a|      |   y
-    /// |      |p|      |p|      |p|      |   |
-    /// +======+=+======+=+======+=+======+   _
-    /// |- x ->
-    ///
-    /// Where the bottom is the sun shield.
-    ///
-    /// Parameters
-    /// ----------
-    /// x_width :
-    ///     Width of the long axis of the Visit in degrees.
-    /// y_width :
-    ///     Width of the short axis of the Visit in degrees.
-    /// gap_angle :
-    ///     Width of the gap between chips in degrees.
-    /// pointing :
-    ///     Vector defining the center of the FOV.
-    /// rotation :
-    ///     Rotation of the FOV in degrees.
-    /// observer :
-    ///     State of the observer.
-    /// side_id :
-    ///     Side ID indicating where we are in the survey.
-    /// stack_id :
-    ///     Stack ID indicating where we are in the survey.
-    /// quad_id :
-    ///     Quad ID indicating where we are in the survey.
-    /// loop_id :
-    ///     Loop ID indicating where we are in the survey.
-    /// subloop_id :
-    ///     Subloop ID indicating where we are in the survey.
-    /// exposure_id :
-    ///     Exposure number indicating where we are in the survey.
-    /// band :
-    ///     Band, can be either 1 or 2 to represent NC1/NC2.
     #[new]
     pub fn new(
         x_width: f64,

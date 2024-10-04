@@ -23,12 +23,15 @@ use pyo3::prelude::*;
 /// vs accuracy. Conversion between time scales is only accurate on the millisecond
 /// scale, however internal representation accuracy is on the microsecond scale.
 ///
+/// TDB is treated as equivalent to TT and TCB, because these times only differ by less
+/// than milliseconds per century.
+///
 /// Parameters
 /// ----------
 /// jd:
 ///     Julian Date in days.
 /// scaling:
-///     Accepts 'tdb', 'tai', 'utc', and 'tt', but they are converted to TDB
+///     Accepts 'tdb', 'tai', 'utc', 'tcb', and 'tt', but they are converted to TDB
 ///     immediately.
 #[pyclass(frozen, module = "kete", name = "Time")]
 #[derive(Debug)]
@@ -59,10 +62,11 @@ impl PyTime {
         Ok(match scaling.as_str() {
             "tt" => PyTime(Time::<TDB>::new(jd)),
             "tdb" => PyTime(Time::<TDB>::new(jd)),
+            "tcb" => PyTime(Time::<TDB>::new(jd)),
             "tai" => PyTime(Time::<TAI>::new(jd).tdb()),
             "utc" => PyTime(Time::<UTC>::new(jd).tdb()),
             s => Err(Error::ValueError(format!(
-                "Scaling of type ({:?}) is not supported, must be one of: 'tt', 'tdb', 'tai', 'utc'",
+                "Scaling of type ({:?}) is not supported, must be one of: 'tt', 'tdb', 'tcb', 'tai', 'utc'",
                 s
             )))?,
         })

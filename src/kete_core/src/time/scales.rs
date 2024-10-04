@@ -38,6 +38,7 @@ pub trait TimeScale {
 /// Earth).
 ///
 /// This is in agreement with TT up to about 1.7ms per century.
+/// This is in agreement with TCB up to 0.57ms per century.
 #[derive(Debug, Clone, Copy)]
 pub struct TDB;
 
@@ -51,6 +52,8 @@ impl TimeScale for TDB {
 }
 
 /// UTC Scaled JD time.
+///
+/// The international standard for communicating time.
 #[derive(Debug, Clone, Copy)]
 pub struct UTC;
 
@@ -83,10 +86,7 @@ impl TimeScale for UTC {
 /// TAI Time
 /// This is the international standard for the measurement of time.
 /// Atomic clocks around the world keep track of this time, which then gets
-/// converted to UTC time which is commonly used. UTC Time is an approximation
-/// of the current time with corrections for the rotation rate of the Earth.
-///
-/// As the Earth actually varies in its rotation speed,
+/// converted to UTC time which is commonly used.
 #[derive(Debug, Clone, Copy)]
 pub struct TAI;
 
