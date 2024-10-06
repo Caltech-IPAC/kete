@@ -98,7 +98,7 @@ impl PyNonGravModel {
     /// When alpha=1.0, n=0.0, k=0.0, r0=1.0, and m=2.0, this is equivalent to a
     /// :math:`1/r^2` correction.
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (a1, a2, a3, alpha=0.1112620426, r_0=2.808, m=2.15, n=5.093, k=4.6142))]
+    #[pyo3(signature = (a1=0.0, a2=0.0, a3=0.0, alpha=0.1112620426, r_0=2.808, m=2.15, n=5.093, k=4.6142))]
     #[staticmethod]
     pub fn new_comet(
         a1: f64,

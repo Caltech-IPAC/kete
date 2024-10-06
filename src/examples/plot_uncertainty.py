@@ -33,18 +33,7 @@ jd_s = obj.epoch - 10
 jds = np.arange(jd_s, jd_e, time_step)
 
 # Sample the covariance matrix
-cov = np.array(obj.covariance.cov_matrix)
-samples = kete.covariance.generate_sample_from_cov(n_samples, cov)
-labels, values = zip(*obj.covariance.params)
-values = np.array(values)
-
-# Construct new states from the covariance samples.
-# Keep the current best estimate as the first state.
-states = [obj.state]
-for sample in samples:
-    sample = sample + values
-    params = dict(zip(labels, sample))
-    states.append(kete.CometElements(obj.desig, obj.covariance.epoch, **params).state)
+states, _ = obj.sample(n_samples)
 
 # Propagate the position of all states to all time steps, recording the V mags
 mags = []

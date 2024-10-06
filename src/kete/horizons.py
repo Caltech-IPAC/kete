@@ -1,15 +1,17 @@
 import requests
 import os
 from typing import Union, Optional
+import warnings
 
 import base64
 import json
 import numpy as np
 
-from ._core import HorizonsProperties, Covariance, NonGravModel
+from ._core import HorizonsProperties, Covariance, NonGravModel, CometElements
 from .mpc import unpack_designation, pack_designation
 from .time import Time
 from .cache import cache_path
+from .covariance import generate_sample_from_cov
 
 __all__ = ["HorizonsProperties", "fetch_spice_kernel"]
 
@@ -113,6 +115,9 @@ def fetch(name, update_name=True, cache=True, update_cache=False, exact_name=Fal
                 elements = {
                     lab: phys[lookup_rev[lab]] for lab in labels if lab in lookup_rev
                 }
+            if "model_pars" in props["orbit"]:
+                for param in props["orbit"]["model_pars"]:
+                    elements[param["name"]] = float(param["value"])
             params = [(lookup_rev.get(x, x), elements.get(x, np.nan)) for x in labels]
             phys["covariance"] = Covariance(name, cov_epoch, params, mat)
     else:
@@ -262,6 +267,13 @@ def _nongrav(self) -> NonGravModel:
         return None
 
     for vals in orbit["model_pars"]:
+        if vals["name"] == "DT":
+            warnings.warn(
+                "Non-gravitational model from Horizons includes time delay, "
+                "this is currently not supported by kete. A non-grav model "
+                "is still returned, however it will not be as precise."
+            )
+            continue
         if vals["name"] not in lookup:
             raise ValueError("Unknown non-grav values: ", vals)
         params[lookup[vals["name"]]] = float(vals["value"])
@@ -269,9 +281,69 @@ def _nongrav(self) -> NonGravModel:
     return NonGravModel.new_comet(**params)
 
 
+def _sample(self, n_samples):
+    """
+    Sample the covariance matrix for this object, returning `n_samples` of states and
+    non-gravitational models, which may be used to propagate the orbit in time.
+
+    This uses the full covariance matrix in order to correctly sample the object's orbit
+    with all correlations, including correlations with the non-gravitational forces.
+
+    Parameters
+    ----------
+    n_samples :
+        The number of samples to take of the covariance.
+    """
+    matrix = self.covariance.cov_matrix
+    epoch = self.covariance.epoch
+    samples = generate_sample_from_cov(n_samples, matrix)
+
+    elem_keywords = [
+        "eccentricity",
+        "inclination",
+        "lon_of_ascending",
+        "peri_arg",
+        "peri_dist",
+        "peri_time",
+    ]
+
+    lookup = {
+        "A1": "a1",
+        "A2": "a2",
+        "A3": "a3",
+        "ALN": "alpha",
+        "NM": "m",
+        "R0": "r_0",
+        "NK": "k",
+        "NN": "n",
+    }
+    best_params = {lookup.get(k, k): v for k, v in self.covariance.params}
+
+    if 'DT' in best_params:
+        warnings.warn(
+            "Non-gravitational model from Horizons includes time delay, "
+            "this is currently not supported by kete. A non-grav model "
+            "is still returned, however it will not be as precise."
+        )
+    states = []
+    non_gravs = []
+    for sample in samples:
+        cur_params = {k: v + d for (k, v), d in zip(best_params.items(), sample)}
+        elem_params = {x: cur_params.pop(x) for x in elem_keywords}
+        state = CometElements(self.desig, epoch, **elem_params).state
+        if 'DT' in cur_params:
+            del cur_params['DT']
+        non_grav = NonGravModel.new_comet(**cur_params)
+        states.append(state)
+        non_gravs.append(non_grav)
+
+    return states, non_gravs
+
+
 HorizonsProperties.fetch = fetch
 HorizonsProperties.json = _json
 HorizonsProperties.non_grav = _nongrav
+HorizonsProperties.sample = _sample
 
 
 def fetch_spice_kernel(
