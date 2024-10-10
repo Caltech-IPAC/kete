@@ -1,7 +1,6 @@
 import requests
 import os
 from typing import Union, Optional
-import warnings
 
 import base64
 import json
@@ -14,6 +13,25 @@ from .cache import cache_path
 from .covariance import generate_sample_from_cov
 
 __all__ = ["HorizonsProperties", "fetch_spice_kernel"]
+
+
+_PARAM_MAP = {
+    "a1": "a1",
+    "a2": "a2",
+    "a3": "a3",
+    "aln": "alpha",
+    "nm": "m",
+    "r0": "r_0",
+    "nk": "k",
+    "nn": "n",
+    "dt": "dt",
+    "e": "eccentricity",
+    "q": "peri_dist",
+    "tp": "peri_time",
+    "node": "lon_of_ascending",
+    "peri": "peri_arg",
+    "i": "inclination",
+}
 
 
 def fetch(name, update_name=True, cache=True, update_cache=False, exact_name=False):
@@ -233,12 +251,7 @@ def _json(self) -> dict:
     return _fetch_json(self.desig, update_cache=False)
 
 
-@property  # type: ignore
-def _nongrav(self) -> NonGravModel:
-    """
-    The non-gravitational forces model from the values returned from horizons.
-    """
-
+def _nongrav_params(self) -> dict:
     # default parameters used by jpl horizons for their non-grav models.
     params = {
         "a1": 0.0,
@@ -249,17 +262,7 @@ def _nongrav(self) -> NonGravModel:
         "m": 2.15,
         "n": 5.093,
         "k": 4.6142,
-    }
-
-    lookup = {
-        "A1": "a1",
-        "A2": "a2",
-        "A3": "a3",
-        "ALN": "alpha",
-        "NM": "m",
-        "R0": "r_0",
-        "NK": "k",
-        "NN": "n",
+        "dt": 0.0,
     }
 
     orbit = self.json["orbit"]
@@ -267,17 +270,18 @@ def _nongrav(self) -> NonGravModel:
         return None
 
     for vals in orbit["model_pars"]:
-        if vals["name"] == "DT":
-            warnings.warn(
-                "Non-gravitational model from Horizons includes time delay, "
-                "this is currently not supported by kete. A non-grav model "
-                "is still returned, however it will not be as precise."
-            )
-            continue
-        if vals["name"] not in lookup:
+        if vals["name"].lower() not in params:
             raise ValueError("Unknown non-grav values: ", vals)
-        params[lookup[vals["name"]]] = float(vals["value"])
+        params[_PARAM_MAP[vals["name"].lower()]] = float(vals["value"])
+    return params
 
+
+@property  # type: ignore
+def _nongrav(self) -> NonGravModel:
+    """
+    The non-gravitational forces model from the values returned from horizons.
+    """
+    params = _nongrav_params(self)
     return NonGravModel.new_comet(**params)
 
 
@@ -307,32 +311,20 @@ def _sample(self, n_samples):
         "peri_time",
     ]
 
-    lookup = {
-        "A1": "a1",
-        "A2": "a2",
-        "A3": "a3",
-        "ALN": "alpha",
-        "NM": "m",
-        "R0": "r_0",
-        "NK": "k",
-        "NN": "n",
-    }
-    best_params = {lookup.get(k, k): v for k, v in self.covariance.params}
+    labels = self.json["orbit"]["covariance"]["labels"]
+    mapped_label = [_PARAM_MAP[k.lower()] for k in labels]
 
-    if 'DT' in best_params:
-        warnings.warn(
-            "Non-gravitational model from Horizons includes time delay, "
-            "this is currently not supported by kete. A non-grav model "
-            "is still returned, however it will not be as precise."
-        )
+    best_params = _nongrav_params(self)
+    for prop in elem_keywords:
+        best_params[prop] = getattr(self, prop)
     states = []
     non_gravs = []
     for sample in samples:
-        cur_params = {k: v + d for (k, v), d in zip(best_params.items(), sample)}
+        cur_params = {
+            label: best_params[label] + d for label, d in zip(mapped_label, sample)
+        }
         elem_params = {x: cur_params.pop(x) for x in elem_keywords}
         state = CometElements(self.desig, epoch, **elem_params).state
-        if 'DT' in cur_params:
-            del cur_params['DT']
         non_grav = NonGravModel.new_comet(**cur_params)
         states.append(state)
         non_gravs.append(non_grav)

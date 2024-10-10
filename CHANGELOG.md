@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `sample` to the `HorizonsProperties` object, allowing sampling of the orbit's
   uncertainty.
+- Added support for time delayed non-gravitational forces, as is found a number of
+  comets in JPL Horizons.
 
 ## [v1.0.1]
 
