@@ -267,7 +267,7 @@ def _nongrav_params(self) -> dict:
 
     orbit = self.json["orbit"]
     if "model_pars" not in orbit:
-        return None
+        return params
 
     for vals in orbit["model_pars"]:
         if vals["name"].lower() not in params:
