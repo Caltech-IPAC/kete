@@ -1,6 +1,9 @@
 use nalgebra::Vector3;
+use pathfinding::num_traits::Zero;
 
 use crate::constants::{C_AU_PER_DAY_INV_SQUARED, GMS};
+
+use super::analytic_2_body;
 
 /// Non-Gravitational models.
 /// These are used during integration to model non-gravitational forces on particles in
@@ -39,6 +42,9 @@ pub enum NonGravModel {
         n: f64,
         /// Coefficients for the g(r) function defined above.
         k: f64,
+        /// Time delay for the forces, this is applied by propagating the object to the
+        /// specified delay before computing the forces.
+        dt: f64,
     },
 
     /// Dust model, including Solar Radiation Pressure (SRP) and the Poynting-Robertson
@@ -67,6 +73,7 @@ impl NonGravModel {
         m: f64,
         n: f64,
         k: f64,
+        dt: f64,
     ) -> Self {
         Self::JplComet {
             a1,
@@ -77,6 +84,7 @@ impl NonGravModel {
             m,
             n,
             k,
+            dt,
         }
     }
 
@@ -96,6 +104,7 @@ impl NonGravModel {
             m: 2.15,
             n: 5.093,
             k: 4.6142,
+            dt: 0.0,
         }
     }
 
@@ -128,12 +137,18 @@ impl NonGravModel {
                 m,
                 n,
                 k,
+                dt,
             } => {
+                let mut pos = *pos;
                 let pos_norm = pos.normalize();
-                let rr0 = pos.norm() / r_0;
-                let scale = alpha * rr0.powf(-m) * (1.0 + rr0.powf(*n)).powf(-k);
                 let t_vec = (vel - pos_norm * vel.dot(&pos_norm)).normalize();
                 let n_vec = t_vec.cross(&pos_norm).normalize();
+
+                if !dt.is_zero() {
+                    (pos, _) = analytic_2_body(-dt, &pos, vel, None).unwrap();
+                };
+                let rr0 = pos.norm() / r_0;
+                let scale = alpha * rr0.powf(-m) * (1.0 + rr0.powf(*n)).powf(-k);
                 *accel += pos_norm * (scale * a1);
                 *accel += t_vec * (scale * a2);
                 *accel += n_vec * (scale * a3);

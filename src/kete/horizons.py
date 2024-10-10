@@ -6,12 +6,32 @@ import base64
 import json
 import numpy as np
 
-from ._core import HorizonsProperties, Covariance, NonGravModel
+from ._core import HorizonsProperties, Covariance, NonGravModel, CometElements
 from .mpc import unpack_designation, pack_designation
 from .time import Time
 from .cache import cache_path
+from .covariance import generate_sample_from_cov
 
 __all__ = ["HorizonsProperties", "fetch_spice_kernel"]
+
+
+_PARAM_MAP = {
+    "a1": "a1",
+    "a2": "a2",
+    "a3": "a3",
+    "aln": "alpha",
+    "nm": "m",
+    "r0": "r_0",
+    "nk": "k",
+    "nn": "n",
+    "dt": "dt",
+    "e": "eccentricity",
+    "q": "peri_dist",
+    "tp": "peri_time",
+    "node": "lon_of_ascending",
+    "peri": "peri_arg",
+    "i": "inclination",
+}
 
 
 def fetch(name, update_name=True, cache=True, update_cache=False, exact_name=False):
@@ -113,6 +133,9 @@ def fetch(name, update_name=True, cache=True, update_cache=False, exact_name=Fal
                 elements = {
                     lab: phys[lookup_rev[lab]] for lab in labels if lab in lookup_rev
                 }
+            if "model_pars" in props["orbit"]:
+                for param in props["orbit"]["model_pars"]:
+                    elements[param["name"]] = float(param["value"])
             params = [(lookup_rev.get(x, x), elements.get(x, np.nan)) for x in labels]
             phys["covariance"] = Covariance(name, cov_epoch, params, mat)
     else:
@@ -228,12 +251,7 @@ def _json(self) -> dict:
     return _fetch_json(self.desig, update_cache=False)
 
 
-@property  # type: ignore
-def _nongrav(self) -> NonGravModel:
-    """
-    The non-gravitational forces model from the values returned from horizons.
-    """
-
+def _nongrav_params(self) -> dict:
     # default parameters used by jpl horizons for their non-grav models.
     params = {
         "a1": 0.0,
@@ -244,34 +262,80 @@ def _nongrav(self) -> NonGravModel:
         "m": 2.15,
         "n": 5.093,
         "k": 4.6142,
-    }
-
-    lookup = {
-        "A1": "a1",
-        "A2": "a2",
-        "A3": "a3",
-        "ALN": "alpha",
-        "NM": "m",
-        "R0": "r_0",
-        "NK": "k",
-        "NN": "n",
+        "dt": 0.0,
     }
 
     orbit = self.json["orbit"]
     if "model_pars" not in orbit:
-        return None
+        return params
 
     for vals in orbit["model_pars"]:
-        if vals["name"] not in lookup:
+        if vals["name"].lower() not in params:
             raise ValueError("Unknown non-grav values: ", vals)
-        params[lookup[vals["name"]]] = float(vals["value"])
+        params[_PARAM_MAP[vals["name"].lower()]] = float(vals["value"])
+    return params
 
+
+@property  # type: ignore
+def _nongrav(self) -> NonGravModel:
+    """
+    The non-gravitational forces model from the values returned from horizons.
+    """
+    params = _nongrav_params(self)
     return NonGravModel.new_comet(**params)
+
+
+def _sample(self, n_samples):
+    """
+    Sample the covariance matrix for this object, returning `n_samples` of states and
+    non-gravitational models, which may be used to propagate the orbit in time.
+
+    This uses the full covariance matrix in order to correctly sample the object's orbit
+    with all correlations, including correlations with the non-gravitational forces.
+
+    Parameters
+    ----------
+    n_samples :
+        The number of samples to take of the covariance.
+    """
+    matrix = self.covariance.cov_matrix
+    epoch = self.covariance.epoch
+    samples = generate_sample_from_cov(n_samples, matrix)
+
+    elem_keywords = [
+        "eccentricity",
+        "inclination",
+        "lon_of_ascending",
+        "peri_arg",
+        "peri_dist",
+        "peri_time",
+    ]
+
+    labels = self.json["orbit"]["covariance"]["labels"]
+    mapped_label = [_PARAM_MAP[k.lower()] for k in labels]
+
+    best_params = _nongrav_params(self)
+    for prop in elem_keywords:
+        best_params[prop] = getattr(self, prop)
+    states = []
+    non_gravs = []
+    for sample in samples:
+        cur_params = {
+            label: best_params[label] + d for label, d in zip(mapped_label, sample)
+        }
+        elem_params = {x: cur_params.pop(x) for x in elem_keywords}
+        state = CometElements(self.desig, epoch, **elem_params).state
+        non_grav = NonGravModel.new_comet(**cur_params)
+        states.append(state)
+        non_gravs.append(non_grav)
+
+    return states, non_gravs
 
 
 HorizonsProperties.fetch = fetch
 HorizonsProperties.json = _json
 HorizonsProperties.non_grav = _nongrav
+HorizonsProperties.sample = _sample
 
 
 def fetch_spice_kernel(

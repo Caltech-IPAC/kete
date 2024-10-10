@@ -97,8 +97,11 @@ impl PyNonGravModel {
     ///
     /// When alpha=1.0, n=0.0, k=0.0, r0=1.0, and m=2.0, this is equivalent to a
     /// :math:`1/r^2` correction.
+    ///
+    /// This includes an optional time delay, which the non-gravitational forces are
+    /// time delayed.
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (a1, a2, a3, alpha=0.1112620426, r_0=2.808, m=2.15, n=5.093, k=4.6142))]
+    #[pyo3(signature = (a1=0.0, a2=0.0, a3=0.0, alpha=0.1112620426, r_0=2.808, m=2.15, n=5.093, k=4.6142, dt=0.0))]
     #[staticmethod]
     pub fn new_comet(
         a1: f64,
@@ -109,6 +112,7 @@ impl PyNonGravModel {
         m: f64,
         n: f64,
         k: f64,
+        dt: f64,
     ) -> Self {
         Self(NonGravModel::JplComet {
             a1,
@@ -119,6 +123,7 @@ impl PyNonGravModel {
             m,
             n,
             k,
+            dt,
         })
     }
 
@@ -127,7 +132,7 @@ impl PyNonGravModel {
     ///
     /// See :py:meth:`NonGravModel.new_comet` for more details.
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (a1, a2, a3, alpha=1.0, r_0=1.0, m= 2.0, n=1.0, k=0.0))]
+    #[pyo3(signature = (a1, a2, a3, alpha=1.0, r_0=1.0, m= 2.0, n=1.0, k=0.0, dt=0.0))]
     #[staticmethod]
     pub fn new_asteroid(
         a1: f64,
@@ -138,6 +143,7 @@ impl PyNonGravModel {
         m: f64,
         n: f64,
         k: f64,
+        dt: f64,
     ) -> Self {
         Self(NonGravModel::JplComet {
             a1,
@@ -148,6 +154,7 @@ impl PyNonGravModel {
             m,
             n,
             k,
+            dt,
         })
     }
 
@@ -166,9 +173,10 @@ impl PyNonGravModel {
                 m,
                 n,
                 k,
+                dt,
             } => format!(
-                "kete.propagation.NonGravModel.new_comet(a1={:?}, a2={:?}, a3={:?}, alpha={:?}, r_0={:?}, m={:?}, n={:?}, k={:?})",
-                a1, a2, a3, alpha, r_0, m, n, k,
+                "kete.propagation.NonGravModel.new_comet(a1={:?}, a2={:?}, a3={:?}, alpha={:?}, r_0={:?}, m={:?}, n={:?}, k={:?}, dt={:?})",
+                a1, a2, a3, alpha, r_0, m, n, k, dt
             ),
         }
     }
