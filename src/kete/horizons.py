@@ -495,5 +495,7 @@ def fetch_known_orbit_data(update_cache=False):
         "pdes": "desig",
     }
     columns = [lookup.get(c, c) for c in columns]
-
-    return pd.DataFrame.from_records(file_contents["data"], columns=columns)
+    table = pd.DataFrame.from_records(file_contents["data"], columns=columns)
+    others = table.columns.difference(['desig', 'spkid', 'orbit_id'])
+    table[others] = table[others].apply(pd.to_numeric, errors='coerce')
+    return table
