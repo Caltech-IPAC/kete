@@ -225,21 +225,16 @@ pub trait FovLike: Sync + Sized {
             .collect()
     }
 
-    /// Given a collection of static positions, return all which are visible.
-    fn check_statics(&self, pos: &[Vector3<f64>]) -> Vec<Option<(Vec<Vector3<f64>>, FOV)>> {
-        let mut visible: Vec<Vec<Vector3<f64>>> = vec![Vec::new(); self.n_patches()];
+    /// Given a collection of static positions, return the index of the input vector
+    /// which was visible.
+    fn check_statics(&self, pos: &[Vector3<f64>]) -> Vec<Option<(Vec<usize>, FOV)>> {
+        let mut visible: Vec<Vec<usize>> = vec![Vec::new(); self.n_patches()];
 
-        let vis_pos: Vec<_> = pos
-            .iter()
-            .filter_map(|p| match self.check_static(p) {
-                (idx, Contains::Inside) => Some((idx, p)),
-                _ => None,
-            })
-            .collect();
-
-        vis_pos
-            .into_iter()
-            .for_each(|(patch_idx, p)| visible[patch_idx].push(*p));
+        pos.iter().enumerate().for_each(|(vec_idx, p)| {
+            if let (patch_idx, Contains::Inside) = self.check_static(p) {
+                visible[patch_idx].push(vec_idx)
+            }
+        });
 
         visible
             .into_iter()

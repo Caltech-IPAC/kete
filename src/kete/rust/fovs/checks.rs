@@ -3,10 +3,7 @@ use kete_core::{fov::FOV, propagation::propagate_n_body_spk};
 use pyo3::prelude::*;
 use rayon::prelude::*;
 
-use crate::{
-    simult_states::PySimultaneousStates,
-    vector::{Vector, VectorLike},
-};
+use crate::{simult_states::PySimultaneousStates, vector::VectorLike};
 
 /// Given states and field of view, return only the objects which are visible to the
 /// observer, adding a correction for optical light delay.
@@ -135,15 +132,20 @@ pub fn fov_spk_checks_py(obj_ids: Vec<i64>, fovs: FOVListLike) -> Vec<PySimultan
 
 /// Check if a list of static sky positions are present in the given Field of View list.
 ///
-/// This returns a list of tuples, where the first entry in the tuple is the vector of
-/// all of the points in the provided FOV, and the second entry is the original FOV.
+/// This returns a list of tuples, where the first entry in the tuple is a vector of
+/// indices, where if the input vector shows up in the specific FOV, the index
+/// corresponding to that vector is returned, and the second entry is the original FOV.
+///
+/// An example:
+/// Given a list of containing 6 vectors, and 2 FOVs ('a' and 'b'). If the first 3
+/// vectors are in field 'a' and the second 3 in 'b', then the returned values will be
+/// `[([0, 1, 2], fov_a), ([3, 4, 5], fov_b)`. If a third fov is provided,
+/// but none of the vectors are contained within it, then nothing will be returned.
 ///
 /// Parameters
 /// ----------
 /// pos :
 ///     Collection of Vectors defining sky positions from the point of view of the observer.
-///     These vectors are automatically converted to the Ecliptic frame, results will be
-///     returned in that frame as well.
 /// fovs :
 ///     Collection of Field of Views to check.
 #[pyfunction]
@@ -151,7 +153,7 @@ pub fn fov_spk_checks_py(obj_ids: Vec<i64>, fovs: FOVListLike) -> Vec<PySimultan
 pub fn fov_static_checks_py(
     pos: Vec<VectorLike>,
     fovs: FOVListLike,
-) -> Vec<(Vec<Vector>, AllowedFOV)> {
+) -> Vec<(Vec<usize>, AllowedFOV)> {
     let fovs = fovs.into_sorted_vec_fov();
     let pos: Vec<_> = pos
         .into_iter()
@@ -163,15 +165,7 @@ pub fn fov_static_checks_py(
             let vis: Vec<_> = fov
                 .check_statics(&pos)
                 .into_iter()
-                .filter_map(|pop| {
-                    pop.map(|(p_vec, fov)| {
-                        let p_vec = p_vec
-                            .into_iter()
-                            .map(|p| Vector::new(p.into(), crate::frame::PyFrames::Ecliptic))
-                            .collect();
-                        (p_vec, fov.into())
-                    })
-                })
+                .filter_map(|pop| pop.map(|(p_vec, fov)| (p_vec, fov.into())))
                 .collect();
             match vis.is_empty() {
                 true => None,
