@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Added
+
+- Added support for loading orbit information from JPL Horizons
+
+### Changed
+
+- Changed the return signature for `fov_static_check`, this now returns indices of
+  the inputs, instead of the original inputs themselves.
+
+
 ## [v1.0.2]
 
 ### Added

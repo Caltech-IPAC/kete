@@ -19,7 +19,7 @@ from .time import Time
 from .cache import cache_path
 from .covariance import generate_sample_from_cov
 
-__all__ = ["HorizonsProperties", "fetch_spice_kernel"]
+__all__ = ["HorizonsProperties", "fetch_spice_kernel", "fetch_known_orbit_data"]
 
 
 _PARAM_MAP = {
@@ -459,6 +459,9 @@ def fetch_known_orbit_data(update_cache=False):
     This gets loaded as a pandas table, and if the file already exists in cache, then
     the contents of this file are returned by default.
 
+    The constructed pandas table may be turned into states using the
+    :func:`~kete.mpc.table_to_states` function.
+
     Parameters
     ==========
     update_cache :
@@ -496,6 +499,6 @@ def fetch_known_orbit_data(update_cache=False):
     }
     columns = [lookup.get(c, c) for c in columns]
     table = pd.DataFrame.from_records(file_contents["data"], columns=columns)
-    others = table.columns.difference(['desig', 'spkid', 'orbit_id'])
-    table[others] = table[others].apply(pd.to_numeric, errors='coerce')
+    others = table.columns.difference(["desig", "spkid", "orbit_id"])
+    table[others] = table[others].apply(pd.to_numeric, errors="coerce")
     return table
