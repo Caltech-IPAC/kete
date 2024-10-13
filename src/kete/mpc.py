@@ -14,7 +14,26 @@ from .cache import download_json
 from . import _core
 
 
-__all__ = ["unpack_designation", "pack_designation", "find_obs_code"]
+__all__ = [
+    "unpack_designation",
+    "pack_designation",
+    "fetch_known_packed_designations",
+    "fetch_known_designations",
+    "fetch_known_orbit_data",
+    "fetch_known_comet_orbit_data",
+    "find_obs_code",
+    "table_to_states",
+    "unpack_permanent_designation",
+    "pack_permanent_designation",
+    "unpack_provisional_designation",
+    "pack_provisional_designation",
+    "unpack_satellite_designation",
+    "pack_satellite_designation",
+    "unpack_comet_designation",
+    "pack_comet_designation",
+    "normalize_names",
+]
+
 _mpc_hex = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 logger = logging.getLogger(__name__)

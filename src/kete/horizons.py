@@ -1,10 +1,17 @@
+"""
+Interface functions and classes to JPL Horizons web services.
+"""
+
+import gzip
 import requests
 import os
 from typing import Union, Optional
+from functools import lru_cache
 
 import base64
 import json
 import numpy as np
+import pandas as pd
 
 from ._core import HorizonsProperties, Covariance, NonGravModel, CometElements
 from .mpc import unpack_designation, pack_designation
@@ -12,7 +19,7 @@ from .time import Time
 from .cache import cache_path
 from .covariance import generate_sample_from_cov
 
-__all__ = ["HorizonsProperties", "fetch_spice_kernel"]
+__all__ = ["HorizonsProperties", "fetch_spice_kernel", "fetch_known_orbit_data"]
 
 
 _PARAM_MAP = {
@@ -442,3 +449,56 @@ def fetch_spice_kernel(
 
     with open(filename, "wb") as f:
         f.write(base64.b64decode(response.json()["spk"]))
+
+
+@lru_cache()
+def fetch_known_orbit_data(update_cache=False):
+    """
+    Fetch the known orbit data from JPL Horizons for all known asteroids and comets.
+
+    This gets loaded as a pandas table, and if the file already exists in cache, then
+    the contents of this file are returned by default.
+
+    The constructed pandas table may be turned into states using the
+    :func:`~kete.mpc.table_to_states` function.
+
+    Parameters
+    ==========
+    update_cache :
+        Force download a new file from JPL Horizons, this can be used to update the
+        orbit fits which are currently saved.
+    """
+    filename = os.path.join(cache_path(), "horizons_orbits.json.gz")
+    if update_cache or not os.path.isfile(filename):
+        res = requests.get(
+            (
+                "https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields="
+                "pdes,spkid,orbit_id,rms,H,diameter,epoch,e,i,q,w,tp,om,A1,A2,A3,DT"
+                "&full-prec=1&sb-xfrag=1"
+            )
+        )
+        res.raise_for_status()
+        with gzip.open(filename, "wb") as f:
+            f.write(res.content)
+        file_contents = res.json()
+    else:
+        with gzip.open(filename, "rb") as f:
+            file_contents = json.load(f)
+    columns = file_contents["fields"]
+
+    # relabel some of the columns so that they match the contents of the MPC orbit file
+    # this allows user to reuse the table_to_state function in mpc.py
+    lookup = {
+        "e": "ecc",
+        "i": "incl",
+        "q": "peri_dist",
+        "w": "peri_arg",
+        "tp": "peri_time",
+        "om": "lon_node",
+        "pdes": "desig",
+    }
+    columns = [lookup.get(c, c) for c in columns]
+    table = pd.DataFrame.from_records(file_contents["data"], columns=columns)
+    others = table.columns.difference(["desig", "spkid", "orbit_id"])
+    table[others] = table[others].apply(pd.to_numeric, errors="coerce")
+    return table
