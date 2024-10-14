@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed the return signature for `fov_static_check`, this now returns indices of
   the inputs, instead of the original inputs themselves.
 
+### Fixed
+
+- Sampling of JPL Horizons orbit fits was slightly off, and appears to be fixed by
+  assuming that the epoch time of the covariance fits is in UTC. This assumption is
+  now included in the covariance matrix sampling. This is different than their other
+  data products.
+
 
 ## [v1.0.2]
 
