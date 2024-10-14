@@ -109,6 +109,17 @@ pub fn fov_checks_py(
     Ok(visible.into_iter().flatten().collect())
 }
 
+/// Check if a list of loaded spice kernel objects are visible in the provided FOVs.
+/// 
+/// Returns only the objects which are visible to the  observer, adding a correction
+/// for optical light delay.
+///
+/// Parameters
+/// ----------
+/// obj_ids :
+///     Vector of spice kernel IDs to check.
+/// fovs :
+///     Collection of Field of Views to check.
 #[pyfunction]
 #[pyo3(name = "fov_spk_check")]
 pub fn fov_spk_checks_py(obj_ids: Vec<i64>, fovs: FOVListLike) -> Vec<PySimultaneousStates> {

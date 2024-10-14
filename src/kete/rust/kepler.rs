@@ -1,3 +1,4 @@
+//! Python support for kepler orbit calculations
 use itertools::Itertools;
 use kete_core::state::State;
 use kete_core::{constants, propagation};

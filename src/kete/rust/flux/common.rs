@@ -419,6 +419,7 @@ pub fn w4_color_correction_py(temp: f64) -> f64 {
     w4_color_correction(temp)
 }
 
+/// The normal vectors of the fib lattice
 #[pyfunction]
 #[pyo3(name = "fib_lattice_vecs")]
 pub fn fib_lattice_vecs_py(n_facets: usize) -> Vec<[f64; 3]> {

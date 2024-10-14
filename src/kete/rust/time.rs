@@ -1,3 +1,5 @@
+//! Python support for time conversions.
+
 use kete_core::{
     errors::Error,
     time::{
@@ -54,6 +56,7 @@ impl From<f64> for PyTime {
 
 #[pymethods]
 impl PyTime {
+    /// Construct a new time object, TDB default.
     #[new]
     #[pyo3(signature = (jd, scaling="tdb"))]
     pub fn new(jd: f64, scaling: &str) -> PyResult<Self> {
@@ -180,6 +183,7 @@ impl PyTime {
         Ok(self.0.utc().to_iso()?)
     }
 
+    /// J2000 epoch time.
     #[staticmethod]
     pub fn j2000() -> Self {
         PyTime(Time::<TDB>::new(2451545.0))

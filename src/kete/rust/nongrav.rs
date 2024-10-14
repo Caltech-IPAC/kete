@@ -1,3 +1,4 @@
+//! Python support for non-gravitational forces
 use kete_core::{errors::Error, propagation::NonGravModel};
 use pyo3::{pyclass, pymethods, PyResult};
 
@@ -22,6 +23,7 @@ pub struct PyNonGravModel(pub NonGravModel);
 
 #[pymethods]
 impl PyNonGravModel {
+    /// Unused constructor for non-grav models.
     #[allow(clippy::new_without_default)]
     #[new]
     pub fn new() -> PyResult<Self> {
@@ -158,6 +160,7 @@ impl PyNonGravModel {
         })
     }
 
+    /// Text representation of this object
     pub fn __repr__(&self) -> String {
         match self.0 {
             NonGravModel::Dust { beta} => format!(

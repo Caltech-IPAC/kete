@@ -41,7 +41,7 @@ impl From<kete_core::flux::ModelResults> for PyModelResults {
 impl PyModelResults {
     #[new]
     #[pyo3(signature = (fluxes, thermal_fluxes, hg_fluxes, v_band_magnitude, v_band_flux, magnitudes=None))]
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, missing_docs)]
     pub fn new(
         fluxes: Vec<f64>,
         thermal_fluxes: Vec<f64>,
@@ -192,7 +192,7 @@ impl From<kete_core::flux::NeatmParams> for PyNeatmParams {
 #[pymethods]
 impl PyNeatmParams {
     #[new]
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, missing_docs)]
     #[pyo3(signature = (desig, band_wavelength, band_albedos, h_mag=None, diam=None,
         vis_albedo=None, beaming=None, g_param=None, c_hg=None, emissivity=None, zero_mags=None))]
     pub fn new(
@@ -531,7 +531,7 @@ impl From<kete_core::flux::FrmParams> for PyFrmParams {
 #[pymethods]
 impl PyFrmParams {
     #[new]
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, missing_docs)]
     #[pyo3(signature = (desig, band_wavelength, band_albedos, h_mag=None, diam=None,
         vis_albedo=None, g_param=None, c_hg=None, emissivity=None, zero_mags=None))]
     pub fn new(

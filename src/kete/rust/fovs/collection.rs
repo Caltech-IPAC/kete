@@ -8,9 +8,12 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 
 /// Polymorphic support
-#[derive(FromPyObject)]
+#[derive(FromPyObject, Debug)]
 pub enum FOVListLike {
+    /// Vector of allowed FOVs
     Vec(Vec<AllowedFOV>),
+
+    /// An FOVList which is equivalent.
     FOVList(FOVList),
 }
 
@@ -33,6 +36,7 @@ impl FOVListLike {
     }
 }
 
+/// A list of FOVs, which can be saved and loaded.
 #[pyclass(module = "kete", sequence)]
 #[derive(Debug, Clone)]
 pub struct FOVList(pub Vec<AllowedFOV>);
@@ -40,6 +44,7 @@ pub struct FOVList(pub Vec<AllowedFOV>);
 #[pymethods]
 impl FOVList {
     #[new]
+    #[allow(missing_docs)]
     pub fn new(list: Vec<AllowedFOV>) -> Self {
         FOVList(list)
     }
@@ -53,6 +58,7 @@ impl FOVList {
         self.0.len()
     }
 
+    #[allow(missing_docs)]
     pub fn __getitem__(&self, mut idx: isize) -> PyResult<AllowedFOV> {
         if idx < 0 {
             idx += self.0.len() as isize;
@@ -65,6 +71,7 @@ impl FOVList {
         Ok(self.0[idx as usize].clone())
     }
 
+    #[allow(missing_docs)]
     pub fn __repr__(&self) -> String {
         format!("FOVList(<{} FOVs>)", self.0.len())
     }

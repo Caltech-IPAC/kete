@@ -1,3 +1,4 @@
+//! Python support for orbital elements
 use kete_core::elements;
 use kete_core::prelude;
 use pyo3::{pyclass, pymethods, PyResult};

@@ -210,7 +210,7 @@ pub struct PyOmniDirectional(pub fov::OmniDirectional);
 
 /// Field of views supported by the python interface
 #[derive(Debug, Clone, FromPyObject)]
-#[allow(clippy::upper_case_acronyms)]
+#[allow(clippy::upper_case_acronyms, missing_docs)]
 pub enum AllowedFOV {
     WISE(PyWiseCmos),
     NEOS(PyNeosCmos),
@@ -223,6 +223,7 @@ pub enum AllowedFOV {
 }
 
 impl AllowedFOV {
+    #[allow(missing_docs)]
     pub fn jd(&self) -> f64 {
         match self {
             AllowedFOV::NEOS(fov) => fov.0.observer().jd,
@@ -236,6 +237,7 @@ impl AllowedFOV {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn get_fov(self, idx: Option<usize>) -> fov::FOV {
         let idx = idx.unwrap_or_default();
         match self {
@@ -250,6 +252,7 @@ impl AllowedFOV {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn unwrap(self) -> fov::FOV {
         match self {
             AllowedFOV::WISE(fov) => fov::FOV::Wise(fov.0),
@@ -263,6 +266,7 @@ impl AllowedFOV {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn __repr__(self) -> String {
         match self {
             AllowedFOV::WISE(fov) => fov.__repr__(),
@@ -309,6 +313,7 @@ impl From<fov::FOV> for AllowedFOV {
 
 #[pymethods]
 impl PyWiseCmos {
+    /// Construct a WISE CMOS fov from a pointing vector, rotation and observer state.
     #[staticmethod]
     pub fn from_pointing(
         pointing: VectorLike,
@@ -329,6 +334,7 @@ impl PyWiseCmos {
         ))
     }
 
+    /// Construct a WISE CMOS fov the corners of the FOV and observer state.
     #[new]
     pub fn new(
         corners: [VectorLike; 4],
@@ -406,6 +412,7 @@ impl PyWiseCmos {
 #[pymethods]
 impl PyGenericRectangle {
     #[new]
+    /// Construct a Generic Rectangular FOV from a central vector, rotation, and observer state.
     pub fn new(
         pointing: VectorLike,
         rotation: f64,
@@ -496,6 +503,7 @@ impl PyGenericRectangle {
 
 #[pymethods]
 impl PyGenericCone {
+    /// Construct a Generic Cone FOV from a central vector, angle, and observer state.
     #[new]
     pub fn new(pointing: VectorLike, angle: f64, observer: PyState) -> Self {
         let pointing = pointing.into_vector(observer.frame());
@@ -546,6 +554,7 @@ impl PyGenericCone {
 #[pymethods]
 impl PyOmniDirectional {
     #[new]
+    #[allow(missing_docs)]
     pub fn new(observer: PyState) -> Self {
         PyOmniDirectional(fov::OmniDirectional::new(observer.0))
     }
@@ -571,6 +580,7 @@ impl PyOmniDirectional {
 #[allow(clippy::too_many_arguments)]
 impl PyNeosCmos {
     #[new]
+    #[allow(missing_docs)]
     pub fn new(
         pointing: VectorLike,
         rotation: f64,
@@ -711,6 +721,7 @@ impl PyNeosCmos {
 #[pymethods]
 #[allow(clippy::too_many_arguments)]
 impl PyNeosVisit {
+    #[allow(missing_docs)]
     #[new]
     pub fn new(
         x_width: f64,
@@ -806,6 +817,7 @@ impl PyNeosVisit {
         self.0.rotation
     }
 
+    #[allow(missing_docs)]
     pub fn __len__(&self) -> usize {
         4
     }
@@ -1058,6 +1070,7 @@ impl PyZtfField {
             .collect()
     }
 
+    #[allow(missing_docs)]
     pub fn __len__(&self) -> usize {
         self.0.n_patches()
     }
