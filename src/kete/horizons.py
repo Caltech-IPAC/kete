@@ -306,7 +306,7 @@ def _sample(self, n_samples):
         The number of samples to take of the covariance.
     """
     matrix = self.covariance.cov_matrix
-    epoch = self.covariance.epoch
+    epoch = Time(self.covariance.epoch, scaling="utc").jd
     samples = generate_sample_from_cov(n_samples, matrix)
 
     elem_keywords = [
@@ -318,21 +318,14 @@ def _sample(self, n_samples):
         "peri_time",
     ]
 
-    labels = self.json["orbit"]["covariance"]["labels"]
-    mapped_label = [_PARAM_MAP[k.lower()] for k in labels]
-
-    best_params = _nongrav_params(self)
-    for prop in elem_keywords:
-        best_params[prop] = getattr(self, prop)
     states = []
     non_gravs = []
     for sample in samples:
-        cur_params = {
-            label: best_params[label] + d for label, d in zip(mapped_label, sample)
-        }
-        elem_params = {x: cur_params.pop(x) for x in elem_keywords}
+        names, vals = zip(*self.covariance.params)
+        params = dict(zip(names, np.array(vals) + sample))
+        elem_params = {x: params.pop(x) for x in elem_keywords}
         state = CometElements(self.desig, epoch, **elem_params).state
-        non_grav = NonGravModel.new_comet(**cur_params)
+        non_grav = NonGravModel.new_comet(**params)
         states.append(state)
         non_gravs.append(non_grav)
 
@@ -475,7 +468,8 @@ def fetch_known_orbit_data(update_cache=False):
                 "https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields="
                 "pdes,spkid,orbit_id,rms,H,diameter,epoch,e,i,q,w,tp,om,A1,A2,A3,DT"
                 "&full-prec=1&sb-xfrag=1"
-            )
+            ),
+            timeout=120,
         )
         res.raise_for_status()
         with gzip.open(filename, "wb") as f:
