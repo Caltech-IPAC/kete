@@ -316,7 +316,7 @@ impl Vector {
         Self::new(rotated.into(), self.frame)
     }
 
-    /// repr
+    #[allow(missing_docs)]
     pub fn __repr__(&self) -> String {
         // 1e-12 AU is about 15cm, this seems like a reasonable printing resolution
         let x = (self.raw[0] * 1e12).round() / 1e12 + 0.0;
