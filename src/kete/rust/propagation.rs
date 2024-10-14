@@ -1,3 +1,4 @@
+//! Python support for n body propagation
 use itertools::Itertools;
 use kete_core::{
     errors::Error,

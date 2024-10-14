@@ -1,3 +1,4 @@
+//! Python vector support with frame information.
 use kete_core::frames::rotate_around;
 use pyo3::exceptions;
 use std::f64::consts::FRAC_PI_2;
@@ -21,12 +22,14 @@ use pyo3::{PyResult, Python};
 #[pyclass(sequence, frozen, module = "kete")]
 #[derive(Clone, Debug)]
 pub struct Vector {
+    /// X/Y/Z numbers of the vector
     pub raw: [f64; 3],
 
     frame: PyFrames,
 }
 
 impl Vector {
+    /// Construct a new vector
     pub fn new(raw: [f64; 3], frame: PyFrames) -> Self {
         Self { raw, frame }
     }
@@ -35,11 +38,15 @@ impl Vector {
 /// Polymorphic support
 #[derive(Debug, FromPyObject)]
 pub enum VectorLike {
+    /// Vector directly
     Vec(Vector),
+
+    /// Vector from x/y/z
     Arr([f64; 3]),
 }
 
 impl VectorLike {
+    /// Cast VectorLike into a Vector3
     pub fn into_vec(self, target_frame: PyFrames) -> Vector3<f64> {
         match self {
             VectorLike::Arr(arr) => Vector3::from(arr),
@@ -52,6 +59,7 @@ impl VectorLike {
         }
     }
 
+    /// Cast VectorLike into a python Vector
     pub fn into_vector(self, target_frame: PyFrames) -> Vector {
         let vec = self.into_vec(target_frame);
         Vector {
@@ -63,6 +71,7 @@ impl VectorLike {
 
 #[pymethods]
 impl Vector {
+    /// create new vector 
     #[new]
     #[pyo3(signature = (raw, frame=None))]
     pub fn py_new(raw: VectorLike, frame: Option<PyFrames>) -> PyResult<Self> {
@@ -307,6 +316,7 @@ impl Vector {
         Self::new(rotated.into(), self.frame)
     }
 
+    #[allow(missing_docs)]
     pub fn __repr__(&self) -> String {
         // 1e-12 AU is about 15cm, this seems like a reasonable printing resolution
         let x = (self.raw[0] * 1e12).round() / 1e12 + 0.0;
@@ -315,6 +325,7 @@ impl Vector {
         format!("Vector([{:?}, {:?}, {:?}], {:?})", x, y, z, self.frame)
     }
 
+    #[allow(missing_docs)]
     pub fn __sub__(&self, other: VectorLike) -> Self {
         let self_vec = Vector3::from(self.raw);
         let other_vec = other.into_vec(self.frame());
@@ -322,6 +333,7 @@ impl Vector {
         Self::new(diff.into(), self.frame)
     }
 
+    #[allow(missing_docs)]
     pub fn __add__(&self, other: VectorLike) -> Self {
         let self_vec = Vector3::from(self.raw);
         let other_vec = other.into_vec(self.frame());
@@ -329,24 +341,29 @@ impl Vector {
         Self::new(diff.into(), self.frame)
     }
 
+    #[allow(missing_docs)]
     pub fn __mul__(&self, other: f64) -> Self {
         let self_vec = Vector3::from(self.raw);
         Self::new((self_vec * other).into(), self.frame)
     }
 
+    #[allow(missing_docs)]
     pub fn __truediv__(&self, other: f64) -> Self {
         let self_vec = Vector3::from(self.raw);
         Self::new((self_vec / other).into(), self.frame)
     }
 
+    #[allow(missing_docs)]
     pub fn __neg__(&self) -> Self {
         Self::new([-self.x(), -self.y(), -self.z()], self.frame)
     }
 
+    #[allow(missing_docs)]
     pub fn __len__(&self) -> usize {
         3
     }
 
+    #[allow(missing_docs)]
     pub fn __getitem__(&self, idx: usize) -> PyResult<f64> {
         if idx >= 3 {
             return Err(PyErr::new::<exceptions::PyIndexError, _>(""));

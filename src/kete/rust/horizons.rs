@@ -1,3 +1,4 @@
+//! JPL Horizons data representation
 use std::fmt::Debug;
 
 use crate::covariance::Covariance;
@@ -66,6 +67,7 @@ impl FileIO for HorizonsProperties {}
 
 #[pymethods]
 impl HorizonsProperties {
+    /// Construct a new HorizonsProperties Object
     #[new]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (desig, group=None, epoch=None, eccentricity=None, inclination=None,

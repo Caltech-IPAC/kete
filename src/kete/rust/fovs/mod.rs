@@ -1,3 +1,4 @@
+//! Python support for Fields of View
 mod checks;
 mod collection;
 mod definitions;

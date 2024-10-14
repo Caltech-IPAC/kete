@@ -23,7 +23,7 @@ bincode = {version = "2.0.0-rc.3", features=["derive", "serde"]}
 [lib]
 name = "_core"
 path = "src/kete/rust/lib.rs"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "lib"]
 
 [workspace]
 members = ["src/kete_core"]

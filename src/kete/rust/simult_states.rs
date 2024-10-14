@@ -1,3 +1,4 @@
+//! Python support for simultaneous States.
 use kete_core::errors::Error;
 use kete_core::io::FileIO;
 use kete_core::simult_states::SimultaneousStates;
@@ -114,10 +115,12 @@ impl PySimultaneousStates {
         Ok(())
     }
 
+    /// Length of states
     pub fn __len__(&self) -> usize {
         self.0.states.len()
     }
 
+    /// Get the Nth state
     pub fn __getitem__(&self, mut idx: isize) -> PyResult<PyState> {
         if idx < 0 {
             idx += self.0.states.len() as isize;

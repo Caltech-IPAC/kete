@@ -1,3 +1,4 @@
+//! Python support for State vectors
 use crate::elements::PyCometElements;
 use crate::frame::*;
 use crate::time::PyTime;
@@ -34,6 +35,7 @@ impl From<prelude::State> for PyState {
 
 #[pymethods]
 impl PyState {
+    /// Construct a new State
     #[new]
     #[pyo3(signature = (desig, jd, pos, vel, frame=None, center_id=10))]
     pub fn new(
@@ -167,6 +169,7 @@ impl PyState {
         }
     }
 
+    /// Text representation of the state.
     pub fn __repr__(&self) -> String {
         format!(
             "State(desig={:?}, jd={:?}, pos={:?}, vel={:?}, frame={:?}, center_id={:?})",

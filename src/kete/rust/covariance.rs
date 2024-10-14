@@ -1,3 +1,5 @@
+//! Covariance matrix representation
+
 use std::{collections::HashMap, fmt::Debug};
 
 use crate::state::PyState;
@@ -27,6 +29,7 @@ impl FileIO for Covariance {}
 
 #[pymethods]
 impl Covariance {
+    /// Create a new covariance object
     #[new]
     #[allow(clippy::too_many_arguments)]
     pub fn new(

@@ -1,3 +1,4 @@
+//! Python Frame of reference support
 use kete_core::frames::*;
 use pyo3::prelude::*;
 
@@ -5,10 +6,15 @@ use pyo3::prelude::*;
 #[pyclass(frozen, eq, eq_int, name = "Frames", module = "kete")]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PyFrames {
+    /// Ecliptic Frame
     Ecliptic,
+    /// Equatorial Frame
     Equatorial,
+    /// Galactic Frame
     Galactic,
+    /// FK4 Frame
     FK4,
+    /// Undefined Frame
     Undefined,
 }
 
@@ -36,26 +42,6 @@ impl From<Frame> for PyFrames {
             _ => PyFrames::Undefined,
         }
     }
-}
-
-/// Convert a vector in the input frame to the same vector in the output frame.
-#[allow(clippy::too_many_arguments)]
-#[pyfunction]
-#[pyo3(name = "frame_change")]
-pub fn frame_change_py(
-    states: Vec<[f64; 3]>,
-    input_frame: PyFrames,
-    output_frame: PyFrames,
-) -> Vec<[f64; 3]> {
-    states
-        .into_iter()
-        .map(|vec| {
-            Into::<Frame>::into(input_frame)
-                .try_vec_frame_change(vec.into(), output_frame.into())
-                .unwrap()
-                .into()
-        })
-        .collect()
 }
 
 /// Compute a ECEF position from WCS84 Geodetic latitude/longitude/height.

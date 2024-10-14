@@ -1,4 +1,5 @@
 //! Core kete library code, which are wrappers over the kete_core rust package.
+//! Primarily enables python interfaces
 
 #![deny(
     bad_style,
@@ -24,22 +25,22 @@
 
 use pyo3::prelude::*;
 
-mod covariance;
-mod elements;
-mod fitting;
-mod flux;
-mod fovs;
-mod frame;
-mod horizons;
-mod kepler;
-mod nongrav;
-mod propagation;
-mod simult_states;
-mod spice;
-mod state;
-mod state_transition;
-mod time;
-mod vector;
+pub mod covariance;
+pub mod elements;
+pub mod fitting;
+pub mod flux;
+pub mod fovs;
+pub mod frame;
+pub mod horizons;
+pub mod kepler;
+pub mod nongrav;
+pub mod propagation;
+pub mod simult_states;
+pub mod spice;
+pub mod state;
+pub mod state_transition;
+pub mod time;
+pub mod vector;
 
 // Due to the nature of this sort of interface, there is quite a bit of boiler-plate
 // code which is difficult to avoid.
@@ -80,7 +81,6 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_class::<covariance::Covariance>()?;
 
-    m.add_function(wrap_pyfunction!(frame::frame_change_py, m)?)?;
     m.add_function(wrap_pyfunction!(frame::wgs_lat_lon_to_ecef, m)?)?;
     m.add_function(wrap_pyfunction!(frame::ecef_to_wgs_lat_lon, m)?)?;
     m.add_function(wrap_pyfunction!(frame::calc_obliquity_py, m)?)?;
@@ -129,8 +129,6 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(spice::daf_header_info_py, m)?)?;
     m.add_function(wrap_pyfunction!(spice::obs_codes, m)?)?;
-
-    m.add_function(wrap_pyfunction!(spice::load_tle, m)?)?;
 
     m.add_function(wrap_pyfunction!(state_transition::compute_stm_py, m)?)?;
 

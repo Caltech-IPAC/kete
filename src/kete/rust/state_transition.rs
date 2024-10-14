@@ -1,9 +1,11 @@
+//! State Transition matrix computation
 use kete_core::prelude::*;
 use kete_core::propagation::compute_state_transition;
 use pyo3::pyfunction;
 
 use crate::time::PyTime;
 
+/// Compute an approximate STM
 #[pyfunction]
 #[pyo3(name = "compute_stm")]
 pub fn compute_stm_py(
