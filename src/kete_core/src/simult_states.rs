@@ -3,7 +3,7 @@
 
 use crate::fov::FOV;
 use crate::io::FileIO;
-use crate::prelude::{Error, Frame, NeosResult, State};
+use crate::prelude::{Error, Frame, KeteResult, State};
 use serde::{Deserialize, Serialize};
 
 /// Collection of [`State`] at the same time.
@@ -31,7 +31,7 @@ impl SimultaneousStates {
     /// Create a new Exact SimultaneousStates
     /// Simultaneous States occur at the same JD, which is defined by either the time
     /// in the optional fov, or the time of the first state.
-    pub fn new_exact(mut states: Vec<State>, fov: Option<FOV>) -> NeosResult<Self> {
+    pub fn new_exact(mut states: Vec<State>, fov: Option<FOV>) -> KeteResult<Self> {
         if states.is_empty() {
             return Err(Error::ValueError(
                 "SimultaneousStates must contain at least one state.".into(),

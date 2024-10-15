@@ -1,4 +1,4 @@
-use crate::{errors::Error, prelude::NeosResult};
+use crate::{errors::Error, prelude::KeteResult};
 
 /// Calculate desired quantile of the provided data.
 ///
@@ -9,7 +9,7 @@ use crate::{errors::Error, prelude::NeosResult};
 /// Quantiles are linearly interpolated between the two closest ranked values.
 ///
 /// If only one valid data point is provided, all quantiles evaluate to that value.
-pub fn quantile(data: &[f64], quant: f64) -> NeosResult<f64> {
+pub fn quantile(data: &[f64], quant: f64) -> KeteResult<f64> {
     if quant <= 0.0 || quant >= 1.0 {
         Err(Error::ValueError(
             "Quantile must be between 0.0 and 1.0".into(),
@@ -46,7 +46,7 @@ pub fn quantile(data: &[f64], quant: f64) -> NeosResult<f64> {
 /// Compute the median value of the data.
 ///
 /// This ignores non-finite values such as inf and nan.
-pub fn median(data: &[f64]) -> NeosResult<f64> {
+pub fn median(data: &[f64]) -> KeteResult<f64> {
     quantile(data, 0.5)
 }
 
@@ -55,7 +55,7 @@ pub fn median(data: &[f64]) -> NeosResult<f64> {
 /// <https://en.wikipedia.org/wiki/Median_absolute_deviation>
 ///
 #[allow(dead_code)]
-pub fn mad(data: &[f64]) -> NeosResult<f64> {
+pub fn mad(data: &[f64]) -> KeteResult<f64> {
     let median = quantile(data, 0.5)?;
     let abs_deviation_from_med: Box<[f64]> = data.iter().map(|d| d - median).collect();
     quantile(&abs_deviation_from_med, 0.5)

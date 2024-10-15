@@ -71,7 +71,7 @@ impl VectorLike {
 
 #[pymethods]
 impl Vector {
-    /// create new vector 
+    /// create new vector
     #[new]
     #[pyo3(signature = (raw, frame=None))]
     pub fn py_new(raw: VectorLike, frame: Option<PyFrames>) -> PyResult<Self> {

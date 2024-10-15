@@ -48,7 +48,7 @@ pub mod time;
 /// Common useful imports
 pub mod prelude {
     pub use crate::elements::CometElements;
-    pub use crate::errors::{Error, NeosResult};
+    pub use crate::errors::{Error, KeteResult};
     pub use crate::flux::{
         black_body_flux, frm_facet_temperature, lambertian_flux, neatm_facet_temperature,
         CometMKParams, FrmParams, HGParams, NeatmParams,

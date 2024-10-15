@@ -3,7 +3,7 @@
 //! Third order root finding algorithm.
 //! This is the next order method of newton-raphson.
 
-use crate::{errors::Error, prelude::NeosResult};
+use crate::{errors::Error, prelude::KeteResult};
 
 /// Solve root using Halley's method.
 ///
@@ -27,7 +27,7 @@ pub fn halley<Func, Der, SecDer>(
     sec_der: SecDer,
     start: f64,
     atol: f64,
-) -> NeosResult<f64>
+) -> KeteResult<f64>
 where
     Func: Fn(f64) -> f64,
     Der: Fn(f64) -> f64,

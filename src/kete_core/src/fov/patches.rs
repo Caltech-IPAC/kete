@@ -6,7 +6,7 @@ use nalgebra::{UnitVector3, Vector3};
 use serde::{Deserialize, Serialize};
 use std::f64::consts::FRAC_PI_2;
 
-use super::NeosResult;
+use super::KeteResult;
 
 /// Bounded areas can either contains a vector or not.
 /// This enum specifies if the vector is within the area, or
@@ -53,7 +53,7 @@ pub trait SkyPatch: Sized {
     fn frame(&self) -> Frame;
 
     /// Change the frame of the bounded area to the new target frame.
-    fn try_frame_change(&self, target_frame: Frame) -> NeosResult<Self>;
+    fn try_frame_change(&self, target_frame: Frame) -> KeteResult<Self>;
 
     /// Center of the field of view
     fn pointing(&self) -> UnitVector3<f64>;
@@ -237,7 +237,7 @@ impl<const D: usize> SkyPatch for SphericalPolygon<D> {
         self.frame
     }
 
-    fn try_frame_change(&self, target_frame: Frame) -> NeosResult<Self> {
+    fn try_frame_change(&self, target_frame: Frame) -> KeteResult<Self> {
         let new_edges = self
             .edge_normals
             .iter()
@@ -245,7 +245,7 @@ impl<const D: usize> SkyPatch for SphericalPolygon<D> {
                 self.frame
                     .try_vec_frame_change(Vector3::from(*vec), target_frame)
             })
-            .collect::<NeosResult<Vec<_>>>()?;
+            .collect::<KeteResult<Vec<_>>>()?;
         let new_edges: Vec<[f64; 3]> = new_edges.into_iter().map(|e| e.into()).collect();
         let new_edges: [[f64; 3]; D] = new_edges.try_into().unwrap();
 
@@ -342,7 +342,7 @@ impl SkyPatch for SphericalCone {
         self.frame
     }
 
-    fn try_frame_change(&self, target_frame: Frame) -> NeosResult<Self> {
+    fn try_frame_change(&self, target_frame: Frame) -> KeteResult<Self> {
         let pointing = self
             .frame
             .try_vec_frame_change(Vector3::from(self.pointing), target_frame)?;

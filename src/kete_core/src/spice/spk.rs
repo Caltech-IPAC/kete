@@ -22,7 +22,7 @@ use super::daf::DafFile;
 use super::{spk_segments::*, DAFType};
 use crate::errors::Error;
 use crate::frames::Frame;
-use crate::prelude::NeosResult;
+use crate::prelude::KeteResult;
 use crate::state::State;
 use pathfinding::prelude::dijkstra;
 use std::collections::{HashMap, HashSet};
@@ -64,7 +64,7 @@ impl SpkCollection {
     /// This state will have the center and frame of whatever was originally loaded
     /// into the file.
     #[inline(always)]
-    pub fn try_get_raw_state(&self, id: i64, jd: f64) -> NeosResult<State> {
+    pub fn try_get_raw_state(&self, id: i64, jd: f64) -> KeteResult<State> {
         for segment in self.segments.iter() {
             if id == segment.obj_id && segment.contains(jd) {
                 return segment.try_get_state(jd);
@@ -79,7 +79,7 @@ impl SpkCollection {
     /// Load a state from the file, then attempt to change the center to the center id
     /// specified.
     #[inline(always)]
-    pub fn try_get_state(&self, id: i64, jd: f64, center: i64, frame: Frame) -> NeosResult<State> {
+    pub fn try_get_state(&self, id: i64, jd: f64, center: i64, frame: Frame) -> KeteResult<State> {
         let mut state = self.try_get_raw_state(id, jd)?;
         self.try_change_center(&mut state, center)?;
         state.try_change_frame_mut(frame)?;
@@ -88,7 +88,7 @@ impl SpkCollection {
 
     /// Use the data loaded in the SPKs to change the center ID of the provided state.
     #[inline(always)]
-    pub fn try_change_center(&self, state: &mut State, new_center: i64) -> NeosResult<()> {
+    pub fn try_change_center(&self, state: &mut State, new_center: i64) -> KeteResult<()> {
         match (state.center_id, new_center) {
             (a, b) if a == b => (),
             (i, 0) if i <= 10 => {
@@ -177,7 +177,7 @@ impl SpkCollection {
     /// Given a NAIF ID, and a target NAIF ID, find the intermediate SPICE Segments
     /// which need to be loaded to find a path from one object to the other.
     /// Use Dijkstra plus the known segments to calculate a path.
-    fn find_path(&self, start: i64, goal: i64) -> NeosResult<Vec<i64>> {
+    fn find_path(&self, start: i64, goal: i64) -> KeteResult<Vec<i64>> {
         // first we check to see if the cache contains the lookup we need.
         if let Some(path) = self.map_cache.get(&(start, goal)) {
             return Ok(path.clone());
@@ -270,7 +270,7 @@ impl SpkCollection {
 
     /// Given an SPK filename, load all the segments present inside of it.
     /// These segments are added to the SPK singleton in memory.
-    pub fn load_file(&mut self, filename: &str) -> NeosResult<()> {
+    pub fn load_file(&mut self, filename: &str) -> KeteResult<()> {
         let file = DafFile::from_file(filename)?;
 
         if !matches!(file.daf_type, DAFType::Spk) {

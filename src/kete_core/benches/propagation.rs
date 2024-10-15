@@ -2,9 +2,9 @@ extern crate criterion;
 use std::time::Duration;
 
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
-use lazy_static::lazy_static;
 use kete_core::prelude::*;
 use kete_core::*;
+use lazy_static::lazy_static;
 use pprof::criterion::{Output, PProfProfiler};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 

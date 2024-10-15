@@ -18,7 +18,7 @@
 //! thinks that the object should actually be. These times are when close encounter
 //! information should be recorded.
 //!
-use crate::prelude::NeosResult;
+use crate::prelude::KeteResult;
 use crate::spice::get_spk_singleton;
 use crate::{constants::*, errors::Error, frames::Frame, propagation::nongrav::NonGravModel};
 use nalgebra::allocator::Allocator;
@@ -69,7 +69,7 @@ pub fn central_accel(
     vel: &Vector3<f64>,
     meta: &mut CentralAccelMeta,
     exact_eval: bool,
-) -> NeosResult<Vector3<f64>> {
+) -> KeteResult<Vector3<f64>> {
     if exact_eval {
         meta.times.push(time);
         meta.pos.push(*pos);
@@ -124,7 +124,7 @@ pub fn spk_accel(
     vel: &Vector3<f64>,
     meta: &mut AccelSPKMeta,
     exact_eval: bool,
-) -> NeosResult<Vector3<f64>> {
+) -> KeteResult<Vector3<f64>> {
     let mut accel = Vector3::<f64>::zeros();
 
     if exact_eval {
@@ -200,7 +200,7 @@ pub fn vec_accel<D: Dim>(
     vel: &OVector<f64, D>,
     meta: &mut AccelVecMeta,
     exact_eval: bool,
-) -> NeosResult<OVector<f64, D>>
+) -> KeteResult<OVector<f64, D>>
 where
     DefaultAllocator: Allocator<D> + Allocator<D, U2>,
 {

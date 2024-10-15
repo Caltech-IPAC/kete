@@ -1,5 +1,5 @@
 use crate::constants::GMS_SQRT;
-use crate::prelude::{NeosResult, State};
+use crate::prelude::{KeteResult, State};
 use crate::propagation::{central_accel, central_accel_grad, CentralAccelMeta, RK45Integrator};
 use nalgebra::{Const, Matrix6, SVector, Vector3, U1, U6};
 
@@ -8,7 +8,7 @@ fn stm_ivp_eqn(
     state: &SVector<f64, 42>,
     meta: &mut CentralAccelMeta,
     exact_eval: bool,
-) -> NeosResult<SVector<f64, 42>> {
+) -> KeteResult<SVector<f64, 42>> {
     let mut res = SVector::<f64, 42>::zeros();
 
     // first 6 values of the state are pos and vel respectively.

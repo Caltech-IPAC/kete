@@ -126,7 +126,7 @@ impl FovLike for NeosCmos {
         1
     }
 
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
         self.observer.try_change_frame_mut(target_frame)?;
         self.patch = self.patch.try_frame_change(target_frame)?;
         Ok(())
@@ -170,7 +170,7 @@ pub struct NeosVisit {
 impl NeosVisit {
     /// Construct a new NeosVisit from a list of cmos fovs.
     /// These cmos fovs must be from the same metadata when appropriate.
-    pub fn new(chips: Vec<NeosCmos>) -> NeosResult<Self> {
+    pub fn new(chips: Vec<NeosCmos>) -> KeteResult<Self> {
         if chips.len() != 4 {
             Err(Error::ValueError(
                 "Visit must contains 4 NeosCmos fovs".into(),
@@ -416,12 +416,12 @@ impl FovLike for NeosVisit {
         4
     }
 
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
         let _ = self
             .chips
             .iter_mut()
             .map(|ccd| ccd.try_frame_change_mut(target_frame))
-            .collect::<NeosResult<Vec<_>>>()?;
+            .collect::<KeteResult<Vec<_>>>()?;
         self.observer.try_change_frame_mut(target_frame)?;
         Ok(())
     }

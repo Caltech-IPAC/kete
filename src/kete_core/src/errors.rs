@@ -7,7 +7,7 @@ use chrono::ParseError;
 use std::{error, fmt, io};
 
 /// kete specific result.
-pub type NeosResult<T> = Result<T, Error>;
+pub type KeteResult<T> = Result<T, Error>;
 
 /// Possible Errors which may be raised by this crate.
 #[derive(Debug, Clone)]

@@ -1,14 +1,14 @@
-use crate::{errors::Error, prelude::NeosResult};
+use crate::{errors::Error, prelude::KeteResult};
 use nalgebra::SVector;
 
 /// Function will be of the form y' = F(t, y, metadata, exact_eval).
 /// Metadata is passed for every evaluation. The `exact_eval` bool indicates to the
 /// function that the input parameters are known to be solutions for the IVP.
 pub type FirstOrderFunc<'a, MType, const D: usize> =
-    &'a dyn Fn(f64, &SVector<f64, D>, &mut MType, bool) -> NeosResult<SVector<f64, D>>;
+    &'a dyn Fn(f64, &SVector<f64, D>, &mut MType, bool) -> KeteResult<SVector<f64, D>>;
 
 /// Integrator will return a result of this type.
-pub type FirstOrderResult<MType, const D: usize> = NeosResult<(SVector<f64, D>, MType)>;
+pub type FirstOrderResult<MType, const D: usize> = KeteResult<(SVector<f64, D>, MType)>;
 
 /// Runge-Kutta-Fehlberg Integrator - RK4(5)
 /// <https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta%E2%80%93Fehlberg_method>
@@ -30,11 +30,9 @@ impl<'a, MType, const D: usize> RK45Integrator<'a, MType, D> {
     /// Attempt to integrate by the provided step size.
     /// This may take a smaller step that specified if it failed to converge with the
     /// specified tolerance.
-    fn step(&mut self, step_size: f64) -> NeosResult<f64> {
+    fn step(&mut self, step_size: f64) -> KeteResult<f64> {
         if step_size < 1e-30 {
-            Err(Error::Convergence(
-                "Runge-Kutta step size too small".into(),
-            ))?;
+            Err(Error::Convergence("Runge-Kutta step size too small".into()))?;
         }
 
         let k2 = step_size
@@ -153,7 +151,7 @@ impl<'a, MType, const D: usize> RK45Integrator<'a, MType, D> {
 mod tests {
     use nalgebra::Vector1;
 
-    use crate::prelude::NeosResult;
+    use crate::prelude::KeteResult;
     use crate::propagation::RK45Integrator;
 
     #[test]
@@ -163,7 +161,7 @@ mod tests {
             state: &Vector1<f64>,
             _meta: &mut (),
             _eval: bool,
-        ) -> NeosResult<Vector1<f64>> {
+        ) -> KeteResult<Vector1<f64>> {
             Ok(-state)
         }
 
@@ -188,7 +186,7 @@ mod tests {
             _state: &Vector1<f64>,
             _meta: &mut (),
             _eval: bool,
-        ) -> NeosResult<Vector1<f64>> {
+        ) -> KeteResult<Vector1<f64>> {
             Ok(Vector1::<f64>::repeat(2.0))
         }
 

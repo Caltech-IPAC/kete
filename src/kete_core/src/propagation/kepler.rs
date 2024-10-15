@@ -7,7 +7,7 @@ use crate::errors::Error;
 use crate::fitting::newton_raphson;
 use crate::prelude::CometElements;
 use crate::state::State;
-use crate::{constants::*, prelude::NeosResult};
+use crate::{constants::*, prelude::KeteResult};
 use argmin::solver::neldermead::NelderMead;
 use core::f64;
 use nalgebra::{ComplexField, Vector3};
@@ -24,7 +24,7 @@ pub const PARABOLIC_ECC_LIMIT: f64 = 1e-3;
 /// * `mean_anomaly` - Mean anomaly.
 /// * `peri_dist` - Perihelion Distance in AU, only used for parabolic orbits.
 ///
-pub fn compute_eccentric_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> NeosResult<f64> {
+pub fn compute_eccentric_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> KeteResult<f64> {
     match ecc {
         ecc if !ecc.is_finite() => Err(Error::ValueError(
             "Eccentricity must be a finite value".into(),
@@ -67,7 +67,7 @@ pub fn compute_eccentric_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> Ne
 /// * `mean_anomaly` - Mean anomaly, between 0 and 2 pi.
 /// * `peri_dist` - Perihelion Distance in AU, only used for parabolic orbits.
 ///
-pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> NeosResult<f64> {
+pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> KeteResult<f64> {
     let ecc_anom = compute_eccentric_anomaly(ecc, mean_anom, peri_dist)?;
 
     let anom = match ecc {
@@ -93,7 +93,7 @@ pub fn compute_true_anomaly(ecc: f64, mean_anom: f64, peri_dist: f64) -> NeosRes
 /// * `true_anomaly` - true anomaly, between 0 and 2 pi.
 /// * `peri_dist` - Perihelion Distance in AU, only used for parabolic orbits.
 ///
-pub fn eccentric_anomaly_from_true(ecc: f64, true_anom: f64, peri_dist: f64) -> NeosResult<f64> {
+pub fn eccentric_anomaly_from_true(ecc: f64, true_anom: f64, peri_dist: f64) -> KeteResult<f64> {
     let ecc_anom = match ecc {
         ecc if !ecc.is_finite() => Err(Error::ValueError(
             "Eccentricity must be a finite value".into(),
@@ -176,7 +176,7 @@ fn g_2(s: f64, beta: f64) -> f64 {
 /// * `v0` - Velocity with respect to the central body (AU/day)
 /// * `rv0` - R vector dotted with the V vector, not normalized.
 ///
-fn solve_kepler_universal(mut dt: f64, r0: f64, v0: f64, rv0: f64) -> NeosResult<(f64, f64)> {
+fn solve_kepler_universal(mut dt: f64, r0: f64, v0: f64, rv0: f64) -> KeteResult<(f64, f64)> {
     // beta is GMS / semi_major
     let beta = 2.0 * GMS / r0 - v0.powi(2);
     let b_sqrt = beta.abs().sqrt();
@@ -256,7 +256,7 @@ pub fn analytic_2_body(
     pos: &Vector3<f64>,
     vel: &Vector3<f64>,
     depth: Option<usize>,
-) -> NeosResult<(Vector3<f64>, Vector3<f64>)> {
+) -> KeteResult<(Vector3<f64>, Vector3<f64>)> {
     let mut depth = depth.to_owned().unwrap_or(0);
     if depth >= 10 {
         Err(Error::Convergence(
@@ -303,7 +303,7 @@ pub fn analytic_2_body(
 /// recommended to use a center of the Sun (10) for this computation.
 ///
 /// This is the fastest method for getting a relatively good estimate of the orbits.
-pub fn propagate_two_body(state: &State, jd_final: f64) -> NeosResult<State> {
+pub fn propagate_two_body(state: &State, jd_final: f64) -> KeteResult<State> {
     let (pos, vel) = analytic_2_body(
         jd_final - state.jd,
         &state.pos.into(),
@@ -345,7 +345,7 @@ impl CostFunction for MoidCost {
 
 /// Compute the MOID between two states in au.
 /// MOID = Minimum Orbital Intersection Distance
-pub fn moid(mut state_a: State, mut state_b: State) -> NeosResult<f64> {
+pub fn moid(mut state_a: State, mut state_b: State) -> KeteResult<f64> {
     state_a.try_change_frame_mut(crate::frames::Frame::Ecliptic)?;
     state_b.try_change_frame_mut(crate::frames::Frame::Ecliptic)?;
 

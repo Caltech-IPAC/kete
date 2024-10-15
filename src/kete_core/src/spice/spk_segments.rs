@@ -17,7 +17,7 @@ use super::{jd_to_spice_jd, spice_jds_to_jd, DafArray};
 use crate::constants::AU_KM;
 use crate::errors::Error;
 use crate::frames::Frame;
-use crate::prelude::{Desig, NeosResult};
+use crate::prelude::{Desig, KeteResult};
 use crate::state::State;
 use crate::time::scales::TDB;
 use crate::time::Time;
@@ -36,7 +36,7 @@ pub enum SpkSegmentType {
 
 impl SpkSegmentType {
     /// Create a Segment from a DafArray, the segment type must be specified.
-    pub fn from_array(segment_type: i32, array: DafArray) -> NeosResult<Self> {
+    pub fn from_array(segment_type: i32, array: DafArray) -> KeteResult<Self> {
         match segment_type {
             1 => Ok(SpkSegmentType::Type1(array.into())),
             2 => Ok(SpkSegmentType::Type2(array.into())),
@@ -106,7 +106,7 @@ impl From<SpkSegment> for DafArray {
 impl TryFrom<DafArray> for SpkSegment {
     type Error = Error;
 
-    fn try_from(value: DafArray) -> NeosResult<SpkSegment> {
+    fn try_from(value: DafArray) -> KeteResult<SpkSegment> {
         let summary_floats = &value.summary_floats;
         let summary_ints = &value.summary_ints;
         let jd_start = spice_jds_to_jd(summary_floats[0]);
@@ -144,7 +144,7 @@ impl SpkSegment {
     /// Return the [`State`] object at the specified JD. If the requested time is
     /// not within the available range, this will fail.
     #[inline(always)]
-    pub fn try_get_state(&self, jd: f64) -> NeosResult<State> {
+    pub fn try_get_state(&self, jd: f64) -> KeteResult<State> {
         // this is faster than calling contains, probably because the || instead of &&
         if jd < self.jd_start || jd > self.jd_end {
             return Err(Error::DAFLimits(
@@ -198,7 +198,7 @@ impl SpkSegmentType1 {
     }
 
     #[inline(always)]
-    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> NeosResult<([f64; 3], [f64; 3])> {
+    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
         // Records are laid out as so:
         //
         // Size      Description
@@ -346,7 +346,7 @@ impl SpkSegmentType2 {
     }
 
     #[inline(always)]
-    fn try_get_pos_vel(&self, segment: &SpkSegment, jd: f64) -> NeosResult<([f64; 3], [f64; 3])> {
+    fn try_get_pos_vel(&self, segment: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
         let jd = jd_to_spice_jd(jd);
         let jd_start = jd_to_spice_jd(segment.jd_start);
         let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
@@ -454,7 +454,7 @@ impl SpkSegmentType10 {
     }
 
     #[inline(always)]
-    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> NeosResult<([f64; 3], [f64; 3])> {
+    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
         // TODO: this does not yet implement the interpolation between two neighboring states
         // which is present in the cSPICE implementation.
         // This currently matches the cspice implementation to within about 20km, where the error
@@ -572,7 +572,7 @@ impl SpkSegmentType13 {
     }
 
     #[inline(always)]
-    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> NeosResult<([f64; 3], [f64; 3])> {
+    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
         let jd = jd_to_spice_jd(jd);
         let times = self.get_times();
         let start_idx: isize = match times.binary_search_by(|probe| probe.total_cmp(&jd)) {
@@ -655,7 +655,7 @@ impl SpkSegmentType21 {
     }
 
     #[inline(always)]
-    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> NeosResult<([f64; 3], [f64; 3])> {
+    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
         // Records are laid out as so:
         //
         // Size      Description
@@ -850,7 +850,7 @@ impl GenericSegment {
 impl TryFrom<DafArray> for GenericSegment {
     type Error = Error;
 
-    fn try_from(array: DafArray) -> NeosResult<Self> {
+    fn try_from(array: DafArray) -> KeteResult<Self> {
         // The very last value of this array is an int (cast to f64) which indicates the number
         // of meta-data values.
 
