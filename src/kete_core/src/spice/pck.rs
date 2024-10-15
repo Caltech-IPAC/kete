@@ -9,10 +9,11 @@ use super::daf::{DAFType, DafFile};
 use super::pck_segments::PckSegment;
 use crate::errors::{Error, NeosResult};
 use crate::frames::Frame;
+use crossbeam::sync::ShardedLock;
 
 use std::io::Cursor;
 use std::mem::MaybeUninit;
-use std::sync::{Once, RwLock};
+use std::sync::Once;
 
 const PRELOAD_PCK: &[&[u8]] = &[
     include_bytes!("../../data/earth_000101_240215_231123.bpc"),
@@ -27,7 +28,7 @@ pub struct PckCollection {
 }
 
 /// Define the PCK singleton structure.
-pub type PckSingleton = RwLock<PckCollection>;
+pub type PckSingleton = ShardedLock<PckCollection>;
 
 impl PckCollection {
     /// Given an PCK filename, load all the segments present inside of it.
@@ -91,7 +92,7 @@ pub fn get_pck_singleton() -> &'static PckSingleton {
                 segments: Vec::new(),
             };
             files.reset();
-            let singleton: PckSingleton = RwLock::new(files);
+            let singleton: PckSingleton = ShardedLock::new(files);
             // Store it to the static var, i.e. initialize it
             let _ = SINGLETON.write(singleton);
         });
