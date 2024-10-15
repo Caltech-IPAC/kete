@@ -2,7 +2,7 @@
 //!
 //! It is unlikely to be useful outside of reading these files.
 //!
-use crate::{errors::Error, prelude::NeosResult};
+use crate::{errors::Error, prelude::KeteResult};
 use nalgebra::DVector;
 
 /// Given a list of chebyshev polynomial coefficients, compute the value of the function
@@ -27,7 +27,7 @@ pub fn chebyshev3_evaluate_both(
     coefx: &[f64],
     coefy: &[f64],
     coefz: &[f64],
-) -> NeosResult<([f64; 3], [f64; 3])> {
+) -> KeteResult<([f64; 3], [f64; 3])> {
     let n_coef = coefx.len();
 
     if n_coef < 2 {

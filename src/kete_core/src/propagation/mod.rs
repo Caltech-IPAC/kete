@@ -6,7 +6,7 @@
 use crate::constants::{MASSES, PLANETS, SIMPLE_PLANETS};
 use crate::errors::Error;
 use crate::frames::Frame;
-use crate::prelude::{Desig, NeosResult};
+use crate::prelude::{Desig, KeteResult};
 use crate::spice::get_spk_singleton;
 use crate::state::State;
 use nalgebra::{DVector, Vector3};
@@ -49,7 +49,7 @@ pub fn propagate_two_body_radau(dt: f64, pos: &[f64; 3], vel: &[f64; 3]) -> ([f6
 ///
 /// This is a very poor approximation over more than a few minutes/hours, however it
 /// is very fast.
-pub fn propagate_linear(state: &State, jd_final: f64) -> NeosResult<State> {
+pub fn propagate_linear(state: &State, jd_final: f64) -> KeteResult<State> {
     let dt = jd_final - state.jd;
     let mut pos: Vector3<f64> = state.pos.into();
     pos.iter_mut()
@@ -72,7 +72,7 @@ pub fn propagate_n_body_spk(
     jd_final: f64,
     include_extended: bool,
     non_grav_model: Option<NonGravModel>,
-) -> NeosResult<State> {
+) -> KeteResult<State> {
     let center = state.center_id;
     let frame = state.frame;
     let spk = get_spk_singleton().try_read().unwrap();
@@ -123,7 +123,7 @@ pub fn propagate_n_body_spk(
 ///
 /// It is *strongly recommended* to use the `kepler.rs` code for this, as
 /// it will be much more computationally efficient.
-pub fn propagation_central(state: &State, jd_final: f64) -> NeosResult<[[f64; 3]; 2]> {
+pub fn propagation_central(state: &State, jd_final: f64) -> KeteResult<[[f64; 3]; 2]> {
     let pos: Vector3<f64> = state.pos.into();
     let vel: Vector3<f64> = state.vel.into();
     let (pos, vel, _meta) = RadauIntegrator::integrate(
@@ -144,7 +144,7 @@ pub fn propagate_n_body_vec(
     jd_final: f64,
     planet_states: Option<Vec<State>>,
     non_gravs: Vec<Option<NonGravModel>>,
-) -> NeosResult<(Vec<State>, Vec<State>)> {
+) -> KeteResult<(Vec<State>, Vec<State>)> {
     if states.is_empty() {
         Err(Error::ValueError(
             "State vector is empty, propagation cannot continue".into(),

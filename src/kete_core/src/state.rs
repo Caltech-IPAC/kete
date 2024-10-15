@@ -19,7 +19,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
 
-use crate::errors::{Error, NeosResult};
+use crate::errors::{Error, KeteResult};
 use crate::frames::{
     ecliptic_to_equatorial, ecliptic_to_fk4, ecliptic_to_galactic, equatorial_to_ecliptic,
     fk4_to_ecliptic, galactic_to_ecliptic, inertial_to_noninertial, noninertial_to_inertial, Frame,
@@ -142,7 +142,7 @@ impl State {
     ///
     /// * `target_frame` - Target frame from the [`Frame`] enum.
     #[inline(always)]
-    pub fn try_change_frame_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
+    pub fn try_change_frame_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
         if self.frame == target_frame {
             return Ok(());
         }
@@ -211,7 +211,7 @@ impl State {
     /// Trade the center ID and ID values, and flip the direction of the position and
     /// velocity vectors.
     #[inline(always)]
-    pub fn try_flip_center_id(&mut self) -> NeosResult<()> {
+    pub fn try_flip_center_id(&mut self) -> KeteResult<()> {
         if let Desig::Naif(mut id) = self.desig {
             (id, self.center_id) = (self.center_id, id);
             for i in 0..3 {
@@ -238,7 +238,7 @@ impl State {
     ///
     /// * `state` - [`State`] object which defines the new center point.
     #[inline(always)]
-    pub fn try_change_center(&mut self, mut state: Self) -> NeosResult<()> {
+    pub fn try_change_center(&mut self, mut state: Self) -> KeteResult<()> {
         if self.jd != state.jd {
             return Err(Error::ValueError("States don't have matching jds.".into()));
         }

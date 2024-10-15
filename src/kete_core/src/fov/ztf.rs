@@ -94,7 +94,7 @@ impl FovLike for ZtfCcdQuad {
         1
     }
 
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
         self.observer.try_change_frame_mut(target_frame)?;
         self.patch = self.patch.try_frame_change(target_frame)?;
         Ok(())
@@ -127,7 +127,7 @@ impl ZtfField {
     /// Construct a new ZtfField from a list of ccd quads.
     /// These ccd quads must be from the same field and having matching value as
     /// appropriate.
-    pub fn new(ccd_quads: Vec<ZtfCcdQuad>) -> NeosResult<Self> {
+    pub fn new(ccd_quads: Vec<ZtfCcdQuad>) -> KeteResult<Self> {
         if ccd_quads.is_empty() {
             Err(Error::ValueError(
                 "Ztf Field must contains ZtfCcdQuads".into(),
@@ -174,7 +174,7 @@ impl FovLike for ZtfField {
         &self.observer
     }
 
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> NeosResult<()> {
+    fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
         let _ = self
             .ccd_quads
             .iter_mut()

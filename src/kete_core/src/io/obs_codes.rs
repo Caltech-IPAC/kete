@@ -2,7 +2,7 @@
 use lazy_static::lazy_static;
 use serde::Deserialize;
 
-use crate::prelude::{Error, NeosResult};
+use crate::prelude::{Error, KeteResult};
 use std::str;
 use std::str::FromStr;
 
@@ -29,7 +29,7 @@ impl FromStr for ObsCode {
     type Err = Error;
 
     /// Load an ObsCode from a single string.
-    fn from_str(row: &str) -> NeosResult<Self> {
+    fn from_str(row: &str) -> KeteResult<Self> {
         let code = row[3..6].to_string();
         let lon = f64::from_str(row[8..19].trim()).unwrap();
         let lat = f64::from_str(row[18..29].trim()).unwrap();

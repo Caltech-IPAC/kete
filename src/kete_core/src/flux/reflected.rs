@@ -1,7 +1,7 @@
 use super::sun::solar_flux_black_body;
 use crate::{
     constants::{AU_KM, C_V},
-    prelude::{Error, NeosResult},
+    prelude::{Error, KeteResult},
 };
 
 use nalgebra::Vector3;
@@ -117,7 +117,7 @@ impl HGParams {
         c_hg: Option<f64>,
         vis_albedo: Option<f64>,
         diam: Option<f64>,
-    ) -> NeosResult<Self> {
+    ) -> KeteResult<Self> {
         let (h_mag, vis_albedo, diam, c_hg) = Self::fill(h_mag, vis_albedo, diam, c_hg)?;
         Ok(Self {
             desig,
@@ -151,7 +151,7 @@ impl HGParams {
         vis_albedo: Option<f64>,
         diam: Option<f64>,
         c_hg: Option<f64>,
-    ) -> NeosResult<(f64, Option<f64>, Option<f64>, f64)> {
+    ) -> KeteResult<(f64, Option<f64>, Option<f64>, f64)> {
         if h_mag.is_none() && (vis_albedo.is_none() || diam.is_none()) {
             Err(Error::ValueError(
                 "h_mag must be defined unless both vis_albedo and diam are provided.".into(),

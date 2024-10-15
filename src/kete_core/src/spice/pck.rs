@@ -7,7 +7,7 @@
 //!
 use super::daf::{DAFType, DafFile};
 use super::pck_segments::PckSegment;
-use crate::errors::{Error, NeosResult};
+use crate::errors::{Error, KeteResult};
 use crate::frames::Frame;
 use crossbeam::sync::ShardedLock;
 
@@ -33,7 +33,7 @@ pub type PckSingleton = ShardedLock<PckCollection>;
 impl PckCollection {
     /// Given an PCK filename, load all the segments present inside of it.
     /// These segments are added to the PCK singleton in memory.
-    pub fn load_file(&mut self, filename: &str) -> NeosResult<()> {
+    pub fn load_file(&mut self, filename: &str) -> KeteResult<()> {
         let file = DafFile::from_file(filename)?;
         if !matches!(file.daf_type, DAFType::Pck) {
             Err(Error::IOError(format!(
@@ -48,7 +48,7 @@ impl PckCollection {
 
     /// Get the raw orientation from the loaded PCK files.
     /// This orientation will have the frame of what was originally present in the file.
-    pub fn try_get_orientation(&self, id: isize, jd: f64) -> NeosResult<Frame> {
+    pub fn try_get_orientation(&self, id: isize, jd: f64) -> KeteResult<Frame> {
         for segment in self.segments.iter() {
             if id == segment.center_id && segment.contains(jd) {
                 return segment.try_get_orientation(jd);

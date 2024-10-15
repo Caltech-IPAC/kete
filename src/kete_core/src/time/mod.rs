@@ -11,7 +11,7 @@ pub mod scales;
 use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc};
 use scales::{TimeScale, JD_TO_MJD, TAI, TDB, UTC};
 
-use crate::prelude::{Error, NeosResult};
+use crate::prelude::{Error, KeteResult};
 
 /// Representation of Time.
 ///
@@ -72,18 +72,18 @@ pub fn frac_day_to_hmsms(mut frac: f64) -> Option<(u32, u32, u32, u32)> {
 
 impl Time<UTC> {
     /// Read time from the standard ISO format for time.
-    pub fn from_iso(s: &str) -> NeosResult<Self> {
+    pub fn from_iso(s: &str) -> KeteResult<Self> {
         let time = DateTime::parse_from_rfc3339(s)?.to_utc();
         Self::from_datetime(&time)
     }
 
     /// Construct time from the current time.
-    pub fn now() -> NeosResult<Self> {
+    pub fn now() -> KeteResult<Self> {
         Self::from_datetime(&Utc::now())
     }
 
     /// Construct a Time object from a UTC DateTime.
-    pub fn from_datetime(time: &DateTime<Utc>) -> NeosResult<Self> {
+    pub fn from_datetime(time: &DateTime<Utc>) -> KeteResult<Self> {
         let frac_day = hour_min_sec_to_day(
             time.hour(),
             time.minute(),
@@ -143,7 +143,7 @@ impl Time<UTC> {
     }
 
     /// Create a DateTime object
-    pub fn to_datetime(&self) -> NeosResult<DateTime<Utc>> {
+    pub fn to_datetime(&self) -> KeteResult<DateTime<Utc>> {
         let (y, month, d, f) = self.year_month_day();
         let (h, m, s, ms) = frac_day_to_hmsms(f).unwrap();
         Ok(NaiveDate::from_ymd_opt(y as i32, month, d)
@@ -154,7 +154,7 @@ impl Time<UTC> {
     }
 
     /// Construct a ISO compliant UTC string.
-    pub fn to_iso(&self) -> NeosResult<String> {
+    pub fn to_iso(&self) -> KeteResult<String> {
         let datetime = self.to_datetime()?;
         Ok(datetime.to_rfc3339())
     }

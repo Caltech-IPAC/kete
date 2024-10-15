@@ -110,7 +110,7 @@ pub fn fov_checks_py(
 }
 
 /// Check if a list of loaded spice kernel objects are visible in the provided FOVs.
-/// 
+///
 /// Returns only the objects which are visible to the  observer, adding a correction
 /// for optical light delay.
 ///

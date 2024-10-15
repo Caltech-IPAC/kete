@@ -1,7 +1,7 @@
 /// Gauss-Radau Spacing Numerical Integrator
 /// This solves a second-order initial value problem.
 use crate::errors::Error;
-use crate::prelude::NeosResult;
+use crate::prelude::KeteResult;
 use itertools::izip;
 use lazy_static::lazy_static;
 use nalgebra::allocator::Allocator;
@@ -16,10 +16,10 @@ pub type RadauFunc<'a, MType, D> = &'a dyn Fn(
     &OVector<f64, D>,
     &mut MType,
     bool,
-) -> NeosResult<OVector<f64, D>>;
+) -> KeteResult<OVector<f64, D>>;
 
 /// Integrator will return a result of this type.
-pub type RadauResult<MType, D> = NeosResult<(OVector<f64, D>, OVector<f64, D>, MType)>;
+pub type RadauResult<MType, D> = KeteResult<(OVector<f64, D>, OVector<f64, D>, MType)>;
 
 const GAUSS_RADAU_SPACINGS: [f64; 8] = [
     0.0,
@@ -123,7 +123,7 @@ where
         time_init: f64,
         final_time: f64,
         metadata: MType,
-    ) -> NeosResult<Self> {
+    ) -> KeteResult<Self> {
         let (dim, _) = state_init.shape_generic();
         if state_init.len() != state_der_init.len() {
             Err(Error::ValueError(
@@ -222,7 +222,7 @@ where
     /// This function will update the current b matrices to be correct for the
     /// step guess provided.
     ///
-    fn step(&mut self, step_size: f64) -> NeosResult<f64> {
+    fn step(&mut self, step_size: f64) -> KeteResult<f64> {
         self.g_scratch.fill(0.0);
         self.state_scratch.fill(0.0);
         self.state_der_scratch.fill(0.0);

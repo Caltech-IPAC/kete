@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::f64::consts::{PI, TAU};
 use std::fmt::{self, Debug, Display};
 
-use crate::prelude::{Error, NeosResult};
+use crate::prelude::{Error, KeteResult};
 use crate::time::Time;
 
 /// Coordinate frames.
@@ -43,13 +43,26 @@ pub enum Frame {
     // Other non inertial frames will require multi-step conversions
 }
 
+impl From<Frame> for i32 {
+    fn from(value: Frame) -> Self {
+        match value {
+            Frame::Unknown(_) => 0,
+            Frame::Equatorial => 1,
+            Frame::Ecliptic => 2,
+            Frame::FK4 => 3,
+            Frame::Galactic => 4,
+            Frame::EclipticNonInertial(..) => 5,
+        }
+    }
+}
+
 impl Frame {
     /// Change a vector from the current frame into the target frame.
     pub fn try_vec_frame_change(
         &self,
         mut vec: Vector3<f64>,
         target: Frame,
-    ) -> NeosResult<Vector3<f64>> {
+    ) -> KeteResult<Vector3<f64>> {
         match self {
             Frame::Equatorial => {
                 vec = equatorial_to_ecliptic(&vec);

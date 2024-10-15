@@ -2,7 +2,6 @@
 use kete_core::{fitting, stats};
 use pyo3::pyfunction;
 
-
 /// Perform a KS test between two vectors of values.
 #[pyfunction]
 #[pyo3(name = "ks_test")]

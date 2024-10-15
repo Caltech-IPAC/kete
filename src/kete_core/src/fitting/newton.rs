@@ -1,4 +1,4 @@
-use crate::{errors::Error, prelude::NeosResult};
+use crate::{errors::Error, prelude::KeteResult};
 
 /// Solve root using the Newton-Raphson method.
 ///
@@ -15,7 +15,7 @@ use crate::{errors::Error, prelude::NeosResult};
 /// ```
 ///
 #[inline(always)]
-pub fn newton_raphson<Func, Der>(func: Func, der: Der, start: f64, atol: f64) -> NeosResult<f64>
+pub fn newton_raphson<Func, Der>(func: Func, der: Der, start: f64, atol: f64) -> KeteResult<f64>
 where
     Func: Fn(f64) -> f64,
     Der: Fn(f64) -> f64,

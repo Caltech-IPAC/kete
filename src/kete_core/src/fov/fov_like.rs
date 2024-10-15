@@ -28,7 +28,7 @@ pub trait FovLike: Sync + Sized {
     fn n_patches(&self) -> usize;
 
     /// Change the target frame to the new frame.
-    fn try_frame_change_mut(&mut self, new_frame: Frame) -> NeosResult<()>;
+    fn try_frame_change_mut(&mut self, new_frame: Frame) -> KeteResult<()>;
 
     /// Check if a static source is visible. This assumes the vector passed in is at an
     /// infinite distance from the observer.
@@ -68,7 +68,7 @@ pub trait FovLike: Sync + Sized {
     /// Assuming the object undergoes two-body motion, check to see if it is within the
     /// field of view.
     #[inline]
-    fn check_two_body(&self, state: &State) -> NeosResult<(usize, Contains, State)> {
+    fn check_two_body(&self, state: &State) -> KeteResult<(usize, Contains, State)> {
         let obs = self.observer();
         let obs_pos: Vector3<_> = obs.pos.into();
 
@@ -91,7 +91,7 @@ pub trait FovLike: Sync + Sized {
         &self,
         state: &State,
         include_asteroids: bool,
-    ) -> NeosResult<(usize, Contains, State)> {
+    ) -> KeteResult<(usize, Contains, State)> {
         let obs = self.observer();
         let obs_pos = Vector3::from(obs.pos);
 
