@@ -11,10 +11,10 @@ use serde::{Deserialize, Serialize};
 /// 
 /// Specifically page Page 550 - Equation (A4):
 /// 
-///     Asteroids II. University of Arizona Press, Tucson, pp. 524–556.
-///     Bowell, E., Hapke, B., Domingue, D., Lumme, K., Peltoniemi, J., Harris,
-///     A.W., 1989. Application of photometric models to asteroids, in: Binzel,
-///     R.P., Gehrels, T., Matthews, M.S. (Eds.),
+/// Asteroids II. University of Arizona Press, Tucson, pp. 524–556.
+/// Bowell, E., Hapke, B., Domingue, D., Lumme, K., Peltoniemi, J., Harris,
+/// A.W., 1989. Application of photometric models to asteroids, in: Binzel,
+/// R.P., Gehrels, T., Matthews, M.S. (Eds.)
 ///
 /// # Arguments
 ///
@@ -40,10 +40,10 @@ pub fn hg_phase_curve_correction(g_param: f64, phase: f64) -> f64 {
 /// 
 /// Specifically page Page 549 - Equation (A1) of:
 /// 
-///     Asteroids II. University of Arizona Press, Tucson, pp. 524–556.
-///     Bowell, E., Hapke, B., Domingue, D., Lumme, K., Peltoniemi, J., Harris,
-///     A.W., 1989. Application of photometric models to asteroids, in: Binzel,
-///     R.P., Gehrels, T., Matthews, M.S. (Eds.),
+/// Asteroids II. University of Arizona Press, Tucson, pp. 524–556.
+/// Bowell, E., Hapke, B., Domingue, D., Lumme, K., Peltoniemi, J., Harris,
+/// A.W., 1989. Application of photometric models to asteroids, in: Binzel,
+/// R.P., Gehrels, T., Matthews, M.S. (Eds.)
 ///
 /// # Arguments
 /// * `desig` - Designation of the object.
