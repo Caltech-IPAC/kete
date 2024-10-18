@@ -38,6 +38,7 @@ pub enum Frame {
     /// - isize value represents the frame identifier.
     /// - array of 6 floats represent the euler angles and their derivatives to move to
     ///   this frame from the ecliptic frame.
+    ///
     /// Rotation is done with a ZXZ set of chained rotations.
     EclipticNonInertial(isize, [f64; 6]),
     // Other non inertial frames will require multi-step conversions

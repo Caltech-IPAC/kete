@@ -214,7 +214,7 @@ impl HGParams {
     ///
     /// The IAU model is not technically defined above 120 degrees phase, however this will
     /// continue to return values fit to the model until 160 degrees. Phases larger than
-    /// 160 degrees will return an apparent magnitude of infinity.
+    /// 160 degrees will return nan.
     ///
     /// Note that this typically assumes that H/G have been fit in the V band, thus this
     /// will return a V band apparent magnitude.
@@ -232,7 +232,7 @@ impl HGParams {
 
         // 2.7925... == 160 degrees in radians
         if phase > 2.792526803190927 {
-            return f64::INFINITY;
+            return f64::NAN;
         }
 
         let correction = hg_phase_curve_correction(self.g_param, phase).log10();
