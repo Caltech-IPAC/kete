@@ -97,7 +97,7 @@ pub fn hg_apparent_flux_py(
 ///
 /// The HG IAU model is not technically defined above 120 degrees phase, however this
 /// will continue to return values fit to the model until 160 degrees. Phases larger
-/// than 160 degrees will return an apparent magnitude of infinity.
+/// than 160 degrees will return nan.
 ///
 /// Parameters
 /// ----------

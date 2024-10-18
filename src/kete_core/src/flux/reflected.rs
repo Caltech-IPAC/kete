@@ -7,7 +7,14 @@ use crate::{
 use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
 
-///  This computes the phase curve correction using the IAU standard for the HG model.
+/// This computes the phase curve correction using the IAU standard for the HG model.
+/// 
+/// Specifically page Page 550 - Equation (A4):
+/// 
+/// Asteroids II. University of Arizona Press, Tucson, pp. 524–556.
+/// Bowell, E., Hapke, B., Domingue, D., Lumme, K., Peltoniemi, J., Harris,
+/// A.W., 1989. Application of photometric models to asteroids, in: Binzel,
+/// R.P., Gehrels, T., Matthews, M.S. (Eds.)
 ///
 /// # Arguments
 ///
@@ -30,6 +37,13 @@ pub fn hg_phase_curve_correction(g_param: f64, phase: f64) -> f64 {
 ///
 /// H, Albedo, and Diameter are all related by the relation:
 /// diameter = c_hg / albedo.sqrt() * (10f64).powf(-h_mag / 5.0);
+/// 
+/// Specifically page Page 549 - Equation (A1) of:
+/// 
+/// Asteroids II. University of Arizona Press, Tucson, pp. 524–556.
+/// Bowell, E., Hapke, B., Domingue, D., Lumme, K., Peltoniemi, J., Harris,
+/// A.W., 1989. Application of photometric models to asteroids, in: Binzel,
+/// R.P., Gehrels, T., Matthews, M.S. (Eds.)
 ///
 /// # Arguments
 /// * `desig` - Designation of the object.
@@ -214,7 +228,7 @@ impl HGParams {
     ///
     /// The IAU model is not technically defined above 120 degrees phase, however this will
     /// continue to return values fit to the model until 160 degrees. Phases larger than
-    /// 160 degrees will return an apparent magnitude of infinity.
+    /// 160 degrees will return nan.
     ///
     /// Note that this typically assumes that H/G have been fit in the V band, thus this
     /// will return a V band apparent magnitude.
@@ -232,7 +246,7 @@ impl HGParams {
 
         // 2.7925... == 160 degrees in radians
         if phase > 2.792526803190927 {
-            return f64::INFINITY;
+            return f64::NAN;
         }
 
         let correction = hg_phase_curve_correction(self.g_param, phase).log10();
