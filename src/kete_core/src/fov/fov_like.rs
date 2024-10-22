@@ -56,7 +56,7 @@ pub trait FovLike: Sync + Sized {
         let (idx, contains) = self.contains(&new_rel_pos);
         let new_state = State::new(
             state.desig.clone(),
-            obs.jd,
+            obs.jd + dt,
             new_pos,
             vel,
             obs.frame,
@@ -203,8 +203,8 @@ pub trait FovLike: Sync + Sized {
             .into_par_iter()
             .filter_map(|&obj_id| {
                 match spk.try_get_state(obj_id, obs.jd, obs.center_id, obs.frame) {
-                    Ok(state) => match self.check_linear(&state) {
-                        (idx, Contains::Inside, state) => Some((idx, state)),
+                    Ok(state) => match self.check_two_body(&state) {
+                        Ok((idx, Contains::Inside, state)) => Some((idx, state)),
                         _ => None,
                     },
                     _ => None,

@@ -192,12 +192,12 @@ impl FovLike for GenericCone {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::constants::GMS_SQRT;
+    use crate::constants::{self, GMS_SQRT};
     use crate::prelude::*;
     use crate::state::Desig;
 
     #[test]
-    fn test_check_visible() {
+    fn test_check_rectangle_visible() {
         let circular = State::new(
             Desig::Empty,
             2451545.0,
@@ -232,6 +232,70 @@ mod tests {
 
             assert!(fov
                 .check_visible(&[off_state], 6.0, false)
+                .first()
+                .unwrap()
+                .is_some());
+        }
+    }
+
+    /// Test the light delay computations for the different checks
+    #[test]
+    fn test_check_omni_visible() {
+        // Build an observer, and check the observability of ceres with different offsets from the observer time.
+        // this will exercise the position, velocity, and time offsets due to light delay.
+        let spk = get_spk_singleton().read().unwrap();
+        let observer = State::new(
+            Desig::Empty,
+            2451545.0,
+            [0.0, 1., 0.0].into(),
+            [-GMS_SQRT, 0.0, 0.0].into(),
+            Frame::Ecliptic,
+            10,
+        );
+
+        for offset in [-10.0, -5.0, 0.0, 5.0, 10.0] {
+            let ceres = spk
+                .try_get_state(20000001, observer.jd + offset, 10, Frame::Ecliptic)
+                .unwrap();
+
+            let fov = OmniDirectional::new(observer.clone());
+
+            // Check two body approximation calculation
+            let two_body = fov.check_two_body(&ceres);
+            assert!(two_body.is_ok());
+            let (_, _, two_body) = two_body.unwrap();
+            let dist = (Vector3::from(two_body.pos) - Vector3::from(observer.pos)).norm();
+            assert!((observer.jd - two_body.jd - dist * constants::C_AU_PER_DAY_INV).abs() < 1e-6);
+            let ceres_exact = spk
+                .try_get_state(20000001, two_body.jd, 10, Frame::Ecliptic)
+                .unwrap();
+            // check that we are within about 150km - not bad for 2 body
+            assert!((Vector3::from(two_body.pos) - Vector3::from(ceres_exact.pos)).norm() < 1e-6);
+
+            // Check n body approximation calculation
+            let n_body = fov.check_n_body(&ceres, false);
+            assert!(n_body.is_ok());
+            let (_, _, n_body) = n_body.unwrap();
+            assert!((observer.jd - n_body.jd - dist * constants::C_AU_PER_DAY_INV).abs() < 1e-6);
+            let ceres_exact = spk
+                .try_get_state(20000001, n_body.jd, 10, Frame::Ecliptic)
+                .unwrap();
+            // check that we are within about 150m
+            assert!((Vector3::from(n_body.pos) - Vector3::from(ceres_exact.pos)).norm() < 1e-9);
+
+            // Check spk queries
+            let spk_check = &fov.check_spks(&[20000001])[0];
+            assert!(spk_check.is_some());
+            let spk_check = &spk_check.as_ref().unwrap().states[0];
+            assert!((observer.jd - spk_check.jd - dist * constants::C_AU_PER_DAY_INV).abs() < 1e-6);
+            let ceres_exact = spk
+                .try_get_state(20000001, spk_check.jd, 10, Frame::Ecliptic)
+                .unwrap();
+            // check that we are within about 150 micron
+            assert!((Vector3::from(spk_check.pos) - Vector3::from(ceres_exact.pos)).norm() < 1e-12);
+
+            assert!(fov
+                .check_visible(&[ceres], 6.0, false)
                 .first()
                 .unwrap()
                 .is_some());
