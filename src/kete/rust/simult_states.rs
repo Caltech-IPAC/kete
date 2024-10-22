@@ -14,6 +14,10 @@ use crate::{fovs::AllowedFOV, frame::PyFrames, state::PyState};
 /// The main value in this is that also includes an optional Field of View.
 /// If the FOV is provided, it is implied that the states which are present
 /// in this file were objects seen by the FOV.
+/// 
+/// In the case where the FOV is provided, it is expected that the states
+/// positions will include light delay, so an object which is ~1au away from
+/// the FOV observer will have a JD which is offset by about 8 minutes.
 ///
 #[pyclass(module = "kete", frozen, sequence, name = "SimultaneousStates")]
 #[derive(Debug)]
