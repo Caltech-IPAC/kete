@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added support for loading orbit information from JPL Horizons
+- Added more complete testing for light delay computations in the various FOV checks.
 
 ### Changed
 
@@ -23,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   assuming that the epoch time of the covariance fits is in UTC. This assumption is
   now included in the covariance matrix sampling. This is different than their other
   data products.
+- Field of View checks for SPK checks was not returning the correct light delayed time
+  for, it was returning the position/velocity at the observed position, but the time
+  was the instantaneous time.
 
 
 ## [v1.0.2]
