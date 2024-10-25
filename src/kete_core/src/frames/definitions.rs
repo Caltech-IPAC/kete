@@ -5,7 +5,7 @@
 use lazy_static::lazy_static;
 use nalgebra::{Matrix3, Rotation3, UnitVector3, Vector3};
 use serde::{Deserialize, Serialize};
-use std::f64::consts::{PI, TAU};
+use std::f64::consts::{FRAC_PI_2, PI, TAU};
 use std::fmt::{self, Debug, Display};
 
 use crate::prelude::{Error, KeteResult};
@@ -292,56 +292,32 @@ pub fn inertial_to_noninertial(
     (new_pos, new_vel)
 }
 
-/// Create a unit vector from polar spherical theta and phi angles in radians.
+/// Create a unit vector from latitude and longitude.
+///
+/// In the Equatorial frame, lat = dec, lon = ra
 ///
 /// <https://en.wikipedia.org/wiki/Spherical_coordinate_system#Cartesian_coordinates>
-pub fn from_polar_spherical(theta: f64, phi: f64) -> UnitVector3<f64> {
-    let (theta_sin, theta_cos) = theta.sin_cos();
-    let (phi_sin, phi_cos) = phi.sin_cos();
-    UnitVector3::<f64>::new_unchecked([theta_sin * phi_cos, theta_sin * phi_sin, theta_cos].into())
+#[inline(always)]
+pub fn from_lat_lon(lat: f64, lon: f64) -> [f64; 3] {
+    let (lat_sin, lat_cos) = lat.sin_cos();
+    let (lon_sin, lon_cos) = lon.sin_cos();
+    [lat_cos * lon_cos, lat_cos * lon_sin, lat_sin]
 }
 
-/// Create a unit vector from latitude and longitude in units of radians.
-pub fn from_lat_lon(lat: f64, lon: f64) -> UnitVector3<f64> {
-    from_polar_spherical(PI / 2.0 - lat, lon)
-}
-
-/// Create a unit vector from ra and dec in units of radians.
-pub fn from_ra_dec(ra: f64, dec: f64) -> UnitVector3<f64> {
-    from_polar_spherical(PI / 2.0 - dec, ra)
-}
-
-/// Convert a unit vector to polar spherical coordinates.
+/// Convert a vector to latitude and longitude in the current coordinate frame.
+///
+/// In the Equatorial frame, lat = dec, lon = ra
 ///
 /// <https://en.wikipedia.org/wiki/Spherical_coordinate_system#Cartesian_coordinates>
-pub fn to_polar_spherical(vec: UnitVector3<f64>) -> (f64, f64) {
-    let theta = vec.z.acos();
-    let phi = vec.y.atan2(vec.x) % TAU;
-    (theta, phi)
-}
-
-/// Convert a unit vector to latitude and longitude.
-///
-/// Input vector needs to be in the [`Frame::Ecliptic`] frame.
-pub fn to_lat_lon(vec: UnitVector3<f64>) -> (f64, f64) {
-    let (mut lat, mut lon) = to_polar_spherical(vec);
-    if lat > PI {
-        lat = TAU - lat;
-        lon += PI
+#[inline(always)]
+pub fn to_lat_lon(x: f64, y: f64, z: f64) -> (f64, f64) {
+    let r = Vector3::from([x, y, z]).norm();
+    if r < 1e-10 {
+        return (0.0, 0.0);
     }
-    (PI / 2.0 - lat, lon)
-}
-
-/// Convert a unit vector to ra and dec.
-///
-/// Input vector needs to be in the [`Frame::Equatorial`] frame.
-pub fn to_ra_dec(vec: UnitVector3<f64>) -> (f64, f64) {
-    let (mut dec, mut ra) = to_polar_spherical(vec);
-    if dec > PI {
-        dec = TAU - dec;
-        ra += PI
-    }
-    (ra, PI / 2.0 - dec)
+    let lon = (3.0 * FRAC_PI_2 - (z / r).clamp(-1.0, 1.0).acos()).rem_euclid(TAU) - PI;
+    let lat = y.atan2(x).rem_euclid(TAU);
+    (lon, lat)
 }
 
 /// Rotate a collection of vectors around the specified rotation vector.
@@ -363,6 +339,8 @@ pub fn rotate_around(
 
 #[cfg(test)]
 mod tests {
+    use std::f64::consts::{FRAC_PI_2, TAU};
+
     use crate::frames::*;
 
     #[test]
@@ -404,5 +382,52 @@ mod tests {
         assert!((0.1 - vel_return[0]).abs() <= 10.0 * f64::EPSILON);
         assert!((0.2 - vel_return[1]).abs() <= 10.0 * f64::EPSILON);
         assert!((0.3 - vel_return[2]).abs() <= 10.0 * f64::EPSILON);
+    }
+
+    #[test]
+    fn test_lat_lon() {
+        // Several cardinal axis checks.
+        let [x, y, z] = from_lat_lon(0.0, 0.0);
+        assert!((x - 1.0).abs() < 10.0 * f64::EPSILON);
+        assert!(y.abs() < 10.0 * f64::EPSILON);
+        assert!(z.abs() < 10.0 * f64::EPSILON);
+
+        let [x, y, z] = from_lat_lon(0.0, FRAC_PI_2);
+        assert!(x.abs() < 10.0 * f64::EPSILON);
+        assert!((y - 1.0).abs() < 10.0 * f64::EPSILON);
+        assert!(z.abs() < 10.0 * f64::EPSILON);
+
+        let [x, y, z] = from_lat_lon(0.0, -FRAC_PI_2);
+        assert!(x.abs() < 10.0 * f64::EPSILON);
+        assert!((y + 1.0).abs() < 10.0 * f64::EPSILON);
+        assert!(z.abs() < 10.0 * f64::EPSILON);
+
+        let [x, y, z] = from_lat_lon(FRAC_PI_2, 0.0);
+        assert!(x.abs() < 10.0 * f64::EPSILON);
+        assert!(y.abs() < 10.0 * f64::EPSILON);
+        assert!((z - 1.0).abs() < 10.0 * f64::EPSILON);
+
+        let [x, y, z] = from_lat_lon(-FRAC_PI_2, 0.0);
+        assert!(x.abs() < 10.0 * f64::EPSILON);
+        assert!(y.abs() < 10.0 * f64::EPSILON);
+        assert!((z + 1.0).abs() < 10.0 * f64::EPSILON);
+
+        // sample conversion from around the sphere
+        for idx in -10..10 {
+            let lat = idx as f64 / 11.0 * FRAC_PI_2;
+            for idy in 0..11 {
+                let lon = idy as f64 / 11. * TAU;
+                let [x, y, z] = from_lat_lon(lat, lon);
+                let (new_lat, new_lon) = to_lat_lon(x, y, z);
+
+                let [x_new, y_new, z_new] = from_lat_lon(new_lat, new_lon);
+                assert!((new_lat - lat).abs() < 10.0 * f64::EPSILON);
+                assert!((new_lon - lon).abs() < 10.0 * f64::EPSILON);
+
+                assert!((x - x_new).abs() < 10.0 * f64::EPSILON);
+                assert!((y - y_new).abs() < 10.0 * f64::EPSILON);
+                assert!((z - z_new).abs() < 10.0 * f64::EPSILON);
+            }
+        }
     }
 }

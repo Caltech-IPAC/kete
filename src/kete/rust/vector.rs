@@ -185,8 +185,7 @@ impl Vector {
         if r < 1e-8 {
             return 0.0;
         }
-        ((FRAC_PI_2 - ((data.z / r).clamp(-1.0, 1.0)).acos()).to_degrees() + 180.0)
-            .rem_euclid(360.0)
+        ((FRAC_PI_2 - (data.z / r).clamp(-1.0, 1.0).acos()).to_degrees() + 180.0).rem_euclid(360.0)
             - 180.0
     }
 

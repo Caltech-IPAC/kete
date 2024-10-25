@@ -14,7 +14,7 @@ use crate::{fovs::AllowedFOV, frame::PyFrames, state::PyState};
 /// The main value in this is that also includes an optional Field of View.
 /// If the FOV is provided, it is implied that the states which are present
 /// in this file were objects seen by the FOV.
-/// 
+///
 /// In the case where the FOV is provided, it is expected that the states
 /// positions will include light delay, so an object which is ~1au away from
 /// the FOV observer will have a JD which is offset by about 8 minutes.
@@ -156,6 +156,32 @@ impl PySimultaneousStates {
             vecs.push(diff);
         }
         Ok(vecs)
+    }
+
+    /// If a FOV is present, calculate the RA/Decs and their rates for all states in this object.
+    /// This will automatically convert all frames to Equatorial.
+    ///
+    /// 4 numbers are returned for each object, [RA, DEC, RA', DEC'], where rates are provided in
+    /// degrees/day.
+    ///
+    /// The returned RA' rate is scaled by cos(dec) so that it is equivalent to a
+    /// linear projection onto the observing plane.
+    ///
+    #[getter]
+    pub fn ra_dec_with_rates(&self) -> PyResult<Vec<[f64; 4]>> {
+        Ok(self
+            .0
+            .ra_dec_with_rates()?
+            .into_iter()
+            .map(|[ra, dec, dra, ddec]| {
+                [
+                    ra.to_degrees(),
+                    dec.to_degrees(),
+                    dra.to_degrees(),
+                    ddec.to_degrees(),
+                ]
+            })
+            .collect())
     }
 
     fn __repr__(&self) -> String {

@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added support for loading orbit information from JPL Horizons
 - Added more complete testing for light delay computations in the various FOV checks.
+- Added quality of life function to `SimultaneousState` for computing the RA/Dec along
+  with the projected on sky rates of motion.
 
 ### Changed
 
@@ -27,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Field of View checks for SPK checks was not returning the correct light delayed time,
   it was returning the position/velocity at the observed position, but the time was
   the instantaneous time.
+
+### Removed
+
+- Removed several polar coordinate transformations in the rust backend which were all
+  equivalent variations of latitude/longitude conversions. Nothing in the Python was
+  impacted.
 
 
 ## [v1.0.2]
