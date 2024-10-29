@@ -1,6 +1,8 @@
 //! File IO related tools
 
-pub mod obs_codes;
+pub mod bytes;
+#[cfg(feature = "polars")]
+pub mod parquet;
 pub mod serde_const_arr;
 
 use crate::prelude::{Error, KeteResult};

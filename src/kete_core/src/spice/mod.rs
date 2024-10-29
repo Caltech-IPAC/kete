@@ -1,9 +1,9 @@
 //! Spice replacement methods
 //! Primarily includes the ability to read the contents of SPK files.
-mod binary;
 mod daf;
 mod interpolation;
 mod naif_ids;
+mod obs_codes;
 mod pck;
 mod pck_segments;
 mod spk;
@@ -12,6 +12,7 @@ mod spk_segments;
 // expose the public methods in spk to the outside world.
 pub use daf::*;
 pub use naif_ids::try_name_from_id;
+pub use obs_codes::OBS_CODES;
 pub use pck::*;
 pub use spk::*;
 

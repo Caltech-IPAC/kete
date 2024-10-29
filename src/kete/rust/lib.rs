@@ -23,7 +23,9 @@
     unused_results
 )]
 
+use kete_core::state::State;
 use pyo3::prelude::*;
+use state::PyState;
 
 pub mod covariance;
 pub mod elements;
@@ -56,7 +58,7 @@ pub mod vector;
 #[pymodule]
 fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<frame::PyFrames>()?;
-    m.add_class::<state::PyState>()?;
+    m.add_class::<PyState>()?;
     m.add_class::<vector::Vector>()?;
     m.add_class::<elements::PyCometElements>()?;
     m.add_class::<simult_states::PySimultaneousStates>()?;
@@ -135,5 +137,27 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(fitting::ks_test_py, m)?)?;
     m.add_function(wrap_pyfunction!(fitting::fit_chi2_py, m)?)?;
 
+    m.add_function(wrap_pyfunction!(write_parquet, m)?)?;
+    m.add_function(wrap_pyfunction!(read_parquet, m)?)?;
+
     Ok(())
+}
+
+/// Write some states to a parquet table
+#[pyfunction]
+#[pyo3(name = "write_parquet")]
+pub fn write_parquet(states: Vec<PyState>, filename: String) {
+    let states: Vec<State> = states.into_iter().map(|s| s.0).collect();
+    kete_core::io::parquet::write_states_parquet(&states, &filename).unwrap()
+}
+
+/// Write some states to a parquet table
+#[pyfunction]
+#[pyo3(name = "read_parquet")]
+pub fn read_parquet(filename: String) -> Vec<PyState> {
+    kete_core::io::parquet::read_states_parquet(&filename)
+        .unwrap()
+        .into_iter()
+        .map(|s| s.into())
+        .collect()
 }

@@ -8,7 +8,7 @@ license = "BSD-3-Clause"
 keywords = ["physics", "simulation", "astronomy"]
 
 [dependencies]
-kete_core = { version = "*", path = "src/kete_core", features=["pyo3"]}
+kete_core = { version = "*", path = "src/kete_core", features=["pyo3", "polars"]}
 pyo3 = { version =  "^0.22.1", features = ["extension-module"] }
 serde = { version = "^1.0.203", features = ["derive"] }
 nalgebra = {version = "^0.33.0"}

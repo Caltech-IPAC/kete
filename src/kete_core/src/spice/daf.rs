@@ -9,12 +9,12 @@
 //! These summary records contain the location information for all the contents
 //! of the DAF file.
 //!
-use super::binary::{
+use super::pck_segments::PckSegment;
+use super::spk_segments::SpkSegment;
+use crate::io::bytes::{
     bytes_to_f64, bytes_to_f64_vec, bytes_to_i32, bytes_to_i32_vec, bytes_to_string,
     read_bytes_exact, read_f64_vec, read_str,
 };
-use super::pck_segments::PckSegment;
-use super::spk_segments::SpkSegment;
 
 use crate::errors::{Error, KeteResult};
 use std::fmt::Debug;

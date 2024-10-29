@@ -47,9 +47,22 @@ pub enum Desig {
     Empty,
 }
 
+impl Desig {
+    /// Return a full string representation of the designation, including the type.
+    pub fn full_string(&self) -> String {
+        format!("{:?}", self)
+    }
+}
+
 impl Display for Desig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Debug::fmt(self, f)
+        f.write_str(&match self {
+            Desig::Empty => "".to_string(),
+            Desig::Prov(s) => s.clone(),
+            Desig::Name(s) => s.clone(),
+            Desig::Perm(i) => i.to_string(),
+            Desig::Naif(i) => i.to_string(),
+        })
     }
 }
 
