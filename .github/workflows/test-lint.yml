@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   build:
-    timeout-minutes: 10
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -31,7 +31,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.9"
+        python-version: "3.11"
     - name: Test with cargo
       run: |
         cargo test
