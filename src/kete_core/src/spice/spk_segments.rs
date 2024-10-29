@@ -63,16 +63,6 @@ impl From<SpkSegmentType> for DafArray {
     }
 }
 
-impl From<i32> for Frame {
-    fn from(value: i32) -> Self {
-        match value {
-            1 => Frame::Equatorial, // J2000
-            17 => Frame::Ecliptic,  // ECLIPJ2000
-            _ => Frame::Unknown(value as usize),
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct SpkSegment {
     /// The NAIF ID of the object recorded in this Segment.
@@ -116,7 +106,11 @@ impl TryFrom<DafArray> for SpkSegment {
         let frame_num = summary_ints[2];
         let segment_type = summary_ints[3];
 
-        let ref_frame = frame_num.into();
+        let ref_frame = match frame_num {
+            17 => Frame::Ecliptic,
+            1 => Frame::Equatorial,
+            i => Frame::Unknown(i.abs() as usize),
+        };
 
         let segment = SpkSegmentType::from_array(segment_type, value)?;
 

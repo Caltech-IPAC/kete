@@ -47,12 +47,24 @@ pub enum Frame {
 impl From<Frame> for i32 {
     fn from(value: Frame) -> Self {
         match value {
-            Frame::Unknown(_) => 0,
             Frame::Equatorial => 1,
             Frame::Ecliptic => 2,
             Frame::FK4 => 3,
             Frame::Galactic => 4,
             Frame::EclipticNonInertial(..) => 5,
+            Frame::Unknown(_) => 0,
+        }
+    }
+}
+
+impl From<i32> for Frame {
+    fn from(value: i32) -> Self {
+        match value {
+            1 => Frame::Equatorial,
+            2 => Frame::Ecliptic,
+            3 => Frame::FK4,
+            4 => Frame::Galactic,
+            i => Frame::Unknown(i as usize),
         }
     }
 }
@@ -128,6 +140,7 @@ const OBLIQUITY: f64 = 0.40909280422232897;
 ///
 /// The equation here is from the 2010 Astronomical Almanac.
 ///
+#[inline(always)]
 pub fn calc_obliquity(jd: f64) -> f64 {
     // centuries from j2000
     let c = (jd - Time::j2000().jd) / 365.25 / 100.0;
@@ -166,6 +179,7 @@ lazy_static! {
 /// # Arguments
 ///
 /// * `vec` - Vector, arbitrary units.
+#[inline(always)]
 pub fn fk4_to_ecliptic(vec: &Vector3<f64>) -> Vector3<f64> {
     FK4_ECLIPTIC_ROT.transform_vector(vec)
 }
@@ -175,6 +189,7 @@ pub fn fk4_to_ecliptic(vec: &Vector3<f64>) -> Vector3<f64> {
 /// # Arguments
 ///
 /// * `vec` - Vector, arbitrary units.
+#[inline(always)]
 pub fn ecliptic_to_fk4(vec: &Vector3<f64>) -> Vector3<f64> {
     FK4_ECLIPTIC_ROT.inverse().transform_vector(vec)
 }
@@ -184,6 +199,7 @@ pub fn ecliptic_to_fk4(vec: &Vector3<f64>) -> Vector3<f64> {
 /// # Arguments
 ///
 /// * `vec` - Vector, arbitrary units.
+#[inline(always)]
 pub fn galactic_to_ecliptic(vec: &Vector3<f64>) -> Vector3<f64> {
     GALACTIC_ECLIPTIC_ROT.transform_vector(vec)
 }
@@ -193,6 +209,7 @@ pub fn galactic_to_ecliptic(vec: &Vector3<f64>) -> Vector3<f64> {
 /// # Arguments
 ///
 /// * `vec` - Vector, arbitrary units.
+#[inline(always)]
 pub fn ecliptic_to_galactic(vec: &Vector3<f64>) -> Vector3<f64> {
     GALACTIC_ECLIPTIC_ROT.inverse().transform_vector(vec)
 }
@@ -203,6 +220,7 @@ pub fn ecliptic_to_galactic(vec: &Vector3<f64>) -> Vector3<f64> {
 /// # Arguments
 ///
 /// * `vec` - Vector, arbitrary units.
+#[inline(always)]
 pub fn ecliptic_to_equatorial(vec: &Vector3<f64>) -> Vector3<f64> {
     ECLIPTIC_EQUATORIAL_ROT.transform_vector(vec)
 }
@@ -213,17 +231,20 @@ pub fn ecliptic_to_equatorial(vec: &Vector3<f64>) -> Vector3<f64> {
 /// # Arguments
 ///
 /// * `vec` - Vector, arbitrary units.
+#[inline(always)]
 pub fn equatorial_to_ecliptic(vec: &Vector3<f64>) -> Vector3<f64> {
     ECLIPTIC_EQUATORIAL_ROT.inverse().transform_vector(vec)
 }
 
 /// Derivative of the z rotation matrix with respect to the rotation angle.
+#[inline(always)]
 fn rot_z_der(angle: f64) -> Matrix3<f64> {
     let (sin_a, cos_a) = angle.sin_cos();
     Matrix3::<f64>::from([[-sin_a, cos_a, 0.0], [-cos_a, -sin_a, 0.0], [0.0, 0.0, 0.0]])
 }
 
 /// Derivative of the x rotation matrix with respect to the rotation angle.
+#[inline(always)]
 fn rot_x_der(angle: f64) -> Matrix3<f64> {
     let (sin_a, cos_a) = angle.sin_cos();
     Matrix3::<f64>::from([[0.0, 0.0, 0.0], [0.0, -sin_a, cos_a], [0.0, -cos_a, -sin_a]])
@@ -237,6 +258,7 @@ fn rot_x_der(angle: f64) -> Matrix3<f64> {
 /// second is the derivative of the 3x3 matrix with respect to time. These two matrices
 /// may be used to compute the new position and velocities when moving from one frame
 /// to another.
+#[inline(always)]
 pub fn noninertial_rotation(frame_angles: &[f64; 6]) -> (Matrix3<f64>, Matrix3<f64>) {
     let r_z1 = Rotation3::from_axis_angle(&Vector3::z_axis(), frame_angles[0]);
     let r_x = Rotation3::from_axis_angle(&Vector3::x_axis(), frame_angles[1]);
@@ -262,6 +284,7 @@ pub fn noninertial_rotation(frame_angles: &[f64; 6]) -> (Matrix3<f64>, Matrix3<f
 /// defined by the provided angles. The first 3 angles here define the rotation ZXZ, the
 /// second three values define the derivative of the 3 angles. These angles define the
 /// rotation from the inertial to the non-inertial frame.
+#[inline(always)]
 pub fn noninertial_to_inertial(
     frame_angles: &[f64; 6],
     pos: &Vector3<f64>,
@@ -279,6 +302,7 @@ pub fn noninertial_to_inertial(
 /// defined by the provided angles. The first 3 angles here define the rotation ZXZ, the
 /// second three values define the derivative of the 3 angles. These angles define the
 /// rotation from the inertial to the non-inertial frame.
+#[inline(always)]
 pub fn inertial_to_noninertial(
     frame_angles: &[f64; 6],
     pos: &Vector3<f64>,
@@ -328,6 +352,7 @@ pub fn to_lat_lon(x: f64, y: f64, z: f64) -> (f64, f64) {
 /// * `rotation_vec` - The single vector around which to rotate the vectors.
 /// * `angle` - The angle in radians to rotate the vectors.
 ///
+#[inline(always)]
 pub fn rotate_around(
     vector: &Vector3<f64>,
     rotation_vec: Vector3<f64>,
@@ -382,6 +407,11 @@ mod tests {
         assert!((0.1 - vel_return[0]).abs() <= 10.0 * f64::EPSILON);
         assert!((0.2 - vel_return[1]).abs() <= 10.0 * f64::EPSILON);
         assert!((0.3 - vel_return[2]).abs() <= 10.0 * f64::EPSILON);
+    }
+    #[test]
+    fn test_frame_conversion() {
+        let f: Frame = 2i32.into();
+        assert!(f == Frame::Ecliptic);
     }
 
     #[test]
