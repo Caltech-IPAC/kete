@@ -15,7 +15,7 @@ use pyo3::pyfunction;
 #[pyo3(name = "observatory_codes")]
 pub fn obs_codes() -> Vec<(f64, f64, f64, String, String)> {
     let mut codes = Vec::new();
-    for row in kete_core::io::obs_codes::OBS_CODES.iter() {
+    for row in kete_core::spice::OBS_CODES.iter() {
         codes.push((
             row.lat,
             row.lon,

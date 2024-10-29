@@ -119,6 +119,30 @@ impl PySimultaneousStates {
         Ok(())
     }
 
+    /// Save states as a parquet file.
+    pub fn save_parquet(&self, filename: String) -> PyResult<()> {
+        if self.0.fov.is_some() {
+            Err(Error::IOError(
+                "Cannot save a SimultaneousStates object which has a FOV as parquet. \
+                Parquet can only support a basic table format and saving metadata such \
+                as a field of view is not feasible. Consider using the binary saving \
+                method `SimultaneousStates.save`."
+                    .into(),
+            ))?;
+        }
+        kete_core::io::parquet::write_states_parquet(&self.0.states, &filename)?;
+        Ok(())
+    }
+
+    /// Load states from a parquet file.
+    #[staticmethod]
+    pub fn load_parquet(filename: String) -> PyResult<Self> {
+        let states = kete_core::io::parquet::read_states_parquet(&filename)?;
+        Ok(PySimultaneousStates(Box::new(
+            SimultaneousStates::new_exact(states, None)?,
+        )))
+    }
+
     /// Length of states
     pub fn __len__(&self) -> usize {
         self.0.states.len()

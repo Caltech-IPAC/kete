@@ -1,8 +1,9 @@
+//! Converting to and from bytes
 use crate::errors::{Error, KeteResult};
 use std::io::Read;
 
 /// Read the exact number of specified bytes from the file.
-pub fn read_bytes_exact<T: Read>(buffer: T, n_bytes: usize) -> KeteResult<Box<[u8]>> {
+pub(crate) fn read_bytes_exact<T: Read>(buffer: T, n_bytes: usize) -> KeteResult<Box<[u8]>> {
     let mut bytes = Vec::with_capacity(n_bytes);
     let n_read = buffer.take(n_bytes as u64).read_to_end(&mut bytes)?;
     if n_read != n_bytes {
@@ -13,7 +14,7 @@ pub fn read_bytes_exact<T: Read>(buffer: T, n_bytes: usize) -> KeteResult<Box<[u
 }
 
 /// Change a collection of bytes into a f64.
-pub fn bytes_to_f64(bytes: &[u8], little_endian: bool) -> KeteResult<f64> {
+pub(crate) fn bytes_to_f64(bytes: &[u8], little_endian: bool) -> KeteResult<f64> {
     let bytes: [u8; 8] = bytes
         .try_into()
         .map_err(|_| Error::IOError("File is not correctly formatted".into()))?;
@@ -25,7 +26,7 @@ pub fn bytes_to_f64(bytes: &[u8], little_endian: bool) -> KeteResult<f64> {
 }
 
 /// Change a collection of bytes into a vector of f64s.
-pub fn bytes_to_f64_vec(bytes: &[u8], little_endian: bool) -> KeteResult<Box<[f64]>> {
+pub(crate) fn bytes_to_f64_vec(bytes: &[u8], little_endian: bool) -> KeteResult<Box<[f64]>> {
     let byte_len = bytes.len();
     if byte_len % 8 != 0 {
         Err(Error::IOError("File is not correctly formatted".into()))?;
@@ -37,7 +38,7 @@ pub fn bytes_to_f64_vec(bytes: &[u8], little_endian: bool) -> KeteResult<Box<[f6
 }
 
 /// Change a collection of bytes into a vector of i32s.
-pub fn bytes_to_i32_vec(bytes: &[u8], little_endian: bool) -> KeteResult<Box<[i32]>> {
+pub(crate) fn bytes_to_i32_vec(bytes: &[u8], little_endian: bool) -> KeteResult<Box<[i32]>> {
     let byte_len = bytes.len();
     if byte_len % 4 != 0 {
         Err(Error::IOError("File is not correctly formatted".into()))?;
@@ -49,7 +50,7 @@ pub fn bytes_to_i32_vec(bytes: &[u8], little_endian: bool) -> KeteResult<Box<[i3
 }
 
 /// Change a collection of bytes into a i32.
-pub fn bytes_to_i32(bytes: &[u8], little_endian: bool) -> KeteResult<i32> {
+pub(crate) fn bytes_to_i32(bytes: &[u8], little_endian: bool) -> KeteResult<i32> {
     let bytes: [u8; 4] = bytes
         .try_into()
         .map_err(|_| Error::IOError("File is not correctly formatted".into()))?;
@@ -61,7 +62,7 @@ pub fn bytes_to_i32(bytes: &[u8], little_endian: bool) -> KeteResult<i32> {
 }
 
 /// Change a collection of bytes into a String.
-pub fn bytes_to_string(bytes: &[u8]) -> String {
+pub(crate) fn bytes_to_string(bytes: &[u8]) -> String {
     let mut bytes = bytes.to_vec();
     bytes.iter_mut().for_each(|x| {
         if x == &0x00 {
@@ -72,7 +73,7 @@ pub fn bytes_to_string(bytes: &[u8]) -> String {
 }
 
 /// Read a multiple contiguous f64s from the file.
-pub fn read_f64_vec<T: Read>(
+pub(crate) fn read_f64_vec<T: Read>(
     buffer: T,
     n_floats: usize,
     little_endian: bool,
@@ -84,7 +85,7 @@ pub fn read_f64_vec<T: Read>(
 /// Read a string of the specified length from the file.
 /// 0x00 are replaced with new lines, and new lines are stripped from the end of the
 /// string.
-pub fn read_str<T: Read>(buffer: T, length: usize) -> KeteResult<String> {
+pub(crate) fn read_str<T: Read>(buffer: T, length: usize) -> KeteResult<String> {
     let bytes = read_bytes_exact(buffer, length)?;
     Ok(bytes_to_string(&bytes))
 }

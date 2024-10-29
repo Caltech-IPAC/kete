@@ -24,6 +24,7 @@
 )]
 
 use pyo3::prelude::*;
+use state::PyState;
 
 pub mod covariance;
 pub mod elements;
@@ -56,7 +57,7 @@ pub mod vector;
 #[pymodule]
 fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<frame::PyFrames>()?;
-    m.add_class::<state::PyState>()?;
+    m.add_class::<PyState>()?;
     m.add_class::<vector::Vector>()?;
     m.add_class::<elements::PyCometElements>()?;
     m.add_class::<simult_states::PySimultaneousStates>()?;
