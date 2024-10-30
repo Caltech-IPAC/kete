@@ -357,7 +357,7 @@ def moon_illumination_frac(jd: Union[float, Time], observer: str = "399"):
     This is a simple approximation using basic spherical geometry, and defaults to
     having the observer located at the geocenter of the Earth.
 
-    >>> kete.spice.moon_illumination_frac(Time.from_ymd(2024, 2, 24))
+    >>> float(kete.spice.moon_illumination_frac(Time.from_ymd(2024, 2, 24)))
     0.9964936478732302
 
     Parameters
