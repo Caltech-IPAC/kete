@@ -25,7 +25,7 @@ use crate::frames::{
     fk4_to_ecliptic, galactic_to_ecliptic, inertial_to_noninertial, noninertial_to_inertial, Frame,
 };
 use crate::spice;
-use nalgebra::{Vector3, Vector6};
+use nalgebra::Vector3;
 
 /// Designation for an object.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Hash, Eq)]
@@ -63,18 +63,6 @@ impl Display for Desig {
             Desig::Perm(i) => i.to_string(),
             Desig::Naif(i) => i.to_string(),
         })
-    }
-}
-
-impl From<u64> for Desig {
-    fn from(value: u64) -> Self {
-        Desig::Perm(value)
-    }
-}
-
-impl From<i64> for Desig {
-    fn from(value: i64) -> Self {
-        Desig::Naif(value)
     }
 }
 
@@ -303,26 +291,6 @@ impl State {
     }
 }
 
-impl From<State> for [f64; 6] {
-    fn from(value: State) -> Self {
-        value
-            .pos
-            .iter()
-            .chain(value.vel.iter())
-            .copied()
-            .collect::<Vec<_>>()
-            .try_into()
-            .unwrap()
-    }
-}
-
-impl From<State> for Vector6<f64> {
-    fn from(value: State) -> Self {
-        let arr: [f64; 6] = value.into();
-        Vector6::from(arr)
-    }
-}
-
 #[cfg(test)]
 mod tests {
 
@@ -331,7 +299,7 @@ mod tests {
     #[test]
     fn flip_center() {
         let mut a = State::new(
-            1i64.into(),
+            Desig::Naif(1),
             0.0,
             [1.0, 0.0, 0.0].into(),
             [0.0, 1.0, 0.0].into(),
@@ -346,9 +314,97 @@ mod tests {
     }
 
     #[test]
+    fn nan_finite() {
+        let a = State::new(
+            Desig::Naif(1),
+            0.0,
+            [1.0, 0.0, 0.0].into(),
+            [0.0, 1.0, 0.0].into(),
+            Frame::Ecliptic,
+            0,
+        );
+        assert!(a.is_finite());
+
+        let b = State::new_nan(Desig::Empty, 0.0, Frame::Ecliptic, 1000);
+        assert!(!b.is_finite())
+    }
+
+    #[test]
+    fn desig_strings() {
+        assert!(Desig::Empty.to_string() == "");
+        assert!(Desig::Naif(100).to_string() == "100");
+        assert!(Desig::Name("Foo".into()).to_string() == "Foo");
+        assert!(Desig::Perm(123).to_string() == "123");
+        assert!(Desig::Prov("Prov".into()).to_string() == "Prov");
+    }
+
+    #[test]
+    fn naif_name_resolution() {
+        let mut a = State::new(
+            Desig::Naif(1),
+            0.0,
+            [1.0, 0.0, 0.0].into(),
+            [0.0, 1.0, 0.0].into(),
+            Frame::Ecliptic,
+            0,
+        );
+        assert!(a.try_naif_id_to_name().is_some());
+        assert!(a.desig == Desig::Name("mercury barycenter".into()));
+        assert!(a.desig.full_string() == "Name(\"mercury barycenter\")");
+        assert!(a.desig.to_string() == "mercury barycenter");
+    }
+
+    #[test]
+    fn frame_roundtrip() {
+        let mut state = State::new(
+            Desig::Naif(1),
+            0.0,
+            [1.0, 0.0, 0.0].into(),
+            [1.0, 0.0, 0.0].into(),
+            Frame::Ecliptic,
+            0,
+        );
+
+        assert!(state.try_change_frame_mut(Frame::Unknown(10000)).is_err());
+
+        let non_inerial = Frame::EclipticNonInertial(123, [1.0, 1.2, 1.4, 1.1, 1.3, 1.5]);
+
+        for frame_a in vec![
+            Frame::Ecliptic,
+            Frame::Equatorial,
+            Frame::FK4,
+            Frame::Galactic,
+            non_inerial,
+        ] {
+            let mut test_state = state.clone();
+            test_state.try_change_frame_mut(frame_a).unwrap();
+            let pos_exp = &test_state.pos;
+            let vel_exp = &test_state.vel;
+            for frame_b in vec![
+                Frame::Ecliptic,
+                Frame::Equatorial,
+                Frame::FK4,
+                Frame::Galactic,
+                non_inerial,
+            ] {
+                let mut test_state_b = test_state.clone();
+                test_state_b.try_change_frame_mut(frame_b).unwrap();
+                test_state_b.try_change_frame_mut(frame_a).unwrap();
+                let pos = &test_state_b.pos;
+                let vel = &test_state_b.vel;
+                assert!((pos[0] - pos_exp[0]).abs() < 10.0 * f64::EPSILON);
+                assert!((pos[1] - pos_exp[1]).abs() < 10.0 * f64::EPSILON);
+                assert!((pos[2] - pos_exp[2]).abs() < 10.0 * f64::EPSILON);
+                assert!((vel[0] - vel_exp[0]).abs() < 10.0 * f64::EPSILON);
+                assert!((vel[1] - vel_exp[1]).abs() < 10.0 * f64::EPSILON);
+                assert!((vel[2] - vel_exp[2]).abs() < 10.0 * f64::EPSILON);
+            }
+        }
+    }
+    #[test]
     fn change_center() {
         let mut a = State::new(
-            1i64.into(),
+            Desig::Naif(1),
             0.0,
             [1.0, 0.0, 0.0].into(),
             [1.0, 0.0, 0.0].into(),
@@ -356,7 +412,7 @@ mod tests {
             0,
         );
         let b = State::new(
-            3i64.into(),
+            Desig::Naif(3),
             0.0,
             [0.0, 1.0, 0.0].into(),
             [0.0, 1.0, 0.0].into(),
@@ -370,5 +426,36 @@ mod tests {
         assert!(a.pos[1] != 0.0);
         assert!(a.pos[2] != 0.0);
         assert!(a.vel[0] == 1.0);
+
+        // try cases which cause errors
+        let diff_jd = State::new(
+            Desig::Naif(3),
+            1.0,
+            [0.0, 1.0, 0.0].into(),
+            [0.0, 1.0, 0.0].into(),
+            Frame::Equatorial,
+            0,
+        );
+        assert!(a.try_change_center(diff_jd).is_err());
+
+        let not_naif_id = State::new(
+            Desig::Empty,
+            0.0,
+            [0.0, 1.0, 0.0].into(),
+            [0.0, 1.0, 0.0].into(),
+            Frame::Equatorial,
+            0,
+        );
+        assert!(a.try_change_center(not_naif_id).is_err());
+
+        let no_matching_id = State::new(
+            Desig::Naif(2),
+            0.0,
+            [0.0, 1.0, 0.0].into(),
+            [0.0, 1.0, 0.0].into(),
+            Frame::Equatorial,
+            1000000000,
+        );
+        assert!(a.try_change_center(no_matching_id).is_err());
     }
 }
