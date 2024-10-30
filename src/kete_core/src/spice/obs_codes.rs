@@ -59,3 +59,15 @@ lazy_static! {
         codes
     };
 }
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn obs_codes() {
+        let codes = &OBS_CODES;
+        assert!(!codes.is_empty());
+    }
+}
