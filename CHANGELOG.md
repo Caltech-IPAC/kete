@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Horizons orbit table query now includes, M1/2, K1/2, PC, and orbital period.
+- Horizons orbit table query now includes, M1/2, K1/2, PC, and rotation period.
 
 
 ## [v1.0.3]
