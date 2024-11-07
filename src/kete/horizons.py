@@ -466,7 +466,7 @@ def fetch_known_orbit_data(update_cache=False):
         res = requests.get(
             (
                 "https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields="
-                "pdes,spkid,orbit_id,rms,H,diameter,epoch,e,i,q,w,tp,om,A1,A2,A3,DT"
+                "pdes,spkid,orbit_id,rms,H,diameter,epoch,e,i,q,w,tp,om,A1,A2,A3,DT,M1,M2,K1,K2,PC,rot_per"
                 "&full-prec=1&sb-xfrag=1"
             ),
             timeout=120,

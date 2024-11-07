@@ -61,9 +61,6 @@ pub struct PckSegment {
     /// End time of the segment.
     pub jd_end: f64,
 
-    /// Type of the segment
-    pub segment_type: i32,
-
     /// Internal data representation.
     segment: PckSegmentType,
 }
@@ -94,7 +91,6 @@ impl TryFrom<DafArray> for PckSegment {
             jd_end,
             center_id,
             ref_frame,
-            segment_type,
             segment,
         })
     }
@@ -111,6 +107,11 @@ impl PckSegment {
         if jd < self.jd_start || jd > self.jd_end {
             Err(Error::DAFLimits(
                 "JD is not present in this record.".to_string(),
+            ))?;
+        }
+        if self.ref_frame != Frame::Ecliptic {
+            Err(Error::ValueError(
+                "Non ecltiptic frames are not supported for PCK queries.".into(),
             ))?;
         }
 
