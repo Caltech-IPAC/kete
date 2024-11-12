@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Horizons orbit table query now includes, M1/2, K1/2, PC, and rotation period.
 
+### Fixed
+
+- NEOS Chip size calculation was slightly incorrect with regard to the placement of the
+  gaps between the chips.
+- NEOS FOV rotation was being calculated in the ecliptic frame, whereas images will be
+  in the equatorial frame. Rotation is now defaulting to the equatorial frame.
+
 
 ## [v1.0.3]
 

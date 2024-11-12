@@ -6,31 +6,6 @@ use crate::prelude::*;
 use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
 
-/// NEOS bands
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
-pub enum NeosBand {
-    /// No Band defined.
-    Undefined,
-
-    /// NEOS NC1 Band.
-    NC1,
-
-    /// NEOS NC2 Band.
-    NC2,
-}
-
-/// Convert a NEOS band from u8
-/// 1 is NC1 2 is NC2, everything else is Undefined.
-impl From<u8> for NeosBand {
-    fn from(value: u8) -> Self {
-        match value {
-            1 => NeosBand::NC1,
-            2 => NeosBand::NC2,
-            _ => NeosBand::Undefined,
-        }
-    }
-}
-
 /// NEOS frame data, a single detector on a single band
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NeosCmos {
@@ -62,7 +37,7 @@ pub struct NeosCmos {
     pub exposure_id: u8,
 
     /// Wavelength band
-    pub band: NeosBand,
+    pub band: u8,
 
     /// CMOS ID
     /// ID number of the CMOS chip, 0, 1, 2, or 3
@@ -83,7 +58,7 @@ impl NeosCmos {
         subloop_id: u8,
         exposure_id: u8,
         cmos_id: u8,
-        band: NeosBand,
+        band: u8,
     ) -> Self {
         let patch =
             OnSkyRectangle::new(pointing, rotation, NEOS_WIDTH, NEOS_HEIGHT, observer.frame);
@@ -164,7 +139,7 @@ pub struct NeosVisit {
     pub exposure_id: u8,
 
     /// Wavelength band
-    pub band: NeosBand,
+    pub band: u8,
 }
 
 impl NeosVisit {
@@ -235,7 +210,7 @@ impl NeosVisit {
         loop_id: u8,
         subloop_id: u8,
         exposure_id: u8,
-        band: NeosBand,
+        band: u8,
     ) -> Self {
         // Rotate the Z axis to match the defined rotation angle, this vector is not
         // orthogonal to the pointing vector, but is in the correct plane of the final
@@ -250,14 +225,14 @@ impl NeosVisit {
         // orthogonal to the two existing vectors.
         let up_vec = pointing.cross(&left_vec);
 
-        // +------+-+------+-+------+-+------+   ^
-        // |  1   |g|  2   |g|  3   |g|  4   |   |
-        // |      |a|      |a|      |a|      |   y
-        // |      |p|      |p|      |p|      |   |
-        // +------+-+------+-+------+-+------+   _
-        // <-cf->    x ->
+        // +-------+-+-------+-+-------+-+-------+   ^
+        // |       |g|       |g|       |g|       |   |
+        // |   1   |a|   2   |a|   3   |a|   4   |   y
+        // |       |p|       |p|       |p|       |   |
+        // +-------+-+-------+-+-------+-+-------+   -
+        // |            <---- x ----->           |
         //
-        // pointing vector is in the middle of the 'a' in the central gap.
+        // Pointing vector is in the middle of the 'a' in the central gap.
 
         // the Y direction is bounded by 2 planes, calculate them one time
         let y_top: Vector3<f64> = rotate_around(&up_vec, left_vec, y_width / 2.0);
@@ -265,14 +240,19 @@ impl NeosVisit {
 
         let half_gap = gap_angle / 2.0;
 
+        // chip width in the x direction:
+        // 4 * chip_width + 3 * gap_angle = x_width
+        // chip_width = (x_width - 3 * gap_angle) / 4
+        let chip_width = (x_width - 3.0 * gap_angle) / 4.0;
+
         // for each chip calculate the x bounds
         let chip_1_a: Vector3<f64> = rotate_around(&left_vec, up_vec, -x_width / 2.0);
-        let chip_1_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, -x_width / 4.0 - half_gap);
-        let chip_2_a: Vector3<f64> = rotate_around(&left_vec, up_vec, -x_width / 4.0 + half_gap);
+        let chip_1_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, -x_width / 2.0 + chip_width);
+        let chip_2_a: Vector3<f64> = rotate_around(&left_vec, up_vec, -chip_width - half_gap);
         let chip_2_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, -half_gap);
         let chip_3_a: Vector3<f64> = rotate_around(&left_vec, up_vec, half_gap);
-        let chip_3_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, x_width / 4.0 - half_gap);
-        let chip_4_a: Vector3<f64> = rotate_around(&left_vec, up_vec, x_width / 4.0 + half_gap);
+        let chip_3_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, chip_width + half_gap);
+        let chip_4_a: Vector3<f64> = rotate_around(&left_vec, up_vec, x_width / 2.0 - chip_width);
         let chip_4_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, x_width / 2.0);
 
         // make the patches for each chip

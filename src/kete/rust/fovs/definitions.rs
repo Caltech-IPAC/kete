@@ -1,4 +1,4 @@
-use kete_core::fov::{self, NeosBand};
+use kete_core::fov::{self};
 use kete_core::fov::{FovLike, SkyPatch};
 use nalgebra::Vector3;
 use pyo3::{exceptions, prelude::*};
@@ -607,7 +607,7 @@ impl PyNeosCmos {
             subloop_id,
             exposure_id,
             cmos_id,
-            band.into(),
+            band,
         ))
     }
 
@@ -677,11 +677,7 @@ impl PyNeosCmos {
     /// Band Number
     #[getter]
     pub fn band(&self) -> u8 {
-        match self.0.band {
-            NeosBand::NC1 => 1,
-            NeosBand::NC2 => 2,
-            NeosBand::Undefined => 0,
-        }
+        self.0.band
     }
 
     /// Rotation angle of the FOV in degrees.
@@ -738,22 +734,23 @@ impl PyNeosVisit {
         exposure_id: u8,
         band: u8,
     ) -> Self {
-        let pointing = pointing.into_vector(crate::frame::PyFrames::Ecliptic);
+        let pointing = pointing.into_vector(crate::frame::PyFrames::Equatorial);
         let pointing = pointing.raw.into();
+        let observer = observer.as_equatorial().unwrap().0;
         PyNeosVisit(fov::NeosVisit::from_pointing(
             x_width.to_radians(),
             y_width.to_radians(),
             gap_angle.to_radians(),
             pointing,
             rotation.to_radians(),
-            observer.0,
+            observer,
             side_id,
             stack_id,
             quad_id,
             loop_id,
             subloop_id,
             exposure_id,
-            band.into(),
+            band,
         ))
     }
 
