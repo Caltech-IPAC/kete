@@ -1,13 +1,21 @@
 import numpy as np
+from .fov import NeosCmos, NeosVisit
+
+
+__all__ = ["sunshield_rotation", "NeosCmos", "NeosVisit", "FOV_WIDTH", "FOV_HEIGHT"]
+
 
 BANDS: list[float] = [4700.0, 8000.0]
 """Effective wavelength of the NC1 and NC2 bands in nm."""
 
 FOV_WIDTH: float = 7.10
-"""Expected effective field of view width in degrees"""
+"""Expected effective field of view width in degrees. Approximate Value."""
 
 FOV_HEIGHT: float = 1.68
-"""Expected effective field of view height in degrees"""
+"""Expected effective field of view height in degrees. Approximate Value."""
+
+FOV_CHIP_GAP: float = 0.11
+"""Expected effective gap between individual chips in degrees. Approximate Value."""
 
 ZERO_MAGS: list[float] = [170.662, 64.13]
 """Zero point magnitude for nc1 and nc2"""
