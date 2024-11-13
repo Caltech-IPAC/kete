@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [v1.0.4]
 
 ### Added
 
@@ -320,7 +320,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Initial Release
 
-
 - Initial version release of kete!
 - kete's primary goal is to enable simulations of NEOs, however it also supports any 
   asteroid or comet. Included are n-body orbit propagation tools, thermal and optical
@@ -329,7 +328,8 @@ Initial Release
 
 
 [Unreleased]: https://github.com/IPAC-SW/kete/tree/main
-[1.0.3]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.1
+[1.0.4]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.4
+[1.0.3]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.3
 [1.0.2]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.2
 [1.0.1]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.1
 [1.0.0]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.0
