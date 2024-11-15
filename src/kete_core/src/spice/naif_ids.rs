@@ -3,6 +3,7 @@
 //! implementation.
 use lazy_static::lazy_static;
 use serde::Deserialize;
+use smol_str::SmolStr;
 
 use crate::prelude::{Error, KeteResult};
 use std::str;
@@ -15,7 +16,7 @@ pub struct NaifId {
     pub id: i32,
 
     /// name of the object
-    pub name: String,
+    pub name: SmolStr,
 }
 
 impl FromStr for NaifId {
@@ -24,7 +25,7 @@ impl FromStr for NaifId {
     /// Load an NaifId from a single string.
     fn from_str(row: &str) -> KeteResult<Self> {
         let id = i32::from_str(row[0..10].trim()).unwrap();
-        let name = row[11..].trim().to_string();
+        let name = row[11..].trim().to_string().into();
         Ok(NaifId { id, name })
     }
 }
@@ -44,7 +45,7 @@ lazy_static! {
 }
 
 /// Return the string name of the desired ID if possible.
-pub fn try_name_from_id(id: i64) -> Option<String> {
+pub fn try_name_from_id(id: i64) -> Option<SmolStr> {
     let id = id as i32;
     for naif_id in NAIF_IDS.iter() {
         if naif_id.id == id {

@@ -1,19 +1,17 @@
 //! # NEOS field of views
 use super::{closest_inside, Contains, FovLike, OnSkyRectangle, SkyPatch, FOV};
 use crate::constants::{NEOS_HEIGHT, NEOS_WIDTH};
-use crate::frames::rotate_around;
 use crate::prelude::*;
-use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
 
 /// NEOS frame data, a single detector on a single band
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct NeosCmos {
     /// State of the observer
-    observer: State,
+    observer: State<Equatorial>,
 
     /// Patch of sky
-    pub patch: OnSkyRectangle,
+    pub patch: OnSkyRectangle<Equatorial>,
 
     /// Rotation of the FOV.
     pub rotation: f64,
@@ -36,9 +34,6 @@ pub struct NeosCmos {
     /// Exposure ID
     pub exposure_id: u8,
 
-    /// Wavelength band
-    pub band: u8,
-
     /// CMOS ID
     /// ID number of the CMOS chip, 0, 1, 2, or 3
     pub cmos_id: u8,
@@ -48,9 +43,9 @@ impl NeosCmos {
     /// Create a NEOS FOV
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        pointing: Vector3<f64>,
+        pointing: Vector<Equatorial>,
         rotation: f64,
-        observer: State,
+        observer: State<Equatorial>,
         side_id: u16,
         stack_id: u8,
         quad_id: u8,
@@ -58,10 +53,8 @@ impl NeosCmos {
         subloop_id: u8,
         exposure_id: u8,
         cmos_id: u8,
-        band: u8,
     ) -> Self {
-        let patch =
-            OnSkyRectangle::new(pointing, rotation, NEOS_WIDTH, NEOS_HEIGHT, observer.frame);
+        let patch = OnSkyRectangle::new(pointing, rotation, NEOS_WIDTH, NEOS_HEIGHT);
         Self {
             observer,
             patch,
@@ -72,7 +65,6 @@ impl NeosCmos {
             subloop_id,
             exposure_id,
             cmos_id,
-            band,
             rotation,
         }
     }
@@ -87,24 +79,18 @@ impl FovLike for NeosCmos {
     }
 
     #[inline]
-    fn observer(&self) -> &State {
+    fn observer(&self) -> &State<Equatorial> {
         &self.observer
     }
 
     #[inline]
-    fn contains(&self, obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
+    fn contains(&self, obs_to_obj: &Vector<Equatorial>) -> (usize, Contains) {
         (0, self.patch.contains(obs_to_obj))
     }
 
     #[inline]
     fn n_patches(&self) -> usize {
         1
-    }
-
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
-        self.observer.try_change_frame_mut(target_frame)?;
-        self.patch = self.patch.try_frame_change(target_frame)?;
-        Ok(())
     }
 }
 
@@ -115,7 +101,7 @@ pub struct NeosVisit {
     chips: Box<[NeosCmos; 4]>,
 
     /// Observer position
-    observer: State,
+    observer: State<Equatorial>,
 
     /// Rotation of the FOV.
     pub rotation: f64,
@@ -137,9 +123,6 @@ pub struct NeosVisit {
 
     /// Exposure ID
     pub exposure_id: u8,
-
-    /// Wavelength band
-    pub band: u8,
 }
 
 impl NeosVisit {
@@ -163,7 +146,6 @@ impl NeosVisit {
         let subloop_id = first.subloop_id;
         let exposure_id = first.exposure_id;
         let rotation = first.rotation;
-        let band = first.band;
 
         for ccd in chips.iter() {
             if ccd.side_id != side_id
@@ -174,7 +156,6 @@ impl NeosVisit {
                 || ccd.exposure_id != exposure_id
                 || ccd.rotation != rotation
                 || ccd.observer().jd != observer.jd
-                || ccd.band != band
             {
                 Err(Error::ValueError(
                     "All NeosCmos must have matching values.".into(),
@@ -191,7 +172,6 @@ impl NeosVisit {
             loop_id,
             subloop_id,
             exposure_id,
-            band,
         })
     }
 
@@ -201,21 +181,21 @@ impl NeosVisit {
         x_width: f64,
         y_width: f64,
         gap_angle: f64,
-        pointing: Vector3<f64>,
+        pointing: Vector<Equatorial>,
         rotation: f64,
-        observer: State,
+        observer: State<Equatorial>,
         side_id: u16,
         stack_id: u8,
         quad_id: u8,
         loop_id: u8,
         subloop_id: u8,
         exposure_id: u8,
-        band: u8,
     ) -> Self {
         // Rotate the Z axis to match the defined rotation angle, this vector is not
         // orthogonal to the pointing vector, but is in the correct plane of the final
         // up vector.
-        let up_vec = rotate_around(&Vector3::new(0.0, 0.0, 1.0), pointing, -rotation);
+
+        let up_vec = Vector::<Equatorial>::new([0.0, 0.0, 1.0]).rotate_around(pointing, -rotation);
 
         // construct the vector orthogonal to the pointing and rotated z axis vectors.
         let left_vec = pointing.cross(&up_vec);
@@ -235,8 +215,8 @@ impl NeosVisit {
         // Pointing vector is in the middle of the 'a' in the central gap.
 
         // the Y direction is bounded by 2 planes, calculate them one time
-        let y_top: Vector3<f64> = rotate_around(&up_vec, left_vec, y_width / 2.0);
-        let y_bottom: Vector3<f64> = rotate_around(&(-up_vec), left_vec, -y_width / 2.0);
+        let y_top = up_vec.rotate_around(left_vec, y_width / 2.0);
+        let y_bottom = (-up_vec).rotate_around(left_vec, -y_width / 2.0);
 
         let half_gap = gap_angle / 2.0;
 
@@ -246,52 +226,20 @@ impl NeosVisit {
         let chip_width = (x_width - 3.0 * gap_angle) / 4.0;
 
         // for each chip calculate the x bounds
-        let chip_1_a: Vector3<f64> = rotate_around(&left_vec, up_vec, -x_width / 2.0);
-        let chip_1_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, -x_width / 2.0 + chip_width);
-        let chip_2_a: Vector3<f64> = rotate_around(&left_vec, up_vec, -chip_width - half_gap);
-        let chip_2_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, -half_gap);
-        let chip_3_a: Vector3<f64> = rotate_around(&left_vec, up_vec, half_gap);
-        let chip_3_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, chip_width + half_gap);
-        let chip_4_a: Vector3<f64> = rotate_around(&left_vec, up_vec, x_width / 2.0 - chip_width);
-        let chip_4_b: Vector3<f64> = -rotate_around(&left_vec, up_vec, x_width / 2.0);
+        let chip_1_a = left_vec.rotate_around(up_vec, -x_width / 2.0);
+        let chip_1_b = -left_vec.rotate_around(up_vec, -x_width / 2.0 + chip_width);
+        let chip_2_a = left_vec.rotate_around(up_vec, -chip_width - half_gap);
+        let chip_2_b = -left_vec.rotate_around(up_vec, -half_gap);
+        let chip_3_a = left_vec.rotate_around(up_vec, half_gap);
+        let chip_3_b = -left_vec.rotate_around(up_vec, chip_width + half_gap);
+        let chip_4_a = left_vec.rotate_around(up_vec, x_width / 2.0 - chip_width);
+        let chip_4_b = -left_vec.rotate_around(up_vec, x_width / 2.0);
 
         // make the patches for each chip
-        let chip_1_patch = OnSkyRectangle::from_normals(
-            [
-                chip_1_a.into(),
-                y_top.into(),
-                chip_1_b.into(),
-                y_bottom.into(),
-            ],
-            observer.frame,
-        );
-        let chip_2_patch = OnSkyRectangle::from_normals(
-            [
-                chip_2_a.into(),
-                y_top.into(),
-                chip_2_b.into(),
-                y_bottom.into(),
-            ],
-            observer.frame,
-        );
-        let chip_3_patch = OnSkyRectangle::from_normals(
-            [
-                chip_3_a.into(),
-                y_top.into(),
-                chip_3_b.into(),
-                y_bottom.into(),
-            ],
-            observer.frame,
-        );
-        let chip_4_patch = OnSkyRectangle::from_normals(
-            [
-                chip_4_a.into(),
-                y_top.into(),
-                chip_4_b.into(),
-                y_bottom.into(),
-            ],
-            observer.frame,
-        );
+        let chip_1_patch = OnSkyRectangle::from_normals([chip_1_a, y_top, chip_1_b, y_bottom]);
+        let chip_2_patch = OnSkyRectangle::from_normals([chip_2_a, y_top, chip_2_b, y_bottom]);
+        let chip_3_patch = OnSkyRectangle::from_normals([chip_3_a, y_top, chip_3_b, y_bottom]);
+        let chip_4_patch = OnSkyRectangle::from_normals([chip_4_a, y_top, chip_4_b, y_bottom]);
 
         // make the chips
         let chip_1 = NeosCmos {
@@ -304,7 +252,6 @@ impl NeosVisit {
             loop_id,
             subloop_id,
             exposure_id,
-            band,
             cmos_id: 0,
         };
         let chip_2 = NeosCmos {
@@ -317,7 +264,6 @@ impl NeosVisit {
             loop_id,
             subloop_id,
             exposure_id,
-            band,
             cmos_id: 1,
         };
         let chip_3 = NeosCmos {
@@ -330,7 +276,6 @@ impl NeosVisit {
             loop_id,
             subloop_id,
             exposure_id,
-            band,
             cmos_id: 2,
         };
         let chip_4 = NeosCmos {
@@ -343,7 +288,6 @@ impl NeosVisit {
             loop_id,
             subloop_id,
             exposure_id,
-            band,
             cmos_id: 3,
         };
 
@@ -359,16 +303,15 @@ impl NeosVisit {
             loop_id,
             subloop_id,
             exposure_id,
-            band,
         }
     }
 
     /// Return the central pointing vector.
-    pub fn pointing(&self) -> Vector3<f64> {
-        let mut pointing = Vector3::<f64>::zeros();
+    pub fn pointing(&self) -> Vector<Equatorial> {
+        let mut pointing = Vector::<Equatorial>::new([0.0; 3]);
         self.chips
             .iter()
-            .for_each(|chip| pointing += *chip.patch.pointing());
+            .for_each(|chip| pointing = pointing + chip.patch.pointing());
         pointing.normalize()
     }
 }
@@ -378,11 +321,11 @@ impl FovLike for NeosVisit {
         FOV::NeosCmos(self.chips[index].clone())
     }
 
-    fn observer(&self) -> &State {
+    fn observer(&self) -> &State<Equatorial> {
         &self.observer
     }
 
-    fn contains(&self, obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
+    fn contains(&self, obs_to_obj: &Vector<Equatorial>) -> (usize, Contains) {
         closest_inside(
             &self
                 .chips
@@ -394,15 +337,5 @@ impl FovLike for NeosVisit {
 
     fn n_patches(&self) -> usize {
         4
-    }
-
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
-        let _ = self
-            .chips
-            .iter_mut()
-            .map(|ccd| ccd.try_frame_change_mut(target_frame))
-            .collect::<KeteResult<Vec<_>>>()?;
-        self.observer.try_change_frame_mut(target_frame)?;
-        Ok(())
     }
 }

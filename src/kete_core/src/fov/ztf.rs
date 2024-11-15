@@ -2,30 +2,29 @@
 
 use super::{closest_inside, Contains, FovLike, OnSkyRectangle, SkyPatch, FOV};
 use crate::prelude::*;
-use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
 
 /// ZTF frame data, single quad of a single chip
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ZtfCcdQuad {
     /// State of the observer
-    observer: State,
+    observer: State<Equatorial>,
 
     /// Patch of sky
-    pub patch: OnSkyRectangle,
+    pub patch: OnSkyRectangle<Equatorial>,
 
     /// Field ID
-    pub field: u32,
+    pub field: u16,
 
     /// File Frac Day
     /// String representation of the filename for this frame.
     pub filefracday: u64,
 
     /// Magnitude limit of this frame
-    pub maglimit: f64,
+    pub maglimit: f32,
 
     /// Filter ID
-    pub fid: u64,
+    pub fid: u8,
 
     /// Filter code used for the frame
     pub filtercode: Box<str>,
@@ -44,18 +43,18 @@ impl ZtfCcdQuad {
     /// Create a ZTF field of view
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        corners: [Vector3<f64>; 4],
-        observer: State,
-        field: u32,
+        corners: [Vector<Equatorial>; 4],
+        observer: State<Equatorial>,
+        field: u16,
         filefracday: u64,
         ccdid: u8,
         filtercode: Box<str>,
         imgtypecode: Box<str>,
         qid: u8,
-        maglimit: f64,
-        fid: u64,
+        maglimit: f32,
+        fid: u8,
     ) -> Self {
-        let patch = OnSkyRectangle::from_corners(corners, observer.frame);
+        let patch = OnSkyRectangle::from_corners(corners);
         Self {
             patch,
             observer,
@@ -80,24 +79,18 @@ impl FovLike for ZtfCcdQuad {
     }
 
     #[inline]
-    fn observer(&self) -> &State {
+    fn observer(&self) -> &State<Equatorial> {
         &self.observer
     }
 
     #[inline]
-    fn contains(&self, obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
+    fn contains(&self, obs_to_obj: &Vector<Equatorial>) -> (usize, Contains) {
         (0, self.patch.contains(obs_to_obj))
     }
 
     #[inline]
     fn n_patches(&self) -> usize {
         1
-    }
-
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
-        self.observer.try_change_frame_mut(target_frame)?;
-        self.patch = self.patch.try_frame_change(target_frame)?;
-        Ok(())
     }
 }
 
@@ -108,13 +101,13 @@ pub struct ZtfField {
     ccd_quads: Vec<ZtfCcdQuad>,
 
     /// Observer position
-    observer: State,
+    observer: State<Equatorial>,
 
     /// Field ID
-    pub field: u32,
+    pub field: u16,
 
     /// Filter ID
-    pub fid: u64,
+    pub fid: u8,
 
     /// Filter code used for the frame
     pub filtercode: Box<str>,
@@ -170,21 +163,11 @@ impl FovLike for ZtfField {
         FOV::ZtfCcdQuad(self.ccd_quads[index].clone())
     }
 
-    fn observer(&self) -> &State {
+    fn observer(&self) -> &State<Equatorial> {
         &self.observer
     }
 
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
-        let _ = self
-            .ccd_quads
-            .iter_mut()
-            .map(|ccd| ccd.try_frame_change_mut(target_frame))
-            .collect::<Result<Vec<_>, _>>()?;
-        self.observer.try_change_frame_mut(target_frame)?;
-        Ok(())
-    }
-
-    fn contains(&self, obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
+    fn contains(&self, obs_to_obj: &Vector<Equatorial>) -> (usize, Contains) {
         closest_inside(
             &self
                 .ccd_quads

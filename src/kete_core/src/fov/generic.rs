@@ -3,34 +3,36 @@
 
 use std::fmt::Debug;
 
-use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
 
-use super::{Contains, FovLike, Frame, KeteResult, OnSkyRectangle, SkyPatch, SphericalCone, FOV};
-use crate::state::State;
+use super::{Contains, Equatorial, FovLike, OnSkyRectangle, SkyPatch, SphericalCone, FOV};
+use crate::{
+    frames::{InertialFrame, Vector},
+    state::State,
+};
 
 /// Generic rectangular FOV
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct GenericRectangle {
-    observer: State,
+pub struct GenericRectangle<F: InertialFrame> {
+    observer: State<F>,
 
     /// Patch of sky
-    pub patch: OnSkyRectangle,
+    pub patch: OnSkyRectangle<F>,
 
     /// Rotation of the FOV.
     pub rotation: f64,
 }
 
-impl GenericRectangle {
+impl<F: InertialFrame> GenericRectangle<F> {
     /// Create a new Generic Rectangular FOV
     pub fn new(
-        pointing: Vector3<f64>,
+        pointing: Vector<F>,
         rotation: f64,
         lon_width: f64,
         lat_width: f64,
-        observer: State,
+        observer: State<F>,
     ) -> Self {
-        let patch = OnSkyRectangle::new(pointing, rotation, lon_width, lat_width, observer.frame);
+        let patch = OnSkyRectangle::new(pointing, rotation, lon_width, lat_width);
         Self {
             observer,
             patch,
@@ -39,8 +41,8 @@ impl GenericRectangle {
     }
 
     /// Create a Field of view from a collection of corners.
-    pub fn from_corners(corners: [Vector3<f64>; 4], observer: State) -> Self {
-        let patch = OnSkyRectangle::from_corners(corners, observer.frame);
+    pub fn from_corners(corners: [Vector<F>; 4], observer: State<F>) -> Self {
+        let patch = OnSkyRectangle::from_corners(corners);
         Self {
             patch,
             observer,
@@ -61,7 +63,7 @@ impl GenericRectangle {
     }
 }
 
-impl FovLike for GenericRectangle {
+impl FovLike for GenericRectangle<Equatorial> {
     #[inline]
     fn get_fov(&self, index: usize) -> FOV {
         if index != 0 {
@@ -71,12 +73,12 @@ impl FovLike for GenericRectangle {
     }
 
     #[inline]
-    fn observer(&self) -> &State {
+    fn observer(&self) -> &State<Equatorial> {
         &self.observer
     }
 
     #[inline]
-    fn contains(&self, obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
+    fn contains(&self, obs_to_obj: &Vector<Equatorial>) -> (usize, Contains) {
         (0, self.patch.contains(obs_to_obj))
     }
 
@@ -84,28 +86,22 @@ impl FovLike for GenericRectangle {
     fn n_patches(&self) -> usize {
         1
     }
-
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
-        self.observer.try_change_frame_mut(target_frame)?;
-        self.patch = self.patch.try_frame_change(target_frame)?;
-        Ok(())
-    }
 }
 
 /// Generic rectangular FOV
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct OmniDirectional {
-    observer: State,
+pub struct OmniDirectional<F: InertialFrame> {
+    observer: State<F>,
 }
 
-impl OmniDirectional {
+impl<F: InertialFrame> OmniDirectional<F> {
     /// Create a new Omni-Directional FOV
-    pub fn new(observer: State) -> Self {
+    pub fn new(observer: State<F>) -> Self {
         Self { observer }
     }
 }
 
-impl FovLike for OmniDirectional {
+impl FovLike for OmniDirectional<Equatorial> {
     #[inline]
     fn get_fov(&self, index: usize) -> FOV {
         if index != 0 {
@@ -115,12 +111,12 @@ impl FovLike for OmniDirectional {
     }
 
     #[inline]
-    fn observer(&self) -> &State {
+    fn observer(&self) -> &State<Equatorial> {
         &self.observer
     }
 
     #[inline]
-    fn contains(&self, _obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
+    fn contains(&self, _obs_to_obj: &Vector<Equatorial>) -> (usize, Contains) {
         (0, Contains::Inside)
     }
 
@@ -128,26 +124,21 @@ impl FovLike for OmniDirectional {
     fn n_patches(&self) -> usize {
         1
     }
-
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
-        self.observer.try_change_frame_mut(target_frame)?;
-        Ok(())
-    }
 }
 
 /// Generic rectangular FOV
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct GenericCone {
-    observer: State,
+pub struct GenericCone<F: InertialFrame> {
+    observer: State<F>,
 
     /// Patch of sky
-    pub patch: SphericalCone,
+    pub patch: SphericalCone<F>,
 }
 
-impl GenericCone {
+impl<F: InertialFrame> GenericCone<F> {
     /// Create a new Generic Conic FOV
-    pub fn new(pointing: Vector3<f64>, angle: f64, observer: State) -> Self {
-        let patch = SphericalCone::new(&pointing, angle, observer.frame);
+    pub fn new(pointing: Vector<F>, angle: f64, observer: State<F>) -> Self {
+        let patch = SphericalCone::new(&pointing, angle);
         Self { observer, patch }
     }
 
@@ -158,7 +149,7 @@ impl GenericCone {
     }
 }
 
-impl FovLike for GenericCone {
+impl FovLike for GenericCone<Equatorial> {
     #[inline]
     fn get_fov(&self, index: usize) -> FOV {
         if index != 0 {
@@ -168,24 +159,18 @@ impl FovLike for GenericCone {
     }
 
     #[inline]
-    fn observer(&self) -> &State {
+    fn observer(&self) -> &State<Equatorial> {
         &self.observer
     }
 
     #[inline]
-    fn contains(&self, obs_to_obj: &Vector3<f64>) -> (usize, Contains) {
+    fn contains(&self, obs_to_obj: &Vector<Equatorial>) -> (usize, Contains) {
         (0, self.patch.contains(obs_to_obj))
     }
 
     #[inline]
     fn n_patches(&self) -> usize {
         1
-    }
-
-    fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
-        self.observer.try_change_frame_mut(target_frame)?;
-        self.patch = self.patch.try_frame_change(target_frame)?;
-        Ok(())
     }
 }
 
@@ -198,37 +183,36 @@ mod tests {
 
     #[test]
     fn test_check_rectangle_visible() {
-        let circular = State::new(
+        let circular = State::<Equatorial>::new(
             Desig::Empty,
             2451545.0,
             [0.0, 1., 0.0].into(),
             [-GMS_SQRT, 0.0, 0.0].into(),
-            Frame::Ecliptic,
             0,
         );
-        let circular_back = State::new(
+        let circular_back = State::<Equatorial>::new(
             Desig::Empty,
             2451545.0,
             [1.0, 0.0, 0.0].into(),
             [0.0, GMS_SQRT, 0.0].into(),
-            Frame::Ecliptic,
             0,
         );
 
         for offset in [-10.0, -5.0, 0.0, 5.0, 10.0] {
             let off_state = propagate_n_body_spk(
-                circular_back.clone(),
+                circular_back.clone().into_frame(),
                 circular_back.jd - offset,
                 false,
                 None,
             )
-            .unwrap();
+            .unwrap()
+            .into_frame();
 
-            let vec = Vector3::from(circular_back.pos) - Vector3::from(circular.pos);
+            let vec = circular_back.pos - circular.pos;
 
             let fov = GenericRectangle::new(vec, 0.0001, 0.01, 0.01, circular.clone());
             assert!(fov.check_two_body(&off_state).is_ok());
-            assert!(fov.check_n_body(&off_state, false).is_ok());
+            assert!(fov.check_n_body(off_state.clone(), false).is_ok());
 
             assert!(fov
                 .check_visible(&[off_state], 6.0, false)
@@ -244,18 +228,17 @@ mod tests {
         // Build an observer, and check the observability of ceres with different offsets from the observer time.
         // this will exercise the position, velocity, and time offsets due to light delay.
         let spk = get_spk_singleton().read().unwrap();
-        let observer = State::new(
+        let observer = State::<Equatorial>::new(
             Desig::Empty,
             2451545.0,
             [0.0, 1., 0.0].into(),
             [-GMS_SQRT, 0.0, 0.0].into(),
-            Frame::Ecliptic,
             10,
         );
 
         for offset in [-10.0, -5.0, 0.0, 5.0, 10.0] {
             let ceres = spk
-                .try_get_state(20000001, observer.jd + offset, 10, Frame::Ecliptic)
+                .try_get_state(20000001, observer.jd + offset, 10)
                 .unwrap();
 
             let fov = OmniDirectional::new(observer.clone());
@@ -264,35 +247,29 @@ mod tests {
             let two_body = fov.check_two_body(&ceres);
             assert!(two_body.is_ok());
             let (_, _, two_body) = two_body.unwrap();
-            let dist = (Vector3::from(two_body.pos) - Vector3::from(observer.pos)).norm();
+            let dist = (two_body.pos - observer.pos).norm();
             assert!((observer.jd - two_body.jd - dist * constants::C_AU_PER_DAY_INV).abs() < 1e-6);
-            let ceres_exact = spk
-                .try_get_state(20000001, two_body.jd, 10, Frame::Ecliptic)
-                .unwrap();
+            let ceres_exact = spk.try_get_state(20000001, two_body.jd, 10).unwrap();
             // check that we are within about 150km - not bad for 2 body
-            assert!((Vector3::from(two_body.pos) - Vector3::from(ceres_exact.pos)).norm() < 1e-6);
+            assert!((two_body.pos - ceres_exact.pos).norm() < 1e-6);
 
             // Check n body approximation calculation
-            let n_body = fov.check_n_body(&ceres, false);
+            let n_body = fov.check_n_body(ceres.clone(), false);
             assert!(n_body.is_ok());
             let (_, _, n_body) = n_body.unwrap();
             assert!((observer.jd - n_body.jd - dist * constants::C_AU_PER_DAY_INV).abs() < 1e-6);
-            let ceres_exact = spk
-                .try_get_state(20000001, n_body.jd, 10, Frame::Ecliptic)
-                .unwrap();
+            let ceres_exact = spk.try_get_state(20000001, n_body.jd, 10).unwrap();
             // check that we are within about 150m
-            assert!((Vector3::from(n_body.pos) - Vector3::from(ceres_exact.pos)).norm() < 1e-9);
+            assert!((n_body.pos - ceres_exact.pos).norm() < 1e-9);
 
             // Check spk queries
             let spk_check = &fov.check_spks(&[20000001])[0];
             assert!(spk_check.is_some());
             let spk_check = &spk_check.as_ref().unwrap().states[0];
             assert!((observer.jd - spk_check.jd - dist * constants::C_AU_PER_DAY_INV).abs() < 1e-6);
-            let ceres_exact = spk
-                .try_get_state(20000001, spk_check.jd, 10, Frame::Ecliptic)
-                .unwrap();
+            let ceres_exact = spk.try_get_state(20000001, spk_check.jd, 10).unwrap();
             // check that we are within about 150 micron
-            assert!((Vector3::from(spk_check.pos) - Vector3::from(ceres_exact.pos)).norm() < 1e-12);
+            assert!((spk_check.pos - ceres_exact.pos).norm() < 1e-12);
 
             assert!(fov
                 .check_visible(&[ceres], 6.0, false)

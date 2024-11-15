@@ -9,7 +9,6 @@ pub mod ztf;
 
 pub use fov_like::*;
 pub use generic::*;
-use nalgebra::Vector3;
 pub use neos::*;
 pub use patches::*;
 pub use wise::*;
@@ -33,10 +32,10 @@ pub enum FOV {
     ZtfCcdQuad(ZtfCcdQuad),
 
     /// Generic cone FOV without any additional metadata.
-    GenericCone(GenericCone),
+    GenericCone(GenericCone<Equatorial>),
 
     /// Generic rectangle FOV without any additional metadata.
-    GenericRectangle(GenericRectangle),
+    GenericRectangle(GenericRectangle<Equatorial>),
 
     /// Full ZTF field of up to 64 individual files.
     ZtfField(ZtfField),
@@ -45,17 +44,17 @@ pub enum FOV {
     NeosVisit(NeosVisit),
 
     /// Omni-Directional FOV.
-    OmniDirectional(OmniDirectional),
+    OmniDirectional(OmniDirectional<Equatorial>),
 }
 
 impl FOV {
     /// Check if a collection of states are visible to this FOV using orbital propagation
     pub fn check_visible(
         self,
-        states: &[State],
+        states: &[State<Equatorial>],
         dt_limit: f64,
         include_asteroids: bool,
-    ) -> Vec<Option<SimultaneousStates>> {
+    ) -> Vec<Option<SimultaneousStates<Equatorial>>> {
         match self {
             FOV::Wise(fov) => fov.check_visible(states, dt_limit, include_asteroids),
             FOV::NeosCmos(fov) => fov.check_visible(states, dt_limit, include_asteroids),
@@ -69,7 +68,7 @@ impl FOV {
     }
 
     /// Observer position in this FOV
-    pub fn observer(&self) -> &State {
+    pub fn observer(&self) -> &State<Equatorial> {
         match self {
             FOV::Wise(fov) => fov.observer(),
             FOV::NeosCmos(fov) => fov.observer(),
@@ -83,7 +82,7 @@ impl FOV {
     }
 
     /// Check if any loaded SPK objects are visible to this FOV
-    pub fn check_spks(&self, obj_ids: &[i64]) -> Vec<Option<SimultaneousStates>> {
+    pub fn check_spks(&self, obj_ids: &[i64]) -> Vec<Option<SimultaneousStates<Equatorial>>> {
         match self {
             FOV::Wise(fov) => fov.check_spks(obj_ids),
             FOV::NeosCmos(fov) => fov.check_spks(obj_ids),
@@ -98,7 +97,7 @@ impl FOV {
 
     /// Check if static sources are visible in this FOV.
     /// Position must be in the correct frame!
-    pub fn check_statics(&self, pos: &[Vector3<f64>]) -> Vec<Option<(Vec<usize>, FOV)>> {
+    pub fn check_statics(&self, pos: &[Vector<Equatorial>]) -> Vec<Option<(Vec<usize>, FOV)>> {
         match self {
             FOV::Wise(fov) => fov.check_statics(pos),
             FOV::NeosCmos(fov) => fov.check_statics(pos),
@@ -108,20 +107,6 @@ impl FOV {
             FOV::ZtfField(fov) => fov.check_statics(pos),
             FOV::NeosVisit(fov) => fov.check_statics(pos),
             FOV::OmniDirectional(fov) => fov.check_statics(pos),
-        }
-    }
-
-    /// Change the frame of this FOV
-    pub fn try_frame_change_mut(&mut self, target_frame: Frame) -> KeteResult<()> {
-        match self {
-            FOV::Wise(fov) => fov.try_frame_change_mut(target_frame),
-            FOV::NeosCmos(fov) => fov.try_frame_change_mut(target_frame),
-            FOV::NeosVisit(fov) => fov.try_frame_change_mut(target_frame),
-            FOV::ZtfCcdQuad(fov) => fov.try_frame_change_mut(target_frame),
-            FOV::GenericCone(fov) => fov.try_frame_change_mut(target_frame),
-            FOV::GenericRectangle(fov) => fov.try_frame_change_mut(target_frame),
-            FOV::ZtfField(fov) => fov.try_frame_change_mut(target_frame),
-            FOV::OmniDirectional(fov) => fov.try_frame_change_mut(target_frame),
         }
     }
 }

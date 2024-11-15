@@ -18,9 +18,10 @@
 //! thinks that the object should actually be. These times are when close encounter
 //! information should be recorded.
 //!
+use crate::frames::Equatorial;
 use crate::prelude::KeteResult;
 use crate::spice::get_spk_singleton;
-use crate::{constants::*, errors::Error, frames::Frame, propagation::nongrav::NonGravModel};
+use crate::{constants::*, errors::Error, propagation::nongrav::NonGravModel};
 use nalgebra::allocator::Allocator;
 use nalgebra::{DefaultAllocator, Dim, Matrix3, OVector, Vector3, U1, U2};
 use std::ops::AddAssign;
@@ -140,7 +141,7 @@ pub fn spk_accel(
     for grav_params in meta.massive_obj.iter() {
         let id = grav_params.naif_id;
         let radius = grav_params.radius;
-        let state = spk.try_get_state(id, time, 0, Frame::Equatorial)?;
+        let state = spk.try_get_state::<Equatorial>(id, time, 0)?;
         let rel_pos: Vector3<f64> = pos - Vector3::from(state.pos);
         let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
 
@@ -303,9 +304,7 @@ mod tests {
         let mut vel: Vec<f64> = Vec::new();
 
         for obj in MASSES.iter() {
-            let planet = spk
-                .try_get_state(obj.naif_id, jd, 0, Frame::Equatorial)
-                .unwrap();
+            let planet = spk.try_get_state::<Equatorial>(obj.naif_id, jd, 0).unwrap();
             pos.append(&mut planet.pos.into());
             vel.append(&mut planet.vel.into());
         }

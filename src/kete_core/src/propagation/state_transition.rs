@@ -1,4 +1,5 @@
 use crate::constants::GMS_SQRT;
+use crate::frames::InertialFrame;
 use crate::prelude::{KeteResult, State};
 use crate::propagation::{central_accel, central_accel_grad, CentralAccelMeta, RK45Integrator};
 use nalgebra::{Const, Matrix6, SVector, Vector3, U1, U6};
@@ -49,8 +50,8 @@ fn stm_ivp_eqn(
 /// Compute a state transition matrix assuming only 2-body mechanics.
 ///
 /// This uses a Runge-Kutta 4/5 algorithm.
-pub fn compute_state_transition(
-    state: &mut State,
+pub fn compute_state_transition<F: InertialFrame>(
+    state: &mut State<F>,
     jd: f64,
     central_mass: f64,
 ) -> ([[f64; 3]; 2], Matrix6<f64>) {

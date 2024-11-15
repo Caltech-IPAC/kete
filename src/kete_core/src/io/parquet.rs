@@ -5,13 +5,13 @@ use itertools::Itertools;
 use std::fs::File;
 
 use crate::errors::{Error, KeteResult};
-use crate::frames::Frame;
+use crate::frames::Ecliptic;
 use crate::state::State;
 
 use polars::prelude::*;
 
 /// Write a collection of states to a parquet table.
-pub fn write_states_parquet(states: &[State], filename: &str) -> KeteResult<()> {
+pub fn write_states_parquet(states: &[State<Ecliptic>], filename: &str) -> KeteResult<()> {
     let desigs = Series::new(
         "desig".into(),
         states
@@ -47,18 +47,11 @@ pub fn write_states_parquet(states: &[State], filename: &str) -> KeteResult<()> 
         "vz".into(),
         states.iter().map(|state| state.vel[2]).collect_vec(),
     );
-    let frame = Series::new(
-        "frame".into(),
-        states
-            .iter()
-            .map(|state| Into::<i32>::into(state.frame))
-            .collect_vec(),
-    );
     let center = Series::new(
         "center".into(),
         states.iter().map(|state| state.center_id).collect_vec(),
     );
-    let mut df = DataFrame::new(vec![desigs, jd, x, y, z, vx, vy, vz, frame, center])
+    let mut df = DataFrame::new(vec![desigs, jd, x, y, z, vx, vy, vz, center])
         .expect("Failed to construct dataframe");
     let file = File::create(filename).expect("could not create file");
     let _ = ParquetWriter::new(file)
@@ -68,7 +61,7 @@ pub fn write_states_parquet(states: &[State], filename: &str) -> KeteResult<()> 
 }
 
 /// Read a collection of states from a parquet table.
-pub fn read_states_parquet(filename: &str) -> KeteResult<Vec<State>> {
+pub fn read_states_parquet(filename: &str) -> KeteResult<Vec<State<Ecliptic>>> {
     // this reads the parquet table, then creates iterators over the contents, making
     // states by going through the iterators one at a time.
     let r = File::open(filename)?;
@@ -84,13 +77,6 @@ pub fn read_states_parquet(filename: &str) -> KeteResult<Vec<State>> {
         .map_err(|_| Error::IOError("File doesn't contain the correct columns".into()))?
         .str()
         .expect("Designations are not all strings.")
-        .into_no_null_iter();
-
-    let mut frame_iter = dataframe
-        .column("frame")
-        .map_err(|_| Error::IOError("File doesn't contain the correct columns".into()))?
-        .i32()
-        .expect("Frames are not all ints.")
         .into_no_null_iter();
 
     let mut center_iter = dataframe
@@ -122,7 +108,6 @@ pub fn read_states_parquet(filename: &str) -> KeteResult<Vec<State>> {
             let desig = desig_iter
                 .next()
                 .expect("should have as many iterations as rows");
-            let frame: Frame = frame_iter.next().unwrap().into();
             let center_id = center_iter.next().unwrap();
 
             let jd = state_iters[0].next().unwrap();
@@ -134,11 +119,10 @@ pub fn read_states_parquet(filename: &str) -> KeteResult<Vec<State>> {
             let vz = state_iters[6].next().unwrap();
 
             State::new(
-                crate::state::Desig::Name(desig.to_string()),
+                crate::state::Desig::Name(desig.into()),
                 jd,
                 [x, y, z].into(),
                 [vx, vy, vz].into(),
-                frame,
                 center_id,
             )
         })

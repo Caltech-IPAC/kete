@@ -6,121 +6,132 @@ use lazy_static::lazy_static;
 use nalgebra::{Matrix3, Rotation3, UnitVector3, Vector3};
 use serde::{Deserialize, Serialize};
 use std::f64::consts::{FRAC_PI_2, PI, TAU};
-use std::fmt::{self, Debug, Display};
+use std::fmt::Debug;
 
-use crate::prelude::{Error, KeteResult};
 use crate::time::Time;
 
-/// Coordinate frames.
-///
-/// Frames define the orientation of the coordinate system.
-/// These distance units are always AU, and time is measured in days with TDB scaling.
-///
-#[derive(Debug, PartialEq, Clone, Copy, Deserialize, Serialize)]
-pub enum Frame {
-    /// Equivalent to Ecliptic J2000
-    Ecliptic,
+/// Frame which supports vector conversion
+pub trait InertialFrame: 'static + Sized + Sync + Send + Clone + Copy + Debug {
+    /// Convert a vector from input frame to equatorial frame.
+    fn to_equatorial(vec: Vector3<f64>) -> Vector3<f64>;
 
-    /// Equivalent to Equatorial J2000
-    Equatorial,
+    /// Convert a vector from the equatorial frame to this frame.
+    fn from_equatorial(vec: Vector3<f64>) -> Vector3<f64>;
 
-    /// FK4 Frame
-    FK4,
-
-    /// Galactic Frame as defined by SPICE
-    Galactic,
-
-    /// Unknown is to allow SPK files to be loaded with other frames.
-    Unknown(usize),
-
-    /// Non-inertial frame as defined by rotations from the ecliptic frame.
-    ///
-    /// - isize value represents the frame identifier.
-    /// - array of 6 floats represent the euler angles and their derivatives to move to
-    ///   this frame from the ecliptic frame.
-    ///
-    /// Rotation is done with a ZXZ set of chained rotations.
-    EclipticNonInertial(isize, [f64; 6]),
-    // Other non inertial frames will require multi-step conversions
-}
-
-impl From<Frame> for i32 {
-    fn from(value: Frame) -> Self {
-        match value {
-            Frame::Equatorial => 1,
-            Frame::Ecliptic => 2,
-            Frame::FK4 => 3,
-            Frame::Galactic => 4,
-            Frame::EclipticNonInertial(..) => 5,
-            Frame::Unknown(_) => 0,
-        }
+    /// Convert between frames.
+    #[inline(always)]
+    fn convert<Target: InertialFrame>(vec: Vector3<f64>) -> Vector3<f64> {
+        Target::from_equatorial(Self::to_equatorial(vec))
     }
 }
 
-impl From<i32> for Frame {
-    fn from(value: i32) -> Self {
-        match value {
-            1 => Frame::Equatorial,
-            2 => Frame::Ecliptic,
-            3 => Frame::FK4,
-            4 => Frame::Galactic,
-            i => Frame::Unknown(i as usize),
-        }
+/// Equatorial frame.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct Equatorial {}
+
+impl InertialFrame for Equatorial {
+    #[inline(always)]
+    fn to_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
+        vec
+    }
+    #[inline(always)]
+    fn from_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
+        vec
     }
 }
 
-impl Frame {
-    /// Change a vector from the current frame into the target frame.
-    pub fn try_vec_frame_change(
+/// Equatorial frame.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct Ecliptic {}
+impl InertialFrame for Ecliptic {
+    #[inline(always)]
+    fn from_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
+        ECLIPTIC_EQUATORIAL_ROT.inverse_transform_vector(&vec)
+    }
+    #[inline(always)]
+    fn to_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
+        ECLIPTIC_EQUATORIAL_ROT.transform_vector(&vec)
+    }
+}
+
+/// Equatorial frame.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct Galactic {}
+impl InertialFrame for Galactic {
+    #[inline(always)]
+    fn from_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
+        GALACTIC_ECLIPTIC_ROT.inverse_transform_vector(&vec)
+    }
+    #[inline(always)]
+    fn to_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
+        GALACTIC_ECLIPTIC_ROT.transform_vector(&vec)
+    }
+}
+
+/// Equatorial frame.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct FK4 {}
+impl InertialFrame for FK4 {
+    #[inline(always)]
+    fn from_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
+        FK4_ECLIPTIC_ROT.inverse_transform_vector(&vec)
+    }
+    #[inline(always)]
+    fn to_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
+        FK4_ECLIPTIC_ROT.transform_vector(&vec)
+    }
+}
+
+/// Frame which supports vector conversion
+pub trait NonInertialFrame {
+    /// Convert a vector from input frame to equatorial frame.
+    fn to_equatorial(&self, pos: Vector3<f64>, vel: Vector3<f64>) -> (Vector3<f64>, Vector3<f64>);
+
+    /// Convert a vector from the equatorial frame to this frame.
+    #[allow(clippy::wrong_self_convention)]
+    fn from_equatorial(&self, pos: Vector3<f64>, vel: Vector3<f64>)
+        -> (Vector3<f64>, Vector3<f64>);
+
+    /// Convert between frames.
+    #[inline(always)]
+    fn convert<T: NonInertialFrame>(
         &self,
-        mut vec: Vector3<f64>,
-        target: Frame,
-    ) -> KeteResult<Vector3<f64>> {
-        match self {
-            Frame::Equatorial => {
-                vec = equatorial_to_ecliptic(&vec);
-            }
-            Frame::Ecliptic => {}
-            Frame::EclipticNonInertial(_, _) => {
-                 Err(Error::ValueError(
-                    "Cannot convert bare vector between non-inertial frames.  This may only be done with a State".into(),
-                ))?
-            }
-            Frame::FK4 => {
-                vec = fk4_to_ecliptic(&vec);
-            }
-            Frame::Galactic => {
-                vec = galactic_to_ecliptic(&vec);
-            }
-            Frame::Unknown(id) =>  Err(Error::UnknownFrame(*id))?,
-        }
-
-        // new_vec is now in ecliptic.
-        match target {
-            Frame::Equatorial => {
-                vec = ecliptic_to_equatorial(&vec);
-            }
-            Frame::Ecliptic => {}
-            Frame::EclipticNonInertial(_, _) => {
-                 Err(Error::ValueError(
-                    "Cannot convert bare vector between non-inertial frames. This may only be done with a State.".into(),
-                ))?
-            }
-            Frame::FK4 => {
-                vec = ecliptic_to_fk4(&vec);
-            }
-            Frame::Galactic => {
-                vec = ecliptic_to_galactic(&vec);
-            }
-            Frame::Unknown(id) =>  Err(Error::UnknownFrame(id))?,
-        }
-        Ok(vec)
+        target_frame: &T,
+        pos: Vector3<f64>,
+        vel: Vector3<f64>,
+    ) -> (Vector3<f64>, Vector3<f64>) {
+        let (pos, vel) = self.to_equatorial(pos, vel);
+        target_frame.from_equatorial(pos, vel)
     }
 }
 
-impl Display for Frame {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        Debug::fmt(self, f)
+/// NonInertial rotation frame defined by rotations to and from the Ecliptic Inertial Frame.
+#[derive(Debug, Clone)]
+pub struct EclipticNonInertial(pub [f64; 6]);
+
+impl NonInertialFrame for EclipticNonInertial {
+    #[inline(always)]
+    fn to_equatorial(&self, pos: Vector3<f64>, vel: Vector3<f64>) -> (Vector3<f64>, Vector3<f64>) {
+        let (rot_p, rot_dp) = noninertial_rotation(&self.0);
+
+        let new_pos = rot_p.transpose() * pos;
+        let new_vel = rot_dp.transpose() * pos + rot_p.transpose() * vel;
+
+        (new_pos, new_vel)
+    }
+
+    #[inline(always)]
+    fn from_equatorial(
+        &self,
+        pos: Vector3<f64>,
+        vel: Vector3<f64>,
+    ) -> (Vector3<f64>, Vector3<f64>) {
+        let (rot_p, rot_dp) = noninertial_rotation(&self.0);
+
+        let new_pos = rot_p * pos;
+        let new_vel = rot_dp * pos + rot_p * vel;
+
+        (new_pos, new_vel)
     }
 }
 
@@ -407,11 +418,6 @@ mod tests {
         assert!((0.1 - vel_return[0]).abs() <= 10.0 * f64::EPSILON);
         assert!((0.2 - vel_return[1]).abs() <= 10.0 * f64::EPSILON);
         assert!((0.3 - vel_return[2]).abs() <= 10.0 * f64::EPSILON);
-    }
-    #[test]
-    fn test_frame_conversion() {
-        let f: Frame = 2i32.into();
-        assert!(f == Frame::Ecliptic);
     }
 
     #[test]

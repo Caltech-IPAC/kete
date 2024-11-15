@@ -8,7 +8,7 @@
 use super::daf::{DAFType, DafFile};
 use super::pck_segments::PckSegment;
 use crate::errors::{Error, KeteResult};
-use crate::frames::Frame;
+use crate::frames::EclipticNonInertial;
 use crossbeam::sync::ShardedLock;
 
 use std::io::Cursor;
@@ -48,7 +48,7 @@ impl PckCollection {
 
     /// Get the raw orientation from the loaded PCK files.
     /// This orientation will have the frame of what was originally present in the file.
-    pub fn try_get_orientation(&self, id: isize, jd: f64) -> KeteResult<Frame> {
+    pub fn try_get_orientation(&self, id: isize, jd: f64) -> KeteResult<EclipticNonInertial> {
         for segment in self.segments.iter() {
             if id == segment.center_id && segment.contains(jd) {
                 return segment.try_get_orientation(jd);
@@ -58,7 +58,7 @@ impl PckCollection {
         Err(Error::DAFLimits(format!(
             "Object ({}) does not have an PCK record for the target JD.",
             id
-        )))?
+        )))
     }
 
     /// Delete all segments in the PCK singleton, equivalent to unloading all files.

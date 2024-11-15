@@ -6,6 +6,7 @@ mod naif_ids;
 mod obs_codes;
 mod pck;
 mod pck_segments;
+mod spice_frames;
 mod spk;
 mod spk_segments;
 

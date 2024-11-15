@@ -13,10 +13,11 @@
 //! There is a lot of repetition in this file, as many of the segment types have very
 //! similar internal structures.
 use super::interpolation::*;
+use super::spice_frames::SpiceFrames;
 use super::{jd_to_spice_jd, spice_jds_to_jd, DafArray};
 use crate::constants::AU_KM;
 use crate::errors::Error;
-use crate::frames::Frame;
+use crate::frames::{Ecliptic, Equatorial, InertialFrame};
 use crate::prelude::{Desig, KeteResult};
 use crate::state::State;
 use crate::time::scales::TDB;
@@ -77,8 +78,8 @@ pub struct SpkSegment {
     /// The reference center NAIF ID for the position/velocity in this Segment.
     pub center_id: i64,
 
-    /// [`Frame`] of reference for this Segment.
-    pub ref_frame: Frame,
+    /// [`SpiceFrame`] of reference for this Segment.
+    pub ref_frame: SpiceFrames,
 
     /// Number which defines the segment type as defined by the DAF standard.
     pub segment_type: i32,
@@ -106,11 +107,7 @@ impl TryFrom<DafArray> for SpkSegment {
         let frame_num = summary_ints[2];
         let segment_type = summary_ints[3];
 
-        let ref_frame = match frame_num {
-            17 => Frame::Ecliptic,
-            1 => Frame::Equatorial,
-            i => Frame::Unknown(i.unsigned_abs() as usize),
-        };
+        let ref_frame: SpiceFrames = frame_num.into();
 
         let segment = SpkSegmentType::from_array(segment_type, value)?;
 
@@ -138,7 +135,7 @@ impl SpkSegment {
     /// Return the [`State`] object at the specified JD. If the requested time is
     /// not within the available range, this will fail.
     #[inline(always)]
-    pub fn try_get_state(&self, jd: f64) -> KeteResult<State> {
+    pub fn try_get_state<T: InertialFrame>(&self, jd: f64) -> KeteResult<State<T>> {
         // this is faster than calling contains, probably because the || instead of &&
         if jd < self.jd_start || jd > self.jd_end {
             return Err(Error::DAFLimits(
@@ -154,14 +151,24 @@ impl SpkSegment {
             SpkSegmentType::Type21(v) => v.try_get_pos_vel(self, jd)?,
         };
 
-        Ok(State::new(
-            Desig::Naif(self.obj_id),
-            jd,
-            pos.into(),
-            vel.into(),
-            self.ref_frame,
-            self.center_id,
-        ))
+        match self.ref_frame {
+            SpiceFrames::ECLIPJ2000 => Ok(State::<Ecliptic>::new(
+                Desig::Naif(self.obj_id),
+                jd,
+                pos.into(),
+                vel.into(),
+                self.center_id,
+            )
+            .into_frame()),
+            SpiceFrames::J2000 => Ok(State::<Equatorial>::new(
+                Desig::Naif(self.obj_id),
+                jd,
+                pos.into(),
+                vel.into(),
+                self.center_id,
+            )
+            .into_frame()),
+        }
     }
 }
 
@@ -748,7 +755,7 @@ impl SpkSegmentType21 {
 
 /// Segments of type 10 and 14 use a "generic segment" definition.
 /// This segment type has poor documentation on the NAIF website, a significant amount
-/// of reverse engineering was to understand this.
+/// of reverse engineering was required to understand this.
 /// The DAF Array is big flat vector of floats.
 
 #[derive(Debug)]
@@ -852,7 +859,7 @@ impl TryFrom<DafArray> for GenericSegment {
 
         if n_meta < 15 {
             Err(Error::IOError(
-                "PSK File not correctly formatted. There are fewer values found than expected."
+                "SPK File not correctly formatted. There are fewer values found than expected."
                     .into(),
             ))?;
         }
