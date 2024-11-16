@@ -1,9 +1,13 @@
 //! Spice specific coordinate frames
 //!
 
+/// Inertial frames of reference saved in SPICE
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SpiceFrames {
+    /// Equatorial J2000, effectively the same as ICRF
     J2000,
+
+    /// Ecliptic J2000, same as equatorial above with a fixed X rotation.
     ECLIPJ2000,
 }
 

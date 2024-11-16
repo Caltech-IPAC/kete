@@ -2,9 +2,12 @@ use super::{
     common::{black_body_flux, lambertian_vis_scale_factor, sub_solar_temperature, ModelResults},
     flux_to_mag, HGParams, ObserverBands, DEFAULT_SHAPE,
 };
-use crate::{constants::V_MAG_ZERO, io::FileIO};
+use crate::{
+    constants::V_MAG_ZERO,
+    frames::{Equatorial, InertialFrame, UnitVector, Vector},
+    io::FileIO,
+};
 
-use nalgebra::{UnitVector3, Vector3};
 use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;
 
@@ -17,15 +20,17 @@ use std::f64::consts::PI;
 /// * `subsolar_temp` - The temperature at the sub-solar point in kelvin.
 /// * `obj2sun` - The vector from the object to the sun, unit vector.
 #[inline(always)]
-pub fn frm_facet_temperature(
-    facet_normal: &UnitVector3<f64>,
+pub fn frm_facet_temperature<T: InertialFrame>(
+    facet_normal: &UnitVector<T>,
     subsolar_temp: f64,
-    obj2sun: &UnitVector3<f64>,
+    obj2sun: &UnitVector<T>,
 ) -> f64 {
     // since the facet normals are length 1, and the sun_norm vec is length one, the
     // angle difference is arcsin(z_sun) - arcsin(z_normal)
+    let facet_normal = facet_normal.into_inner();
+    let obj2sun = obj2sun.into_inner();
 
-    let tmp = (facet_normal.z.asin() - obj2sun.z.asin()).cos();
+    let tmp = (facet_normal.z().asin() - obj2sun.z().asin()).cos();
     if tmp > 0.0 {
         return tmp.sqrt().sqrt() * subsolar_temp;
     }
@@ -79,8 +84,8 @@ impl FrmParams {
     /// * `sun2obs` - Position of the Observer with respect to the Sun in AU.
     pub fn apparent_thermal_flux(
         &self,
-        sun2obj: &Vector3<f64>,
-        sun2obs: &Vector3<f64>,
+        sun2obj: &Vector<Equatorial>,
+        sun2obs: &Vector<Equatorial>,
     ) -> Option<Vec<f64>> {
         let obj2sun = -sun2obj;
         let obs2obj = sun2obj - sun2obs;
@@ -98,8 +103,8 @@ impl FrmParams {
 
         let bands = self.obs_bands.band_wavelength();
         let color_correction = self.obs_bands.color_correction();
-        let obj2sun = UnitVector3::new_normalize(obj2sun);
-        let obs2obj = UnitVector3::new_normalize(obs2obj);
+        let obj2sun = UnitVector::new_checked(obj2sun);
+        let obs2obj = UnitVector::new_checked(obs2obj);
 
         let mut fluxes = vec![0.0; bands.len()];
         for facet in geom.facets.iter() {
@@ -135,8 +140,8 @@ impl FrmParams {
     /// * `sun2obs` - Position of the Observer with respect to the Sun in AU.
     pub fn apparent_total_flux(
         &self,
-        sun2obj: &Vector3<f64>,
-        sun2obs: &Vector3<f64>,
+        sun2obj: &Vector<Equatorial>,
+        sun2obs: &Vector<Equatorial>,
     ) -> Option<ModelResults> {
         let bands = self.obs_bands.band_wavelength();
         let mut fluxes = vec![0.0; bands.len()];
@@ -180,54 +185,52 @@ impl FrmParams {
 #[cfg(test)]
 mod tests {
 
-    use nalgebra::UnitVector3;
-
     use super::*;
     use crate::flux::*;
     use std::f64::consts::PI;
 
     #[test]
     fn test_frm_facet_temperature() {
-        let obj2sun = UnitVector3::new_unchecked([1.0, 0.0, 0.0].into());
+        let obj2sun:UnitVector<Equatorial> = UnitVector::new_unchecked([1.0, 0.0, 0.0].into());
         let t = (PI / 4.0).cos().powf(0.25);
 
         let temp = frm_facet_temperature(
-            &UnitVector3::new_unchecked([1.0, 0.0, 0.0].into()),
+            &UnitVector::new_unchecked([1.0, 0.0, 0.0].into()),
             1.0,
             &obj2sun,
         );
         assert!((temp - 1.0).abs() < 1e-8);
 
         let temp = frm_facet_temperature(
-            &UnitVector3::new_unchecked([0.0, 1.0, 0.0].into()),
+            &UnitVector::new_unchecked([0.0, 1.0, 0.0].into()),
             1.0,
             &obj2sun,
         );
         assert!((temp - 1.0).abs() < 1e-8);
 
         let temp = frm_facet_temperature(
-            &UnitVector3::new_unchecked([-1.0, 0.0, 0.0].into()),
+            &UnitVector::new_unchecked([-1.0, 0.0, 0.0].into()),
             1.0,
             &obj2sun,
         );
         assert!((temp - 1.0).abs() < 1e-8);
 
         let temp = frm_facet_temperature(
-            &UnitVector3::new_normalize([1.0, 1.0, 0.0].into()),
+            &UnitVector::new_checked([1.0, 1.0, 0.0].into()),
             1.0,
             &obj2sun,
         );
         assert!((temp - 1.0).abs() < 1e-8);
 
         let temp = frm_facet_temperature(
-            &UnitVector3::new_normalize([1.0, 0.0, 1.0].into()),
+            &UnitVector::new_checked([1.0, 0.0, 1.0].into()),
             1.0,
             &obj2sun,
         );
         assert!((temp - t).abs() < 1e-8);
 
         let temp = frm_facet_temperature(
-            &UnitVector3::new_normalize([0.0, -1.0, 1.0].into()),
+            &UnitVector::new_checked([0.0, -1.0, 1.0].into()),
             1.0,
             &obj2sun,
         );

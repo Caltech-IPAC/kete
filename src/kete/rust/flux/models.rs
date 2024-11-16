@@ -5,11 +5,12 @@ use serde::{Deserialize, Serialize};
 
 use kete_core::{
     flux::{HGParams, ObserverBands},
+    frames::Equatorial,
     io::FileIO,
 };
 use pyo3::prelude::*;
 
-use crate::{frame::PyFrames, vector::VectorLike};
+use crate::vector::VectorLike;
 
 /// Reflected/Thermal model results.
 ///
@@ -362,8 +363,8 @@ impl PyNeatmParams {
             .into_par_iter()
             .zip(sun2obs_vecs)
             .map(|(sun2obj, sun2obs)| {
-                let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-                let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
+                let sun2obj = sun2obj.into_vector::<Equatorial>();
+                let sun2obs = sun2obs.into_vector::<Equatorial>();
 
                 self.0
                     .apparent_total_flux(&sun2obj, &sun2obs)
@@ -684,8 +685,8 @@ impl PyFrmParams {
             .into_par_iter()
             .zip(sun2obs_vecs)
             .map(|(sun2obj, sun2obs)| {
-                let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-                let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
+                let sun2obj = sun2obj.into_vector();
+                let sun2obs = sun2obs.into_vector();
 
                 self.0
                     .apparent_total_flux(&sun2obj, &sun2obs)

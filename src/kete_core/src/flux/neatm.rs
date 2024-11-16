@@ -2,9 +2,9 @@ use super::{
     common::{black_body_flux, lambertian_vis_scale_factor, sub_solar_temperature, ModelResults},
     flux_to_mag, HGParams, ObserverBands, DEFAULT_SHAPE,
 };
+use crate::frames::{Equatorial, InertialFrame, UnitVector, Vector};
 use crate::{constants::V_MAG_ZERO, io::FileIO};
 
-use nalgebra::{UnitVector3, Vector3};
 use serde::{Deserialize, Serialize};
 
 /// Using the NEATM thermal model, calculate the temperature of each facet given the
@@ -16,12 +16,12 @@ use serde::{Deserialize, Serialize};
 /// * `subsolar_temp` - The temperature at the sub-solar point in kelvin.
 /// * `obj2sun` - The vector from the object to the sun, unit length.
 #[inline(always)]
-pub fn neatm_facet_temperature(
-    facet_normal: &UnitVector3<f64>,
-    obj2sun: &UnitVector3<f64>,
+pub fn neatm_facet_temperature<T: InertialFrame>(
+    facet_normal: &UnitVector<T>,
+    obj2sun: &UnitVector<T>,
     subsolar_temp: &f64,
 ) -> f64 {
-    let tmp = facet_normal.dot(obj2sun);
+    let tmp = facet_normal.into_inner().dot(&obj2sun.into_inner());
     if tmp > 0.0 {
         return tmp.sqrt().sqrt() * subsolar_temp;
     }
@@ -84,8 +84,8 @@ impl NeatmParams {
     ///                        gets scaled by for that specified temp.
     pub fn apparent_thermal_flux(
         &self,
-        sun2obj: &Vector3<f64>,
-        sun2obs: &Vector3<f64>,
+        sun2obj: &Vector<Equatorial>,
+        sun2obs: &Vector<Equatorial>,
     ) -> Option<Vec<f64>> {
         let obj2sun = -sun2obj;
         let obs2obj = sun2obj - sun2obs;
@@ -104,8 +104,8 @@ impl NeatmParams {
             self.emissivity,
         );
 
-        let obj2sun = UnitVector3::new_normalize(obj2sun);
-        let obs2obj = UnitVector3::new_normalize(obs2obj);
+        let obj2sun = UnitVector::new_checked(obj2sun);
+        let obs2obj = UnitVector::new_checked(obs2obj);
 
         let mut fluxes = vec![0.0; bands.len()];
 
@@ -142,8 +142,8 @@ impl NeatmParams {
     /// * `sun2obs` - Position of the Observer with respect to the Sun in AU.
     pub fn apparent_total_flux(
         &self,
-        sun2obj: &Vector3<f64>,
-        sun2obs: &Vector3<f64>,
+        sun2obj: &Vector<Equatorial>,
+        sun2obs: &Vector<Equatorial>,
     ) -> Option<ModelResults> {
         let bands = self.obs_bands.band_wavelength();
         let mut fluxes = vec![0.0; bands.len()];
@@ -188,45 +188,44 @@ impl NeatmParams {
 #[cfg(test)]
 mod tests {
 
-    use crate::flux::*;
-    use nalgebra::UnitVector3;
+    use crate::{flux::*, frames::{Equatorial, UnitVector}};
     use std::f64::consts::PI;
 
     #[test]
     fn test_neatm_facet_temperature() {
-        let obj2sun = UnitVector3::new_unchecked([1.0, 0.0, 0.0].into());
+        let obj2sun: UnitVector<Equatorial> = UnitVector::new_unchecked([1.0, 0.0, 0.0].into());
         let t = (PI / 4.0).cos().powf(0.25);
 
         let temp = neatm_facet_temperature(
-            &UnitVector3::new_unchecked([1.0, 0.0, 0.0].into()),
+            &UnitVector::new_unchecked([1.0, 0.0, 0.0].into()),
             &obj2sun,
             &1.0,
         );
         assert!((temp - 1.0).abs() < 1e-8);
 
         let temp = neatm_facet_temperature(
-            &UnitVector3::new_unchecked([0.0, 1.0, 0.0].into()),
+            &UnitVector::new_unchecked([0.0, 1.0, 0.0].into()),
             &obj2sun,
             &1.0,
         );
         assert!(temp.abs() < 1e-8);
 
         let temp = neatm_facet_temperature(
-            &UnitVector3::new_unchecked([-1.0, 0.0, 0.0].into()),
+            &UnitVector::new_unchecked([-1.0, 0.0, 0.0].into()),
             &obj2sun,
             &1.0,
         );
         assert!(temp.abs() < 1e-8);
 
         let temp = neatm_facet_temperature(
-            &UnitVector3::new_normalize([1.0, 1.0, 0.0].into()),
+            &UnitVector::new_checked([1.0, 1.0, 0.0].into()),
             &obj2sun,
             &1.0,
         );
         assert!((temp - t).abs() < 1e-8);
 
         let temp = neatm_facet_temperature(
-            &UnitVector3::new_normalize([1.0, -1.0, 0.0].into()),
+            &UnitVector::new_checked([1.0, -1.0, 0.0].into()),
             &obj2sun,
             &1.0,
         );

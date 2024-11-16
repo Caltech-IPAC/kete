@@ -1,13 +1,14 @@
 //! Python support for simultaneous States.
 use kete_core::errors::Error;
+use kete_core::frames::Equatorial;
 use kete_core::io::FileIO;
 use kete_core::simult_states::SimultaneousStates;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::{pyclass, pymethods, PyResult};
 
-use crate::vector::{Vector, VectorLike};
-use crate::{fovs::AllowedFOV, frame::PyFrames, state::PyState};
+use crate::vector::PyVector;
+use crate::{fovs::AllowedFOV, state::PyState};
 
 /// Representation of a collection of [`State`] at a single point in time.
 ///
@@ -21,10 +22,10 @@ use crate::{fovs::AllowedFOV, frame::PyFrames, state::PyState};
 ///
 #[pyclass(module = "kete", frozen, sequence, name = "SimultaneousStates")]
 #[derive(Debug)]
-pub struct PySimultaneousStates(pub Box<SimultaneousStates>);
+pub struct PySimultaneousStates(pub Box<SimultaneousStates<Equatorial>>);
 
-impl From<SimultaneousStates> for PySimultaneousStates {
-    fn from(value: SimultaneousStates) -> Self {
+impl From<SimultaneousStates<Equatorial>> for PySimultaneousStates {
+    fn from(value: SimultaneousStates<Equatorial>) -> Self {
         Self(Box::new(value))
     }
 }
@@ -99,12 +100,6 @@ impl PySimultaneousStates {
         self.0.center_id
     }
 
-    /// Coordinate Frame.
-    #[getter]
-    pub fn frame(&self) -> PyFrames {
-        self.0.frame.into()
-    }
-
     /// Load a single SimultaneousStates from a file.
     #[staticmethod]
     pub fn load(filename: String) -> PyResult<Self> {
@@ -164,7 +159,7 @@ impl PySimultaneousStates {
     /// If a FOV is present, calculate all vectors from the observer position to the
     /// position of the objects.
     #[getter]
-    pub fn obs_vecs(&self) -> PyResult<Vec<Vector>> {
+    pub fn obs_vecs(&self) -> PyResult<Vec<PyVector>> {
         let fov = self
             .fov()
             .ok_or(PyErr::new::<exceptions::PyValueError, _>(
@@ -175,9 +170,8 @@ impl PySimultaneousStates {
 
         let mut vecs = Vec::with_capacity(self.__len__());
         for state in &self.0.states {
-            let diff = Vector::new(state.pos, state.frame.into())
-                .__sub__(VectorLike::Vec(Vector::new(obs.pos, obs.frame.into())));
-            vecs.push(diff);
+            let diff = state.pos - obs.pos;
+            vecs.push(diff.into());
         }
         Ok(vecs)
     }

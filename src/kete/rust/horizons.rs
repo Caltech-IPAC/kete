@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use crate::covariance::Covariance;
 use crate::elements::PyCometElements;
 use crate::state::PyState;
-use kete_core::{io::FileIO, prelude};
+use kete_core::{frames::Ecliptic, io::FileIO, prelude};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -114,36 +114,28 @@ impl HorizonsProperties {
     /// Cometary orbital elements.
     #[getter]
     pub fn elements(&self) -> PyResult<PyCometElements> {
-        Ok(PyCometElements(prelude::CometElements {
-            desig: prelude::Desig::Name(self.desig.clone()),
-            epoch: self
-                .epoch
+        Ok(PyCometElements(prelude::CometElements::<Ecliptic>::new(
+            prelude::Desig::Name(self.desig.clone().into()),
+            self.epoch
                 .ok_or(prelude::Error::ValueError("No Epoch defined".into()))?,
-            eccentricity: self
-                .eccentricity
+            self.eccentricity
                 .ok_or(prelude::Error::ValueError("No Eccentricity defined".into()))?,
-            inclination: self
-                .inclination
+            self.inclination
                 .ok_or(prelude::Error::ValueError("No Inclination defined".into()))?
                 .to_radians(),
-            peri_arg: self
-                .peri_arg
+            self.peri_arg
                 .ok_or(prelude::Error::ValueError("No peri_arg defined".into()))?
                 .to_radians(),
-            peri_dist: self
-                .peri_dist
+            self.peri_dist
                 .ok_or(prelude::Error::ValueError("No peri_dist defined".into()))?,
-            peri_time: self
-                .peri_time
+            self.peri_time
                 .ok_or(prelude::Error::ValueError("No peri_time defined".into()))?,
-            lon_of_ascending: self
-                .lon_of_ascending
+            self.lon_of_ascending
                 .ok_or(prelude::Error::ValueError(
                     "No longitude of ascending node defined".into(),
                 ))?
                 .to_radians(),
-            frame: prelude::Frame::Ecliptic,
-        }))
+        )))
     }
 
     /// Convert the orbital elements of the object to a State.

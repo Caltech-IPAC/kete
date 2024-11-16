@@ -1,11 +1,11 @@
-use crate::{frame::PyFrames, vector::VectorLike};
+use crate::vector::{VectorLike, PyVector};
 use itertools::Itertools;
 use kete_core::constants::{
     w1_color_correction, w2_color_correction, w3_color_correction, w4_color_correction, C_V,
 };
 use kete_core::flux::*;
+use kete_core::frames::{Equatorial, UnitVector, Vector};
 use kete_core::prelude::Error;
-use nalgebra::UnitVector3;
 use pyo3::{pyfunction, PyResult};
 
 /// Calculate the visible flux at the observer assuming a convex faceted object made up
@@ -32,18 +32,18 @@ pub fn lambertian_flux_py(
     diameter: f64,
     emissivity: f64,
 ) -> f64 {
-    let obs2obj = obs2obj.into_vec(PyFrames::Ecliptic);
+    let obs2obj: Vector<Equatorial> = obs2obj.into_vector();
     let facet_normals: Vec<_> = facet_normals
         .into_iter()
-        .map(|norm| norm.into_vec(PyFrames::Ecliptic))
+        .map(|norm| norm.into_vector())
         .collect();
     let obs2obj_r = obs2obj.norm();
-    let obs2obj = UnitVector3::new_normalize(obs2obj);
+    let obs2obj = UnitVector::new_checked(obs2obj);
     facet_normals
         .into_iter()
         .zip(facet_flux)
         .map(|(normal, flux)| {
-            let normal = UnitVector3::new_normalize(normal);
+            let normal = UnitVector::new_checked(normal);
             lambertian_flux(&normal, &obs2obj, &flux, &obs2obj_r, &diameter, &emissivity)
         })
         .sum()
@@ -93,7 +93,7 @@ pub fn sub_solar_temperature_py(
     emissivity: Option<f64>,
 ) -> f64 {
     let emissivity = emissivity.unwrap_or(0.9);
-    let obj2sun = obj2sun.into_vec(PyFrames::Ecliptic);
+    let obj2sun: Vector<Equatorial> = obj2sun.into_vector();
     sub_solar_temperature(&obj2sun, geom_albedo, g_param, beaming, emissivity)
 }
 
@@ -143,16 +143,16 @@ pub fn neatm_facet_temperature_py(
     subsolar_temp: f64,
     obj2sun: VectorLike,
 ) -> Vec<f64> {
-    let obj2sun = UnitVector3::new_normalize(obj2sun.into_vec(PyFrames::Ecliptic));
+    let obj2sun = UnitVector::new_checked(obj2sun.into_vector::<Equatorial>());
     let facet_normals: Vec<_> = facet_normals
         .into_iter()
-        .map(|norm| norm.into_vec(PyFrames::Ecliptic))
+        .map(|norm| norm.into_vector())
         .collect();
     facet_normals
         .into_iter()
         .map(|normal| {
             neatm_facet_temperature(
-                &UnitVector3::new_normalize(normal),
+                &UnitVector::new_checked(normal),
                 &obj2sun,
                 &subsolar_temp,
             )
@@ -179,15 +179,15 @@ pub fn frm_facet_temperature_py(
     subsolar_temp: f64,
     obj2sun: VectorLike,
 ) -> Vec<f64> {
-    let obj2sun = UnitVector3::new_normalize(obj2sun.into_vec(PyFrames::Ecliptic));
+    let obj2sun = UnitVector::new_checked(obj2sun.into_vector::<Equatorial>());
     let facet_normals: Vec<_> = facet_normals
         .into_iter()
-        .map(|norm| norm.into_vec(PyFrames::Ecliptic))
+        .map(|norm| UnitVector::new_checked(norm.into_vector()))
         .collect();
     facet_normals
         .into_iter()
         .map(|normal| {
-            frm_facet_temperature(&UnitVector3::new_normalize(normal), subsolar_temp, &obj2sun)
+            frm_facet_temperature(&normal, subsolar_temp, &obj2sun)
         })
         .collect_vec()
 }
@@ -235,8 +235,8 @@ pub fn neatm_thermal_py(
     emissivity: Option<f64>,
 ) -> f64 {
     let emissivity = emissivity.unwrap_or(0.9);
-    let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-    let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
+    let sun2obj = sun2obj.into_vector();
+    let sun2obs = sun2obs.into_vector();
 
     let hg_params = HGParams::try_fill(
         "".into(),
@@ -304,8 +304,8 @@ pub fn frm_thermal_py(
     emissivity: Option<f64>,
 ) -> f64 {
     let emissivity = emissivity.unwrap_or(0.9);
-    let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-    let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
+    let sun2obj = sun2obj.into_vector();
+    let sun2obs = sun2obs.into_vector();
     let hg_params = HGParams::try_fill(
         "".into(),
         g_param,
@@ -381,8 +381,8 @@ pub fn comet_mags_py(
     mk_2: Option<[f64; 2]>,
     phase_corr: Option<f64>,
 ) -> (Option<f64>, Option<f64>) {
-    let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-    let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
+    let sun2obj = sun2obj.into_vector::<Equatorial>();
+    let sun2obs = sun2obs.into_vector();
     let corr = phase_corr.unwrap_or(0.035);
     let mk_params = CometMKParams::new("".into(), mk_1, mk_2, corr);
     (
@@ -422,8 +422,8 @@ pub fn w4_color_correction_py(temp: f64) -> f64 {
 /// The normal vectors of the fib lattice
 #[pyfunction]
 #[pyo3(name = "fib_lattice_vecs")]
-pub fn fib_lattice_vecs_py(n_facets: usize) -> Vec<[f64; 3]> {
-    let facets = ConvexShape::new_fibonacci_lattice(n_facets).facets;
+pub fn fib_lattice_vecs_py(n_facets: usize) -> Vec<PyVector> {
+    let facets = ConvexShape::<Equatorial>::new_fibonacci_lattice(n_facets).facets;
     facets
         .iter()
         .map(|f| f.normal.into_inner().into())

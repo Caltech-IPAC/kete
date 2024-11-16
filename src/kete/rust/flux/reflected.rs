@@ -1,7 +1,8 @@
-use crate::{frame::PyFrames, vector::VectorLike};
+use crate::vector::VectorLike;
 use kete_core::constants;
 use kete_core::flux::hg_phase_curve_correction;
 use kete_core::flux::HGParams;
+use kete_core::frames::Equatorial;
 use pyo3::pyfunction;
 
 /// This computes the phase curve correction in the IAU format.
@@ -76,8 +77,8 @@ pub fn hg_apparent_flux_py(
     c_hg: Option<f64>,
 ) -> f64 {
     let c_hg = c_hg.unwrap_or(constants::C_V);
-    let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-    let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
+    let sun2obj = sun2obj.into_vector::<Equatorial>();
+    let sun2obs = sun2obs.into_vector();
     let params = HGParams::try_fill(
         "".into(),
         g_param,
@@ -125,8 +126,8 @@ pub fn hg_apparent_mag_py(
     h_mag: f64,
     g_param: f64,
 ) -> f64 {
-    let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
-    let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
+    let sun2obj = sun2obj.into_vector::<Equatorial>();
+    let sun2obs = sun2obs.into_vector();
     let params = HGParams::new("".into(), g_param, h_mag, None);
     params.apparent_mag(&sun2obj, &sun2obs)
 }

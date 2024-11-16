@@ -1,5 +1,5 @@
 //! Python vector support with frame information.
-use kete_core::frames::rotate_around;
+use kete_core::frames::{rotate_around, InertialFrame, FK4};
 use pyo3::exceptions;
 use std::f64::consts::FRAC_PI_2;
 
@@ -19,16 +19,44 @@ use pyo3::{PyResult, Python};
 /// frame :
 ///     The frame of reference defining the coordinate frame of the vector, defaults
 ///     to ecliptic.
-#[pyclass(sequence, frozen, module = "kete")]
-#[derive(Clone, Debug)]
-pub struct Vector {
+#[pyclass(sequence, frozen, module = "kete", name = "Vector")]
+#[derive(Clone, Debug, Copy)]
+pub struct PyVector {
     /// X/Y/Z numbers of the vector
     pub raw: [f64; 3],
 
     frame: PyFrames,
 }
 
-impl Vector {
+impl<T: InertialFrame> From<PyVector> for Vector<T> {
+    #[inline(always)]
+    fn from(value: PyVector) -> Self {
+        match value.frame {
+            PyFrames::Equatorial => Vector::<Equatorial>::from(value.raw).into_frame(),
+            PyFrames::Ecliptic => Vector::<Ecliptic>::from(value.raw).into_frame(),
+            PyFrames::Galactic => Vector::<Galactic>::from(value.raw).into_frame(),
+            PyFrames::FK4 => Vector::<FK4>::from(value.raw).into_frame(),
+        }
+    }
+}
+
+macro_rules! PyVector_frame_conversion {
+    ($pyframe: expr, $frame: ty) => {
+        impl From<Vector<$frame>> for PyVector {
+            #[inline(always)]
+            fn from(value: Vector<$frame>) -> Self {
+                PyVector::new(value.vec, $pyframe)
+            }
+        }
+    };
+}
+
+PyVector_frame_conversion!(PyFrames::Ecliptic, Ecliptic);
+PyVector_frame_conversion!(PyFrames::Equatorial, Equatorial);
+PyVector_frame_conversion!(PyFrames::FK4, FK4);
+PyVector_frame_conversion!(PyFrames::Galactic, Galactic);
+
+impl PyVector {
     /// Construct a new vector
     pub fn new(raw: [f64; 3], frame: PyFrames) -> Self {
         Self { raw, frame }
@@ -39,38 +67,34 @@ impl Vector {
 #[derive(Debug, FromPyObject)]
 pub enum VectorLike {
     /// Vector directly
-    Vec(Vector),
+    Vec(PyVector),
 
     /// Vector from x/y/z
     Arr([f64; 3]),
 }
 
 impl VectorLike {
-    /// Cast VectorLike into a Vector3
-    pub fn into_vec(self, target_frame: PyFrames) -> Vector3<f64> {
+    /// Cast VectorLike into a rust Vector
+    pub fn into_vector<F: InertialFrame>(self) -> Vector<F> {
         match self {
-            VectorLike::Arr(arr) => Vector3::from(arr),
-            VectorLike::Vec(mut vec) => {
-                if vec.frame() != target_frame {
-                    vec = vec.change_frame(target_frame);
-                };
-                Vector3::from(vec.raw)
-            }
+            VectorLike::Arr(arr) => Vector::<F>::from(arr),
+            VectorLike::Vec(vec) => vec.into(),
         }
     }
 
     /// Cast VectorLike into a python Vector
-    pub fn into_vector(self, target_frame: PyFrames) -> Vector {
-        let vec = self.into_vec(target_frame);
-        Vector {
-            raw: vec.into(),
-            frame: target_frame,
+    pub fn into_pyvector(self, target_frame: PyFrames) -> PyVector {
+        match target_frame {
+            PyFrames::Ecliptic => self.into_vector::<Ecliptic>().into(),
+            PyFrames::Equatorial => self.into_vector::<Equatorial>().into(),
+            PyFrames::Galactic => self.into_vector::<Galactic>().into(),
+            PyFrames::FK4 => self.into_vector::<FK4>().into(),
         }
     }
 }
 
 #[pymethods]
-impl Vector {
+impl PyVector {
     /// create new vector
     #[new]
     #[pyo3(signature = (raw, frame=None))]
@@ -244,9 +268,7 @@ impl Vector {
     /// Compute the angle in degrees between two vectors in degrees.
     /// This will automatically make a frame change if necessary.
     pub fn angle_between(&self, other: VectorLike) -> f64 {
-        let self_vec = Vector3::from(self.raw);
-        let other_vec = other.into_vec(self.frame());
-        self_vec.angle(&other_vec).to_degrees()
+        Into::<Vector<Equatorial>>::into(*self).angle(&other.into_vector())
     }
 
     /// Return the vector in the ecliptic frame, regardless of starting frame.
@@ -275,10 +297,7 @@ impl Vector {
 
     /// Return the vector in the target frame, regardless of starting frame.
     pub fn change_frame(&self, target_frame: PyFrames) -> Self {
-        let new_dat = Into::<Frame>::into(self.frame)
-            .try_vec_frame_change(self.raw.into(), target_frame.into())
-            .unwrap();
-        Self::new(new_dat.into(), target_frame)
+        VectorLike::Vec(*self).into_pyvector(target_frame)
     }
 
     /// X coordinate in au.
@@ -310,7 +329,7 @@ impl Vector {
     ///     The angle in degrees of the rotation.
     pub fn rotate_around(&self, other: VectorLike, angle: f64) -> Self {
         let self_vec = Vector3::from(self.raw);
-        let other_vec = other.into_vec(self.frame());
+        let other_vec = other.into_pyvector(self.frame()).raw.into();
         let rotated = rotate_around(&self_vec, other_vec, angle.to_radians());
         Self::new(rotated.into(), self.frame)
     }
@@ -327,7 +346,7 @@ impl Vector {
     #[allow(missing_docs)]
     pub fn __sub__(&self, other: VectorLike) -> Self {
         let self_vec = Vector3::from(self.raw);
-        let other_vec = other.into_vec(self.frame());
+        let other_vec: Vector3<f64> = other.into_pyvector(self.frame()).raw.into();
         let diff = self_vec - other_vec;
         Self::new(diff.into(), self.frame)
     }
@@ -335,7 +354,7 @@ impl Vector {
     #[allow(missing_docs)]
     pub fn __add__(&self, other: VectorLike) -> Self {
         let self_vec = Vector3::from(self.raw);
-        let other_vec = other.into_vec(self.frame());
+        let other_vec: Vector3<f64> = other.into_pyvector(self.frame()).raw.into();
         let diff = self_vec + other_vec;
         Self::new(diff.into(), self.frame)
     }
@@ -372,7 +391,7 @@ impl Vector {
 
     fn __richcmp__(&self, other: VectorLike, op: CompareOp, py: Python<'_>) -> PyObject {
         let self_vec = Vector3::from(self.raw);
-        let other_vec = other.into_vec(self.frame());
+        let other_vec: Vector3<f64> = other.into_pyvector(self.frame()).raw.into();
         match op {
             CompareOp::Eq => ((self_vec - other_vec).norm() < 1e-12).into_py(py),
             CompareOp::Ne => ((self_vec - other_vec).norm() >= 1e-12).into_py(py),

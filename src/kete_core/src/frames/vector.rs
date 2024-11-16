@@ -10,7 +10,7 @@ use std::ops::{Add, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub};
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
 pub struct Vector<T: InertialFrame> {
     /// Raw Vector
-    vec: [f64; 3],
+    pub vec: [f64; 3],
 
     /// PhantomData is used here as the frame is only a record keeping convenience.
     frame: PhantomData<T>,
@@ -97,6 +97,11 @@ impl<T: InertialFrame> Vector<T> {
     pub fn normalize(&self) -> Self {
         self / self.norm()
     }
+    /// Normalize the vector to unit length in place.
+    #[inline]
+    pub fn normalize_mut(&mut self) {
+        *self /= self.norm();
+    }
 
     /// Create a unit vector from polar spherical theta and phi angles in radians.
     ///
@@ -134,6 +139,39 @@ impl<T: InertialFrame> Vector<T> {
     #[inline]
     pub fn z(&self) -> f64 {
         unsafe { *self.vec.get_unchecked(2) }
+    }
+
+    /// Are all elements of the vector finite valued.
+    #[inline]
+    pub fn is_finite(&self) -> bool {
+        self.vec.iter().all(|x| x.is_finite())
+    }
+}
+
+/// Unit length vector.
+/// Thin wrapper over [`Vector`] to indicate it is of unit length.
+#[repr(transparent)]
+#[derive(Debug, Clone, Copy)]
+pub struct UnitVector<T: InertialFrame>(Vector<T>);
+
+impl<T: InertialFrame> UnitVector<T> {
+    /// Make a new unit vector from a vector assumed to be unit length.
+    #[inline(always)]
+    pub fn new_unchecked(vec: Vector<T>) -> Self {
+        Self(vec)
+    }
+
+    /// Make a new unit vector, normalizing it as necessary.
+    #[inline(always)]
+    pub fn new_checked(mut vec: Vector<T>) -> Self {
+        vec.normalize_mut();
+        Self(vec)
+    }
+
+    /// Unwrap the underlying vector.
+    #[inline(always)]
+    pub fn into_inner(self) -> Vector<T> {
+        self.0
     }
 }
 
@@ -238,6 +276,18 @@ impl<T: InertialFrame> From<Vector<T>> for Vec<f64> {
     }
 }
 
+impl<T: InertialFrame> Sub<&Vector<T>> for &Vector<T> {
+    type Output = Vector<T>;
+    #[inline]
+    fn sub(self, rhs: &Vector<T>) -> Self::Output {
+        Vector::<T>::new([
+            self.vec[0] - rhs.vec[0],
+            self.vec[1] - rhs.vec[1],
+            self.vec[2] - rhs.vec[2],
+        ])
+    }
+}
+
 impl<T: InertialFrame> Sub<&Vector<T>> for Vector<T> {
     type Output = Vector<T>;
     #[inline]
@@ -253,6 +303,18 @@ impl<T: InertialFrame> Sub<Vector<T>> for Vector<T> {
     fn sub(mut self, rhs: Vector<T>) -> Self::Output {
         (0..3).for_each(|i| self.vec[i] -= rhs.vec[i]);
         self
+    }
+}
+
+impl<T: InertialFrame> Add<&Vector<T>> for &Vector<T> {
+    type Output = Vector<T>;
+    #[inline]
+    fn add(self, rhs: &Vector<T>) -> Self::Output {
+        Vector::<T>::new([
+            self.vec[0] + rhs.vec[0],
+            self.vec[1] + rhs.vec[1],
+            self.vec[2] + rhs.vec[2],
+        ])
     }
 }
 

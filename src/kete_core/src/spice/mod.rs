@@ -15,6 +15,7 @@ pub use daf::*;
 pub use naif_ids::try_name_from_id;
 pub use obs_codes::OBS_CODES;
 pub use pck::*;
+pub use spice_frames::*;
 pub use spk::*;
 
 /// Convert seconds from J2000 into JD.

@@ -1,4 +1,4 @@
-use kete_core::frames::ecef_to_geodetic_lat_lon;
+use kete_core::frames::{ecef_to_geodetic_lat_lon, NonInertialFrame};
 use kete_core::spice::{get_pck_singleton, get_spk_singleton};
 use kete_core::{constants, prelude::*};
 use pyo3::{pyfunction, PyResult};
@@ -20,7 +20,7 @@ pub fn pck_load_py(filenames: Vec<String>) -> PyResult<()> {
 }
 
 /// Convert a position vector which is geocentered in the earth frame to a position
-/// vector in the sun centered ecliptic frame.
+/// vector in the sun centered equatorial frame.
 ///
 /// This requires the `earth_000101_*.pck` file to be loaded which contains the
 /// instantaneous earth frame information. The one provided by kete has dates from
@@ -39,7 +39,7 @@ pub fn pck_load_py(filenames: Vec<String>) -> PyResult<()> {
 /// name : String
 ///     Optional name of the state.
 #[pyfunction]
-#[pyo3(name = "pck_earth_frame_to_ecliptic", signature = (pos, jd, new_center, name=None))]
+#[pyo3(name = "pck_earth_frame_to_state", signature = (pos, jd, new_center, name=None))]
 pub fn pck_earth_frame_py(
     pos: [f64; 3],
     jd: f64,
@@ -48,15 +48,15 @@ pub fn pck_earth_frame_py(
 ) -> PyResult<PyState> {
     let desig = {
         match name {
-            Some(d) => Desig::Name(d),
+            Some(d) => Desig::Name(d.into()),
             None => Desig::Empty,
         }
     };
     let pcks = get_pck_singleton().try_read().unwrap();
     let frame = pcks.try_get_orientation(3000, jd)?;
 
-    let mut state = State::new(desig, jd, pos.into(), [0.0, 0.0, 0.0].into(), frame, 399);
-    state.try_change_frame_mut(Frame::Ecliptic)?;
+    let (pos, vel) = frame.to_equatorial(pos.into(), [0.0, 0.0, 0.0].into());
+    let mut state = State::new(desig, jd, pos.into(), vel.into(), 399);
 
     let spks = get_spk_singleton().try_read().unwrap();
     spks.try_change_center(&mut state, new_center)?;
@@ -76,15 +76,15 @@ pub fn pck_earth_frame_py(
 ///     Convert the given state to latitude, longitude, and height in km on the WGS84
 ///     reference.
 #[pyfunction]
-#[pyo3(name = "state_to_earth_pos")]
+#[pyo3(name = "state_to_earth_frame")]
 pub fn pck_state_to_earth(state: PyState) -> PyResult<(f64, f64, f64)> {
     let pcks = get_pck_singleton().try_read().unwrap();
-    let state = state.change_center(399)?.as_ecliptic()?;
-    let frame = pcks.try_get_orientation(3000, state.jd())?;
-    let mut state = state.0;
+    let state = state.change_center(399)?.0;
+    let frame = pcks.try_get_orientation(3000, state.jd)?;
 
-    state.try_change_frame_mut(frame)?;
-    let [x, y, z] = state.pos;
+    let (pos, _) = frame.from_equatorial(state.pos.into(), state.vel.into());
+
+    let [x, y, z] = pos.into();
     let (lat, lon, height) = ecef_to_geodetic_lat_lon(
         x * constants::AU_KM,
         y * constants::AU_KM,

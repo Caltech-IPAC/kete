@@ -19,7 +19,7 @@ pub struct WiseCmos {
     pub rotation: f64,
 
     /// Frame number of the fov
-    pub frame_num: u32,
+    pub frame_num: u16,
 
     /// Scan ID of the fov
     pub scan_id: Box<str>,
@@ -31,7 +31,7 @@ impl WiseCmos {
         pointing: Vector<Equatorial>,
         rotation: f64,
         observer: State<Equatorial>,
-        frame_num: u32,
+        frame_num: u16,
         scan_id: Box<str>,
     ) -> Self {
         let patch = OnSkyRectangle::new(pointing, rotation, WISE_WIDTH, WISE_WIDTH);
@@ -48,7 +48,7 @@ impl WiseCmos {
     pub fn from_corners(
         corners: [Vector<Equatorial>; 4],
         observer: State<Equatorial>,
-        frame_num: u32,
+        frame_num: u16,
         scan_id: Box<str>,
     ) -> Self {
         let patch = OnSkyRectangle::from_corners(corners);

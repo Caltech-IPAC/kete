@@ -1,5 +1,9 @@
 use super::*;
-use kete_core::{fov::FOV, propagation::propagate_n_body_spk};
+use kete_core::{
+    fov::FOV,
+    frames::{Equatorial, Vector},
+    propagation::propagate_n_body_spk,
+};
 use pyo3::prelude::*;
 use rayon::prelude::*;
 
@@ -166,10 +170,7 @@ pub fn fov_static_checks_py(
     fovs: FOVListLike,
 ) -> Vec<(Vec<usize>, AllowedFOV)> {
     let fovs = fovs.into_sorted_vec_fov();
-    let pos: Vec<_> = pos
-        .into_iter()
-        .map(|p| p.into_vec(crate::frame::PyFrames::Ecliptic))
-        .collect();
+    let pos: Vec<Vector<Equatorial>> = pos.into_iter().map(|p| p.into_vector()).collect();
 
     fovs.into_par_iter()
         .filter_map(|fov| {

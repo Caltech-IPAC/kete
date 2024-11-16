@@ -1,5 +1,6 @@
 //! Python support for orbital elements
 use kete_core::elements;
+use kete_core::frames::Ecliptic;
 use kete_core::prelude;
 use pyo3::{pyclass, pymethods, PyResult};
 
@@ -29,7 +30,7 @@ use crate::state::PyState;
 ///     The longitude of ascending node, in degrees.
 #[pyclass(module = "kete", frozen, name = "CometElements")]
 #[derive(Clone, Debug)]
-pub struct PyCometElements(pub elements::CometElements);
+pub struct PyCometElements(pub elements::CometElements<Ecliptic>);
 
 #[pymethods]
 impl PyCometElements {
@@ -67,17 +68,16 @@ impl PyCometElements {
         peri_time: f64,
         lon_of_ascending: f64,
     ) -> Self {
-        Self(elements::CometElements {
-            desig: prelude::Desig::Name(desig),
-            frame: prelude::Frame::Ecliptic,
+        Self(elements::CometElements::<Ecliptic>::new(
+            prelude::Desig::Name(desig.into()),
             epoch,
             eccentricity,
-            inclination: inclination.to_radians(),
-            lon_of_ascending: lon_of_ascending.to_radians(),
+            inclination.to_radians(),
+            lon_of_ascending.to_radians(),
             peri_time,
-            peri_arg: peri_arg.to_radians(),
+            peri_arg.to_radians(),
             peri_dist,
-        })
+        ))
     }
 
     /// Construct a new CometElements object from a `State`.
@@ -87,8 +87,8 @@ impl PyCometElements {
     /// State :
     ///     State Object.
     #[staticmethod]
-    pub fn from_state(state: &PyState) -> Self {
-        Self(elements::CometElements::from_state(&state.0))
+    pub fn from_state(state: PyState) -> Self {
+        Self(elements::CometElements::from_state(&state.0.into_frame()))
     }
 
     /// Epoch of the elements in JD.
@@ -101,12 +101,12 @@ impl PyCometElements {
     #[getter]
     pub fn desig(&self) -> String {
         match &self.0.desig {
-            prelude::Desig::Name(s) => s.clone(),
-            prelude::Desig::Naif(s) => {
-                kete_core::spice::try_name_from_id(*s).unwrap_or(s.to_string())
-            }
+            prelude::Desig::Name(s) => s.to_string(),
+            prelude::Desig::Naif(s) => kete_core::spice::try_name_from_id(*s)
+                .map(|x| x.to_string())
+                .unwrap_or(s.to_string()),
             prelude::Desig::Perm(s) => format!("{:?}", s),
-            prelude::Desig::Prov(s) => s.clone(),
+            prelude::Desig::Prov(s) => s.to_string(),
             prelude::Desig::Empty => "None".into(),
         }
     }

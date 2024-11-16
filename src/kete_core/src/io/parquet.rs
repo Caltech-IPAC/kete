@@ -5,13 +5,13 @@ use itertools::Itertools;
 use std::fs::File;
 
 use crate::errors::{Error, KeteResult};
-use crate::frames::Ecliptic;
+use crate::frames::Equatorial;
 use crate::state::State;
 
 use polars::prelude::*;
 
 /// Write a collection of states to a parquet table.
-pub fn write_states_parquet(states: &[State<Ecliptic>], filename: &str) -> KeteResult<()> {
+pub fn write_states_parquet(states: &[State<Equatorial>], filename: &str) -> KeteResult<()> {
     let desigs = Series::new(
         "desig".into(),
         states
@@ -61,7 +61,7 @@ pub fn write_states_parquet(states: &[State<Ecliptic>], filename: &str) -> KeteR
 }
 
 /// Read a collection of states from a parquet table.
-pub fn read_states_parquet(filename: &str) -> KeteResult<Vec<State<Ecliptic>>> {
+pub fn read_states_parquet(filename: &str) -> KeteResult<Vec<State<Equatorial>>> {
     // this reads the parquet table, then creates iterators over the contents, making
     // states by going through the iterators one at a time.
     let r = File::open(filename)?;

@@ -1,4 +1,4 @@
-use kete_core::spice::{get_spk_singleton, try_name_from_id};
+use kete_core::spice::{get_spk_singleton, try_name_from_id, SpiceFrames};
 use pyo3::{pyfunction, PyResult, Python};
 
 use crate::frame::PyFrames;
@@ -34,7 +34,13 @@ pub fn spk_available_info_py(naif_id: i64) -> Vec<(f64, f64, i64, PyFrames, i32)
     singleton
         .available_info(naif_id)
         .into_iter()
-        .map(|(s, e, c, frame, ty)| (s, e, c, frame.into(), ty))
+        .map(|(s, e, c, frame, ty)| {
+            let frame = match frame {
+                SpiceFrames::J2000 => PyFrames::Equatorial,
+                SpiceFrames::ECLIPJ2000 => PyFrames::Ecliptic,
+            };
+            (s, e, c, frame, ty)
+        })
         .collect()
 }
 
@@ -54,7 +60,9 @@ pub fn spk_loaded_objects_py() -> Vec<i64> {
 #[pyfunction]
 #[pyo3(name = "spk_get_name_from_id")]
 pub fn spk_get_name_from_id_py(id: i64) -> String {
-    try_name_from_id(id).unwrap_or(id.to_string())
+    try_name_from_id(id)
+        .map(|x| x.to_string())
+        .unwrap_or(id.to_string())
 }
 
 /// Reset the contents of the SPK shared memory to the default set of SPK kernels.
@@ -64,7 +72,7 @@ pub fn spk_reset_py() {
     get_spk_singleton().write().unwrap().reset()
 }
 
-/// Calculate the state of a given object in the target frame.
+/// Calculate the state of a given object.
 ///
 /// This will automatically replace the name of the object if possible.
 ///
@@ -76,14 +84,12 @@ pub fn spk_reset_py() {
 ///     Time (JD) in TDB scaled time.
 /// center : int
 ///     NAIF ID of the associated central point.
-/// frame : Frames
-///     Frame of reference for the state.
 #[pyfunction]
 #[pyo3(name = "spk_state")]
-pub fn spk_state_py(id: i64, jd: PyTime, center: i64, frame: PyFrames) -> PyResult<PyState> {
+pub fn spk_state_py(id: i64, jd: PyTime, center: i64) -> PyResult<PyState> {
     let jd = jd.jd();
     let spk = get_spk_singleton().try_read().unwrap();
-    let mut state = spk.try_get_state(id, jd, center, frame.into())?;
+    let mut state = spk.try_get_state(id, jd, center)?;
     let _ = state.try_naif_id_to_name();
     Ok(PyState(state))
 }

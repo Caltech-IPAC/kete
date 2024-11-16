@@ -2,6 +2,7 @@
 use itertools::Itertools;
 use kete_core::{
     errors::Error,
+    frames::Equatorial,
     propagation::{self, moid, NonGravModel},
     spice::{self, get_spk_singleton},
     state::State,
@@ -27,16 +28,13 @@ use crate::{nongrav::PyNonGravModel, time::PyTime};
 #[pyfunction]
 #[pyo3(name = "moid", signature = (state_a, state_b=None))]
 pub fn moid_py(state_a: PyState, state_b: Option<PyState>) -> PyResult<f64> {
-    let state_b =
-        state_b
-            .map(|x| x.0)
-            .unwrap_or(get_spk_singleton().read().unwrap().try_get_state(
-                399,
-                state_a.0.jd,
-                10,
-                state_a.0.frame,
-            )?);
-    Ok(moid(state_a.0, state_b)?)
+    let state_b = state_b.map(|x| x.0).unwrap_or(
+        get_spk_singleton()
+            .read()
+            .unwrap()
+            .try_get_state::<Equatorial>(399, state_a.0.jd, 10)?,
+    );
+    Ok(moid(&state_a.0, &state_b)?)
 }
 
 /// Propagate the provided :class:`~kete.State` using N body mechanics to the
@@ -76,7 +74,7 @@ pub fn propagation_n_body_spk_py(
     non_gravs: Option<Vec<Option<PyNonGravModel>>>,
     suppress_errors: bool,
 ) -> PyResult<Vec<PyState>> {
-    let states: Vec<State> = states.into_iter().map(|x| x.0).collect();
+    let states: Vec<State<_>> = states.into_iter().map(|x| x.0).collect();
     let non_gravs = non_gravs.unwrap_or(vec![None; states.len()]);
 
     if states.len() != non_gravs.len() {
@@ -113,10 +111,9 @@ pub fn propagation_n_body_spk_py(
                     if !suppress_errors {
                         Err(Error::ValueError("Input state contains NaNs.".into()))?;
                     };
-                    return Ok(State::new_nan(state.desig, jd, state.frame, center).into());
+                    return Ok(State::<Equatorial>::new_nan(state.desig, jd, center).into());
                 }
                 let desig = state.desig.clone();
-                let frame = state.frame;
                 match propagation::propagate_n_body_spk(state, jd, include_asteroids, model) {
                     Ok(state) => Ok(state.into()),
                     Err(er) => {
@@ -126,14 +123,14 @@ pub fn propagation_n_body_spk_py(
                             if let Error::Impact(id, time) = er {
                                 let time_full: Time<TDB> = Time::new(time);
                                 eprintln!(
-                                    "Impact detected between {:?} <-> {} at time {} ({})",
+                                    "Impact detected between ({:?}) <-> ({}) at time {} ({})",
                                     desig,
-                                    spice::try_name_from_id(id).unwrap_or(id.to_string()),
+                                    spice::try_name_from_id(id).unwrap_or(id.to_string().into()),
                                     time,
                                     time_full.utc().to_iso().unwrap()
                                 );
                             };
-                            Ok(State::new_nan(desig, jd, frame, center).into())
+                            Ok(State::<Equatorial>::new_nan(desig, jd, center).into())
                         }
                     }
                 }
@@ -203,8 +200,8 @@ pub fn propagation_n_body_py(
     non_gravs: Option<Vec<Option<PyNonGravModel>>>,
     batch_size: usize,
 ) -> PyResult<(Vec<PyState>, Vec<PyState>)> {
-    let states: Vec<State> = states.into_iter().map(|x| x.0).collect();
-    let planet_states: Option<Vec<State>> =
+    let states: Vec<State<_>> = states.into_iter().map(|x| x.0).collect();
+    let planet_states: Option<Vec<State<_>>> =
         planet_states.map(|s| s.into_iter().map(|x| x.0).collect());
 
     let non_gravs = non_gravs.unwrap_or(vec![None; states.len()]);
@@ -218,7 +215,7 @@ pub fn propagation_n_body_py(
         .collect_vec()
         .par_chunks(batch_size)
         .map(|chunk| {
-            let (chunk_state, chunk_nongrav): (Vec<State>, Vec<Option<NonGravModel>>) =
+            let (chunk_state, chunk_nongrav): (Vec<State<_>>, Vec<Option<NonGravModel>>) =
                 chunk.iter().cloned().unzip();
 
             propagation::propagate_n_body_vec(chunk_state, jd, planet_states.clone(), chunk_nongrav)

@@ -1,5 +1,7 @@
-use crate::io::FileIO;
-use nalgebra::{UnitVector3, Vector3};
+use crate::{
+    frames::{InertialFrame, UnitVector, Vector},
+    io::FileIO,
+};
 use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;
 
@@ -166,9 +168,9 @@ pub fn black_body_flux(temp: f64, wavelength: f64) -> f64 {
 /// * `diameter` - Diameter of the object in km.
 /// * `emissivity` - The emissivity of surface of the object.
 #[inline(always)]
-pub fn lambertian_flux(
-    facet_normal: &UnitVector3<f64>,
-    obs2obj: &UnitVector3<f64>,
+pub fn lambertian_flux<T: InertialFrame>(
+    facet_normal: &UnitVector<T>,
+    obs2obj: &UnitVector<T>,
     facet_flux: &f64,
     obs2obj_r: &f64,
     diameter: &f64,
@@ -187,9 +189,9 @@ pub fn lambertian_flux(
 /// This allows this to be computed once per geometry, but then multiple wavelengths
 /// be multiplied against it. This resulted in a 50% speedup in FRM and NEATM overall.
 #[inline(always)]
-pub fn lambertian_vis_scale_factor(
-    facet_normal: &UnitVector3<f64>,
-    obs2obj: &UnitVector3<f64>,
+pub fn lambertian_vis_scale_factor<T: InertialFrame>(
+    facet_normal: &UnitVector<T>,
+    obs2obj: &UnitVector<T>,
     obs2obj_r: &f64,
     diameter: &f64,
     emissivity: &f64,
@@ -198,7 +200,7 @@ pub fn lambertian_vis_scale_factor(
     let scale = (obs2obj_r * AU_KM / diameter).powi(-2);
 
     // flipping direction of observer vector
-    let observed = -facet_normal.dot(obs2obj);
+    let observed = -facet_normal.into_inner().dot(&obs2obj.into_inner());
     if observed > 0.0 {
         return observed * emissivity * PI * scale;
     }
@@ -215,8 +217,8 @@ pub fn lambertian_vis_scale_factor(
 /// * `beaming` - Beaming of the object, this is geometry dependent.
 /// * `emissivity` - The emissivity of the surface.
 #[inline(always)]
-pub fn sub_solar_temperature(
-    obj2sun: &Vector3<f64>,
+pub fn sub_solar_temperature<T: InertialFrame>(
+    obj2sun: &Vector<T>,
     geom_albedo: f64,
     g_param: f64,
     beaming: f64,
@@ -258,6 +260,7 @@ mod tests {
 
     use crate::constants::{C_M_PER_S, SOLAR_FLUX, STEFAN_BOLTZMANN};
     use crate::flux::*;
+    use crate::frames::{Equatorial, Vector};
     use std::f64::consts::E;
 
     #[test]
@@ -289,14 +292,14 @@ mod tests {
 
     #[test]
     fn test_sub_solar_temperature() {
-        let obj2sun = [1.0, 0.0, 0.0].into();
+        let obj2sun: Vector<Equatorial> = [1.0, 0.0, 0.0].into();
 
         // albedo, G set to make bond_albedo == 1
         let temp = sub_solar_temperature(&obj2sun, 1.0 / 0.29, 1.0, 1.0, 1.0);
         assert_eq!(temp, 0.0);
 
         for range in 1..10 {
-            let obj2sun = [range as f64, 0.0, 0.0].into();
+            let obj2sun: Vector<Equatorial> = [range as f64, 0.0, 0.0].into();
             let mut temp = sub_solar_temperature(&obj2sun, 0.0, 0.0, 1.0, 1.0);
             temp = temp.powi(4);
             let expected = SOLAR_FLUX / (range as f64).powi(2) / STEFAN_BOLTZMANN;

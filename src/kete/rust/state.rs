@@ -3,10 +3,13 @@ use crate::elements::PyCometElements;
 use crate::frame::*;
 use crate::time::PyTime;
 use crate::vector::*;
+use kete_core::frames::{Equatorial, InertialFrame};
 use kete_core::prelude;
 use pyo3::prelude::*;
 
 /// Representation of the state of an object at a specific moment in time.
+///
+/// All input vectors are automatically converted to Equatorial frame.
 ///
 /// Parameters
 /// ----------
@@ -18,18 +21,16 @@ use pyo3::prelude::*;
 ///     Position of the object with respect to the center ID in au.
 /// vel :
 ///     Velocity of the object with respect to the center ID in au / day.
-/// frame :
-///     The frame of reference defining the position and velocity vectors.
 /// center_id :
 ///     The SPICE kernel ID which defines the central reference point, defaults to the
 ///     Sun (10).
 #[pyclass(frozen, module = "kete", name = "State")]
 #[derive(Clone, Debug)]
-pub struct PyState(pub prelude::State);
+pub struct PyState(pub prelude::State<Equatorial>);
 
-impl From<prelude::State> for PyState {
-    fn from(value: prelude::State) -> Self {
-        Self(value)
+impl<T: InertialFrame> From<prelude::State<T>> for PyState {
+    fn from(value: prelude::State<T>) -> Self {
+        Self(value.into_frame())
     }
 }
 
@@ -47,7 +48,7 @@ impl PyState {
         center_id: Option<i64>,
     ) -> Self {
         let desig = match desig {
-            Some(name) => prelude::Desig::Name(name),
+            Some(name) => prelude::Desig::Name(name.into()),
             None => prelude::Desig::Empty,
         };
 
@@ -63,24 +64,12 @@ impl PyState {
         });
 
         // if frames dont match, force them all into the target frame.
-        let pos = pos.into_vec(frame);
-        let vel = vel.into_vec(frame);
+        let pos = pos.into_pyvector(frame);
+        let vel = vel.into_pyvector(frame);
 
         let center_id = center_id.unwrap_or(10);
-        let state = prelude::State::new(desig, jd.jd(), pos, vel, frame.into(), center_id);
+        let state = prelude::State::new(desig, jd.jd(), pos.into(), vel.into(), center_id);
         Self(state)
-    }
-
-    /// Change the coordinate frame of the object to the target frame.
-    ///
-    /// Parameters
-    /// ----------
-    /// frame : Frames
-    ///     New frame to change to.
-    pub fn change_frame(&self, frame: PyFrames) -> PyResult<Self> {
-        let mut state = self.0.clone();
-        state.try_change_frame_mut(frame.into())?;
-        Ok(Self(state))
     }
 
     /// Change the center ID of the state from the current state to the target state.
@@ -93,30 +82,6 @@ impl PyState {
         Ok(Self(state))
     }
 
-    /// Convert state to the Ecliptic Frame.
-    #[getter]
-    pub fn as_ecliptic(&self) -> PyResult<Self> {
-        self.change_frame(PyFrames::Ecliptic)
-    }
-
-    /// Convert state to the Equatorial Frame.
-    #[getter]
-    pub fn as_equatorial(&self) -> PyResult<Self> {
-        self.change_frame(PyFrames::Equatorial)
-    }
-
-    /// Convert state to the Galactic Frame.
-    #[getter]
-    pub fn as_galactic(&self) -> PyResult<Self> {
-        self.change_frame(PyFrames::Galactic)
-    }
-
-    /// Convert state to the FK4 Frame.
-    #[getter]
-    pub fn as_fk4(&self) -> PyResult<Self> {
-        self.change_frame(PyFrames::FK4)
-    }
-
     /// JD of the object's state in TDB scaled time.
     #[getter]
     pub fn jd(&self) -> f64 {
@@ -125,22 +90,14 @@ impl PyState {
 
     /// Position of the object in AU with respect to the central object.
     #[getter]
-    pub fn pos(&self) -> Vector {
-        let v = self.0.pos;
-        Vector::new(v, self.frame())
+    pub fn pos(&self) -> PyVector {
+        self.0.pos.into()
     }
 
     /// Velocity of the object in AU/Day.
     #[getter]
-    pub fn vel(&self) -> Vector {
-        let v = self.0.vel;
-        Vector::new(v, self.frame())
-    }
-
-    /// Frame of reference used to define the coordinate system.
-    #[getter]
-    pub fn frame(&self) -> PyFrames {
-        self.0.frame.into()
+    pub fn vel(&self) -> PyVector {
+        self.0.vel.into()
     }
 
     /// Central ID of the object used as reference for the coordinate frame.
@@ -152,32 +109,23 @@ impl PyState {
     /// Cometary orbital elements of the state.
     #[getter]
     pub fn elements(&self) -> PyCometElements {
-        PyCometElements::from_state(self)
+        PyCometElements::from_state(self.clone())
     }
 
     /// Designation of the object if defined.
     #[getter]
     pub fn desig(&self) -> String {
-        match &self.0.desig {
-            prelude::Desig::Name(s) => s.clone(),
-            prelude::Desig::Naif(s) => {
-                kete_core::spice::try_name_from_id(*s).unwrap_or(s.to_string())
-            }
-            prelude::Desig::Perm(s) => format!("{:?}", s),
-            prelude::Desig::Prov(s) => s.clone(),
-            prelude::Desig::Empty => "None".into(),
-        }
+        self.0.desig.to_string()
     }
 
     /// Text representation of the state.
     pub fn __repr__(&self) -> String {
         format!(
-            "State(desig={:?}, jd={:?}, pos={:?}, vel={:?}, frame={:?}, center_id={:?})",
+            "State(desig={:?}, jd={:?}, pos={:?}, vel={:?}, center_id={:?})",
             self.desig(),
             self.jd(),
             self.pos().raw,
             self.vel().raw,
-            self.frame(),
             self.center_id()
         )
     }

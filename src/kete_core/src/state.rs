@@ -58,14 +58,13 @@ impl From<Desig> for String {
 
 impl Display for Desig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&
-            match &self {
-                Desig::Empty => "".to_string(),
-                Desig::Prov(s) => s.to_string(),
-                Desig::Name(s) => s.to_string(),
-                Desig::Perm(i) => i.to_string(),
-                Desig::Naif(i) => i.to_string(),
-            })
+        f.write_str(&match &self {
+            Desig::Empty => "".to_string(),
+            Desig::Prov(s) => s.to_string(),
+            Desig::Name(s) => s.to_string(),
+            Desig::Perm(i) => i.to_string(),
+            Desig::Naif(i) => i.to_string(),
+        })
     }
 }
 
@@ -205,6 +204,12 @@ impl<T: InertialFrame> State<T> {
             None
         }
     }
+
+    /// Are all elements of the state finite valued.
+    #[inline]
+    pub fn is_finite(&self) -> bool {
+        self.pos.is_finite() & self.vel.is_finite()
+    }
 }
 
 #[cfg(test)]
@@ -255,7 +260,7 @@ mod tests {
 
     #[test]
     fn change_center() {
-        let mut a = State::<Equatorial>::new(
+        let mut a = State::<Ecliptic>::new(
             Desig::Naif(1),
             0.0,
             [1.0, 0.0, 0.0].into(),
@@ -269,8 +274,9 @@ mod tests {
             [0.0, 1.0, 0.0].into(),
             0,
         );
-        a.try_change_center(b).unwrap();
+        a.try_change_center(b.into_frame()).unwrap();
 
+        dbg!(&a.pos);
         assert!(a.center_id == 3);
         assert!(a.pos[0] == 1.0);
         assert!(a.pos[1] != 0.0);
@@ -285,7 +291,7 @@ mod tests {
             [0.0, 1.0, 0.0].into(),
             0,
         );
-        assert!(a.try_change_center(diff_jd).is_err());
+        assert!(a.try_change_center(diff_jd.into_frame()).is_err());
 
         let not_naif_id = State::<Equatorial>::new(
             Desig::Empty,
@@ -294,7 +300,7 @@ mod tests {
             [0.0, 1.0, 0.0].into(),
             0,
         );
-        assert!(a.try_change_center(not_naif_id).is_err());
+        assert!(a.try_change_center(not_naif_id.into_frame()).is_err());
 
         let no_matching_id = State::<Equatorial>::new(
             Desig::Naif(2),
@@ -303,6 +309,6 @@ mod tests {
             [0.0, 1.0, 0.0].into(),
             1000000000,
         );
-        assert!(a.try_change_center(no_matching_id).is_err());
+        assert!(a.try_change_center(no_matching_id.into_frame()).is_err());
     }
 }

@@ -1,10 +1,8 @@
 use super::sun::solar_flux_black_body;
 use crate::{
-    constants::{AU_KM, C_V},
-    prelude::{Error, KeteResult},
+    constants::{AU_KM, C_V}, frames::{InertialFrame, Vector}, prelude::{Error, KeteResult}
 };
 
-use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
 
 /// This computes the phase curve correction using the IAU standard for the HG model.
@@ -238,7 +236,7 @@ impl HGParams {
     /// * `sun2obj` - Vector from the sun to the object in AU.
     /// * `sun2obs` - Vector from the sun to the observer in AU.
     ///
-    pub fn apparent_mag(&self, sun2obj: &Vector3<f64>, sun2obs: &Vector3<f64>) -> f64 {
+    pub fn apparent_mag<T: InertialFrame>(&self, sun2obj: &Vector<T>, sun2obs: &Vector<T>) -> f64 {
         let obj_r = sun2obj.norm();
         let obj2obs = sun2obs - sun2obj;
         let obj2obs_r = obj2obs.norm();
@@ -278,10 +276,10 @@ impl HGParams {
     /// * `sun2obs` - Vector from the sun to the observer in AU.
     /// * `wavelength` - Central wavelength of light in nm.
     ///
-    pub fn apparent_flux(
+    pub fn apparent_flux<T: InertialFrame>(
         &self,
-        sun2obj: &Vector3<f64>,
-        sun2obs: &Vector3<f64>,
+        sun2obj: &Vector<T>,
+        sun2obs: &Vector<T>,
         wavelength: f64,
         albedo: f64,
     ) -> Option<f64> {

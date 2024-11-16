@@ -9,7 +9,7 @@ use crate::frames::{Equatorial, InertialFrame};
 use crate::prelude::{Desig, KeteResult};
 use crate::spice::get_spk_singleton;
 use crate::state::State;
-use nalgebra::{DVector, Vector3};
+use nalgebra::DVector;
 
 mod acceleration;
 mod kepler;
@@ -25,25 +25,6 @@ pub use nongrav::*;
 pub use radau::*;
 pub use runge_kutta::*;
 pub use state_transition::*;
-
-/// Using the Radau 15th order integrator, integrate the position and velocity of an
-/// object assuming two body mechanics with a central object located at 0, 0 with the
-/// mass of the sun.
-///
-/// This is primarily intended for testing the numerical integrator, it is strongly
-/// recommended to use the Kepler analytic equation to do actual two body calculations.
-pub fn propagate_two_body_radau(dt: f64, pos: &[f64; 3], vel: &[f64; 3]) -> ([f64; 3], [f64; 3]) {
-    let res = RadauIntegrator::integrate(
-        &central_accel,
-        Vector3::from(*pos),
-        Vector3::from(*vel),
-        0.0,
-        dt,
-        CentralAccelMeta::default(),
-    )
-    .unwrap();
-    (res.0.into(), res.1.into())
-}
 
 /// Propagate the state of an object, only considering linear motion.
 ///

@@ -73,12 +73,7 @@ impl<T: InertialFrame> CometElements<T> {
 
     /// Create cometary elements from a state.
     pub fn from_state(state: &State<T>) -> Self {
-        Self::from_pos_vel(
-            state.desig.to_owned(),
-            state.jd,
-            &state.pos,
-            &state.vel,
-        )
+        Self::from_pos_vel(state.desig.to_owned(), state.jd, &state.pos, &state.vel)
     }
 
     /// Construct Cometary Orbital elements from a position and velocity vector.

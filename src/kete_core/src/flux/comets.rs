@@ -1,5 +1,6 @@
-use nalgebra::Vector3;
 use serde::{Deserialize, Serialize};
+
+use crate::frames::{InertialFrame, Vector};
 
 /// Reflected light properties of a comet using the MK magnitude system.
 ///
@@ -39,10 +40,10 @@ impl CometMKParams {
 
     /// Compute the apparent total flux including both coma and nucleus of the comet.
     /// This includes an additional 0.035 Mag/Deg phase correction.
-    pub fn apparent_total_flux(
+    pub fn apparent_total_flux<T: InertialFrame>(
         &self,
-        sun2obs: &Vector3<f64>,
-        sun2obj: &Vector3<f64>,
+        sun2obs: &Vector<T>,
+        sun2obj: &Vector<T>,
     ) -> Option<f64> {
         let [m1, k1] = self.mk_1?;
         let obj2obs = -sun2obj + sun2obs;
@@ -54,10 +55,10 @@ impl CometMKParams {
 
     /// Compute the apparent nuclear flux of the comet, not including the coma.
     /// This includes an additional 0.035 Mag/Deg phase correction.
-    pub fn apparent_nuclear_flux(
+    pub fn apparent_nuclear_flux<T: InertialFrame>(
         &self,
-        sun2obs: &Vector3<f64>,
-        sun2obj: &Vector3<f64>,
+        sun2obs: &Vector<T>,
+        sun2obj: &Vector<T>,
     ) -> Option<f64> {
         let [m2, k2] = self.mk_2?;
         let obj2obs = -sun2obj + sun2obs;

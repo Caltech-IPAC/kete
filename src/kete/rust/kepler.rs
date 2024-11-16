@@ -1,15 +1,15 @@
 //! Python support for kepler orbit calculations
 use itertools::Itertools;
+use kete_core::frames::{Equatorial, Vector};
 use kete_core::state::State;
 use kete_core::{constants, propagation};
-use nalgebra::Vector3;
 use pyo3::{exceptions, PyErr};
 use pyo3::{pyfunction, PyResult};
 use rayon::prelude::*;
 
 use crate::state::PyState;
 use crate::time::PyTime;
-use crate::vector::Vector;
+use crate::vector::PyVector;
 
 /// Solve kepler's equation for the Eccentric Anomaly.
 ///
@@ -70,38 +70,38 @@ pub fn compute_eccentric_anomaly_py(
 pub fn propagation_kepler_py(
     states: Vec<PyState>,
     jd: PyTime,
-    observer_pos: Option<Vector>,
+    observer_pos: Option<PyVector>,
 ) -> Vec<PyState> {
     let jd = jd.jd();
     states
-        .par_iter()
+        .into_par_iter()
         .map(|state| {
             let center = state.center_id();
 
             let Some(state) = state.change_center(10).ok() else {
-                return State::new_nan(state.0.desig.clone(), jd, state.0.frame, center).into();
+                return State::<Equatorial>::new_nan(state.0.desig.clone(), jd, center).into();
             };
 
             let Some(mut new_state) = propagation::propagate_two_body(&state.0, jd).ok() else {
-                return State::new_nan(state.0.desig.clone(), jd, state.0.frame, center).into();
+                return State::<Equatorial>::new_nan(state.0.desig.clone(), jd, center).into();
             };
 
-            if let Some(observer_pos) = &observer_pos {
-                let observer_pos = Vector3::<f64>::from(observer_pos.raw);
+            if let Some(observer_pos) = observer_pos {
+                let observer_pos: Vector<Equatorial> = observer_pos.into();
                 let delay =
-                    -(Vector3::from(new_state.pos) - observer_pos).norm() / constants::C_AU_PER_DAY;
+                    -(new_state.pos - observer_pos).norm() / constants::C_AU_PER_DAY;
 
                 new_state = match propagation::propagate_two_body(&new_state, new_state.jd + delay)
                 {
                     Ok(state) => state,
                     Err(_) => {
-                        return State::new_nan(state.0.desig.clone(), jd, state.0.frame, center)
+                        return State::<Equatorial>::new_nan(state.0.desig.clone(), jd, center)
                             .into()
                     }
                 };
             }
             PyState(new_state).change_center(center).unwrap_or(
-                State::new_nan(state.0.desig.clone(), jd, state.0.frame, state.0.center_id).into(),
+                State::<Equatorial>::new_nan(state.0.desig.clone(), jd, state.0.center_id).into(),
             )
         })
         .collect()
