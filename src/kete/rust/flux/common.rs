@@ -333,8 +333,8 @@ pub fn frm_thermal_py(
 ///
 /// The model for apparent magnitudes are:
 ///
-/// m1 + k1 * log10(sun2obj.r) + 5.0 * log10(obj2obs.r) + phase_mag_slope * phase
-/// m2 + k2 * log10(sun2obj.r) + 5.0 * log10(obj2obs.r) + phase_mag_slope * phase
+/// m1 + k1 * log10(sun2obj.r) + 5.0 * log10(obj2obs.r) + phase_mag_slope_1 * phase
+/// m2 + k2 * log10(sun2obj.r) + 5.0 * log10(obj2obs.r) + phase_mag_slope_2 * phase
 ///
 /// Where m1/k1 are related to total magnitudes and m2/k2 are nucleus magnitudes.
 ///
@@ -345,6 +345,9 @@ pub fn frm_thermal_py(
 /// Note that the above model does not include a 2.5x term attached to the K1/2 terms
 /// which are present in the wikipedia definition, this matches the definitions used by
 /// JPL Horizons.
+///
+/// Note that this includes seperate phase magnitude slope for both the nucleus and
+/// total fluxes.
 ///
 /// This does a best effort to compute both magnitudes, if any values are missing this
 /// will return None in the respective calculation.
@@ -365,29 +368,28 @@ pub fn frm_thermal_py(
 ///     and K_2 nucleus magnitude slope as a function of heliocentric distance.
 /// phase_corr :
 ///     Magnitude variation of the comet as a function of observing phase, units are
-///     Mag/Deg of phase, this defaults to 0.035 Mag/Deg.
+///     Mag/Deg of phase, this defaults to 0.0 for the total magnitude, and 0.035
+///     Mag/Deg for the nucleus.
 ///
 /// Returns
 /// -------
 /// float
 ///     (Total apparent magnitude, Magnitude of the nucleus)
-#[allow(clippy::too_many_arguments)]
 #[pyfunction]
-#[pyo3(name = "comet_apparent_mags", signature = (sun2obj, sun2obs, mk_1=None, mk_2=None, phase_corr=None))]
+#[pyo3(name = "comet_apparent_mags", signature = (sun2obj, sun2obs, mk_1=None, mk_2=None, phase_corr=[0.0, 0.035]))]
 pub fn comet_mags_py(
     sun2obj: VectorLike,
     sun2obs: VectorLike,
     mk_1: Option<[f64; 2]>,
     mk_2: Option<[f64; 2]>,
-    phase_corr: Option<f64>,
+    phase_corr: [f64; 2],
 ) -> (Option<f64>, Option<f64>) {
     let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
     let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
-    let corr = phase_corr.unwrap_or(0.035);
-    let mk_params = CometMKParams::new("".into(), mk_1, mk_2, corr);
+    let mk_params = CometMKParams::new("".into(), mk_1, mk_2, phase_corr);
     (
-        mk_params.apparent_total_flux(&sun2obs, &sun2obj),
-        mk_params.apparent_nuclear_flux(&sun2obs, &sun2obj),
+        mk_params.apparent_total_mag(&sun2obs, &sun2obj),
+        mk_params.apparent_nuclear_mag(&sun2obs, &sun2obj),
     )
 }
 
