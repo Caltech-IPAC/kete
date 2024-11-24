@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 /// Where m1/k1 are related to total magnitudes and m2/k2 are nucleus magnitudes.
 ///
 /// This model is based off of these:
-/// https://ssd.jpl.nasa.gov/horizons/manual.html#obsquan  (see section 9)
-/// https://en.wikipedia.org/wiki/Absolute_magnitude#Cometary_magnitudes
+/// <https://ssd.jpl.nasa.gov/horizons/manual.html#obsquan>  (see section 9)
+/// <https://en.wikipedia.org/wiki/Absolute_magnitude#Cometary_magnitudes>
 ///
 /// Note that the above model does not include a 2.5x term attached to the K1/2 terms
 /// which are present in the wikipedia definition, this matches the definitions used by
