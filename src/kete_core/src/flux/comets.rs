@@ -84,6 +84,7 @@ impl CometMKParams {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
