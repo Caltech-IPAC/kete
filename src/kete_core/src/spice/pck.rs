@@ -10,10 +10,9 @@ use super::pck_segments::PckSegment;
 use crate::errors::{Error, KeteResult};
 use crate::frames::Frame;
 use crossbeam::sync::ShardedLock;
+use lazy_static::lazy_static;
 
 use std::io::Cursor;
-use std::mem::MaybeUninit;
-use std::sync::Once;
 
 const PRELOAD_PCK: &[&[u8]] = &[
     include_bytes!("../../data/earth_000101_240215_231123.bpc"),
@@ -26,9 +25,6 @@ pub struct PckCollection {
     /// Collection of PCK file information
     pub segments: Vec<PckSegment>,
 }
-
-/// Define the PCK singleton structure.
-pub type PckSingleton = ShardedLock<PckCollection>;
 
 impl PckCollection {
     /// Given an PCK filename, load all the segments present inside of it.
@@ -78,26 +74,18 @@ impl PckCollection {
     }
 }
 
-/// Get the PCK singleton.
-/// This is a RwLock protected PCKCollection, and must be `.try_read().unwrapped()` for any
-/// read-only cases.
-pub fn get_pck_singleton() -> &'static PckSingleton {
-    // Create an uninitialized static
-    static mut SINGLETON: MaybeUninit<PckSingleton> = MaybeUninit::uninit();
-    static ONCE: Once = Once::new();
+/// Define the PCK singleton structure.
+pub type PckSingleton = ShardedLock<PckCollection>;
 
-    unsafe {
-        ONCE.call_once(|| {
-            let mut files = PckCollection {
-                segments: Vec::new(),
-            };
-            files.reset();
-            let singleton: PckSingleton = ShardedLock::new(files);
-            // Store it to the static var, i.e. initialize it
-            let _ = SINGLETON.write(singleton);
-        });
-
-        // Now we give out a shared reference to the data, which is safe to use concurrently.
-        SINGLETON.assume_init_ref()
-    }
+lazy_static! {
+    /// The PCK singleton.
+    /// This is a RwLock protected PCKCollection, and must be `.try_read().unwrapped()` for any
+    /// read-only cases.
+    pub static ref PCK_SINGLETON: PckSingleton = {
+        let mut files = PckCollection {
+            segments: Vec::new(),
+        };
+        files.reset();
+        ShardedLock::new(files)
+    };
 }
