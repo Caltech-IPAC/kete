@@ -63,7 +63,9 @@ pub struct PyNeosCmos(pub fov::NeosCmos);
 ///         for chip in fov:
 ///             corners = chip.corners
 ///             corners.append(corners[0])
-///             plt.plot([x.lon for x in corners], [y.lat for y in corners], c="k")
+///             plt.plot([x.as_ecliptic.lon for x in corners],
+///                      [y.as_ecliptic.lat for y in corners],
+///                      c="k")
 ///         plt.gca().set_aspect("equal")
 ///         plt.gca().set_axis_off()
 ///         plt.annotate("0", [0.07, 0.8], xycoords="axes fraction")
