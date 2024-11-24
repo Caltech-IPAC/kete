@@ -91,7 +91,6 @@ mod tests {
     fn test_comet_mags() {
         // Testing 12P against JPL horizons values.
 
-        // Horizons values: 15.757  19.192
         let mk_1 = [5.0, 15.0];
         let mk_2 = [11.0, 10.0];
 
@@ -100,10 +99,11 @@ mod tests {
 
         let comet_mag = CometMKParams::new("12P".into(), Some(mk_1), Some(mk_2), [0.0, 0.0]);
 
-        let nulc_mags = comet_mag.apparent_nuclear_mag(&obs, &pos).unwrap();
+        let nucl_mags = comet_mag.apparent_nuclear_mag(&obs, &pos).unwrap();
         let total_mags = comet_mag.apparent_total_mag(&obs, &pos).unwrap();
 
+        // Horizons values: 15.757  19.192
         assert!((total_mags - 15.757).abs() < 1e-3);
-        assert!((nulc_mags - 19.192).abs() < 1e-3);
+        assert!((nucl_mags - 19.192).abs() < 1e-3);
     }
 }
