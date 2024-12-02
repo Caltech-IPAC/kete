@@ -10,7 +10,9 @@
 //! of the DAF file.
 //!
 use super::pck_segments::PckSegment;
+use super::spice_jds_to_jd;
 use super::spk_segments::SpkSegment;
+use crate::frames::{Ecliptic, Equatorial};
 use crate::io::bytes::{
     bytes_to_f64, bytes_to_f64_vec, bytes_to_i32, bytes_to_i32_vec, bytes_to_string,
     read_bytes_exact, read_f64_vec, read_str,
@@ -49,8 +51,11 @@ impl From<&str> for DAFType {
 /// This list contains the supported formats.
 #[derive(Debug)]
 pub enum DafSegments {
-    /// SPK files are planetary and satellite ephemeris data.
-    Spk(SpkSegment),
+    /// Equatorial SPK files are planetary and satellite ephemeris data.
+    SpkEquatorial(SpkSegment<Equatorial>),
+
+    /// Elliptic SPK files are planetary and satellite ephemeris data.
+    SpkEcliptic(SpkSegment<Ecliptic>),
 
     /// PCK Files are planetary and satellite orientation data.
     Pck(PckSegment),
@@ -59,11 +64,21 @@ pub enum DafSegments {
 impl DafSegments {
     /// Return the contained SPK segment.
     /// Panic if not SPK.
-    pub fn spk(self) -> SpkSegment {
-        if let Self::Spk(seg) = self {
+    pub fn spk_equatorial(self) -> SpkSegment<Equatorial> {
+        if let Self::SpkEquatorial(seg) = self {
             seg
         } else {
-            panic!("Not an SPK segment.")
+            panic!("Not an Equatorial SPK segment.")
+        }
+    }
+
+    /// Return the contained SPK segment.
+    /// Panic if not SPK.
+    pub fn spk_elliptic(self) -> SpkSegment<Ecliptic> {
+        if let Self::SpkEcliptic(seg) = self {
+            seg
+        } else {
+            panic!("Not an Elliptical SPK segment.")
         }
     }
 
@@ -82,7 +97,8 @@ impl From<DafSegments> for DafArray {
     fn from(value: DafSegments) -> DafArray {
         match value {
             DafSegments::Pck(seg) => seg.into(),
-            DafSegments::Spk(seg) => seg.into(),
+            DafSegments::SpkEquatorial(seg) => seg.into(),
+            DafSegments::SpkEcliptic(seg) => seg.into(),
         }
     }
 }
@@ -243,8 +259,23 @@ impl DafFile {
                     DAFType::Spk => {
                         let array =
                             DafArray::try_load_spk_array(file, floats, ints, self.little_endian)?;
-                        let seg = DafSegments::Spk(array.try_into()?);
-                        self.segments.push(seg);
+                        let (_, _, _, _, _, frame_num) = array.spk_read_summary();
+                        match frame_num {
+                            17 => {
+                                let seg = DafSegments::SpkEcliptic(array.try_into()?);
+                                self.segments.push(seg);
+                            }
+                            1 => {
+                                let seg = DafSegments::SpkEquatorial(array.try_into()?);
+                                self.segments.push(seg);
+                            }
+                            _ => {
+                                panic!(
+                                    "Cannot load spice kernels with coordinate frame number {:?}",
+                                    frame_num
+                                )
+                            }
+                        }
                     }
                     DAFType::Pck => {
                         let array =
@@ -282,6 +313,21 @@ impl Debug for DafArray {
 }
 
 impl DafArray {
+    /// Assuming the array is from an SPK file, read the summary.
+    /// Returns:
+    /// (jd_start, jd_end, obj_id, center_id, segment_type, frame_num)
+    pub fn spk_read_summary(&self) -> (f64, f64, i32, i32, i32, i32) {
+        let summary_floats = &self.summary_floats;
+        let summary_ints = &self.summary_ints;
+        let jd_start = spice_jds_to_jd(summary_floats[0]);
+        let jd_end = spice_jds_to_jd(summary_floats[1]);
+        let obj_id = summary_ints[0];
+        let center_id = summary_ints[1];
+        let frame_num = summary_ints[2];
+        let segment_type = summary_ints[3];
+        (jd_start, jd_end, obj_id, center_id, segment_type, frame_num)
+    }
+
     /// Try to load an SPK array from summary data
     pub fn try_load_spk_array<T: Read + Seek>(
         buffer: &mut T,

@@ -1,4 +1,4 @@
-use crate::vector::{VectorLike, PyVector};
+use crate::vector::{PyVector, VectorLike};
 use itertools::Itertools;
 use kete_core::constants::{
     w1_color_correction, w2_color_correction, w3_color_correction, w4_color_correction, C_V,
@@ -151,11 +151,7 @@ pub fn neatm_facet_temperature_py(
     facet_normals
         .into_iter()
         .map(|normal| {
-            neatm_facet_temperature(
-                &UnitVector::new_checked(normal),
-                &obj2sun,
-                &subsolar_temp,
-            )
+            neatm_facet_temperature(&UnitVector::new_checked(normal), &obj2sun, &subsolar_temp)
         })
         .collect_vec()
 }
@@ -186,9 +182,7 @@ pub fn frm_facet_temperature_py(
         .collect();
     facet_normals
         .into_iter()
-        .map(|normal| {
-            frm_facet_temperature(&normal, subsolar_temp, &obj2sun)
-        })
+        .map(|normal| frm_facet_temperature(&normal, subsolar_temp, &obj2sun))
         .collect_vec()
 }
 

@@ -1,6 +1,10 @@
 extern crate criterion;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use kete_core::{frames::{Ecliptic, Equatorial}, spice::get_spk_singleton, state::State};
+use kete_core::{
+    frames::{Ecliptic, Equatorial},
+    spice::get_spk_singleton,
+    state::State,
+};
 use pprof::criterion::{Output, PProfProfiler};
 
 fn spice_get_raw_state(jd: f64) {
@@ -21,17 +25,13 @@ fn spice_change_center(mut state: State<Ecliptic>) {
 fn spice_get_state(jd: f64) {
     let spice = get_spk_singleton().try_read().unwrap();
     for _ in 0..1000 {
-        let _ = spice
-            .try_get_state::<Ecliptic>(5, jd, 10)
-            .unwrap();
+        let _ = spice.try_get_state::<Ecliptic>(5, jd, 10).unwrap();
     }
 }
 
 pub fn spice_benchmark(c: &mut Criterion) {
     let spice = get_spk_singleton().try_read().unwrap();
-    let state = spice
-        .try_get_state::<Ecliptic>(5, 2451545.0, 10)
-        .unwrap();
+    let state = spice.try_get_state::<Ecliptic>(5, 2451545.0, 10).unwrap();
     c.bench_function("spice_get_raw_state", |b| {
         b.iter(|| spice_get_raw_state(black_box(2451545.0)))
     });

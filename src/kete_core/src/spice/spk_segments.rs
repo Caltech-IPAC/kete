@@ -13,11 +13,10 @@
 //! There is a lot of repetition in this file, as many of the segment types have very
 //! similar internal structures.
 use super::interpolation::*;
-use super::spice_frames::SpiceFrames;
 use super::{jd_to_spice_jd, spice_jds_to_jd, DafArray};
 use crate::constants::AU_KM;
 use crate::errors::Error;
-use crate::frames::{Ecliptic, Equatorial, InertialFrame};
+use crate::frames::InertialFrame;
 use crate::prelude::{Desig, KeteResult};
 use crate::state::State;
 use crate::time::scales::TDB;
@@ -25,6 +24,7 @@ use crate::time::Time;
 use itertools::Itertools;
 use sgp4::{julian_years_since_j2000, Constants, Geopotential, MinutesSinceEpoch, Orbit};
 use std::fmt::Debug;
+use std::marker::PhantomData;
 
 #[derive(Debug)]
 pub enum SpkSegmentType {
@@ -65,7 +65,7 @@ impl From<SpkSegmentType> for DafArray {
 }
 
 #[derive(Debug)]
-pub struct SpkSegment {
+pub struct SpkSegment<T: InertialFrame> {
     /// The NAIF ID of the object recorded in this Segment.
     pub obj_id: i64,
 
@@ -78,56 +78,53 @@ pub struct SpkSegment {
     /// The reference center NAIF ID for the position/velocity in this Segment.
     pub center_id: i64,
 
-    /// [`SpiceFrame`] of reference for this Segment.
-    pub ref_frame: SpiceFrames,
-
     /// Number which defines the segment type as defined by the DAF standard.
     pub segment_type: i32,
 
+    /// SPICE frame number.
+    pub frame_num: i32,
+
     /// Internal data representation.
     segment: SpkSegmentType,
+
+    frame: PhantomData<T>,
 }
 
-impl From<SpkSegment> for DafArray {
-    fn from(value: SpkSegment) -> Self {
+impl<T: InertialFrame> From<SpkSegment<T>> for DafArray {
+    fn from(value: SpkSegment<T>) -> Self {
         value.segment.into()
     }
 }
 
-impl TryFrom<DafArray> for SpkSegment {
+impl<T: InertialFrame> TryFrom<DafArray> for SpkSegment<T> {
     type Error = Error;
 
-    fn try_from(value: DafArray) -> KeteResult<SpkSegment> {
-        let summary_floats = &value.summary_floats;
-        let summary_ints = &value.summary_ints;
-        let jd_start = spice_jds_to_jd(summary_floats[0]);
-        let jd_end = spice_jds_to_jd(summary_floats[1]);
-        let obj_id = summary_ints[0] as i64;
-        let center_id = summary_ints[1] as i64;
-        let frame_num = summary_ints[2];
-        let segment_type = summary_ints[3];
-
-        let ref_frame: SpiceFrames = frame_num.into();
+    fn try_from(value: DafArray) -> KeteResult<SpkSegment<T>> {
+        let (jd_start, jd_end, obj_id, center_id, segment_type, frame_num) =
+            value.spk_read_summary();
 
         let segment = SpkSegmentType::from_array(segment_type, value)?;
 
-        Ok(SpkSegment {
-            obj_id,
+        Ok(SpkSegment::<T> {
+            obj_id: obj_id as i64,
             jd_start,
             jd_end,
-            center_id,
-            ref_frame,
+            center_id: center_id as i64,
             segment_type,
+            frame_num,
             segment,
+            frame: PhantomData,
         })
     }
 }
 
-impl SpkSegment {
+impl<T: InertialFrame> SpkSegment<T> {
+    #[inline(always)]
     pub fn jd_range(&self) -> (f64, f64) {
         (self.jd_start, self.jd_end)
     }
 
+    #[inline(always)]
     pub fn contains(&self, jd: f64) -> bool {
         (jd >= self.jd_start) && (jd <= self.jd_end)
     }
@@ -135,7 +132,7 @@ impl SpkSegment {
     /// Return the [`State`] object at the specified JD. If the requested time is
     /// not within the available range, this will fail.
     #[inline(always)]
-    pub fn try_get_state<T: InertialFrame>(&self, jd: f64) -> KeteResult<State<T>> {
+    pub fn try_get_state(&self, jd: f64) -> KeteResult<State<T>> {
         // this is faster than calling contains, probably because the || instead of &&
         if jd < self.jd_start || jd > self.jd_end {
             return Err(Error::DAFLimits(
@@ -150,25 +147,8 @@ impl SpkSegment {
             SpkSegmentType::Type13(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type21(v) => v.try_get_pos_vel(self, jd)?,
         };
-
-        match self.ref_frame {
-            SpiceFrames::ECLIPJ2000 => Ok(State::<Ecliptic>::new(
-                Desig::Naif(self.obj_id),
-                jd,
-                pos.into(),
-                vel.into(),
-                self.center_id,
-            )
-            .into_frame()),
-            SpiceFrames::J2000 => Ok(State::<Equatorial>::new(
-                Desig::Naif(self.obj_id),
-                jd,
-                pos.into(),
-                vel.into(),
-                self.center_id,
-            )
-            .into_frame()),
-        }
+        let des = Desig::Naif(self.obj_id);
+        Ok(State::<T>::new(des, jd, pos.into(), vel.into(), self.center_id).into_frame())
     }
 }
 
@@ -199,7 +179,11 @@ impl SpkSegmentType1 {
     }
 
     #[inline(always)]
-    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
+    fn try_get_pos_vel<T: InertialFrame>(
+        &self,
+        _: &SpkSegment<T>,
+        jd: f64,
+    ) -> KeteResult<([f64; 3], [f64; 3])> {
         // Records are laid out as so:
         //
         // Size      Description
@@ -347,7 +331,11 @@ impl SpkSegmentType2 {
     }
 
     #[inline(always)]
-    fn try_get_pos_vel(&self, segment: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
+    fn try_get_pos_vel<T: InertialFrame>(
+        &self,
+        segment: &SpkSegment<T>,
+        jd: f64,
+    ) -> KeteResult<([f64; 3], [f64; 3])> {
         let jd = jd_to_spice_jd(jd);
         let jd_start = jd_to_spice_jd(segment.jd_start);
         let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
@@ -455,7 +443,11 @@ impl SpkSegmentType10 {
     }
 
     #[inline(always)]
-    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
+    fn try_get_pos_vel<T: InertialFrame>(
+        &self,
+        _: &SpkSegment<T>,
+        jd: f64,
+    ) -> KeteResult<([f64; 3], [f64; 3])> {
         // TODO: this does not yet implement the interpolation between two neighboring states
         // which is present in the cSPICE implementation.
         // This currently matches the cspice implementation to within about 20km, where the error
@@ -573,7 +565,11 @@ impl SpkSegmentType13 {
     }
 
     #[inline(always)]
-    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
+    fn try_get_pos_vel<T: InertialFrame>(
+        &self,
+        _: &SpkSegment<T>,
+        jd: f64,
+    ) -> KeteResult<([f64; 3], [f64; 3])> {
         let jd = jd_to_spice_jd(jd);
         let times = self.get_times();
         let start_idx: isize = match times.binary_search_by(|probe| probe.total_cmp(&jd)) {
@@ -656,7 +652,11 @@ impl SpkSegmentType21 {
     }
 
     #[inline(always)]
-    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
+    fn try_get_pos_vel<T: InertialFrame>(
+        &self,
+        _: &SpkSegment<T>,
+        jd: f64,
+    ) -> KeteResult<([f64; 3], [f64; 3])> {
         // Records are laid out as so:
         //
         // Size      Description

@@ -19,10 +19,9 @@
 //!
 //!
 use super::daf::DafFile;
-use super::spice_frames::SpiceFrames;
 use super::{spk_segments::*, DAFType};
 use crate::errors::Error;
-use crate::frames::InertialFrame;
+use crate::frames::{Equatorial, InertialFrame};
 use crate::prelude::KeteResult;
 use crate::state::State;
 use pathfinding::prelude::dijkstra;
@@ -49,7 +48,7 @@ const PRELOAD_SPKS: &[&[u8]] = &[
 #[derive(Debug)]
 pub struct SpkCollection {
     /// Collection of SPK Segment information
-    segments: Vec<SpkSegment>,
+    segments: Vec<SpkSegment<Equatorial>>,
 
     map_cache: HashMap<(i64, i64), Vec<i64>>,
 
@@ -68,9 +67,10 @@ impl SpkCollection {
     pub fn try_get_raw_state<T: InertialFrame>(&self, id: i64, jd: f64) -> KeteResult<State<T>> {
         for segment in self.segments.iter() {
             if id == segment.obj_id && segment.contains(jd) {
-                return segment.try_get_state(jd);
+                return Ok(segment.try_get_state(jd)?.into_frame());
             }
         }
+        dbg!(self.available_info(id));
         Err(Error::DAFLimits(format!(
             "Object ({}) does not have an SPK record for the target JD.",
             id
@@ -127,8 +127,8 @@ impl SpkCollection {
     }
 
     /// For a given NAIF ID, return all increments of time which are currently loaded.
-    pub fn available_info(&self, id: i64) -> Vec<(f64, f64, i64, SpiceFrames, i32)> {
-        let mut segment_info = Vec::<(f64, f64, i64, SpiceFrames, i32)>::new();
+    pub fn available_info(&self, id: i64) -> Vec<(f64, f64, i64, i32)> {
+        let mut segment_info = Vec::<(f64, f64, i64, i32)>::new();
         for segment in self.segments.iter() {
             if id == segment.obj_id {
                 let jd_range = segment.jd_range();
@@ -136,7 +136,6 @@ impl SpkCollection {
                     jd_range.0,
                     jd_range.1,
                     segment.center_id,
-                    segment.ref_frame,
                     segment.segment_type,
                 ))
             }
@@ -147,7 +146,7 @@ impl SpkCollection {
 
         segment_info.sort_by(|a, b| (a.0).total_cmp(&b.0));
 
-        let mut avail_times = Vec::<(f64, f64, i64, SpiceFrames, i32)>::new();
+        let mut avail_times = Vec::<(f64, f64, i64, i32)>::new();
 
         let mut cur_segment = segment_info[0];
         for segment in segment_info.iter().skip(1) {
@@ -221,7 +220,10 @@ impl SpkCollection {
 
         let mut nodes: HashMap<i64, HashSet<(i64, i64)>> = HashMap::new();
 
-        fn update_nodes(segment: &SpkSegment, nodes: &mut HashMap<i64, HashSet<(i64, i64)>>) {
+        fn update_nodes(
+            segment: &SpkSegment<Equatorial>,
+            nodes: &mut HashMap<i64, HashSet<(i64, i64)>>,
+        ) {
             if let std::collections::hash_map::Entry::Vacant(e) = nodes.entry(segment.obj_id) {
                 let mut set = HashSet::new();
                 let _ = set.insert((segment.center_id, segment.obj_id));
@@ -284,12 +286,19 @@ impl SpkCollection {
 
         if !matches!(file.daf_type, DAFType::Spk) {
             Err(Error::IOError(format!(
-                "File {:?} is not a PCK formatted file.",
+                "File {:?} is not a SPK formatted file.",
                 filename
             )))?;
         }
         self.segments
-            .extend(file.segments.into_iter().map(|x| x.spk()));
+            .extend(file.segments.into_iter().filter_map(|x| {
+                let seg = x.spk_equatorial();
+                if seg.frame_num != 1 {
+                    None
+                } else {
+                    Some(seg)
+                }
+            }));
         Ok(())
     }
 
@@ -307,7 +316,14 @@ impl SpkCollection {
             let mut curse = Cursor::new(buffer);
             let file = DafFile::from_buffer(&mut curse).unwrap();
             self.segments
-                .extend(file.segments.into_iter().map(|x| x.spk()));
+                .extend(file.segments.into_iter().filter_map(|x| {
+                    let seg = x.spk_equatorial();
+                    if seg.frame_num != 1 {
+                        None
+                    } else {
+                        Some(seg)
+                    }
+                }));
         }
         self.build_cache();
     }

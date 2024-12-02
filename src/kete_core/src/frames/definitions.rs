@@ -38,6 +38,11 @@ impl InertialFrame for Equatorial {
     fn from_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
         vec
     }
+    /// Convert between frames.
+    #[inline(always)]
+    fn convert<Target: InertialFrame>(vec: Vector3<f64>) -> Vector3<f64> {
+        vec
+    }
 }
 
 /// Equatorial frame.
@@ -51,6 +56,11 @@ impl InertialFrame for Ecliptic {
     #[inline(always)]
     fn to_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
         ECLIPTIC_EQUATORIAL_ROT.transform_vector(&vec)
+    }
+    /// Convert between frames.
+    #[inline(always)]
+    fn convert<Equatorial>(vec: Vector3<f64>) -> Vector3<f64> {
+        Self::to_equatorial(vec)
     }
 }
 
@@ -66,6 +76,11 @@ impl InertialFrame for Galactic {
     fn to_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
         GALACTIC_ECLIPTIC_ROT.transform_vector(&vec)
     }
+    /// Convert between frames.
+    #[inline(always)]
+    fn convert<Equatorial>(vec: Vector3<f64>) -> Vector3<f64> {
+        Self::to_equatorial(vec)
+    }
 }
 
 /// Equatorial frame.
@@ -79,6 +94,11 @@ impl InertialFrame for FK4 {
     #[inline(always)]
     fn to_equatorial(vec: Vector3<f64>) -> Vector3<f64> {
         FK4_ECLIPTIC_ROT.transform_vector(&vec)
+    }
+    /// Convert between frames.
+    #[inline(always)]
+    fn convert<Equatorial>(vec: Vector3<f64>) -> Vector3<f64> {
+        Self::to_equatorial(vec)
     }
 }
 

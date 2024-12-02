@@ -88,8 +88,7 @@ pub fn propagation_kepler_py(
 
             if let Some(observer_pos) = observer_pos {
                 let observer_pos: Vector<Equatorial> = observer_pos.into();
-                let delay =
-                    -(new_state.pos - observer_pos).norm() / constants::C_AU_PER_DAY;
+                let delay = -(new_state.pos - observer_pos).norm() / constants::C_AU_PER_DAY;
 
                 new_state = match propagation::propagate_two_body(&new_state, new_state.jd + delay)
                 {

@@ -188,7 +188,10 @@ impl NeatmParams {
 #[cfg(test)]
 mod tests {
 
-    use crate::{flux::*, frames::{Equatorial, UnitVector}};
+    use crate::{
+        flux::*,
+        frames::{Equatorial, UnitVector},
+    };
     use std::f64::consts::PI;
 
     #[test]

@@ -1,6 +1,8 @@
 use super::sun::solar_flux_black_body;
 use crate::{
-    constants::{AU_KM, C_V}, frames::{InertialFrame, Vector}, prelude::{Error, KeteResult}
+    constants::{AU_KM, C_V},
+    frames::{InertialFrame, Vector},
+    prelude::{Error, KeteResult},
 };
 
 use serde::{Deserialize, Serialize};

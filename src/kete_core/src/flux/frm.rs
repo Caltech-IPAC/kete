@@ -191,7 +191,7 @@ mod tests {
 
     #[test]
     fn test_frm_facet_temperature() {
-        let obj2sun:UnitVector<Equatorial> = UnitVector::new_unchecked([1.0, 0.0, 0.0].into());
+        let obj2sun: UnitVector<Equatorial> = UnitVector::new_unchecked([1.0, 0.0, 0.0].into());
         let t = (PI / 4.0).cos().powf(0.25);
 
         let temp = frm_facet_temperature(
