@@ -16,10 +16,9 @@ from .cache import cache_path, download_file
 from .time import Time
 from .vector import Vector, Frames
 from .irsa import IRSA_URL, query_irsa_tap, plot_fits_image, zoom_plot, annotate_plot
+from .fov import WiseCmos, FOVList
 
 from ._core import (
-    WiseCmos,
-    FOVList,
     w1_color_correction,
     w2_color_correction,
     w3_color_correction,

@@ -94,10 +94,12 @@ pub fn get_pck_singleton() -> &'static PckSingleton {
             files.reset();
             let singleton: PckSingleton = ShardedLock::new(files);
             // Store it to the static var, i.e. initialize it
+            #[allow(static_mut_refs)]
             let _ = SINGLETON.write(singleton);
         });
 
         // Now we give out a shared reference to the data, which is safe to use concurrently.
+        #[allow(static_mut_refs)]
         SINGLETON.assume_init_ref()
     }
 }

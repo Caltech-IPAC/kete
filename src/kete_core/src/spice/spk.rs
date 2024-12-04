@@ -324,11 +324,13 @@ pub fn get_spk_singleton() -> &'static SpkSingleton {
             segments.reset();
             let singleton: SpkSingleton = ShardedLock::new(segments);
             // Store it to the static var, i.e. initialize it
+            #[allow(static_mut_refs)]
             let _ = SINGLETON.write(singleton);
         });
 
         // Now we give out a shared reference to the data, which is safe to use
         // concurrently.
+        #[allow(static_mut_refs)]
         SINGLETON.assume_init_ref()
     }
 }

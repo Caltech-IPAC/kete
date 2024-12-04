@@ -84,15 +84,14 @@ pub fn solar_flux_py(dist: f64, wavelength: f64) -> PyResult<f64> {
 /// emissivity :
 ///     Emissivity of the object, 0.9 by default.
 #[pyfunction]
-#[pyo3(name = "sub_solar_temperature", signature = (obj2sun, geom_albedo, g_param, beaming, emissivity=None))]
+#[pyo3(name = "sub_solar_temperature", signature = (obj2sun, geom_albedo, g_param, beaming, emissivity=0.9))]
 pub fn sub_solar_temperature_py(
     obj2sun: VectorLike,
     geom_albedo: f64,
     g_param: f64,
     beaming: f64,
-    emissivity: Option<f64>,
+    emissivity: f64,
 ) -> f64 {
-    let emissivity = emissivity.unwrap_or(0.9);
     let obj2sun = obj2sun.into_vec(PyFrames::Ecliptic);
     sub_solar_temperature(&obj2sun, geom_albedo, g_param, beaming, emissivity)
 }
@@ -222,7 +221,7 @@ pub fn frm_facet_temperature_py(
 /// float
 ///     Flux in units of Jy.
 #[pyfunction]
-#[pyo3(name = "neatm_flux", signature = (sun2obj, sun2obs, v_albedo, g_param, beaming, diameter, wavelength, emissivity=None))]
+#[pyo3(name = "neatm_flux", signature = (sun2obj, sun2obs, v_albedo, g_param, beaming, diameter, wavelength, emissivity=0.9))]
 #[allow(clippy::too_many_arguments)]
 pub fn neatm_thermal_py(
     sun2obj: VectorLike,
@@ -232,9 +231,8 @@ pub fn neatm_thermal_py(
     beaming: f64,
     diameter: f64,
     wavelength: f64,
-    emissivity: Option<f64>,
+    emissivity: f64,
 ) -> f64 {
-    let emissivity = emissivity.unwrap_or(0.9);
     let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
     let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
 
@@ -292,7 +290,7 @@ pub fn neatm_thermal_py(
 /// float
 ///     Flux in units of Jy.
 #[pyfunction]
-#[pyo3(name = "frm_flux", signature = (sun2obj, sun2obs, v_albedo, g_param, diameter, wavelength, emissivity=None))]
+#[pyo3(name = "frm_flux", signature = (sun2obj, sun2obs, v_albedo, g_param, diameter, wavelength, emissivity=0.9))]
 #[allow(clippy::too_many_arguments)]
 pub fn frm_thermal_py(
     sun2obj: VectorLike,
@@ -301,9 +299,8 @@ pub fn frm_thermal_py(
     g_param: f64,
     diameter: f64,
     wavelength: f64,
-    emissivity: Option<f64>,
+    emissivity: f64,
 ) -> f64 {
-    let emissivity = emissivity.unwrap_or(0.9);
     let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
     let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
     let hg_params = HGParams::try_fill(

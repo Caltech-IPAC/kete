@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Comet Magnitude estimates now accepts two phase correction values instead of 1.
 
+### Fixed
+
+- Fixed a text case-sensitivity but on Horizons parameter parsing.
+- Thermal model example had function arguments out of order.
+
 
 ## [v1.0.4]
 

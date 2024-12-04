@@ -1,8 +1,7 @@
 import numpy as np
-from .fov import NeosCmos, NeosVisit
 
 
-__all__ = ["sunshield_rotation", "NeosCmos", "NeosVisit", "FOV_WIDTH", "FOV_HEIGHT"]
+__all__ = ["sunshield_rotation", "FOV_WIDTH", "FOV_HEIGHT"]
 
 
 BANDS: list[float] = [4700.0, 8000.0]
