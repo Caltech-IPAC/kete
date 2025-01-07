@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added support for SPICE kernels of type 9, this allows reading SOHO spice files.
+
 ### Changed
 
 - Comet Magnitude estimates now accepts two phase correction values instead of 1.
