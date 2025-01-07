@@ -8,6 +8,7 @@ import numpy as np
 from functools import lru_cache as cache
 from .vector import Vector
 from numpy.typing import ArrayLike
+from typing import Any
 
 
 class Geometry:
@@ -168,7 +169,7 @@ class TriangleEllipsoid(TriangleFaceted):
             for j in range(0, 4 * i):
                 points.append([np.pi - float(i) * dth, j * dphi])
         points.append([np.pi, 0.0])
-        points = np.degrees(points).tolist()
+        points = np.degrees(points).tolist()  # type: ignore
 
         vecs = []
         for point in points:
