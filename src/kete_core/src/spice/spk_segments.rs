@@ -29,6 +29,7 @@ use std::fmt::Debug;
 pub enum SpkSegmentType {
     Type1(SpkSegmentType1),
     Type2(SpkSegmentType2),
+    Type9(SpkSegmentType9),
     Type10(SpkSegmentType10),
     Type13(SpkSegmentType13),
     Type21(SpkSegmentType21),
@@ -40,6 +41,7 @@ impl SpkSegmentType {
         match segment_type {
             1 => Ok(SpkSegmentType::Type1(array.into())),
             2 => Ok(SpkSegmentType::Type2(array.into())),
+            9 => Ok(SpkSegmentType::Type9(array.into())),
             13 => Ok(SpkSegmentType::Type13(array.into())),
             10 => Ok(SpkSegmentType::Type10(array.into())),
             21 => Ok(SpkSegmentType::Type21(array.into())),
@@ -56,6 +58,7 @@ impl From<SpkSegmentType> for DafArray {
         match value {
             SpkSegmentType::Type1(seg) => seg.array,
             SpkSegmentType::Type2(seg) => seg.array,
+            SpkSegmentType::Type9(seg) => seg.array,
             SpkSegmentType::Type10(seg) => seg.array.array,
             SpkSegmentType::Type13(seg) => seg.array,
             SpkSegmentType::Type21(seg) => seg.array,
@@ -149,6 +152,7 @@ impl SpkSegment {
         let (pos, vel) = match &self.segment {
             SpkSegmentType::Type1(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type2(v) => v.try_get_pos_vel(self, jd)?,
+            SpkSegmentType::Type9(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type10(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type13(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type21(v) => v.try_get_pos_vel(self, jd)?,
@@ -381,6 +385,99 @@ impl From<DafArray> for SpkSegmentType2 {
             record_len,
             jd_step,
         }
+    }
+}
+
+// TODO: SPK Segment type 8 should be a minor variation on type 9. This was not
+// implemented here due to missing a valid SPK file to test against.
+
+/// Lagrange Interpolation (Uneven Time Steps)
+///
+/// This uses a collection of individual positions/velocities and interpolates between
+/// them using Lagrange interpolation.
+/// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/spk.html#Type%209:%20Lagrange%20Interpolation%20---%20Unequal%20Time%20Steps>
+#[derive(Debug)]
+pub struct SpkSegmentType9 {
+    array: DafArray,
+    poly_degree: usize,
+    n_records: usize,
+}
+
+impl From<DafArray> for SpkSegmentType9 {
+    fn from(array: DafArray) -> Self {
+        let n_records = array[array.len() - 1] as usize;
+        let poly_degree = array[array.len() - 2] as usize;
+
+        Self {
+            array,
+            poly_degree,
+            n_records,
+        }
+    }
+}
+
+/// Type 9 Record View
+/// A view into a record of type 9, provided mainly for clarity to the underlying
+/// data structure.
+struct Type9RecordView<'a> {
+    pos: &'a [f64; 3],
+    vel: &'a [f64; 3],
+}
+
+impl SpkSegmentType9 {
+    #[inline(always)]
+    fn get_record(&self, idx: usize) -> Type9RecordView {
+        unsafe {
+            let rec = self.array.data.get_unchecked(idx * 6..(idx + 1) * 6);
+            Type9RecordView {
+                pos: rec[0..3].try_into().unwrap(),
+                vel: rec[3..6].try_into().unwrap(),
+            }
+        }
+    }
+
+    #[inline(always)]
+    fn get_times(&self) -> &[f64] {
+        unsafe {
+            self.array
+                .data
+                .get_unchecked(self.n_records * 6..self.n_records * 7)
+        }
+    }
+
+    #[inline(always)]
+    fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
+        let jd = jd_to_spice_jd(jd);
+        let times = self.get_times();
+        let window_size = self.poly_degree + 1;
+        let start_idx: isize = match times.binary_search_by(|probe| probe.total_cmp(&jd)) {
+            Ok(c) => c as isize - (window_size as isize) / 2,
+            Err(c) => {
+                if (jd - times[c - 1]).abs() < (jd - times[c]).abs() {
+                    c as isize - 1 - window_size as isize / 2
+                } else {
+                    c as isize - window_size as isize / 2
+                }
+            }
+        };
+        let start_idx = start_idx.clamp(0, (self.n_records - window_size) as isize) as usize;
+
+        let mut pos = [0.0; 3];
+        let mut vel = [0.0; 3];
+        for idx in 0..3 {
+            let mut p: Box<[f64]> = (0..window_size)
+                .map(|i| self.get_record(i + start_idx).pos[idx])
+                .collect();
+            let mut dp: Box<[f64]> = (0..window_size)
+                .map(|i| self.get_record(i + start_idx).vel[idx])
+                .collect();
+            let p = lagrange_interpolation(&times[start_idx..start_idx + window_size], &mut p, jd);
+            let v = lagrange_interpolation(&times[start_idx..start_idx + window_size], &mut dp, jd);
+            pos[idx] = p / AU_KM;
+            vel[idx] = v / AU_KM * 86400.;
+        }
+
+        Ok((pos, vel))
     }
 }
 

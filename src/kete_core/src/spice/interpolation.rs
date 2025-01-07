@@ -80,21 +80,22 @@ pub fn chebyshev3_evaluate_both(
 ///
 /// # Arguments
 ///
-/// * `times` - Times where `x` and `d`x are evaluated at.
-/// * `x` - The values of the function `f` evaluated at the specified times.
-/// * `dx` - The values of the derivative of the function `f`.
+/// * `times` - Times where the function `f` is evaluated at.
+/// * `y_vals` - The values of the function `f` at the specified times.
+/// * `dy` - The values of the derivative of the function `f`.
 /// * `eval_time` - Time at which to evaluate the interpolation function.
-pub fn hermite_interpolation(times: &[f64], x: &[f64], dx: &[f64], eval_time: f64) -> (f64, f64) {
-    assert_eq!(times.len(), x.len());
-    assert_eq!(times.len(), dx.len());
+#[inline(always)]
+pub fn hermite_interpolation(times: &[f64], y: &[f64], dy: &[f64], eval_time: f64) -> (f64, f64) {
+    debug_assert_eq!(times.len(), y.len());
+    debug_assert_eq!(times.len(), dy.len());
 
-    let n = x.len();
+    let n = y.len();
 
-    let mut work = DVector::<f64>::zeros(2 * x.len());
-    let mut d_work = DVector::<f64>::zeros(2 * x.len());
-    for (idx, (x0, dx0)) in x.iter().zip(dx).enumerate() {
-        work[2 * idx] = *x0;
-        work[2 * idx + 1] = *dx0;
+    let mut work = DVector::<f64>::zeros(2 * y.len());
+    let mut d_work = DVector::<f64>::zeros(2 * y.len());
+    for (idx, (y0, dy0)) in y.iter().zip(dy).enumerate() {
+        work[2 * idx] = *y0;
+        work[2 * idx + 1] = *dy0;
     }
 
     for idx in 1..n {
@@ -131,4 +132,64 @@ pub fn hermite_interpolation(times: &[f64], x: &[f64], dx: &[f64], eval_time: f6
         }
     }
     (work[0], d_work[0])
+}
+
+/// Interpolate using lagrange interpolation.
+///
+/// # Arguments
+///
+/// * `times` - Times where the function `f` is evaluated at.
+/// * `y_vals` - The values of the function `f` at the specified times.
+/// * `eval_time` - Time at which to evaluate the interpolation function.
+pub fn lagrange_interpolation(x: &[f64], y: &mut [f64], eval_time: f64) -> f64 {
+    debug_assert_eq!(x.len(), y.len());
+
+    // implementation of newton interpolation
+    for idx in 1..x.len() {
+        for idy in idx..x.len() {
+            y[idy] = (y[idy] - y[idx - 1]) / (x[idy] - x[idx - 1]);
+        }
+    }
+    let deg = x.len() - 1;
+    let mut val = y[deg];
+    for k in 1..deg + 1 {
+        val = y[deg - k] + (eval_time - x[deg - k]) * val;
+    }
+    val
+}
+
+#[cfg(test)]
+mod tests {
+    use super::lagrange_interpolation;
+
+    #[test]
+    fn test_lagrange_interpolation() {
+        let times = vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0];
+        let y = times.clone();
+
+        for v in 0..100 {
+            let eval_time = (v as f64) / 100. * 9.0;
+            let interp = lagrange_interpolation(&times, &mut y.clone(), eval_time);
+            assert!((interp - eval_time).abs() < 1e-12);
+        }
+
+        let y: Vec<_> = times
+            .iter()
+            .map(|x| x + 1.75 * x.powi(2) - 3.0 * x.powi(3) - 11.0 * x.powi(4))
+            .collect();
+
+        for v in 0..100 {
+            let x = (v as f64) / 100. * 9.0;
+            let expected = x + 1.75 * x.powi(2) - 3.0 * x.powi(3) - 11.0 * x.powi(4);
+            let interp = lagrange_interpolation(&times, &mut y.clone(), x);
+            assert!(
+                (interp - expected).abs() < 1e-10,
+                "x={} interp={} expected={} diff={}",
+                x,
+                interp,
+                expected,
+                interp - expected
+            );
+        }
+    }
 }
