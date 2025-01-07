@@ -8,7 +8,6 @@ import numpy as np
 from functools import lru_cache as cache
 from .vector import Vector
 from numpy.typing import ArrayLike
-from typing import Any
 
 
 class Geometry:
