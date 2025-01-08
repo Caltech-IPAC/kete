@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added support for SPICE kernels of type 9, this allows reading SOHO spice files.
+- Added support for SPICE kernels of type 18, this allows reading Rosetta spice files.
 
 ### Changed
 
