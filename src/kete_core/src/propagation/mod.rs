@@ -7,7 +7,7 @@ use crate::constants::{MASSES, PLANETS, SIMPLE_PLANETS};
 use crate::errors::Error;
 use crate::frames::Frame;
 use crate::prelude::{Desig, KeteResult};
-use crate::spice::get_spk_singleton;
+use crate::spice::LOADED_SPK;
 use crate::state::State;
 use nalgebra::{DVector, Vector3};
 
@@ -75,7 +75,7 @@ pub fn propagate_n_body_spk(
 ) -> KeteResult<State> {
     let center = state.center_id;
     let frame = state.frame;
-    let spk = get_spk_singleton().try_read().unwrap();
+    let spk = &LOADED_SPK.try_read().unwrap();
     spk.try_change_center(&mut state, 0)?;
     state.try_change_frame_mut(Frame::Equatorial)?;
 
@@ -164,7 +164,7 @@ pub fn propagate_n_body_vec(
     let mut desigs: Vec<Desig> = Vec::new();
 
     let planet_states = planet_states.unwrap_or_else(|| {
-        let spk = get_spk_singleton().try_read().unwrap();
+        let spk = &LOADED_SPK.try_read().unwrap();
         let mut planet_states = Vec::with_capacity(SIMPLE_PLANETS.len());
         for obj in SIMPLE_PLANETS.iter() {
             let planet = spk

@@ -195,7 +195,7 @@ pub trait FovLike: Sync + Sized {
     /// This will fail silently if the object is not found.
     fn check_spks(&self, obj_ids: &[i64]) -> Vec<Option<SimultaneousStates>> {
         let obs = self.observer();
-        let spk = get_spk_singleton().try_read().unwrap();
+        let spk = &LOADED_SPK.try_read().unwrap();
 
         let mut visible: Vec<Vec<State>> = vec![Vec::new(); self.n_patches()];
 

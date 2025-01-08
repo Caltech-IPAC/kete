@@ -490,7 +490,6 @@ impl SpkSegmentType9 {
 /// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/spk.html#Type%2010:%20Space%20Command%20Two-Line%20Elements>
 ///
 #[derive(Debug)]
-#[allow(unused)]
 pub struct SpkSegmentType10 {
     /// Generic Segments are a collection of a few different directories:
     /// `Packets` are where Type 10 stores the TLE values.
@@ -505,7 +504,6 @@ pub struct SpkSegmentType10 {
     geopotential: Geopotential,
 }
 
-#[allow(unused)]
 impl SpkSegmentType10 {
     #[inline(always)]
     fn get_times(&self) -> &[f64] {
@@ -527,7 +525,7 @@ impl SpkSegmentType10 {
                 .naive_utc(),
         );
 
-        /// use the provided goepotential even if it is not correct.
+        // use the provided goepotential even if it is not correct.
         let orbit_0 = Orbit::from_kozai_elements(
             &self.geopotential,
             inclination,
