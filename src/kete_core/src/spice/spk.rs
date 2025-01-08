@@ -24,13 +24,12 @@ use crate::errors::Error;
 use crate::frames::Frame;
 use crate::prelude::KeteResult;
 use crate::state::State;
+use lazy_static::lazy_static;
 use pathfinding::prelude::dijkstra;
 use std::collections::{HashMap, HashSet};
 
 use crossbeam::sync::ShardedLock;
 use std::io::Cursor;
-use std::mem::MaybeUninit;
-use std::sync::Once;
 
 const PRELOAD_SPKS: &[&[u8]] = &[
     include_bytes!("../../data/de440s.bsp"),
@@ -304,33 +303,19 @@ impl SpkCollection {
     }
 }
 
-/// Get the SPK singleton.
-/// This is a RwLock protected SPKCollection, and must be `.try_read().unwrapped()` for any
-/// read-only cases.
-///
-/// This singleton starts initialized with preloaded SPK files for the planets.
-pub fn get_spk_singleton() -> &'static SpkSingleton {
-    // Create an uninitialized static
-    static mut SINGLETON: MaybeUninit<SpkSingleton> = MaybeUninit::uninit();
-    static ONCE: Once = Once::new();
-
-    unsafe {
-        ONCE.call_once(|| {
-            let mut segments: SpkCollection = SpkCollection {
-                map_cache: HashMap::new(),
-                nodes: HashMap::new(),
-                segments: Vec::new(),
-            };
-            segments.reset();
-            let singleton: SpkSingleton = ShardedLock::new(segments);
-            // Store it to the static var, i.e. initialize it
-            #[allow(static_mut_refs)]
-            let _ = SINGLETON.write(singleton);
-        });
-
-        // Now we give out a shared reference to the data, which is safe to use
-        // concurrently.
-        #[allow(static_mut_refs)]
-        SINGLETON.assume_init_ref()
-    }
+lazy_static! {
+    /// SPK singleton.
+    /// This is a RwLock protected SPKCollection, and must be `.try_read().unwrapped()` for any
+    /// read-only cases.
+    ///
+    /// This singleton starts initialized with preloaded SPK files for the planets.
+    pub static ref LOADED_SPK: SpkSingleton = {
+        let mut segments: SpkCollection = SpkCollection {
+            map_cache: HashMap::new(),
+            nodes: HashMap::new(),
+            segments: Vec::new(),
+        };
+        segments.reset();
+        ShardedLock::new(segments)
+    };
 }

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Comet Magnitude estimates now accepts two phase correction values instead of 1.
+- Restructured SPICE kernel memory management to make entire class of bugs impossible.
 
 ### Fixed
 
