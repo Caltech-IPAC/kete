@@ -9,7 +9,7 @@ import numpy as np
 from numpy.typing import NDArray
 from . import _core
 from . import constants
-from ._core import compute_obliquity
+from ._core import compute_obliquity, earth_precession_rotation
 
 __all__ = [
     "bin_data",
@@ -25,6 +25,7 @@ __all__ = [
     "compute_tisserand",
     "dec_degrees_to_dms",
     "dec_dms_to_degrees",
+    "earth_precession_rotation",
     "flux_to_mag",
     "mag_to_flux",
     "ra_degrees_to_hms",
