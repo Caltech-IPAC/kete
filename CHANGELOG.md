@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added support for SPICE kernels of type 9, this allows reading SOHO spice files.
 - Added support for SPICE kernels of type 18, this allows reading Rosetta spice files.
+- Added Equatorial frame as observed calculation.
 
 ### Changed
 

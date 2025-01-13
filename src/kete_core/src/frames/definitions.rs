@@ -362,11 +362,93 @@ pub fn rotate_around(
     rot.transform_vector(vector)
 }
 
+/// Rotation which transforms a vector from the J2000 Equatorial frame to the
+/// desired epoch.
+///
+/// Earth's north pole precesses at a rate of about 50 arcseconds per year.
+/// This means there was an approximately 20 arcminute rotation of the Equatorial
+/// axis from the year 2000 to 2025.
+///
+/// This implementation is valid for around 200 years on either side of 2000 to
+/// within sub micro-arcsecond accuracy.
+///
+/// This function is an implementation equation (21) from this paper:
+///     "Expressions for IAU 2000 precession quantities"
+///     Capitaine, N. ; Wallace, P. T. ; Chapront, J. 
+///     Astronomy and Astrophysics, v.412, p.567-586 (2003)
+/// 
+/// It is recommended to first look at the following paper, as it provides useful
+/// discussion to help understand the above model. This defines the model used
+/// by JPL Horizons:
+///     "Precession matrix based on IAU (1976) system of astronomical constants."
+///     Lieske, J. H.
+///     Astronomy and Astrophysics, vol. 73, no. 3, Mar. 1979, p. 282-284.
+/// 
+/// The IAU 2000 model paper improves accuracy by approximately ~300 mas/century over
+/// the 1976 model.
+///
+/// # Arguments
+///
+/// * `tdb_time` - Time in TDB scaled Julian Days.
+///
+#[inline(always)]
+pub fn earth_precession_rotation(tdb_time: f64) -> Rotation3<f64> {
+    // centuries since 2000
+    let t = (tdb_time - 2451545.0) / 36525.0;
+
+    // angles as defined in the cited paper, equations (21)
+    // Note that equation 45 is an even more developed model, which takes into
+    // account frame bias in addition to simple precession, however more clarity
+    // on the DE source and interpretation is probably required to take advantage
+    // of this increased precision.
+    let angle_c = -((2.5976176
+        + (2306.0809506 + (0.3019015 + (0.0179663 + (-0.0000327 - 0.0000002 * t) * t) * t) * t)
+            * t)
+        / 3600.0)
+        .to_radians();
+    let angle_a = -((-2.5976176
+        + (2306.0803226 + (1.094779 + (0.0182273 + (0.000047 - 0.0000003 * t) * t) * t) * t) * t)
+        / 3600.0)
+        .to_radians();
+    let angle_b = ((2004.1917476
+        + (-0.4269353 + (-0.0418251 + (-0.0000601 - 0.0000001 * t) * t) * t) * t)
+        * t
+        / 3600.0)
+        .to_radians();
+    let z_axis = Vector3::z_axis();
+    Rotation3::from_axis_angle(&z_axis, angle_a)
+        * Rotation3::from_axis_angle(&Vector3::y_axis(), angle_b)
+        * Rotation3::from_axis_angle(&z_axis, angle_c)
+}
+
 #[cfg(test)]
 mod tests {
     use std::f64::consts::{FRAC_PI_2, TAU};
 
+    use nalgebra::Matrix3;
+
     use crate::frames::*;
+
+    #[test]
+    fn test_earth_precession() {
+        let rot = earth_precession_rotation(2451545.0);
+        assert!((rot.matrix() - Matrix3::identity()).norm() < 1e-16);
+
+        let rot = earth_precession_rotation(2433282.42345905);
+
+        let expected = Matrix3::new(
+            0.9999257168056067,
+            -0.011178271729385899,
+            -0.004858715050078201,
+            0.011178271443436222,
+            0.9999375208015913,
+            -2.72158794420131e-05,
+            0.004858715707952332,
+            -2.70981779365330e-05,
+            0.9999881960040119
+        );
+        assert!((rot.matrix() - expected).norm() < 1e-16);
+    }
 
     #[test]
     fn test_ecliptic_rot_roundtrip() {

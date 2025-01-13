@@ -35,11 +35,11 @@ criterion = { version = "*", features = ["html_reports"] }
 # pprof is used for flame graphs, this is failing on windows currently so only
 # linux and mac are supported here.
 [target.'cfg(target_os = "linux")'.dev-dependencies]
-pprof = { version = "0.13", features = ["flamegraph", "criterion"] }
+pprof = { version = "0.14", features = ["flamegraph", "criterion"] }
 
 # macos needs the frame-pointer flag, however this doesn't function on linux
 [target.'cfg(target_os = "macos")'.dev-dependencies]
-pprof = { version = "0.13", features = ["flamegraph", "criterion", "frame-pointer"] }
+pprof = { version = "0.14", features = ["flamegraph", "criterion", "frame-pointer"] }
 
 [[bench]]
 name = "propagation"
