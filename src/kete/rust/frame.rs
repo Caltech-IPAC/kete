@@ -95,3 +95,42 @@ pub fn ecef_to_wgs_lat_lon(x: f64, y: f64, z: f64) -> (f64, f64, f64) {
 pub fn calc_obliquity_py(time: f64) -> f64 {
     calc_obliquity(time).to_degrees()
 }
+
+/// Calculate rotation matrix which transforms a vector from the J2000 Equatorial
+/// frame to the desired epoch.
+///
+/// Earth's north pole precesses at a rate of about 50 arcseconds per year.
+/// This means there was an approximately 20 arcminute rotation of the Equatorial
+/// axis from the year 2000 to 2025.
+///
+/// This implementation is valid for around 200 years on either side of 2000 to
+/// within sub micro-arcsecond accuracy.
+///
+/// This function is an implementation equation (21) from this paper:
+///     "Expressions for IAU 2000 precession quantities"
+///     Capitaine, N. ; Wallace, P. T. ; Chapront, J. 
+///     Astronomy and Astrophysics, v.412, p.567-586 (2003)
+/// 
+/// It is recommended to first look at the following paper, as it provides useful
+/// discussion to help understand the above model. This defines the model used
+/// by JPL Horizons:
+///     "Precession matrix based on IAU (1976) system of astronomical constants."
+///     Lieske, J. H.
+///     Astronomy and Astrophysics, vol. 73, no. 3, Mar. 1979, p. 282-284.
+/// 
+/// The IAU 2000 model paper improves accuracy by approximately ~300 mas/century over
+/// the 1976 model.
+///
+/// Parameters
+/// ----------
+/// tdb_time:
+///     Time in TDB scaled Julian Days.
+#[pyfunction]
+#[pyo3(name = "earth_precession_rotation")]
+pub fn calc_earth_precession(time: f64) -> Vec<Vec<f64>> {
+    earth_precession_rotation(time)
+        .matrix()
+        .row_iter()
+        .map(|x| x.iter().cloned().collect())
+        .collect()
+}
