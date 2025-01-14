@@ -9,10 +9,10 @@ keywords = ["physics", "simulation", "astronomy"]
 
 [dependencies]
 kete_core = { version = "*", path = "src/kete_core", features=["pyo3", "polars"]}
-pyo3 = { version =  "^0.22.6", features = ["extension-module"] }
+pyo3 = { version =  "^0.23.4", features = ["extension-module"] }
 serde = { version = "^1.0.203", features = ["derive"] }
 nalgebra = {version = "^0.33.0"}
-itertools = "^0.13.0"
+itertools = "^0.14.0"
 rayon = "^1.10.0"
 sgp4 = "2.2.0"
 

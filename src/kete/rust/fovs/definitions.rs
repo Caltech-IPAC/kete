@@ -211,7 +211,7 @@ pub struct PyGenericCone(pub fov::GenericCone);
 pub struct PyOmniDirectional(pub fov::OmniDirectional);
 
 /// Field of views supported by the python interface
-#[derive(Debug, Clone, FromPyObject)]
+#[derive(Debug, Clone, FromPyObject, IntoPyObject)]
 #[allow(clippy::upper_case_acronyms, missing_docs)]
 pub enum AllowedFOV {
     WISE(PyWiseCmos),
@@ -279,21 +279,6 @@ impl AllowedFOV {
             AllowedFOV::NEOSVisit(fov) => fov.__repr__(),
             AllowedFOV::Cone(fov) => fov.__repr__(),
             AllowedFOV::OmniDirectional(fov) => fov.__repr__(),
-        }
-    }
-}
-
-impl IntoPy<PyObject> for AllowedFOV {
-    fn into_py(self, py: Python) -> PyObject {
-        match self {
-            Self::WISE(fov) => fov.into_py(py),
-            Self::NEOS(fov) => fov.into_py(py),
-            Self::Rectangle(fov) => fov.into_py(py),
-            Self::ZTF(fov) => fov.into_py(py),
-            Self::ZTFField(fov) => fov.into_py(py),
-            Self::NEOSVisit(fov) => fov.into_py(py),
-            Self::Cone(fov) => fov.into_py(py),
-            Self::OmniDirectional(fov) => fov.into_py(py),
         }
     }
 }

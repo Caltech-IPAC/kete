@@ -1,14 +1,15 @@
 //! Python vector support with frame information.
 use kete_core::frames::rotate_around;
+use pyo3::basic::CompareOp;
 use pyo3::exceptions;
+use pyo3::exceptions::PyNotImplementedError;
 use std::f64::consts::FRAC_PI_2;
 
 use crate::frame::*;
 use kete_core::prelude::*;
 use nalgebra::Vector3;
-use pyo3::class::basic::CompareOp;
 use pyo3::prelude::*;
-use pyo3::{PyResult, Python};
+use pyo3::PyResult;
 
 /// Vector class which is a vector along with a reference frame.
 ///
@@ -36,7 +37,7 @@ impl Vector {
 }
 
 /// Polymorphic support
-#[derive(Debug, FromPyObject)]
+#[derive(Debug, FromPyObject, IntoPyObject)]
 pub enum VectorLike {
     /// Vector directly
     Vec(Vector),
@@ -370,13 +371,13 @@ impl Vector {
         Ok(self.raw[idx])
     }
 
-    fn __richcmp__(&self, other: VectorLike, op: CompareOp, py: Python<'_>) -> PyObject {
+    fn __richcmp__(&self, other: VectorLike, op: CompareOp, _py: Python<'_>) -> PyResult<bool> {
         let self_vec = Vector3::from(self.raw);
         let other_vec = other.into_vec(self.frame());
         match op {
-            CompareOp::Eq => ((self_vec - other_vec).norm() < 1e-12).into_py(py),
-            CompareOp::Ne => ((self_vec - other_vec).norm() >= 1e-12).into_py(py),
-            _ => py.NotImplemented(),
+            CompareOp::Eq => Ok((self_vec - other_vec).norm() < 1e-12),
+            CompareOp::Ne => Ok((self_vec - other_vec).norm() >= 1e-12),
+            _ => Err(PyNotImplementedError::new_err("Vectors can only be checked for equality.")),
         }
     }
 }
