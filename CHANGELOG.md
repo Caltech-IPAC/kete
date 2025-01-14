@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v1.0.5]
 
 ### Added
 
 - Added support for SPICE kernels of type 9, this allows reading SOHO spice files.
 - Added support for SPICE kernels of type 18, this allows reading Rosetta spice files.
-- Added Equatorial frame as observed calculation.
+- Added calculation of Earth's precession, allowing the computation of time dependent
+  equatorial vectors.
 
 ### Changed
 
@@ -346,6 +347,7 @@ Initial Release
 
 
 [Unreleased]: https://github.com/IPAC-SW/kete/tree/main
+[1.0.5]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.5
 [1.0.4]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.4
 [1.0.3]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.3
 [1.0.2]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.2
