@@ -216,7 +216,9 @@ def kernel_fetch_from_url(url, force_download: bool = False):
     download_file(url, force_download=force_download, subfolder="kernels")
 
 
-def kernel_reload(filenames: Optional[list[str]] = None, include_cache=False):
+def kernel_reload(
+    filenames: Optional[list[str]] = None, include_cache=False, include_preload=True
+):
     """
     Load the specified spice kernels into memory, this resets the currently loaded
     kernels.
@@ -231,8 +233,11 @@ def kernel_reload(filenames: Optional[list[str]] = None, include_cache=False):
     include_cache:
         This decides if all of the files contained within the kete cache should
         be loaded in addition to the specified files.
+    include_preload:
+        Should the DE440 and asteroid kernels be loaded. If this is not loaded it
+        will likely need to be loaded manually, intended for more advanced usage.
     """
-    _core.spk_reset()
+    _core.spk_reset(include_preload)
     _core.pck_reset()
 
     if include_cache:

@@ -284,7 +284,7 @@ impl SpkCollection {
     }
 
     /// Delete all segments in the SPK singleton, equivalent to unloading all files.
-    pub fn reset(&mut self) {
+    pub fn reset(&mut self, include_preload: bool) {
         let spk_files: SpkCollection = SpkCollection {
             map_cache: HashMap::new(),
             nodes: HashMap::new(),
@@ -293,13 +293,15 @@ impl SpkCollection {
 
         *self = spk_files;
 
-        for buffer in PRELOAD_SPKS {
-            let mut curse = Cursor::new(buffer);
-            let file = DafFile::from_buffer(&mut curse).unwrap();
-            self.segments
-                .extend(file.segments.into_iter().map(|x| x.spk()));
+        if include_preload {
+            for buffer in PRELOAD_SPKS {
+                let mut curse = Cursor::new(buffer);
+                let file = DafFile::from_buffer(&mut curse).unwrap();
+                self.segments
+                    .extend(file.segments.into_iter().map(|x| x.spk()));
+            }
+            self.build_cache();
         }
-        self.build_cache();
     }
 }
 
@@ -315,7 +317,7 @@ lazy_static! {
             nodes: HashMap::new(),
             segments: Vec::new(),
         };
-        segments.reset();
+        segments.reset(true);
         ShardedLock::new(segments)
     };
 }
