@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [Unreleased]
+
+### Added
+
+- Added support for SPICE kernels of type 3, this allows reading satellites of Mars.
+- Added support for choosing to not load the DE440 file when reloading SPICE kernels.
+
+### Fixed
+
+- Fixed the recently added Earth precession calculation which was providing a transposed
+  matrix.
+
+
 ## [v1.0.5]
 
 ### Added

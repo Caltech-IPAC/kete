@@ -29,6 +29,7 @@ use std::fmt::Debug;
 pub enum SpkSegmentType {
     Type1(SpkSegmentType1),
     Type2(SpkSegmentType2),
+    Type3(SpkSegmentType3),
     Type9(SpkSegmentType9),
     Type10(SpkSegmentType10),
     Type13(SpkSegmentType13),
@@ -42,6 +43,7 @@ impl SpkSegmentType {
         match segment_type {
             1 => Ok(SpkSegmentType::Type1(array.into())),
             2 => Ok(SpkSegmentType::Type2(array.into())),
+            3 => Ok(SpkSegmentType::Type3(array.into())),
             9 => Ok(SpkSegmentType::Type9(array.into())),
             13 => Ok(SpkSegmentType::Type13(array.into())),
             10 => Ok(SpkSegmentType::Type10(array.into())),
@@ -60,6 +62,7 @@ impl From<SpkSegmentType> for DafArray {
         match value {
             SpkSegmentType::Type1(seg) => seg.array,
             SpkSegmentType::Type2(seg) => seg.array,
+            SpkSegmentType::Type3(seg) => seg.array,
             SpkSegmentType::Type9(seg) => seg.array,
             SpkSegmentType::Type10(seg) => seg.array.array,
             SpkSegmentType::Type13(seg) => seg.array,
@@ -155,6 +158,7 @@ impl SpkSegment {
         let (pos, vel) = match &self.segment {
             SpkSegmentType::Type1(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type2(v) => v.try_get_pos_vel(self, jd)?,
+            SpkSegmentType::Type3(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type9(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type10(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type13(v) => v.try_get_pos_vel(self, jd)?,
@@ -360,7 +364,7 @@ impl SpkSegmentType2 {
 
         let t_step_scaled = 86400.0 / t_step / AU_KM;
 
-        let (p, v) = chebyshev3_evaluate_both(t, record.x_coef, record.y_coef, record.z_coef)?;
+        let (p, v) = chebyshev_evaluate_both(t, record.x_coef, record.y_coef, record.z_coef)?;
         Ok((
             [p[0] / AU_KM, p[1] / AU_KM, p[2] / AU_KM],
             [
@@ -384,6 +388,98 @@ impl From<DafArray> for SpkSegmentType2 {
         }
 
         SpkSegmentType2 {
+            array,
+            n_coef,
+            record_len,
+            jd_step,
+        }
+    }
+}
+
+/// Type 3 - Chebyshev Polynomials (Position & Velocity)
+///
+/// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/spk.html#Type%203:%20Chebyshev%20position%20and%20velocity>
+///
+#[derive(Debug)]
+pub struct SpkSegmentType3 {
+    array: DafArray,
+    jd_step: f64,
+    n_coef: usize,
+    record_len: usize,
+}
+
+/// Type 3 Record View
+/// A view into a record of type 3, provided mainly for clarity to the underlying
+/// data structure.
+struct Type3RecordView<'a> {
+    t_mid: &'a f64,
+    t_step: &'a f64,
+
+    x_coef: &'a [f64],
+    y_coef: &'a [f64],
+    z_coef: &'a [f64],
+
+    vx_coef: &'a [f64],
+    vy_coef: &'a [f64],
+    vz_coef: &'a [f64],
+}
+
+impl SpkSegmentType3 {
+    #[inline(always)]
+    fn get_record(&self, idx: usize) -> Type3RecordView {
+        unsafe {
+            let vals = self
+                .array
+                .data
+                .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len);
+
+            Type3RecordView {
+                t_mid: vals.get_unchecked(0),
+                t_step: vals.get_unchecked(1),
+                x_coef: vals.get_unchecked(2..(self.n_coef + 2)),
+                y_coef: vals.get_unchecked((self.n_coef + 2)..(2 * self.n_coef + 2)),
+                z_coef: vals.get_unchecked((2 * self.n_coef + 2)..(3 * self.n_coef + 2)),
+                vx_coef: vals.get_unchecked((3 * self.n_coef + 2)..(4 * self.n_coef + 2)),
+                vy_coef: vals.get_unchecked((4 * self.n_coef + 2)..(5 * self.n_coef + 2)),
+                vz_coef: vals.get_unchecked((5 * self.n_coef + 2)..(6 * self.n_coef + 2)),
+            }
+        }
+    }
+
+    #[inline(always)]
+    fn try_get_pos_vel(&self, segment: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
+        let jd = jd_to_spice_jd(jd);
+        let jd_start = jd_to_spice_jd(segment.jd_start);
+        let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
+        let record = self.get_record(record_index);
+
+        let t_step = record.t_step;
+
+        let t = (jd - record.t_mid) / t_step;
+
+        let t_scaled = 86400.0 / AU_KM;
+
+        let p = chebyshev_evaluate(t, record.x_coef, record.y_coef, record.z_coef)?;
+        let v = chebyshev_evaluate(t, record.vx_coef, record.vy_coef, record.vz_coef)?;
+        Ok((
+            [p[0] / AU_KM, p[1] / AU_KM, p[2] / AU_KM],
+            [v[0] * t_scaled, v[1] * t_scaled, v[2] * t_scaled],
+        ))
+    }
+}
+
+impl From<DafArray> for SpkSegmentType3 {
+    fn from(array: DafArray) -> Self {
+        let record_len = array[array.len() - 2] as usize;
+        let jd_step = array[array.len() - 3];
+
+        let n_coef = (record_len - 2) / 6;
+
+        if 6 * n_coef + 2 != record_len {
+            panic!("File incorrectly formatted, found number of Chebyshev coefficients doesn't match expected");
+        }
+
+        SpkSegmentType3 {
             array,
             n_coef,
             record_len,

@@ -18,7 +18,7 @@ fn frm_bench(params: &FrmParams) {
 pub fn neatm_benchmark(c: &mut Criterion) {
     let mut neatm_group = c.benchmark_group("NEATM");
 
-    let hg_params = HGParams::try_fill(
+    let hg_params = HGParams::try_new(
         "test".into(),
         0.15,
         Some(15.0),
@@ -57,7 +57,7 @@ pub fn neatm_benchmark(c: &mut Criterion) {
 pub fn frm_benchmark(c: &mut Criterion) {
     let mut frm_group = c.benchmark_group("FRM");
 
-    let hg_params = HGParams::try_fill(
+    let hg_params = HGParams::try_new(
         "test".into(),
         0.15,
         Some(15.0),

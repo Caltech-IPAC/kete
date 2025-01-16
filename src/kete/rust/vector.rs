@@ -377,7 +377,9 @@ impl Vector {
         match op {
             CompareOp::Eq => Ok((self_vec - other_vec).norm() < 1e-12),
             CompareOp::Ne => Ok((self_vec - other_vec).norm() >= 1e-12),
-            _ => Err(PyNotImplementedError::new_err("Vectors can only be checked for equality.")),
+            _ => Err(PyNotImplementedError::new_err(
+                "Vectors can only be checked for equality.",
+            )),
         }
     }
 }

@@ -208,7 +208,7 @@ impl PyNeatmParams {
         emissivity: f64,
         zero_mags: Option<Vec<f64>>,
     ) -> PyResult<Self> {
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
 
         let obs_bands = ObserverBands::Generic {
             solar_correction: vec![1.0; band_wavelength.len()],
@@ -265,7 +265,7 @@ impl PyNeatmParams {
         c_hg: Option<f64>,
         emissivity: f64,
     ) -> PyResult<Self> {
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,
@@ -319,7 +319,7 @@ impl PyNeatmParams {
         c_hg: Option<f64>,
         emissivity: f64,
     ) -> PyResult<Self> {
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,
@@ -537,7 +537,7 @@ impl PyFrmParams {
         emissivity: f64,
         zero_mags: Option<Vec<f64>>,
     ) -> PyResult<Self> {
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
         let obs_bands = ObserverBands::Generic {
             solar_correction: vec![1.0; band_wavelength.len()],
             bands: band_wavelength,
@@ -590,7 +590,7 @@ impl PyFrmParams {
         c_hg: Option<f64>,
         emissivity: f64,
     ) -> PyResult<Self> {
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,
@@ -638,7 +638,7 @@ impl PyFrmParams {
         c_hg: Option<f64>,
         emissivity: f64,
     ) -> PyResult<Self> {
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,
