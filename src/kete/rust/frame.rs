@@ -154,7 +154,7 @@ pub fn calc_obliquity_py(time: f64) -> f64 {
 pub fn calc_earth_precession(time: f64) -> Vec<Vec<f64>> {
     earth_precession_rotation(time)
         .matrix()
-        .row_iter()
+        .column_iter()
         .map(|x| x.iter().cloned().collect())
         .collect()
 }
