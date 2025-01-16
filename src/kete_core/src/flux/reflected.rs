@@ -116,7 +116,7 @@ impl HGParams {
     /// - All 3 optional parameters are provided, but not self consistent.
     ///
     /// The `c_hg` parameter defaults to the [`C_V`] constant if not provided.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `desig` - Designation of the object.
@@ -162,11 +162,11 @@ impl HGParams {
 
     /// Try to fill in the parameters as much as possible.
     /// If there is internal data inconsistency, return an error.
-    /// 
+    ///
     /// The `c_hg` parameter defaults to the [`C_V`] constant if not provided.
-    /// 
+    ///
     /// This returns `h_mag`, `vis_albedo`, `diam`,  and `c_hg`.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `h_mag` - The H parameter of the object in the HG system.

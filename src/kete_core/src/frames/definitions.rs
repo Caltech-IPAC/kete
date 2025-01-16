@@ -374,16 +374,16 @@ pub fn rotate_around(
 ///
 /// This function is an implementation equation (21) from this paper:
 ///     "Expressions for IAU 2000 precession quantities"
-///     Capitaine, N. ; Wallace, P. T. ; Chapront, J. 
+///     Capitaine, N. ; Wallace, P. T. ; Chapront, J.
 ///     Astronomy and Astrophysics, v.412, p.567-586 (2003)
-/// 
+///
 /// It is recommended to first look at the following paper, as it provides useful
 /// discussion to help understand the above model. This defines the model used
 /// by JPL Horizons:
 ///     "Precession matrix based on IAU (1976) system of astronomical constants."
 ///     Lieske, J. H.
 ///     Astronomy and Astrophysics, vol. 73, no. 3, Mar. 1979, p. 282-284.
-/// 
+///
 /// The IAU 2000 model paper improves accuracy by approximately ~300 mas/century over
 /// the 1976 model.
 ///
@@ -445,7 +445,7 @@ mod tests {
             -2.72158794420131e-05,
             0.004858715707952332,
             -2.70981779365330e-05,
-            0.9999881960040119
+            0.9999881960040119,
         );
         assert!((rot.matrix() - expected).norm() < 1e-16);
     }
