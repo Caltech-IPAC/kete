@@ -22,7 +22,7 @@ use nalgebra::DVector;
 /// * `coefz`    - Slice of coefficients of the chebyshev polynomials.
 ///
 #[inline(always)]
-pub fn chebyshev3_evaluate_both(
+pub fn chebyshev_evaluate_both(
     x: f64,
     coefx: &[f64],
     coefy: &[f64],
@@ -74,6 +74,61 @@ pub fn chebyshev3_evaluate_both(
     }
 
     Ok((val, der_val))
+}
+
+/// Given a list of chebyshev polynomial coefficients, compute the value of the function
+/// at the specified `x`.
+///
+/// This is useful for reading values out of JPL SPK format, be aware though that time
+/// scaling is also important for that particular use case.
+///
+/// This evaluates the coefficients at a single point of time, but for 3 sets of
+/// coefficients at once. This is specifically done for performance reasons.
+///
+/// # Arguments
+///
+/// * `t`       - Time at which to evaluate the chebyshev polynomials.
+/// * `coefx`    - Slice of coefficients of the chebyshev polynomials.
+/// * `coefy`    - Slice of coefficients of the chebyshev polynomials.
+/// * `coefz`    - Slice of coefficients of the chebyshev polynomials.
+///
+#[inline(always)]
+pub fn chebyshev_evaluate(
+    x: f64,
+    coefx: &[f64],
+    coefy: &[f64],
+    coefz: &[f64],
+) -> KeteResult<[f64; 3]> {
+    let n_coef = coefx.len();
+
+    if n_coef < 2 {
+        Err(Error::IOError(
+            "File not formatted correctly. Chebyshev polynomial must be greater than order 2."
+                .into(),
+        ))?;
+    }
+    let x2 = 2.0 * x;
+
+    let mut val = [
+        coefx[0] + coefx[1] * x,
+        coefy[0] + coefy[1] * x,
+        coefz[0] + coefz[1] * x,
+    ];
+    let mut second_t = 1.0;
+    let mut last_t = x;
+    let mut next_t;
+
+    for ((x, y), z) in coefx.iter().zip(coefy).zip(coefz).skip(2) {
+        next_t = x2 * last_t - second_t;
+        val[0] += x * next_t;
+        val[1] += y * next_t;
+        val[2] += z * next_t;
+
+        second_t = last_t;
+        last_t = next_t;
+    }
+
+    Ok(val)
 }
 
 /// Interpolate using Hermite interpolation.
