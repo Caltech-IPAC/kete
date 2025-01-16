@@ -103,7 +103,7 @@ impl HGParams {
 
     /// Create a new [`HGParams`] object, attempting to fill in any missing parameters.
     ///
-    /// h_mag must either be provided, or be computable from the albedo and diameter.
+    /// `h_mag` must either be provided, or be computable from the albedo and diameter.
     ///
     /// H, Albedo, and Diameter are all related by the relation:
     /// diameter = c_hg / albedo.sqrt() * (10f64).powf(-h_mag / 5.0);
@@ -115,6 +115,8 @@ impl HGParams {
     /// - If `h_mag` is [`None`] and there is not enough information to compute it.
     /// - All 3 optional parameters are provided, but not self consistent.
     ///
+    /// The `c_hg` parameter defaults to the [`C_V`] constant if not provided.
+    /// 
     /// # Arguments
     ///
     /// * `desig` - Designation of the object.
@@ -124,7 +126,7 @@ impl HGParams {
     /// * `vis_albedo` - Visible geometric albedo of the object.
     /// * `diameter` - Diameter of the object in km.
     ///
-    pub fn try_fill(
+    pub fn try_new(
         desig: String,
         g_param: f64,
         h_mag: Option<f64>,
@@ -158,8 +160,20 @@ impl HGParams {
         self.vis_albedo
     }
 
-    /// Try to fill in the options as much as possible.
+    /// Try to fill in the parameters as much as possible.
     /// If there is internal data inconsistency, return an error.
+    /// 
+    /// The `c_hg` parameter defaults to the [`C_V`] constant if not provided.
+    /// 
+    /// This returns `h_mag`, `vis_albedo`, `diam`,  and `c_hg`.
+    /// 
+    /// # Arguments
+    ///
+    /// * `h_mag` - The H parameter of the object in the HG system.
+    /// * `vis_albedo` - Visible geometric albedo of the object.
+    /// * `diameter` - Diameter of the object in km.
+    /// * `c_hg` - The relationship constant of the H-D-pV conversion in km.
+    ///
     fn fill(
         h_mag: Option<f64>,
         vis_albedo: Option<f64>,
@@ -277,7 +291,7 @@ impl HGParams {
     /// * `sun2obj` - Vector from the sun to the object in AU.
     /// * `sun2obs` - Vector from the sun to the observer in AU.
     /// * `wavelength` - Central wavelength of light in nm.
-    ///
+    /// * `albedo` - Geometric Albedo at the wavelength provided.
     pub fn apparent_flux(
         &self,
         sun2obj: &Vector3<f64>,

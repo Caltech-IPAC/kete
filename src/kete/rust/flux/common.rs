@@ -236,7 +236,7 @@ pub fn neatm_thermal_py(
     let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
     let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
 
-    let hg_params = HGParams::try_fill(
+    let hg_params = HGParams::try_new(
         "".into(),
         g_param,
         None,
@@ -303,7 +303,7 @@ pub fn frm_thermal_py(
 ) -> f64 {
     let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
     let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
-    let hg_params = HGParams::try_fill(
+    let hg_params = HGParams::try_new(
         "".into(),
         g_param,
         None,

@@ -78,7 +78,7 @@ pub fn hg_apparent_flux_py(
     let c_hg = c_hg.unwrap_or(constants::C_V);
     let sun2obj = sun2obj.into_vec(PyFrames::Ecliptic);
     let sun2obs = sun2obs.into_vec(PyFrames::Ecliptic);
-    let params = HGParams::try_fill(
+    let params = HGParams::try_new(
         "".into(),
         g_param,
         h_mag,
