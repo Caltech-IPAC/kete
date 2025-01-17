@@ -227,7 +227,7 @@ mod tests {
     fn test_check_omni_visible() {
         // Build an observer, and check the observability of ceres with different offsets from the observer time.
         // this will exercise the position, velocity, and time offsets due to light delay.
-        let spk = get_spk_singleton().read().unwrap();
+        let spk = &LOADED_SPK.read().unwrap();
         let observer = State::<Equatorial>::new(
             Desig::Empty,
             2451545.0,

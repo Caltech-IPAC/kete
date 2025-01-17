@@ -195,7 +195,7 @@ impl PyNeatmParams {
     #[new]
     #[allow(clippy::too_many_arguments, missing_docs)]
     #[pyo3(signature = (desig, band_wavelength, band_albedos, h_mag=None, diam=None,
-        vis_albedo=None, beaming=None, g_param=None, c_hg=None, emissivity=None, zero_mags=None))]
+        vis_albedo=None, beaming=1.0, g_param=0.15, c_hg=None, emissivity=0.9, zero_mags=None))]
     pub fn new(
         desig: String,
         band_wavelength: Vec<f64>,
@@ -203,16 +203,13 @@ impl PyNeatmParams {
         h_mag: Option<f64>,
         diam: Option<f64>,
         vis_albedo: Option<f64>,
-        beaming: Option<f64>,
-        g_param: Option<f64>,
+        beaming: f64,
+        g_param: f64,
         c_hg: Option<f64>,
-        emissivity: Option<f64>,
+        emissivity: f64,
         zero_mags: Option<Vec<f64>>,
     ) -> PyResult<Self> {
-        let emissivity = emissivity.unwrap_or(0.9);
-        let beaming = beaming.unwrap_or(1.0);
-        let g_param = g_param.unwrap_or(0.15);
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
 
         let obs_bands = ObserverBands::Generic {
             solar_correction: vec![1.0; band_wavelength.len()],
@@ -257,22 +254,19 @@ impl PyNeatmParams {
     #[staticmethod]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None,
-        beaming=None, g_param=None, c_hg=None, emissivity=None))]
+        beaming=1.0, g_param=0.15, c_hg=None, emissivity=0.9))]
     pub fn new_wise(
         desig: String,
         band_albedos: Vec<f64>,
         h_mag: Option<f64>,
         diam: Option<f64>,
         vis_albedo: Option<f64>,
-        beaming: Option<f64>,
-        g_param: Option<f64>,
+        beaming: f64,
+        g_param: f64,
         c_hg: Option<f64>,
-        emissivity: Option<f64>,
+        emissivity: f64,
     ) -> PyResult<Self> {
-        let emissivity = emissivity.unwrap_or(0.9);
-        let beaming = beaming.unwrap_or(1.0);
-        let g_param = g_param.unwrap_or(0.15);
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,
@@ -312,8 +306,8 @@ impl PyNeatmParams {
     /// emissivity:
     ///     Emissivity of the object, defaults to `0.9`.
     #[staticmethod]
-    #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, beaming=None,
-        g_param=None, c_hg=None, emissivity=None))]
+    #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, beaming=1.0,
+        g_param=0.15, c_hg=None, emissivity=0.9))]
     #[allow(clippy::too_many_arguments)]
     pub fn new_neos(
         desig: String,
@@ -321,15 +315,12 @@ impl PyNeatmParams {
         h_mag: Option<f64>,
         diam: Option<f64>,
         vis_albedo: Option<f64>,
-        beaming: Option<f64>,
-        g_param: Option<f64>,
+        beaming: f64,
+        g_param: f64,
         c_hg: Option<f64>,
-        emissivity: Option<f64>,
+        emissivity: f64,
     ) -> PyResult<Self> {
-        let emissivity = emissivity.unwrap_or(0.9);
-        let beaming = beaming.unwrap_or(1.0);
-        let g_param = g_param.unwrap_or(0.15);
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,
@@ -534,7 +525,7 @@ impl PyFrmParams {
     #[new]
     #[allow(clippy::too_many_arguments, missing_docs)]
     #[pyo3(signature = (desig, band_wavelength, band_albedos, h_mag=None, diam=None,
-        vis_albedo=None, g_param=None, c_hg=None, emissivity=None, zero_mags=None))]
+        vis_albedo=None, g_param=0.15, c_hg=None, emissivity=0.9, zero_mags=None))]
     pub fn new(
         desig: String,
         band_wavelength: Vec<f64>,
@@ -542,14 +533,12 @@ impl PyFrmParams {
         h_mag: Option<f64>,
         diam: Option<f64>,
         vis_albedo: Option<f64>,
-        g_param: Option<f64>,
+        g_param: f64,
         c_hg: Option<f64>,
-        emissivity: Option<f64>,
+        emissivity: f64,
         zero_mags: Option<Vec<f64>>,
     ) -> PyResult<Self> {
-        let emissivity = emissivity.unwrap_or(0.9);
-        let g_param = g_param.unwrap_or(0.15);
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
         let obs_bands = ObserverBands::Generic {
             solar_correction: vec![1.0; band_wavelength.len()],
             bands: band_wavelength,
@@ -590,21 +579,19 @@ impl PyFrmParams {
     ///     Emissivity of the object, defaults to `0.9`.
     #[staticmethod]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, g_param=None,
-        c_hg=None, emissivity=None))]
+    #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, g_param=0.15,
+        c_hg=None, emissivity=0.9))]
     pub fn new_wise(
         desig: String,
         band_albedos: Vec<f64>,
         h_mag: Option<f64>,
         diam: Option<f64>,
         vis_albedo: Option<f64>,
-        g_param: Option<f64>,
+        g_param: f64,
         c_hg: Option<f64>,
-        emissivity: Option<f64>,
+        emissivity: f64,
     ) -> PyResult<Self> {
-        let emissivity = emissivity.unwrap_or(0.9);
-        let g_param = g_param.unwrap_or(0.15);
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,
@@ -640,21 +627,19 @@ impl PyFrmParams {
     ///     Emissivity of the object, defaults to `0.9`.
     #[staticmethod]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, g_param=None,
-        c_hg=None, emissivity=None))]
+    #[pyo3(signature = (desig, band_albedos, h_mag=None, diam=None, vis_albedo=None, g_param=0.15,
+        c_hg=None, emissivity=0.9))]
     pub fn new_neos(
         desig: String,
         band_albedos: Vec<f64>,
         h_mag: Option<f64>,
         diam: Option<f64>,
         vis_albedo: Option<f64>,
-        g_param: Option<f64>,
+        g_param: f64,
         c_hg: Option<f64>,
-        emissivity: Option<f64>,
+        emissivity: f64,
     ) -> PyResult<Self> {
-        let emissivity = emissivity.unwrap_or(0.9);
-        let g_param = g_param.unwrap_or(0.15);
-        let hg_params = HGParams::try_fill(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
+        let hg_params = HGParams::try_new(desig, g_param, h_mag, c_hg, vis_albedo, diam)?;
 
         let band_albedos = match band_albedos.try_into() {
             Ok(v) => v,

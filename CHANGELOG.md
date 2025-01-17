@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Added
+
+- Added support for SPICE kernels of type 3, this allows reading satellites of Mars.
+- Added support for choosing to not load the DE440 file when reloading SPICE kernels.
+
+### Fixed
+
+- Fixed the recently added Earth precession calculation which was providing a transposed
+  matrix.
+
+
+## [v1.0.5]
+
+### Added
+
+- Added support for SPICE kernels of type 9, this allows reading SOHO spice files.
+- Added support for SPICE kernels of type 18, this allows reading Rosetta spice files.
+- Added calculation of Earth's precession, allowing the computation of time dependent
+  equatorial vectors.
+
+### Changed
+
+- Comet Magnitude estimates now accepts two phase correction values instead of 1.
+- Restructured SPICE kernel memory management to make entire class of bugs impossible.
+
+### Fixed
+
+- Fixed a text case-sensitivity but on Horizons parameter parsing.
+- Thermal model example had function arguments out of order.
+
+
 ## [v1.0.4]
 
 ### Added
@@ -328,6 +361,7 @@ Initial Release
 
 
 [Unreleased]: https://github.com/IPAC-SW/kete/tree/main
+[1.0.5]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.5
 [1.0.4]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.4
 [1.0.3]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.3
 [1.0.2]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.2

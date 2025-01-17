@@ -1,5 +1,5 @@
 use kete_core::frames::{ecef_to_geodetic_lat_lon, NonInertialFrame};
-use kete_core::spice::{get_pck_singleton, get_spk_singleton};
+use kete_core::spice::{LOADED_PCK, LOADED_SPK};
 use kete_core::{constants, prelude::*};
 use pyo3::{pyfunction, PyResult};
 
@@ -9,7 +9,7 @@ use crate::state::PyState;
 #[pyfunction]
 #[pyo3(name = "pck_load")]
 pub fn pck_load_py(filenames: Vec<String>) -> PyResult<()> {
-    let mut singleton = get_pck_singleton().write().unwrap();
+    let mut singleton = LOADED_PCK.write().unwrap();
     for filename in filenames.iter() {
         let load = (*singleton).load_file(filename);
         if let Err(err) = load {
@@ -52,13 +52,13 @@ pub fn pck_earth_frame_py(
             None => Desig::Empty,
         }
     };
-    let pcks = get_pck_singleton().try_read().unwrap();
+    let pcks = LOADED_PCK.try_read().unwrap();
     let frame = pcks.try_get_orientation(3000, jd)?;
 
     let (pos, vel) = frame.to_equatorial(pos.into(), [0.0, 0.0, 0.0].into());
     let mut state = State::new(desig, jd, pos.into(), vel.into(), 399);
 
-    let spks = get_spk_singleton().try_read().unwrap();
+    let spks = &LOADED_SPK.try_read().unwrap();
     spks.try_change_center(&mut state, new_center)?;
     Ok(PyState(state))
 }
@@ -78,7 +78,7 @@ pub fn pck_earth_frame_py(
 #[pyfunction]
 #[pyo3(name = "state_to_earth_frame")]
 pub fn pck_state_to_earth(state: PyState) -> PyResult<(f64, f64, f64)> {
-    let pcks = get_pck_singleton().try_read().unwrap();
+    let pcks = LOADED_PCK.try_read().unwrap();
     let state = state.change_center(399)?.0;
     let frame = pcks.try_get_orientation(3000, state.jd)?;
 
@@ -98,5 +98,5 @@ pub fn pck_state_to_earth(state: PyState) -> PyResult<(f64, f64, f64)> {
 #[pyfunction]
 #[pyo3(name = "pck_reset")]
 pub fn pck_reset_py() {
-    get_pck_singleton().write().unwrap().reset()
+    LOADED_PCK.write().unwrap().reset()
 }

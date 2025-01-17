@@ -64,7 +64,9 @@ pub struct PyNeosCmos(pub fov::NeosCmos);
 ///         for chip in fov:
 ///             corners = chip.corners
 ///             corners.append(corners[0])
-///             plt.plot([x.lon for x in corners], [y.lat for y in corners], c="k")
+///             plt.plot([x.as_ecliptic.lon for x in corners],
+///                      [y.as_ecliptic.lat for y in corners],
+///                      c="k")
 ///         plt.gca().set_aspect("equal")
 ///         plt.gca().set_axis_off()
 ///         plt.annotate("0", [0.07, 0.8], xycoords="axes fraction")
@@ -210,7 +212,7 @@ pub struct PyGenericCone(pub fov::GenericCone<Equatorial>);
 pub struct PyOmniDirectional(pub fov::OmniDirectional<Equatorial>);
 
 /// Field of views supported by the python interface
-#[derive(Debug, Clone, FromPyObject)]
+#[derive(Debug, Clone, FromPyObject, IntoPyObject)]
 #[allow(clippy::upper_case_acronyms, missing_docs)]
 pub enum AllowedFOV {
     WISE(PyWiseCmos),
@@ -278,21 +280,6 @@ impl AllowedFOV {
             AllowedFOV::NEOSVisit(fov) => fov.__repr__(),
             AllowedFOV::Cone(fov) => fov.__repr__(),
             AllowedFOV::OmniDirectional(fov) => fov.__repr__(),
-        }
-    }
-}
-
-impl IntoPy<PyObject> for AllowedFOV {
-    fn into_py(self, py: Python) -> PyObject {
-        match self {
-            Self::WISE(fov) => fov.into_py(py),
-            Self::NEOS(fov) => fov.into_py(py),
-            Self::Rectangle(fov) => fov.into_py(py),
-            Self::ZTF(fov) => fov.into_py(py),
-            Self::ZTFField(fov) => fov.into_py(py),
-            Self::NEOSVisit(fov) => fov.into_py(py),
-            Self::Cone(fov) => fov.into_py(py),
-            Self::OmniDirectional(fov) => fov.into_py(py),
         }
     }
 }

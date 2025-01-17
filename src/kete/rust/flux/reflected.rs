@@ -78,8 +78,8 @@ pub fn hg_apparent_flux_py(
 ) -> f64 {
     let c_hg = c_hg.unwrap_or(constants::C_V);
     let sun2obj = sun2obj.into_vector::<Equatorial>();
-    let sun2obs = sun2obs.into_vector();
-    let params = HGParams::try_fill(
+    let sun2obs = sun2obs.into_vector::<Equatorial>();
+    let params = HGParams::try_new(
         "".into(),
         g_param,
         h_mag,

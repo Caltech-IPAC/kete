@@ -77,7 +77,7 @@ impl PyState {
     /// If the desired state is not a known NAIF id this will raise an exception.
     pub fn change_center(&self, naif_id: i64) -> PyResult<Self> {
         let mut state = self.0.clone();
-        let spk = prelude::get_spk_singleton().try_read().unwrap();
+        let spk = prelude::LOADED_SPK.try_read().unwrap();
         spk.try_change_center(&mut state, naif_id)?;
         Ok(Self(state))
     }

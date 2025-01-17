@@ -1,7 +1,6 @@
-use kete_core::spice::{get_spk_singleton, try_name_from_id, SpiceFrames};
+use kete_core::spice::{try_name_from_id, LOADED_SPK};
 use pyo3::{pyfunction, PyResult, Python};
 
-use crate::frame::PyFrames;
 use crate::state::PyState;
 use crate::time::PyTime;
 
@@ -9,7 +8,7 @@ use crate::time::PyTime;
 #[pyfunction]
 #[pyo3(name = "spk_load")]
 pub fn spk_load_py(py: Python<'_>, filenames: Vec<String>) -> PyResult<()> {
-    let mut singleton = get_spk_singleton().write().unwrap();
+    let mut singleton = LOADED_SPK.write().unwrap();
     if filenames.len() > 100 {
         eprintln!("Loading {} spk files...", filenames.len());
     }
@@ -29,26 +28,17 @@ pub fn spk_load_py(py: Python<'_>, filenames: Vec<String>) -> PyResult<()> {
 /// (JD_start, JD_end, Center Naif ID, Frame, SPK Segment type ID)
 #[pyfunction]
 #[pyo3(name = "spk_available_info")]
-pub fn spk_available_info_py(naif_id: i64) -> Vec<(f64, f64, i64, PyFrames, i32)> {
-    let singleton = get_spk_singleton().try_read().unwrap();
+pub fn spk_available_info_py(naif_id: i64) -> Vec<(f64, f64, i64, i32)> {
+    let singleton = &LOADED_SPK.try_read().unwrap();
     singleton
         .available_info(naif_id)
-        .into_iter()
-        .map(|(s, e, c, frame, ty)| {
-            let frame = match frame {
-                SpiceFrames::J2000 => PyFrames::Equatorial,
-                SpiceFrames::ECLIPJ2000 => PyFrames::Ecliptic,
-            };
-            (s, e, c, frame, ty)
-        })
-        .collect()
 }
 
 /// Return a list of all NAIF IDs currently loaded in the SPK shared memory singleton.
 #[pyfunction]
 #[pyo3(name = "spk_loaded")]
 pub fn spk_loaded_objects_py() -> Vec<i64> {
-    let spk = get_spk_singleton().try_read().unwrap();
+    let spk = &LOADED_SPK.try_read().unwrap();
     let loaded = spk.loaded_objects(false);
     let mut loaded: Vec<i64> = loaded.into_iter().collect();
     loaded.sort();
@@ -67,9 +57,9 @@ pub fn spk_get_name_from_id_py(id: i64) -> String {
 
 /// Reset the contents of the SPK shared memory to the default set of SPK kernels.
 #[pyfunction]
-#[pyo3(name = "spk_reset")]
-pub fn spk_reset_py() {
-    get_spk_singleton().write().unwrap().reset()
+#[pyo3(name = "spk_reset", signature = (include_preload=true))]
+pub fn spk_reset_py(include_preload: bool) {
+    LOADED_SPK.write().unwrap().reset(include_preload)
 }
 
 /// Calculate the state of a given object.
@@ -88,7 +78,7 @@ pub fn spk_reset_py() {
 #[pyo3(name = "spk_state")]
 pub fn spk_state_py(id: i64, jd: PyTime, center: i64) -> PyResult<PyState> {
     let jd = jd.jd();
-    let spk = get_spk_singleton().try_read().unwrap();
+    let spk = &LOADED_SPK.try_read().unwrap();
     let mut state = spk.try_get_state(id, jd, center)?;
     let _ = state.try_naif_id_to_name();
     Ok(PyState(state))
@@ -108,6 +98,6 @@ pub fn spk_state_py(id: i64, jd: PyTime, center: i64) -> PyResult<PyState> {
 #[pyo3(name = "spk_raw_state")]
 pub fn spk_raw_state_py(id: i64, jd: PyTime) -> PyResult<PyState> {
     let jd = jd.jd();
-    let spk = get_spk_singleton().try_read().unwrap();
+    let spk = &LOADED_SPK.try_read().unwrap();
     Ok(PyState(spk.try_get_raw_state(id, jd)?))
 }

@@ -12,42 +12,42 @@ use polars::prelude::*;
 
 /// Write a collection of states to a parquet table.
 pub fn write_states_parquet(states: &[State<Equatorial>], filename: &str) -> KeteResult<()> {
-    let desigs = Series::new(
+    let desigs = Column::new(
         "desig".into(),
         states
             .iter()
             .map(|state| state.desig.to_string())
             .collect_vec(),
     );
-    let jd = Series::new(
+    let jd = Column::new(
         "jd".into(),
         states.iter().map(|state| state.jd).collect_vec(),
     );
-    let x = Series::new(
+    let x = Column::new(
         "x".into(),
         states.iter().map(|state| state.pos[0]).collect_vec(),
     );
-    let y = Series::new(
+    let y = Column::new(
         "y".into(),
         states.iter().map(|state| state.pos[1]).collect_vec(),
     );
-    let z = Series::new(
+    let z = Column::new(
         "z".into(),
         states.iter().map(|state| state.pos[2]).collect_vec(),
     );
-    let vx = Series::new(
+    let vx = Column::new(
         "vx".into(),
         states.iter().map(|state| state.vel[0]).collect_vec(),
     );
-    let vy = Series::new(
+    let vy = Column::new(
         "vy".into(),
         states.iter().map(|state| state.vel[1]).collect_vec(),
     );
-    let vz = Series::new(
+    let vz = Column::new(
         "vz".into(),
         states.iter().map(|state| state.vel[2]).collect_vec(),
     );
-    let center = Series::new(
+    let center = Column::new(
         "center".into(),
         states.iter().map(|state| state.center_id).collect_vec(),
     );

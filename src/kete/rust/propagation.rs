@@ -4,7 +4,7 @@ use kete_core::{
     errors::Error,
     frames::Equatorial,
     propagation::{self, moid, NonGravModel},
-    spice::{self, get_spk_singleton},
+    spice::{self, LOADED_SPK},
     state::State,
     time::{scales::TDB, Time},
 };
@@ -28,12 +28,14 @@ use crate::{nongrav::PyNonGravModel, time::PyTime};
 #[pyfunction]
 #[pyo3(name = "moid", signature = (state_a, state_b=None))]
 pub fn moid_py(state_a: PyState, state_b: Option<PyState>) -> PyResult<f64> {
-    let state_b = state_b.map(|x| x.0).unwrap_or(
-        get_spk_singleton()
-            .read()
-            .unwrap()
-            .try_get_state::<Equatorial>(399, state_a.0.jd, 10)?,
-    );
+    let state_b = state_b
+        .map(|x| x.0)
+        .unwrap_or(
+            LOADED_SPK
+                .read()
+                .unwrap()
+                .try_get_state(399, state_a.0.jd, 10)?,
+        );
     Ok(moid(&state_a.0, &state_b)?)
 }
 

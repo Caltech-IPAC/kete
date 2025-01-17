@@ -53,7 +53,7 @@ fn prop_n_body_radau(state: State<Ecliptic>, dt: f64) {
 }
 
 fn prop_n_body_vec_radau(mut state: State<Ecliptic>, dt: f64) {
-    let spk = get_spk_singleton().read().unwrap();
+    let spk = &LOADED_SPK.read().unwrap();
     spk.try_change_center(&mut state, 10).unwrap();
     let states = vec![state.clone(); 100];
     let non_gravs = vec![None; 100];

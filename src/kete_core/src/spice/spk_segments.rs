@@ -30,8 +30,11 @@ use std::marker::PhantomData;
 pub enum SpkSegmentType {
     Type1(SpkSegmentType1),
     Type2(SpkSegmentType2),
+    Type3(SpkSegmentType3),
+    Type9(SpkSegmentType9),
     Type10(SpkSegmentType10),
     Type13(SpkSegmentType13),
+    Type18(SpkSegmentType18),
     Type21(SpkSegmentType21),
 }
 
@@ -41,8 +44,11 @@ impl SpkSegmentType {
         match segment_type {
             1 => Ok(SpkSegmentType::Type1(array.into())),
             2 => Ok(SpkSegmentType::Type2(array.into())),
+            3 => Ok(SpkSegmentType::Type3(array.into())),
+            9 => Ok(SpkSegmentType::Type9(array.into())),
             13 => Ok(SpkSegmentType::Type13(array.into())),
             10 => Ok(SpkSegmentType::Type10(array.into())),
+            18 => Ok(SpkSegmentType::Type18(array.into())),
             21 => Ok(SpkSegmentType::Type21(array.into())),
             v => Err(Error::IOError(format!(
                 "SPK Segment type {:?} not supported.",
@@ -57,8 +63,11 @@ impl From<SpkSegmentType> for DafArray {
         match value {
             SpkSegmentType::Type1(seg) => seg.array,
             SpkSegmentType::Type2(seg) => seg.array,
+            SpkSegmentType::Type3(seg) => seg.array,
+            SpkSegmentType::Type9(seg) => seg.array,
             SpkSegmentType::Type10(seg) => seg.array.array,
             SpkSegmentType::Type13(seg) => seg.array,
+            SpkSegmentType::Type18(seg) => seg.array,
             SpkSegmentType::Type21(seg) => seg.array,
         }
     }
@@ -143,8 +152,11 @@ impl<T: InertialFrame> SpkSegment<T> {
         let (pos, vel) = match &self.segment {
             SpkSegmentType::Type1(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type2(v) => v.try_get_pos_vel(self, jd)?,
+            SpkSegmentType::Type3(v) => v.try_get_pos_vel(self, jd)?,
+            SpkSegmentType::Type9(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type10(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type13(v) => v.try_get_pos_vel(self, jd)?,
+            SpkSegmentType::Type18(v) => v.try_get_pos_vel(self, jd)?,
             SpkSegmentType::Type21(v) => v.try_get_pos_vel(self, jd)?,
         };
         let des = Desig::Naif(self.obj_id);
@@ -347,7 +359,7 @@ impl SpkSegmentType2 {
 
         let t_step_scaled = 86400.0 / t_step / AU_KM;
 
-        let (p, v) = chebyshev3_evaluate_both(t, record.x_coef, record.y_coef, record.z_coef)?;
+        let (p, v) = chebyshev_evaluate_both(t, record.x_coef, record.y_coef, record.z_coef)?;
         Ok((
             [p[0] / AU_KM, p[1] / AU_KM, p[2] / AU_KM],
             [
@@ -379,12 +391,196 @@ impl From<DafArray> for SpkSegmentType2 {
     }
 }
 
+/// Type 3 - Chebyshev Polynomials (Position & Velocity)
+///
+/// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/spk.html#Type%203:%20Chebyshev%20position%20and%20velocity>
+///
+#[derive(Debug)]
+pub struct SpkSegmentType3 {
+    array: DafArray,
+    jd_step: f64,
+    n_coef: usize,
+    record_len: usize,
+}
+
+/// Type 3 Record View
+/// A view into a record of type 3, provided mainly for clarity to the underlying
+/// data structure.
+struct Type3RecordView<'a> {
+    t_mid: &'a f64,
+    t_step: &'a f64,
+
+    x_coef: &'a [f64],
+    y_coef: &'a [f64],
+    z_coef: &'a [f64],
+
+    vx_coef: &'a [f64],
+    vy_coef: &'a [f64],
+    vz_coef: &'a [f64],
+}
+
+impl SpkSegmentType3 {
+    #[inline(always)]
+    fn get_record(&self, idx: usize) -> Type3RecordView {
+        unsafe {
+            let vals = self
+                .array
+                .data
+                .get_unchecked(idx * self.record_len..(idx + 1) * self.record_len);
+
+            Type3RecordView {
+                t_mid: vals.get_unchecked(0),
+                t_step: vals.get_unchecked(1),
+                x_coef: vals.get_unchecked(2..(self.n_coef + 2)),
+                y_coef: vals.get_unchecked((self.n_coef + 2)..(2 * self.n_coef + 2)),
+                z_coef: vals.get_unchecked((2 * self.n_coef + 2)..(3 * self.n_coef + 2)),
+                vx_coef: vals.get_unchecked((3 * self.n_coef + 2)..(4 * self.n_coef + 2)),
+                vy_coef: vals.get_unchecked((4 * self.n_coef + 2)..(5 * self.n_coef + 2)),
+                vz_coef: vals.get_unchecked((5 * self.n_coef + 2)..(6 * self.n_coef + 2)),
+            }
+        }
+    }
+
+    #[inline(always)]
+    fn try_get_pos_vel<T: InertialFrame>(&self, segment: &SpkSegment<T>, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
+        let jd = jd_to_spice_jd(jd);
+        let jd_start = jd_to_spice_jd(segment.jd_start);
+        let record_index = ((jd - jd_start) / self.jd_step).floor() as usize;
+        let record = self.get_record(record_index);
+
+        let t_step = record.t_step;
+
+        let t = (jd - record.t_mid) / t_step;
+
+        let t_scaled = 86400.0 / AU_KM;
+
+        let p = chebyshev_evaluate(t, record.x_coef, record.y_coef, record.z_coef)?;
+        let v = chebyshev_evaluate(t, record.vx_coef, record.vy_coef, record.vz_coef)?;
+        Ok((
+            [p[0] / AU_KM, p[1] / AU_KM, p[2] / AU_KM],
+            [v[0] * t_scaled, v[1] * t_scaled, v[2] * t_scaled],
+        ))
+    }
+}
+
+impl From<DafArray> for SpkSegmentType3 {
+    fn from(array: DafArray) -> Self {
+        let record_len = array[array.len() - 2] as usize;
+        let jd_step = array[array.len() - 3];
+
+        let n_coef = (record_len - 2) / 6;
+
+        if 6 * n_coef + 2 != record_len {
+            panic!("File incorrectly formatted, found number of Chebyshev coefficients doesn't match expected");
+        }
+
+        SpkSegmentType3 {
+            array,
+            n_coef,
+            record_len,
+            jd_step,
+        }
+    }
+}
+
+// TODO: SPK Segment type 8 should be a minor variation on type 9. This was not
+// implemented here due to missing a valid SPK file to test against.
+
+/// Lagrange Interpolation (Uneven Time Steps)
+///
+/// This uses a collection of individual positions/velocities and interpolates between
+/// them using Lagrange interpolation.
+/// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/spk.html#Type%209:%20Lagrange%20Interpolation%20---%20Unequal%20Time%20Steps>
+#[derive(Debug)]
+pub struct SpkSegmentType9 {
+    array: DafArray,
+    poly_degree: usize,
+    n_records: usize,
+}
+
+impl From<DafArray> for SpkSegmentType9 {
+    fn from(array: DafArray) -> Self {
+        let n_records = array[array.len() - 1] as usize;
+        let poly_degree = array[array.len() - 2] as usize;
+
+        Self {
+            array,
+            poly_degree,
+            n_records,
+        }
+    }
+}
+
+/// Type 9 Record View
+/// A view into a record of type 9, provided mainly for clarity to the underlying
+/// data structure.
+struct Type9RecordView<'a> {
+    pos: &'a [f64; 3],
+    vel: &'a [f64; 3],
+}
+
+impl SpkSegmentType9 {
+    #[inline(always)]
+    fn get_record(&self, idx: usize) -> Type9RecordView {
+        unsafe {
+            let rec = self.array.data.get_unchecked(idx * 6..(idx + 1) * 6);
+            Type9RecordView {
+                pos: rec[0..3].try_into().unwrap(),
+                vel: rec[3..6].try_into().unwrap(),
+            }
+        }
+    }
+
+    #[inline(always)]
+    fn get_times(&self) -> &[f64] {
+        unsafe {
+            self.array
+                .data
+                .get_unchecked(self.n_records * 6..self.n_records * 7)
+        }
+    }
+
+    #[inline(always)]
+    fn try_get_pos_vel<T: InertialFrame>(&self, _: &SpkSegment<T>, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
+        let jd = jd_to_spice_jd(jd);
+        let times = self.get_times();
+        let window_size = self.poly_degree + 1;
+        let start_idx: isize = match times.binary_search_by(|probe| probe.total_cmp(&jd)) {
+            Ok(c) => c as isize - (window_size as isize) / 2,
+            Err(c) => {
+                if (jd - times[c - 1]).abs() < (jd - times[c]).abs() {
+                    c as isize - 1 - window_size as isize / 2
+                } else {
+                    c as isize - window_size as isize / 2
+                }
+            }
+        };
+        let start_idx = start_idx.clamp(0, (self.n_records - window_size) as isize) as usize;
+
+        let mut pos = [0.0; 3];
+        let mut vel = [0.0; 3];
+        for idx in 0..3 {
+            let mut p: Box<[f64]> = (0..window_size)
+                .map(|i| self.get_record(i + start_idx).pos[idx])
+                .collect();
+            let mut dp: Box<[f64]> = (0..window_size)
+                .map(|i| self.get_record(i + start_idx).vel[idx])
+                .collect();
+            let p = lagrange_interpolation(&times[start_idx..start_idx + window_size], &mut p, jd);
+            let v = lagrange_interpolation(&times[start_idx..start_idx + window_size], &mut dp, jd);
+            pos[idx] = p / AU_KM;
+            vel[idx] = v / AU_KM * 86400.;
+        }
+
+        Ok((pos, vel))
+    }
+}
+
 /// Space Command two-line elements
 ///
 /// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/spk.html#Type%2010:%20Space%20Command%20Two-Line%20Elements>
 ///
 #[derive(Debug)]
-#[allow(unused)]
 pub struct SpkSegmentType10 {
     /// Generic Segments are a collection of a few different directories:
     /// `Packets` are where Type 10 stores the TLE values.
@@ -399,7 +595,6 @@ pub struct SpkSegmentType10 {
     geopotential: Geopotential,
 }
 
-#[allow(unused)]
 impl SpkSegmentType10 {
     #[inline(always)]
     fn get_times(&self) -> &[f64] {
@@ -421,7 +616,7 @@ impl SpkSegmentType10 {
                 .naive_utc(),
         );
 
-        /// use the provided goepotential even if it is not correct.
+        // use the provided goepotential even if it is not correct.
         let orbit_0 = Orbit::from_kozai_elements(
             &self.geopotential,
             inclination,
@@ -600,6 +795,166 @@ impl SpkSegmentType13 {
             vel[idx] = v / AU_KM * 86400.;
         }
 
+        Ok((pos, vel))
+    }
+}
+
+/// Type 18 Record
+///
+/// This is actually 2 types in 1, under the stated goal of reducing the number
+/// of unique SPICE kernel types.
+///
+/// Subtype 0 is a Hermite Interpolation of both position and velocity, a record
+/// contains 12 numbers, 3 position, 3 derivative of position, 3 velocity, and 3
+/// derivative of velocity. Note that it explicitly allows that the 3 velocity
+/// values do not have to match the derivative of the position vectors.
+/// Subtype 1 is a Lagrange Interpolation, a record of which contains 6 values,
+/// 3 position, and 3 velocity.
+///
+/// <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/spk.html#Type%2018:%20ESOC/DDID%20Hermite/Lagrange%20Interpolation>
+#[derive(Debug)]
+pub struct SpkSegmentType18 {
+    array: DafArray,
+    subtype: usize,
+    window_size: usize,
+    n_records: usize,
+    record_size: usize,
+}
+
+impl From<DafArray> for SpkSegmentType18 {
+    fn from(array: DafArray) -> Self {
+        let n_records = array[array.len() - 1] as usize;
+        let window_size = array[array.len() - 2] as usize;
+        let subtype = array[array.len() - 3] as usize;
+        let record_size = {
+            if subtype == 0 {
+                12
+            } else if subtype == 1 {
+                6
+            } else {
+                panic!("Spk Segment Type 12 only supports subtype of 0 or 1")
+            }
+        };
+
+        SpkSegmentType18 {
+            array,
+            subtype,
+            window_size,
+            n_records,
+            record_size,
+        }
+    }
+}
+
+/// Type 18 Record View
+/// A view into a record of type 18, provided mainly for clarity to the underlying
+/// data structure.
+struct Type18RecordView<'a> {
+    pos: &'a [f64],
+    vel: &'a [f64],
+}
+
+impl SpkSegmentType18 {
+    #[inline(always)]
+    fn get_record(&self, idx: usize) -> Type18RecordView {
+        unsafe {
+            let rec = self
+                .array
+                .data
+                .get_unchecked(idx * self.record_size..(idx + 1) * self.record_size);
+            Type18RecordView {
+                pos: &rec[0..self.record_size / 2],
+                vel: &rec[self.record_size / 2..self.record_size],
+            }
+        }
+    }
+
+    #[inline(always)]
+    fn get_times(&self) -> &[f64] {
+        unsafe {
+            self.array.data.get_unchecked(
+                self.n_records * self.record_size..self.n_records * (self.record_size + 1),
+            )
+        }
+    }
+
+    #[inline(always)]
+    fn try_get_pos_vel<T: InertialFrame>(&self, _: &SpkSegment<T>, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
+        let jd = jd_to_spice_jd(jd);
+        let times = self.get_times();
+        let start_idx: isize = match times.binary_search_by(|probe| probe.total_cmp(&jd)) {
+            Ok(c) => c as isize - (self.window_size as isize) / 2,
+            Err(c) => {
+                if (jd - times[c - 1]).abs() < (jd - times[c]).abs() {
+                    c as isize - 1 - self.window_size as isize / 2
+                } else {
+                    c as isize - self.window_size as isize / 2
+                }
+            }
+        };
+        let start_idx =
+            start_idx.clamp(0, self.n_records as isize - self.window_size as isize) as usize;
+
+        let mut pos = [0.0; 3];
+        let mut vel = [0.0; 3];
+        match self.subtype {
+            0 => {
+                for idx in 0..3 {
+                    let p: Box<[f64]> = (0..self.window_size)
+                        .map(|i| self.get_record(i + start_idx).pos[idx])
+                        .collect();
+                    let dp: Box<[f64]> = (0..self.window_size)
+                        .map(|i| self.get_record(i + start_idx).pos[idx + 3])
+                        .collect();
+                    let (p, _) = hermite_interpolation(
+                        &times[start_idx..start_idx + self.window_size],
+                        &p,
+                        &dp,
+                        jd,
+                    );
+                    pos[idx] = p / AU_KM;
+
+                    let p: Box<[f64]> = (0..self.window_size)
+                        .map(|i| self.get_record(i + start_idx).vel[idx])
+                        .collect();
+                    let dp: Box<[f64]> = (0..self.window_size)
+                        .map(|i| self.get_record(i + start_idx).vel[idx + 3])
+                        .collect();
+                    let (v, _) = hermite_interpolation(
+                        &times[start_idx..start_idx + self.window_size],
+                        &p,
+                        &dp,
+                        jd,
+                    );
+                    vel[idx] = v / AU_KM * 86400.;
+                }
+            }
+            1 => {
+                for idx in 0..3 {
+                    let mut p: Box<[f64]> = (0..self.window_size)
+                        .map(|i| self.get_record(i + start_idx).pos[idx])
+                        .collect();
+                    let mut dp: Box<[f64]> = (0..self.window_size)
+                        .map(|i| self.get_record(i + start_idx).vel[idx])
+                        .collect();
+                    let p = lagrange_interpolation(
+                        &times[start_idx..start_idx + self.window_size],
+                        &mut p,
+                        jd,
+                    );
+                    let v = lagrange_interpolation(
+                        &times[start_idx..start_idx + self.window_size],
+                        &mut dp,
+                        jd,
+                    );
+                    pos[idx] = p / AU_KM;
+                    vel[idx] = v / AU_KM * 86400.;
+                }
+            }
+            _ => {
+                unreachable!()
+            }
+        }
         Ok((pos, vel))
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "kete_core"
-version = "1.0.4"
+version = "1.0.5"
 edition = "2021"
 readme = "README.md"
 license = "BSD-3-Clause"
@@ -14,12 +14,13 @@ argmin = "^0.10.0"
 argmin-math = "^0.4.0"
 chrono = "^0.4.38"
 crossbeam = "^0.8.4"
-itertools = "^0.13.0"
+itertools = "^0.14.0"
+kdtree = "^0.7.0"
 lazy_static = "^1.5.0"
 nalgebra = {version = "^0.33.0"}
-polars = {version = "0.43.1", optional=true, features=["parquet", "polars-io"]}
+polars = {version = "0.45.1", optional=true, features=["parquet", "polars-io"]}
 pathfinding = "^4.10.0"
-pyo3 = { version =  "^0.22.1", optional=true}
+pyo3 = { version =  "^0.23.4", optional=true}
 rayon = "^1.10.0"
 serde = { version = "^1.0.203", features = ["derive"] }
 smol_str = {version = "^0.3.2", features = ["serde"]}
@@ -35,11 +36,11 @@ criterion = { version = "*", features = ["html_reports"] }
 # pprof is used for flame graphs, this is failing on windows currently so only
 # linux and mac are supported here.
 [target.'cfg(target_os = "linux")'.dev-dependencies]
-pprof = { version = "0.13", features = ["flamegraph", "criterion"] }
+pprof = { version = "0.14", features = ["flamegraph", "criterion"] }
 
 # macos needs the frame-pointer flag, however this doesn't function on linux
 [target.'cfg(target_os = "macos")'.dev-dependencies]
-pprof = { version = "0.13", features = ["flamegraph", "criterion", "frame-pointer"] }
+pprof = { version = "0.14", features = ["flamegraph", "criterion", "frame-pointer"] }
 
 [[bench]]
 name = "propagation"

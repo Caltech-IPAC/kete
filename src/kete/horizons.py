@@ -143,7 +143,9 @@ def fetch(name, update_name=True, cache=True, update_cache=False, exact_name=Fal
             if "model_pars" in props["orbit"]:
                 for param in props["orbit"]["model_pars"]:
                     elements[param["name"]] = float(param["value"])
-            params = [(lookup_rev.get(x, x), elements.get(x, np.nan)) for x in labels]
+            params = [
+                (lookup_rev.get(x, x.lower()), elements.get(x, np.nan)) for x in labels
+            ]
             phys["covariance"] = Covariance(name, cov_epoch, params, mat)
     else:
         raise ValueError(
@@ -466,7 +468,8 @@ def fetch_known_orbit_data(update_cache=False):
         res = requests.get(
             (
                 "https://ssd-api.jpl.nasa.gov/sbdb_query.api?fields="
-                "pdes,spkid,orbit_id,rms,H,diameter,epoch,e,i,q,w,tp,om,A1,A2,A3,DT,M1,M2,K1,K2,PC,rot_per"
+                "pdes,spkid,orbit_id,rms,H,diameter,epoch,e,i,q,w,tp,om,"
+                "A1,A2,A3,DT,M1,M2,K1,K2,PC,rot_per"
                 "&full-prec=1&sb-xfrag=1"
             ),
             timeout=120,

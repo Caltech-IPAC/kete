@@ -20,7 +20,7 @@
 //!
 use crate::frames::Equatorial;
 use crate::prelude::KeteResult;
-use crate::spice::get_spk_singleton;
+use crate::spice::LOADED_SPK;
 use crate::{constants::*, errors::Error, propagation::nongrav::NonGravModel};
 use nalgebra::allocator::Allocator;
 use nalgebra::{DefaultAllocator, Dim, Matrix3, OVector, Vector3, U1, U2};
@@ -136,7 +136,7 @@ pub fn spk_accel(
         }
     }
 
-    let spk = get_spk_singleton().try_read().unwrap();
+    let spk = &LOADED_SPK.try_read().unwrap();
 
     for grav_params in meta.massive_obj.iter() {
         let id = grav_params.naif_id;
@@ -298,7 +298,7 @@ mod tests {
 
     #[test]
     fn check_accelerations_equal() {
-        let spk = get_spk_singleton().try_read().unwrap();
+        let spk = &LOADED_SPK.try_read().unwrap();
         let jd = 2451545.0;
         let mut pos: Vec<f64> = Vec::new();
         let mut vel: Vec<f64> = Vec::new();

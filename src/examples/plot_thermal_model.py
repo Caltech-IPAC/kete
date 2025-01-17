@@ -35,12 +35,12 @@ obj2sun = np.array([1, 0, 0])
 # result is not used in this example.
 
 # Compute the temperature at the subsolar point on the object.
-# Note that FRM uses a beaming = pi
 neatm_subsolar_temp = kete.flux.sub_solar_temperature(
-    -obj2sun, vis_albedo, g_phase, emissivity, beaming
+    -obj2sun, vis_albedo, g_phase, beaming, emissivity
 )
+# Note that FRM uses a beaming = pi
 frm_subsolar_temp = kete.flux.sub_solar_temperature(
-    -obj2sun, vis_albedo, g_phase, emissivity
+    -obj2sun, vis_albedo, g_phase, np.pi, emissivity
 )
 
 # Compute the FRM and NEATM facet temperatures for the object
@@ -60,7 +60,7 @@ plt.figure(dpi=150, figsize=(6, 3))
 plt.subplot(121, projection="3d")
 
 norm = mpl.colors.Normalize(vmin=0, vmax=max(neatm_facet_temps))
-m = cm.ScalarMappable(norm=norm, cmap=mpl.colormaps["RdBu_r"])
+m = cm.ScalarMappable(norm=norm, cmap=mpl.colormaps["inferno"])
 colors = m.to_rgba(neatm_facet_temps, alpha=1)
 polygons = Poly3DCollection(geom.facets, edgecolor="black", lw=0.2, color=colors)
 plt.gca().add_collection3d(polygons)
