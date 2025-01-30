@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed the recently added Earth precession calculation which was providing a transposed
   matrix.
 
+### Changed
+
+- Updated the WISE spice kernels, which improve accuracy significantly for the final 2
+  years of WISE/NEOWISE.
+
 
 ## [v1.0.5]
 
