@@ -313,7 +313,6 @@ def plot_groups():
         import kete
         kete.population.plot_groups();
 
-
     """
 
     ecc = np.linspace(0.01, 1.1, 501)
