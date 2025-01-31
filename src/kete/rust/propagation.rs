@@ -59,6 +59,9 @@ pub fn moid_py(state_a: PyState, state_b: Option<PyState>) -> PyResult<f64> {
 /// suppress_errors:
 ///     If True, errors during propagation will return NaN for the relevant state
 ///     vectors, but propagation will continue.
+/// suppress_impact_errors:
+///     If True, impacts will be printed to stderr, but states will still return
+///     filled with `NaN`. If False, impacts are not printed.
 ///
 /// Returns
 /// -------
@@ -66,7 +69,7 @@ pub fn moid_py(state_a: PyState, state_b: Option<PyState>) -> PyResult<f64> {
 ///     A :class:`~kete.State` at the new time.
 #[pyfunction]
 #[pyo3(name = "propagate_n_body", signature = (states, jd, include_asteroids=false,
-    non_gravs=None, suppress_errors=true))]
+    non_gravs=None, suppress_errors=true, suppress_impact_errors=false))]
 pub fn propagation_n_body_spk_py(
     py: Python<'_>,
     states: Vec<PyState>,
@@ -74,6 +77,7 @@ pub fn propagation_n_body_spk_py(
     include_asteroids: bool,
     non_gravs: Option<Vec<Option<PyNonGravModel>>>,
     suppress_errors: bool,
+    suppress_impact_errors: bool,
 ) -> PyResult<Vec<PyState>> {
     let states: Vec<State> = states.into_iter().map(|x| x.0).collect();
     let non_gravs = non_gravs.unwrap_or(vec![None; states.len()]);
@@ -124,13 +128,16 @@ pub fn propagation_n_body_spk_py(
                         } else {
                             if let Error::Impact(id, time) = er {
                                 let time_full: Time<TDB> = Time::new(time);
-                                eprintln!(
-                                    "Impact detected between {:?} <-> {} at time {} ({})",
-                                    desig,
-                                    spice::try_name_from_id(id).unwrap_or(id.to_string()),
-                                    time,
-                                    time_full.utc().to_iso().unwrap()
-                                );
+                                if !suppress_impact_errors {
+                                    eprintln!(
+                                        "Impact detected between ({:?}) <-> ({}) at time {} ({})",
+                                        desig,
+                                        spice::try_name_from_id(id)
+                                            .unwrap_or(id.to_string()),
+                                        time,
+                                        time_full.utc().to_iso().unwrap()
+                                    );
+                                }
                             };
                             Ok(State::new_nan(desig, jd, frame, center).into())
                         }
