@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [v1.0.6]
 
 ### Added
 
@@ -22,7 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated the WISE spice kernels, which improve accuracy significantly for the final 2
+- Updated PCK Files for Earth's orientation to the latest produced by NAIF.
+- Updated leap second file (no new leap seconds).
+- Updated the WISE spice kernels, which improves accuracy significantly for the final 2
   years of WISE/NEOWISE.
 
 
@@ -368,6 +370,7 @@ Initial Release
 
 
 [Unreleased]: https://github.com/IPAC-SW/kete/tree/main
+[1.0.6]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.6
 [1.0.5]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.5
 [1.0.4]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.4
 [1.0.3]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.3

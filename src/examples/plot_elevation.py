@@ -26,7 +26,7 @@ timezone = ZoneInfo("America/Los_Angeles")
 
 object_names = ["Vesta", "10p", "Pallas", 734]
 
-start_time = datetime(2024, 2, 11, 12, tzinfo=timezone)
+start_time = datetime(2025, 2, 11, 12, tzinfo=timezone)
 
 # Observers position, on the surface of the earth:
 site = "Palomar Mountain"

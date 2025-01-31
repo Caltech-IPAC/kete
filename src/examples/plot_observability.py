@@ -28,8 +28,8 @@ import kete
 # -------
 obj = kete.HorizonsProperties.fetch("Eros", update_name=False)
 
-start_time = kete.Time.from_ymd(2023, 11, 1).jd
-end_time = kete.Time.from_ymd(2024, 11, 1).jd
+start_time = kete.Time.from_ymd(2024, 11, 1).jd
+end_time = kete.Time.from_ymd(2025, 11, 1).jd
 
 # Observers position:
 site = "Palomar Mountain"

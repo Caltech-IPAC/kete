@@ -22,11 +22,9 @@ pub fn pck_load_py(filenames: Vec<String>) -> PyResult<()> {
 /// Convert a position vector which is geocentered in the earth frame to a position
 /// vector in the sun centered ecliptic frame.
 ///
-/// This requires the `earth_000101_*.pck` file to be loaded which contains the
-/// instantaneous earth frame information. The one provided by kete has dates from
-/// around 2000 to early 2024. New files may be downloaded from the NAIF website for
-/// additional precision or years of epoch. The current file is accurate to ~5 cm
-/// precision.
+/// This uses PCK files produces by the NAIF team at JPL. New files may be downloaded
+/// from the NAIF website if so desired, but the one provided is a highest accuracy
+/// copy available as of Jan 2025.
 ///
 /// parameters
 /// ----------
