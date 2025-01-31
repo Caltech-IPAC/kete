@@ -322,11 +322,9 @@ def earth_pos_to_ecliptic(
     This uses the WGS84 model of Earth's shape to compute state. This uses Geodetic
     latitude and longitude, not geocentric.
 
-    The frame conversion is done using a high precision PCK file from the NAIF/JPL
-    website. The file provided in kete is valid from ~2000 to ~2024. This file
-    gives positional error on the scale of a few cm. Additionally a lower resolution
-    file is provided which is valid until 2099, and will be used automatically when
-    querying past the end of the high resolution file.
+    The frame conversion is done using a PCK file from the NAIF/JPL website.
+    This is the combined PCK file containing lower accuracy historical data, high
+    accuracy modern data, and the current predictions going forward.
 
     Parameters
     ----------

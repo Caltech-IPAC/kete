@@ -1,7 +1,7 @@
 //! Loading and reading of states from JPL PCK kernel files.
 //!
 //! PCKs are intended to be loaded into a singleton which is accessible via the
-//! [`get_pck_singleton`] function defined below. This singleton is wrapped in a RwLock,
+//! [`LOADED_PCK`] object defined below. This singleton is wrapped in a RwLock,
 //! meaning before its use it must by unwrapped. A vast majority of intended use cases
 //! will only be the read case.
 //!
@@ -15,8 +15,7 @@ use lazy_static::lazy_static;
 use std::io::Cursor;
 
 const PRELOAD_PCK: &[&[u8]] = &[
-    include_bytes!("../../data/earth_000101_240215_231123.bpc"),
-    include_bytes!("../../data/earth_200101_990825_predict.bpc"),
+    include_bytes!("../../data/earth_1962_240827_2124_combined.bpc"),
 ];
 
 /// A collection of segments.

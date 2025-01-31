@@ -36,7 +36,7 @@ print(state)
 # %% Pick an observing time:
 # By default, kete uses TDB scaled JD time, the Time object automatically handles
 # conversions to and from this scaling:
-jd = kete.Time.from_ymd(2024, 6, 1.5).jd
+jd = kete.Time.from_ymd(2025, 6, 1.5).jd
 
 # Currently the state of the object above is not at this date
 # lets perform orbit propagation to bring it to this date:
