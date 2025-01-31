@@ -199,6 +199,79 @@ def jup_trojan(
     return (a < 5.5) & (a > 4.6) & (ecc < 0.3)
 
 
+def centaur(
+    peri_dist: NDArray[np.floating], ecc: NDArray[np.floating], *_
+) -> np.ndarray:
+    """
+    Orbital element filter to select a centaur orbit.
+
+    Returns `True` if the object is a centaur.
+
+    Parameters
+    ----------
+    peri_dist:
+        Perihelion distance in units of AU.
+    ecc:
+        Eccentricity of the orbit.
+    """
+    a = compute_semi_major(peri_dist, ecc)
+    return (a >= 5.5) & (a < 30.1)
+
+
+def trans_neptunian(
+    peri_dist: NDArray[np.floating], ecc: NDArray[np.floating], *_
+) -> np.ndarray:
+    """
+    Orbital element filter to select a trans-neptunian orbit.
+
+    Returns `True` if the object is a TNO.
+
+    Parameters
+    ----------
+    peri_dist:
+        Perihelion distance in units of AU.
+    ecc:
+        Eccentricity of the orbit.
+    """
+    return compute_semi_major(peri_dist, ecc) >= 30.1
+
+
+def parabolic(
+    peri_dist: NDArray[np.floating], ecc: NDArray[np.floating], *_
+) -> np.ndarray:
+    """
+    Orbital element filter to select a parabolic orbit.
+
+    Returns `True` if the object is parabolic.
+
+    Parameters
+    ----------
+    peri_dist:
+        Perihelion distance in units of AU.
+    ecc:
+        Eccentricity of the orbit.
+    """
+    return np.abs(ecc - 1.0) < 0.005
+
+
+def hyperbolic(
+    peri_dist: NDArray[np.floating], ecc: NDArray[np.floating], *_
+) -> np.ndarray:
+    """
+    Orbital element filter to select a hyperbolic orbit.
+
+    Returns `True` if the object is hyperbolic.
+
+    Parameters
+    ----------
+    peri_dist:
+        Perihelion distance in units of AU.
+    ecc:
+        Eccentricity of the orbit.
+    """
+    return ecc > 1.005
+
+
 def distant(
     peri_dist: NDArray[np.floating], ecc: NDArray[np.floating], *_
 ) -> np.ndarray:
@@ -221,6 +294,10 @@ def distant(
         & (ecc < MAX_ECCENTRICITY)
         & (ecc >= 0.0)
         & ~jup_trojan(peri_dist, ecc)
+        & ~trans_neptunian(peri_dist, ecc)
+        & ~centaur(peri_dist, ecc)
+        & ~parabolic(peri_dist, ecc)
+        & ~hyperbolic(peri_dist, ecc)
     )
 
 
@@ -252,6 +329,10 @@ def which_group(
             neo_atira,
             distant,
             jup_trojan,
+            hyperbolic,
+            parabolic,
+            trans_neptunian,
+            centaur,
         ]:
             if func(peri, e):
                 groups.append(func.__name__)
@@ -330,6 +411,10 @@ def plot_groups():
         neo_atira,
         distant,
         jup_trojan,
+        hyperbolic,
+        parabolic,
+        trans_neptunian,
+        centaur,
     ]:
         plt.scatter(
             peris[func(peris, eccs)], eccs[func(peris, eccs)], s=1, label=func.__name__

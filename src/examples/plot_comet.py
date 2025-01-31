@@ -10,9 +10,7 @@ from astropy.wcs import WCS
 import kete
 import astropy
 import numpy as np
-import kete
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 # This is comet NEOWISE as observed by ZTF
