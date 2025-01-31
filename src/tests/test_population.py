@@ -3,7 +3,7 @@ from kete import population, power_law
 
 
 def test_population():
-    assert population.which_group([1000], [0.0]) == ["distant"]
+    assert population.which_group([10], [0.0]) == ["centaur"]
     assert not population.jup_trojan(1, 0)
 
 
