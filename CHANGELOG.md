@@ -10,10 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added definitions of classes of objects.
 - Added support for SPICE kernels of type 3, this allows reading satellites of Mars.
 - Added support for choosing to not load the DE440 file when reloading SPICE kernels.
 - Added optional suppression of impact warnings during propagation.
+- Added new definitions for orbital families of objects.
 
 ### Fixed
 
