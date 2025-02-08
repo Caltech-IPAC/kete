@@ -222,3 +222,47 @@ position causes the alignment to match within the width of the blur.
 
 .. image:: ../data/full_frame_annotated_zoom.png
    :alt: Zoom in of the expected object.
+
+
+Higher Resolution
+-----------------
+
+A more precise estimate of the position of Palomar may be approximated using
+these functions:
+
+.. code-block:: python
+
+    def earth_rotation_angle(jd):
+        """
+        Approximation of Earth Rotation Angle (ERA) with respect to the
+        Equatorial J2000 X-Axis.
+        """
+        jd = kete.Time(jd).utc_jd - 2451545.0
+        return (0.779057273264 + 1.0027379094 * jd) * 360
+
+    def earth_pos_to_eclip_approx(jd, lat, lon, altitude):
+        """
+        Given a time and a position on Earth's surface (WGS84 lat/lon and
+        altitude in km), approximate the position of this spot on Earth in the
+        solar system.
+
+        This is good to within about 1km over a century, however it allows
+        us to estimate observer positions before ~1970, where we do not have
+        SPICE PCK files. This was validated against the PCK files provided by
+        SPICE.
+        """
+
+        rotation = np.array(kete.conversion.earth_precession_rotation(jd))
+        earth = kete.spice.get_state("Earth", jd).pos.as_equatorial
+
+        era = earth_rotation_angle(jd)
+        
+        # Compute the position in ecef
+        ecef = kete.vector.wgs_lat_lon_to_ecef(lat, lon, altitude)
+        # Rotate this around the earth's current north pole for the fraction of
+        # the day
+        ecef = np.array(kete.Vector(ecef).rotate_around((0, 0, 1), era))
+        # convert the local north to j2000 equatorial north
+        eq_ecef = kete.Vector(rotation.T @ ecef, frame=kete.Frames.Equatorial)
+
+        return earth + eq_ecef.as_ecliptic / kete.constants.AU_KM

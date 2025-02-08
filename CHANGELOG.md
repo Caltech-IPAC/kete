@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Added
+- Added functions for estimating the position of Earth coordinates outside of the PCK
+  limits. This allows for estimating Palomar's position in 1950.
+
+
 ## [v1.0.6]
 
 ### Added
