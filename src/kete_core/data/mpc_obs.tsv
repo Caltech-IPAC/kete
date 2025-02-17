@@ -32,7 +32,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 030   11.25446  +43.750648    166.264 0.723534  +0.688012    Italy          Arcetri Observatory, Florence
  3 031   11.18985  +50.377394    627.921 0.639061  +0.766705    Germany        Sonneberg
  3 032   11.58295  +50.925259    151.114 0.631624  +0.772706    Germany        Jena
- 3 033   11.71124  +50.980139    347.894 0.630900  +0.773333    Germany        Karl Schwarzschild Observatory, Tautenburg
+ 3 033   11.71124  +50.980142    388.733 0.630904  +0.773338    Germany        Karl Schwarzschild Observatory, Tautenburg
  3 034   12.45246  +41.922451    102.548 0.745176  +0.664656    Italy          Monte Mario Observatory, Rome
  3 035   12.57592  +55.686868     10.378 0.565008  +0.822321    Denmark        Copenhagen
  3 036   12.65040  +41.747469    432.010 0.747247  +0.662420    Italy          Castel Gandolfo
@@ -72,7 +72,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 070   25.2865   +54.683110    100.911 0.57940   +0.81233     Lithuania      Vilnius (before 1939)
  3 071   24.73782  +41.693123   1740.173 0.74803   +0.66185     Bulgaria       NAO Rozhen, Smolyan
  3 072    7.17     +51.088915  -3965.065 0.629     +0.774       Germany        Scheuren Observatory
- 3 073   26.09391  +44.411999    169.667 0.715519  +0.696289    Romania        Bucharest
+ 3 073   26.09391  +44.411996    133.589 0.715515  +0.696285    Romania        Bucharest
  3 074   26.4058   -29.038138   1407.074 0.87518   -0.48263     South Africa   Boyden Observatory, Bloemfontein
  3 075   26.7216   +58.379715     65.646 0.52557   +0.84791     Estonia        Tartu
  3 076   27.8768   -25.772770   1232.957 0.90127   -0.43225     South Africa   Johannesburg-Hartbeespoort
@@ -87,7 +87,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 085   30.5023   +50.452956    174.404 0.63800   +0.76749     Ukraine        Kyiv
  3 086   30.7582   +46.476827     64.628 0.68987   +0.72152     Ukraine        Odesa
  3 087   31.3411   +29.858775    105.720 0.86799   +0.49495     Egypt          Helwan
- 3 088   31.8250   +29.931772    490.873 0.86741   +0.49608     Egypt          Kottomia
+ 3 088   31.82769  +29.934013    494.061 0.867391  +0.496114    Egypt          Kottomia
  3 089   31.9747   +46.971605     50.870 0.68359   +0.72743     Ukraine        Mykolaiv
  3 090    8.25     +49.943154   1853.099 0.645     +0.762       Germany        Mainz
  3 091    4.20919  +45.381384    467.050 0.703630  +0.708287    France         Observatoire de Nurol, Aurec sur Loire
@@ -125,7 +125,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 123   44.2917   +40.335211   1490.248 0.76352   +0.64398     Armenia        Byurakan
  3 124    2.2550   +43.600501    163.995 0.72534   +0.68612     France         Castres
  3 125   44.78950  +41.717322    410.872 0.747594  +0.662026    Georgia        Tbilisi
- 3 126    9.7903   +44.133169    346.558 0.71893   +0.69283     Italy          Monte Viseggi
+ 3 126    9.79015  +44.132567    397.186 0.718943  +0.692828    Italy          Monte Viseggi L. Zannoni Observatory
  3 127    6.9797   +50.760191     85.429 0.63385   +0.77088     Germany        Bornheim
  3 128   46.00661  +51.538322     76.861 0.623279  +0.779393    Russia         Saratov
  3 129   45.92     +39.134625   2454.983 0.777     +0.628       Azerbaijan     Ordubad
@@ -202,8 +202,8 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 200    4.3036   +50.760191     85.429 0.63385   +0.77088     Belgium        Beersel Hills Observatory
  3 201    7.6033   +45.785135   1433.610 0.69871   +0.71332     Italy          Jonathan B. Postel Observatory
  3 202    5.8997   +43.095279     68.434 0.73137   +0.67971     France         Tamaris Observatoire, La Seyne sur Mer
- 3 203    8.9955   +45.541407    172.794 0.70161   +0.71021     Italy          GiaGa Observatory
- 3 204    8.76972  +45.868329   1278.400 0.697653  +0.714313    Italy          Schiaparelli Observatory
+ 3 203    8.99548  +45.541445    213.425 0.701614  +0.710215    Italy          GiaGa Observatory
+ 3 204    8.76972  +45.868295   1228.727 0.697648  +0.714307    Italy          Schiaparelli Observatory
  3 205   11.2731   +44.472064    113.686 0.71478   +0.69703     Italy          Obs. Casalecchio di Reno, Bologna
  3 206   10.5667   +60.600925    758.276 0.4922    +0.8677      Norway         Haagaar Observatory, Eina
  3 207    9.3065   +45.545063    131.545 0.70156   +0.71025     Italy          Osservatorio Antonio Grosso
@@ -262,10 +262,10 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 260  149.0661   -31.276809   1185.198 0.85560   -0.51626     Australia/NSW  Siding Spring Observatory-DSS
  3 261  243.14022  +33.357340   1686.997 0.836325  +0.546877    US/California  Palomar Mountain-DSS
  3 262  289.26626  -29.258822   2345.440 0.873440  -0.486052    Chile          European Southern Observatory, La Silla-DSS
- 3 266  204.52344  +19.825588   4130.275 0.941701  +0.337237    US/Hawaii      New Horizons KBO Search-Subaru
- 3 267  204.53044  +19.825347   4147.785 0.941705  +0.337234    US/Hawaii      New Horizons KBO Search-CFHT
- 3 268  289.30803  -29.014271   2389.673 0.875516  -0.482342    Chile          New Horizons KBO Search-Magellan/Clay
- 3 269  289.30914  -29.014791   2377.862 0.875510  -0.482349    Chile          New Horizons KBO Search-Magellan/Baade
+ 3 266  204.52396  +19.825501   4194.602 0.941711  +0.337239    US/Hawaii      New Horizons KBO Search-Subaru
+ 3 267  204.53109  +19.825438   4232.766 0.941717  +0.337240    US/Hawaii      New Horizons KBO Search-CFHT
+ 3 268  289.30803  -29.014271   2389.673 0.875516  -0.482342    Chile          Magellan-Clay Telescope
+ 3 269  289.30914  -29.014791   2377.862 0.875510  -0.482349    Chile          Magellan-Baade Telescope
 -2 270    0.000000  +0.000000      0.000 0.0000000 +0.0000000                  Unistellar Network, Roving Observer
 -2 273    0.000000  +0.000000      0.000 0.0000000 +0.0000000                  Euclid
 -2 274    0.000000  +0.000000      0.000 0.0000000 +0.0000000                  James Webb Space Telescope
@@ -295,7 +295,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 301  288.8467   +45.454905   1126.540 0.70279   +0.70926     Canada/Quebec  Mont Megantic
  3 302  288.88      +8.672755   8768.476 0.990     +0.150       Venezuela      University of the Andes station
  3 303  289.1296    +8.787722   3624.775 0.98890   +0.15185     Venezuela      OAN de Llano del Hato, Merida
- 3 304  289.2980   -29.003554   2270.438 0.87559   -0.48217     Chile          Las Campanas Observatory
+ 3 304  289.30858  -29.014556   2385.314 0.875513  -0.482346    Chile          Las Campanas Observatory
  3 305  109.5514   +34.945455    471.527 0.82066   +0.56963     China          Purple Mountain, Hainan Island station
  3 306  290.6769   +10.075583    591.394 0.98477   +0.17381     Venezuela      Observatorio Taya Beixo, Barquisimeto
  3 307  287.7166   +43.704047    209.115 0.72410   +0.68743     US/New Hampsh  Shattuck Observatory, Hanover
@@ -435,7 +435,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 458  355.9806   +40.647204    884.058 0.75992   +0.64805     Spain          Guadarrama Observatory
  3 459  288.1172   +43.540840    284.280 0.72607   +0.68538     US/New Hampsh  Smith River Observatory, Danbury
  3 460  265.9981   +33.982263    160.598 0.83010   +0.55579     US/Arkansas    Area 52 Observatory, Nashville
- 3 461   19.8943   +47.918047    932.619 0.67153   +0.73869     Hungary        University of Szeged, Piszkesteto Stn. (Konkoly)
+ 3 461   19.89367  +47.917455    983.456 0.671543  +0.738689    Hungary        University of Szeged, Piszkesteto Stn. (Konkoly)
  3 462  283.0842   +38.921254     81.407 0.77905   +0.62488     US/Maryland    Mount Belleview Observatory
  3 463  254.7375   +40.004026   1656.692 0.76726   +0.63959     US/Colorado    Sommers-Bausch Observatory, Boulder
  3 464  288.5013   +41.410715     15.737 0.75109   +0.65799     US/Rhode Isla  Toby Point Observatory, Narragansett
@@ -535,7 +535,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 558   21.0303   +52.217857    148.194 0.61396   +0.78672     Poland         Warsaw
  3 559   14.98     +37.618100   -696.944 0.793     +0.607       Italy          Serra La Nave
  3 560   10.93100  +45.407461     63.049 0.703262  +0.708561    Italy          Madonna di Dossobuono
- 3 561   19.8943   +47.918047    932.619 0.67153   +0.73869     Hungary        Piszkesteto Stn. (Konkoly)
+ 3 561   19.89367  +47.917455    983.456 0.671543  +0.738689    Hungary        Piszkesteto Stn. (Konkoly)
  3 562   15.9236   +48.083754    905.092 0.66938   +0.74062     Austria        Figl Observatory, Vienna
  3 563   13.60     +47.952529    135.713 0.671     +0.739       Austria        Seewalchen
  3 564   11.19     +48.029249   9614.117 0.671     +0.741       Germany        Herrsching
@@ -667,7 +667,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 690  248.3367   +35.201970   2220.750 0.81832   +0.57344     US/Arizona     Lowell Observatory, Flagstaff
  3 691  248.39966  +31.962189   2041.007 0.849466  +0.526479    US/Arizona     Steward Observatory, Kitt Peak-Spacewatch
  3 692  249.0513   +32.233024    735.163 0.84679   +0.53036     US/Arizona     Steward Observatory, Tucson
- 3 693  249.26745  +32.416847   2519.508 0.845317  +0.533211    US/Arizona     Catalina Station, Tucson
+ 3 693  249.26745  +32.416873   2491.132 0.845313  +0.533209    US/Arizona     Catalina Station, Tucson
  3 694  248.9943   +32.213449    950.016 0.84700   +0.53009     US/Arizona     Tumamoc Hill, Tucson
  3 695  248.40533  +31.958398   2064.325 0.849504  +0.526425    US/Arizona     Kitt Peak
  3 696  249.1154   +31.688954   2627.639 0.85205   +0.52249     US/Arizona     Whipple Observatory, Mt. Hopkins
@@ -677,7 +677,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 700  250.3817   +36.350510   1624.518 0.80656   +0.58960     US/Arizona     Chinle
  3 701  249.79716  +31.475562   1351.518 0.853823  +0.519224    US/Arizona     Junk Bond Observatory, Sierra Vista
  3 702  252.8117   +33.984187   3381.271 0.8305    +0.5561      US/New Mexico  Joint Obs. for cometary research, Socorro
- 3 703  249.26736  +32.417006   2515.577 0.845315  +0.533213    US/Arizona     Catalina Sky Survey
+ 3 703  249.26736  +32.417032   2487.202 0.845311  +0.533211    US/Arizona     Catalina Sky Survey
  3 704  253.34093  +33.818259   1528.504 0.831869  +0.553542    US/New Mexico  Lincoln Laboratory ETS, New Mexico
  3 705  254.17942  +32.780502   2791.253 0.841945  +0.538563    US/New Mexico  Apache Point
  3 706  253.9366   +38.582008   1664.614 0.78294   +0.62043     US/Colorado    Salida
@@ -877,7 +877,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 900  135.98994  +35.049756    102.190 0.819572  +0.571083    Japan          Moriyama
  3 901  137.0877   +35.342668    139.106 0.81664   +0.57525     Japan          Tajimi
  3 902  132.2208   +34.221330     15.051 0.82775   +0.55922     Japan          Ootake
- 3 903  135.1769   +35.267884     46.715 0.81738   +0.57418     Japan          Fukuchiyama and Kannabe
+ 3 903  135.17423  +35.270953     84.418 0.817354  +0.574227    Japan          Fukuchiyama and Kannabe
  3 904  135.12     +34.617319   1122.666 0.824     +0.565       Japan          Go-Chome and Kobe-Suma
  3 905  135.9246   +33.610193     13.370 0.83368   +0.55040     Japan          Nachi-Katsuura Observatory
  3 906  145.667    -35.916135   3851.883 0.8113    -0.5837      Australia/VIC  Cobram
@@ -906,7 +906,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 929  268.7758   +30.407442     11.532 0.86319   +0.50319     US/Louisiana   Port Allen
  3 930  210.41224  -17.551379     98.541 0.953752  -0.299638    Tahiti         S. S. Observatory, Pamatai
  3 931  210.3842   -17.634072    -23.897 0.95330   -0.30100     Tahiti         Puna'auia
- 3 932  286.57394  +41.525724     76.872 0.749771  +0.659497    US/Connecticu  John J. McCarthy Obs., New Milford
+ 3 932  286.57401  +41.525747     45.086 0.749767  +0.659494    US/Connecticu  John J. McCarthy Obs., New Milford
  3 933  249.7342   +31.476137   1442.880 0.85383   +0.51924     US/Arizona     Rockland Observatory, Sierra Vista
  3 934  242.9572   +32.967432    282.660 0.83985   +0.54108     US/California  Poway Valley
  3 935  282.3394   +38.855930    132.138 0.77977   +0.62400     US/Virginia    Wyrick Observatory, Haymarket
@@ -932,7 +932,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 955  350.6739   +38.700163     66.570 0.78146   +0.62188     Portugal       Sassoeiros
  3 956  356.1908   +40.440581    727.178 0.76224   +0.64530     Spain          Observatorio Pozuelo
  3 957  359.3506   +44.823124      9.039 0.71047   +0.70137     France         Merignac
- 3 958  358.96961  +43.693327      6.101 0.724206  +0.687273    France         Observatoire de Dax
+ 3 958  358.96947  +43.693384     82.648 0.724214  +0.687282    France         Observatoire de Dax
  3 959    1.4653   +43.549352    215.147 0.72596   +0.68548     France         Ramonville Saint Agne
  3 960    0.6108   +51.032485     40.027 0.63016   +0.77387     UK/England     Rolvenden
  3 961  356.8206   +55.956698    109.992 0.56112   +0.82498     UK/Scotland    City Observatory, Calton Hill, Edinburgh
@@ -948,7 +948,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 971  350.81249  +38.711792     87.532 0.781336  +0.622040    Portugal       Lisbon
  3 972  357.5833   +57.160100    125.068 0.54359   +0.83656     UK/Scotland    Dun Echt
  3 973  359.6671   +51.579445      3.680 0.62271   +0.77983     UK/England     Harrow
- 3 974    8.9220   +44.419297     80.212 0.71542   +0.69637     Italy          Genoa
+ 3 974    8.84431  +44.434647    171.397 0.715243  +0.696571    Italy          Genoa Observatory
  3 975  359.6333   +39.478187     56.428 0.77292   +0.63239     Spain          Observatorio Astronomico de Valencia
  3 976  358.4669   +52.317598    108.710 0.61258   +0.78778     UK/England     Leamington Spa
  3 977  351.5483   +54.175554     44.465 0.58660   +0.80717     Ireland        Markree
@@ -991,7 +991,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 A14    5.1864   +44.021537    320.799 0.72028   +0.69143     France         Les Engarouines Observatory
  3 A15    6.7972   +51.848743     79.681 0.61903   +0.78275     Germany        Josef Bresser Sternwarte, Borken
  3 A16    7.1922   +46.770495    719.330 0.68622   +0.72511     Switzerland    Tentlingen
- 3 A17    8.68152  +49.545393    181.130 0.650125  +0.757317    Germany        Guidestar Observatory, Weinheim
+ 3 A17    8.68147  +49.545453    267.623 0.650133  +0.757328    Germany        Guidestar Observatory, Weinheim
  3 A18    7.1761   +51.527963     71.984 0.62342   +0.77928     Germany        Herne
  3 A19    7.0744   +50.923246     37.189 0.63164   +0.77267     Germany        Koln
  3 A20    7.51887  +52.844412     44.392 0.605274  +0.793357    Germany        Sogel
@@ -1239,7 +1239,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 C62   11.3467   +46.494235    250.158 0.68967   +0.72175     Italy          Eurac Observatory, Bolzano
  3 C63    9.9797   +46.188865   1259.638 0.69363   +0.71819     Italy          Giuseppe Piazzi Observatory, Ponte in Valtellina
  3 C64   15.28439  +47.929391    902.213 0.671380  +0.738819    Austria        Puchenstuben
- 3 C65    0.72965  +42.051655   1564.582 0.743841  +0.666482    Spain          Observatori Astronomic del Montsec
+ 3 C65    0.72965  +42.051680   1618.630 0.743847  +0.666488    Spain          Observatori Astronomic del Montsec
  3 C66    2.8050   +39.666780    150.906 0.77084   +0.63493     Spain          Observatorio El Cielo de Consell
  3 C67   12.2199   +53.403828     88.922 0.59747   +0.79922     Germany        Gnevsdorf
  3 C68   23.89339  +37.997695    168.912 0.789058  +0.612302    Greece         Ellinogermaniki Agogi Observatory, Pallini
@@ -1256,7 +1256,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 C79    2.7855   +41.677592     33.057 0.74801   +0.66147     Spain          Roser Observatory, Blanes
  3 C80   39.7651   +47.284989     81.957 0.67959   +0.73115     Russia         Don Astronomical Observatory, Rostov-on-Don
  3 C81   10.84098  +46.241077   1721.080 0.693023  +0.718872    Italy          Dolomites Astronomical Observatory
- 3 C82   14.35763  +40.618683    275.595 0.760171  +0.647611    Italy          Osservatorio Astronomico Nastro Verde, Sorrento
+ 3 C82   14.35759  +40.618777    292.893 0.760172  +0.647614    Italy          Osservatorio Astronomico Nastro Verde, Sorrento
  3 C83   91.8425   +56.084127    392.094 0.55930   +0.82626     Russia         Badalozhnyj Observatory
  3 C84    2.24372  +41.445592     31.514 0.750690  +0.658447    Spain          Badalona
  3 C85    1.2408   +38.891102    166.624 0.77939   +0.62448     Spain          Observatorio Cala d'Hort, Ibiza
@@ -1269,7 +1269,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 C92   13.60995  +43.426292    124.923 0.727425  +0.683915    Italy          Valdicerro Observatory, Loreto
  3 C93   13.4064   +42.334904    640.455 0.74042   +0.67004     Italy          Bellavista Observatory, L'Aquila
  3 C94  103.0670   +51.810111    700.423 0.61962   +0.78241     Russia         MASTER-II Observatory, Tunka
- 3 C95    5.71239  +43.932042    660.800 0.721401  +0.690345    France         SATINO Remote Observatory, Haute Provence
+ 3 C95    5.71239  +43.932050    705.892 0.721406  +0.690350    France         SATINO Remote Observatory, Haute Provence
  3 C96   13.8786   +42.753689    225.199 0.73544   +0.67537     Italy          OACL Observatory, Mosciano Sant Angelo
  3 C97   57.97633  +23.629468     43.382 0.916656  +0.398354    Oman           Al-Fulaij Observatory, Oman
  3 C98   11.1764   +43.764918     59.705 0.72335   +0.68818     Italy          Osservatorio Casellina, Scandicci
@@ -1277,7 +1277,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 D00   42.6536   +43.740151   2104.520 0.72388   +0.68809     Russia         ASC-Kislovodsk Observatory
  3 D01   23.93061  +60.352767     79.288 0.495920  +0.865471    Finland        Andean Northern Observatory, Nummi-Pusula
  3 D02    2.05189  +41.383634    119.250 0.751414  +0.657647    Spain          Observatori Petit Sant Feliu
- 3 D03   10.5889   +44.440858    642.710 0.71522   +0.69670     Italy          Rantiga Osservatorio, Tincana
+ 3 D03   10.58892  +44.441106    696.564 0.715223  +0.696709    Italy          Rantiga Osservatorio, Tincana
  3 D04   38.8569   +44.894146     34.666 0.70960   +0.70225     Russia         Krasnodar
  3 D05   42.50005  +43.274569   3110.076 0.729580  +0.682314    Russia         ISON-Terskol Observatory
  3 D06   12.77017  +41.750270    581.475 0.747232  +0.662472    Italy          Associazione Tuscolana di Astronomia, Domatore
@@ -1304,6 +1304,8 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 D27    3.80361  +43.626682    125.173 0.725021  +0.686446    France         Observatoire de Fontcaude, Juvignac
  3 D28    2.18286  +41.619802    282.425 0.748708  +0.660744    Spain          Escaldarium Observatory,Caldes de Montbui
  3 D29  118.4639   +32.734366    218.979 0.84204   +0.53767     China          Purple Mountain Observatory, XuYi Station
+ 3 D30   11.08350  +50.942811    340.480 0.631405  +0.772922    Germany        Sternwarte Silbergraben, Erfurt
+ 3 D31   10.09797  +44.504353    920.531 0.714476  +0.697520    Italy          Osservatorio Aldebaran, Rivalba
  3 D32  119.59975  +30.469432    942.861 0.862770  +0.504193    China          JiangNanTianChi Observatory, Mt. Getianling
  3 D33  120.6982   +22.049959     38.416 0.92730   +0.37308     Taiwan         Kenting Observatory, Checheng
  3 D34  120.7839   +21.950269    118.573 0.92796   +0.37148     Taiwan         Kenting Observatory, Hengchun
@@ -1312,17 +1314,44 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 D37  120.87325  +23.468778   2860.725 0.918176  +0.395972    Taiwan         Lulin Widefield Telescope, Mt. Lulin
  3 D38    8.43764  +44.912897    157.438 0.709383  +0.702495    Italy          Tecnosky Astropark, Felizzano
  3 D39  122.04961  +37.535927    100.091 0.793971  +0.605943    China          Shandong University Observatory, Weihai
+ 3 D40   13.33772  +41.653222    254.016 0.748318  +0.661176    Italy          Frosinone
+ 3 D41   10.71704  +43.429224    485.944 0.727431  +0.683991    Italy          Osservatorio Astronomico Orciatico
+ 3 D42   11.19084  +43.747676    123.853 0.723565  +0.687970    Italy          Piero Angela Observatory, Scandicci
+ 3 D43    7.77039  +45.044600    555.431 0.707805  +0.704162    Italy          45th Parallel Observatory, Pino Torinese
  3 D44  124.13928  +24.372862    196.762 0.911427  +0.410157    Japan          Ishigakijima Astronomical Observatory
+ 3 D45   21.49325  +50.334547    203.712 0.639594  +0.766177    Poland         Kamyk, Trzesn
+ 3 D46    9.90265  +47.906000    724.482 0.671664  +0.738525    Germany        Observatory Bad Wurzach
+ 3 D47   11.56366  +42.479972    199.693 0.738665  +0.671859    Italy          BigBang Observatory, Manciano
+ 3 D48    7.26381  +49.330851    296.849 0.652979  +0.754898    Germany        Niederbexbach Observatory
+ 3 D49    0.79444  +40.876687     58.241 0.757213  +0.650992    Spain          L'Ametlla de Mar
+ 3 D50    5.21519  +44.039478    314.126 0.720062  +0.691654    France         Vaucluse Observatoire Celeste, Blauvac
+ 3 D51    1.94844  +44.082999    352.160 0.719539  +0.692203    France         Plateau Astronomique La Couronne
+ 3 D52    9.79750  +45.098032     87.240 0.707094  +0.704768    Italy          ULU Observatory, Caselle Landi
  3 D53  127.4820   +50.318536    214.305 0.63981   +0.76600     Russia         ISON-Blagoveschensk Observatory
  3 D54  127.4830   +50.318902    263.392 0.63981   +0.76601     Russia         MASTER-II Observatory, Blagoveshchensk
  3 D55  127.9747   +37.372831    205.007 0.79571   +0.60370     South Korea    Kangwon Science High School Observatory, Ksho
+ 3 D56   11.67408  +45.607803     93.456 0.700775  +0.711011    Italy          Osservatorio Sideris Oculus, San Pietro in Gu
  3 D57  128.88744  +35.252875    369.150 0.817572  +0.573996    South Korea    Gimhae Astronomical Observatory, Uhbang-dong
  3 D58  129.02500  +35.165619    149.564 0.818419  +0.572736    South Korea    KSA SEM Observatory, Danggam-dong
+ 3 D59    7.15617  +43.747770    398.800 0.723595  +0.688001    France         MARIAMIR, Saint-Jeannet
+ 3 D60   13.55146  +46.183670    832.667 0.693649  +0.718079    Italy          Sparky's Stars, Masseris
  3 D61  134.9131   +34.327701     29.273 0.82671   +0.56075     Japan          Suntopia Marina, Sumoto
  3 D62  130.4494   +33.289452     56.396 0.83676   +0.54575     Japan          Miyaki-Argenteus
+ 3 D63   10.46138  +44.081326    296.499 0.719553  +0.692176    Italy          G. Pascoli Observatory, Barga (since June 2023)
+ 3 D64   14.10967  +42.305528    179.161 0.740711  +0.669613    Italy          Fucama, Casalincontrada
+ 3 D65   11.53480  +45.497415    227.692 0.702163  +0.709679    Italy          G. Beltrame, Arcugnano Vicenza
+ 3 D66    9.14839  +45.376776    165.993 0.703654  +0.708197    Italy          Civico Osservatorio Astronomico di Rozzano
  3 D67   37.62472  +54.209185    175.117 0.586136  +0.807530    Russia         Tula Rooftop Observatory, Tula
+ 3 D68   11.73622  +45.465410     67.007 0.702543  +0.709270    Italy          Osservatorio Galileo, Padova
+ 3 D69    9.97013  +49.782617    342.740 0.646988  +0.760014    Germany        JMU Space-Observatory
  3 D70  133.4686   +33.467927     37.268 0.83505   +0.54834     Japan          Tosa
+ 3 D71   15.89225  +46.822401    304.705 0.685516  +0.725682    Austria        ObservaSTYRium, Stainz bei Straden
+ 3 D72   16.36131  -23.236603   1856.060 0.919630  -0.392207    Namibia        WAA Remote Observatory, Hakos
+ 3 D73   16.36139  -23.236611   1870.298 0.919632  -0.392208    Namibia        SNX-NET, Hakos
  3 D74  134.6819   +33.948936     54.371 0.83041   +0.55530     Japan          Nakagawa
+ 3 D75   16.95608  +39.488772     74.321 0.772805  +0.632534    Italy          Cariati
+ 3 D76    2.00702  +41.564599    349.351 0.749354  +0.660032    Spain          AAT-Terrassa, Terrassa
+ 3 D77   10.71736  +43.429020    482.054 0.727433  +0.683988    Italy          TD-TRO (Tuscany Remote Observatory)
  3 D78  136.13281  +34.768568    156.708 0.822378  +0.567077    Japan          Iga-Ueno
  3 D79  138.63092  -34.884487     43.798 0.821212  -0.568722    Australia/SA   YSVP Observatory, Vale Park
  3 D80  138.9728   +36.596424    861.621 0.80392   +0.59297     Japan          Gumma Astronomical Observatory
@@ -1343,6 +1372,8 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 D95  141.0680   +38.801469     14.706 0.78035   +0.62325     Japan          Kurihara
  3 D96  140.34216  -34.268869     32.525 0.827287  -0.559905    Australia/SA   Tzec Maun Observatory, Moorook
  3 D97  140.5700   -34.244932     22.177 0.82752   -0.55956     Australia/SA   Berri
+ 3 D98   11.33409  +44.259208    745.434 0.717444  +0.694448    Italy          Loiano TANDEM
+ 3 D99    0.39122  +44.261624    232.292 0.717357  +0.694422    France         AstroKoT, Port-Ste-Marie
  3 E00  144.2089   -37.059619    313.796 0.79902   -0.59937     Australia/VIC  Castlemaine
  3 E01  144.54142  -37.098948    398.631 0.798618  -0.599924    Australia/VIC  Barfold
  3 E03  145.3822   -38.136178     71.609 0.78756   -0.61419     Australia/VIC  RAS Observatory, Officer
@@ -1370,6 +1401,8 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 E26  153.3971   -27.933917     13.334 0.88414   -0.46566     Australia/QLD  RAS Observatory, Biggera Waters
  3 E27  153.2667   -27.566288    -87.610 0.8871    -0.4600      Australia/QLD  Thornlands
  3 E28  150.64105  -33.664388    305.021 0.833196  -0.551210    Australia/NSW  Kuriwa Observatory, Hawkesbury Heights
+ 3 E29  115.95533  -32.309798    -13.625 0.845978  -0.531426    Australia/WA   Mardella Observatory
+ 3 E62  149.08135  -31.281739    838.174 0.855509  -0.516305    Australia/NSW  Slooh.com Australia, Coonabarabran
  3 E81  173.2617   -41.274462    124.363 0.75267   -0.65622     New Zealand    Nelson
  3 E83  173.95703  -41.535738     13.963 0.749648  -0.659621    New Zealand    Wither Observatory, Witherlea
  3 E85  174.89400  -36.895808      6.601 0.800696  -0.597064    New Zealand    Farm Cove
@@ -1397,7 +1430,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 G10  354.45055  +37.667863    131.547 0.792574  +0.607765    Spain          Clavier Observatory, Lora Del Rio
  3 G11    7.18379  +50.993278    247.233 0.630712  +0.773465    Germany        Breitenweg Observatory, Herkenrath
  3 G12    8.3306   +51.676397    167.423 0.62140   +0.78090     Germany        Sternwarte EG, Lippstadt
- 3 G13    9.77169  +63.213826     69.766 0.451874  +0.889103    Norway         Astronomihagen, Fannrem
+ 3 G13    9.77164  +63.214082     69.656 0.451870  +0.889105    Norway         Astronomihagen, Fannrem
  3 G14    7.00520  +43.609130    257.941 0.725247  +0.686239    France         Novaloop Observatory, Mougins
  3 G15    9.1183   +44.772008    570.316 0.71116   +0.70080     Italy          Magroforte Observatory, Alessandria
  3 G16   13.34869  +38.100310     93.304 0.787948  +0.613701    Italy          OmegaLab Observatory, Palermo
@@ -1418,10 +1451,10 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 G31   13.7253   +45.714674    248.590 0.69946   +0.71233     Italy          CCAT Trieste
  3 G32  291.82040  -22.953233   2399.446 0.921639  -0.387713    Chile          Elena Remote Observatory, San Pedro de Atacama
  3 G33    7.60879  +51.528831    101.188 0.623411  +0.779293    Germany        Wickede
- 3 G34   13.7015   +50.860063    490.669 0.63254   +0.77203     Germany        Oberfrauendorf
+ 3 G34   13.70150  +50.860005    553.479 0.632547  +0.772037    Germany        Oberfrauendorf
  3 G35  249.15789  +31.945051    930.571 0.849476  +0.526134    US/Arizona     Elephant Head Obsevatory, Sahuarita
  3 G36  357.45250  +37.222887   2182.977 0.797538  +0.601812    Spain          Calar Alto-CASADO
- 3 G37  248.57749  +34.744284   2238.541 0.822887  +0.566916    US/Arizona     Lowell Discovery Telescope
+ 3 G37  248.57779  +34.744378   2346.659 0.822900  +0.566927    US/Arizona     Lowell Discovery Telescope
  3 G38  356.76842  +40.641132    700.225 0.759967  +0.647951    Spain          Observatorio La Senda, Cabanillas del Campo
  3 G39  291.82039  -22.953105   2400.344 0.921640  -0.387711    Chile          ROAD, San Pedro de Atacama
  3 G40  343.49174  +28.299720   2370.113 0.881470  +0.471441    Canary Island  Slooh.com Canary Islands Observatory
@@ -1480,7 +1513,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 G93  249.3726   +31.662445   1562.811 0.85215   +0.52201     US/Arizona     Sonoita Research Observatory, Sonoita
  3 G94  249.9267   +31.928464   1542.600 0.84971   +0.52594     US/Arizona     Sonoran Skies Observatory, St. David
  3 G95  249.7622   +31.452173   1386.852 0.85404   +0.51888     US/Arizona     Hereford Arizona Observatory, Hereford
- 3 G96  249.21128  +32.442754   2788.927 0.845111  +0.533614    US/Arizona     Mt. Lemmon Survey
+ 3 G96  249.21128  +32.442732   2757.131 0.845107  +0.533611    US/Arizona     Mt. Lemmon Survey
  3 G97  250.8694   +31.933218   1420.219 0.84965   +0.52600     US/Arizona     Astronomical League Alpha Observatory, Portal
  3 G98  251.34354  +35.525435   2022.028 0.815037  +0.578012    US/New Mexico  Calvin-Rehoboth Observatory, Rehoboth
  3 G99  251.8104   +32.770984   1921.735 0.84192   +0.53835     US/New Mexico  NF Observatory, Silver City
@@ -1617,7 +1650,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 I30  299.3417   -32.984475     64.497 0.83966   -0.54131     Argentina      Observatorio Geminis Austral
  3 I31  299.3649   -32.953687     54.393 0.83995   -0.54086     Argentina      Observatorio Astronomico del Colegio Cristo Rey
  3 I32  299.3464   -32.980641     16.675 0.83969   -0.54125     Argentina      Observatorio Beta Orionis, Rosario
- 3 I33  289.2608   -30.238025   2693.948 0.86504   -0.50086     Chile          SOAR, Cerro Pachon
+ 3 I33  289.26631  -30.237926   2776.132 0.865052  -0.500865    Chile          SOAR, Cerro Pachon
  3 I34  284.1297   +40.146752    155.206 0.76548   +0.64134     US/Pennsylvan  Morgantown
  3 I35  301.5572   -34.807262     47.885 0.82198   -0.56762     Argentina      Sidoli
  3 I36  301.28271  -35.008112     26.061 0.819978  -0.570483    Argentina      Observatorio Los Campitos, Canuelas
@@ -1625,7 +1658,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 I38  302.02141  -31.392540     37.679 0.854400  -0.517885    Uruguay        Observatorio Los Algarrobos, Salto
  3 I39  301.42661  -34.669660     33.927 0.823342  -0.565652    Argentina      Observatorio Cruz del Sur, San Justo
  3 I40  289.26061  -29.254610   2317.774 0.873472  -0.485986    Chile          La Silla--TRAPPIST
- 3 I41  243.14022  +33.357340   1686.997 0.836325  +0.546877    US/California  Palomar Mountain--ZTF
+ 3 I41  243.14022  +33.357339   1664.000 0.836322  +0.546875    US/California  Palomar Mountain--ZTF
  3 I42  288.9081   +41.596233     21.932 0.74895   +0.66041     US/Massachuse  Westport Observatory
  3 I43  261.90237  +32.216192    395.386 0.846901  +0.530084    US/Texas       Tarleton State University Obs., Stephenville
  3 I44  273.5176   +30.542034     59.200 0.86201   +0.50521     US/Florida     Northwest Florida State College, Niceville
@@ -1636,7 +1669,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 I49  253.98617  +35.709179   2085.219 0.813183  +0.580617    US/New Mexico  Sunflower Observatory, Santa Fe
  3 I50  254.47142  +32.903277   2223.377 0.840712  +0.540309    US/New Mexico  P2 Observatory, Mayhill
  3 I51  283.0547   +38.711560     17.782 0.78133   +0.62203     US/Maryland    Clinton
- 3 I52  249.21108  +32.442547   2789.427 0.845113  +0.533611    US/Arizona     Steward Observatory, Mt. Lemmon Station
+ 3 I52  249.21108  +32.442573   2761.053 0.845109  +0.533609    US/Arizona     Steward Observatory, Mt. Lemmon Station
  3 I53  356.3783   +37.140060    668.536 0.79822   +0.60052     Spain          Armilla
  3 I54  353.03081  +38.849002    192.307 0.779853  +0.623912    Spain          Observatorio Las Vaguadas, Badajoz
  3 I55  359.64214  +39.491506     26.918 0.772769  +0.632566    Spain          Valencia
@@ -1677,7 +1710,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 I90  351.59760  +51.900379     13.729 0.618315  +0.783298    Ireland        Blackrock Castle Observatory
  3 I91  357.69250  +36.848496     22.977 0.801192  +0.596407    Spain          Retamar
  3 I92  353.95289  +37.345585    119.226 0.795987  +0.603315    Spain          Astreo Observatory, Mairena del Aljarafe
- 3 I93  359.79700  +44.558710     18.715 0.713711  +0.698096    France         St Pardon de Conques
+ 3 I93  359.79704  +44.558673     68.359 0.713717  +0.698101    France         St Pardon de Conques
  3 I94  356.1367   +40.495586    740.648 0.76162   +0.64603     Spain          Observatorio Rho Ophiocus, Las Rozas de Madrid
  3 I95  356.81394  +39.568615    674.998 0.771993  +0.633666    Spain          Observatorio de la Hita
  3 I96  356.50384  +40.793540    676.395 0.758233  +0.649960    Spain          Hyperion Observatory, Urbanizacion Caraquiz
@@ -1688,7 +1721,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 J01  354.28450  +42.377689    813.776 0.739938  +0.670609    Spain          Observatorio Cielo Profundo, Leon
  3 J02  359.5550   +38.475838    187.428 0.78391   +0.61884     Spain          Busot
  3 J03  355.13250  +50.394175    142.538 0.638787  +0.766833    UK/England     Gothers Observatory, St. Dennis
- 3 J04  343.48817  +28.300924   2391.279 0.881463  +0.471461    Canary Island  ESA Optical Ground Station, Tenerife
+ 3 J04  343.48817  +28.300959   2451.325 0.881471  +0.471466    Canary Island  ESA Optical Ground Station, Tenerife
  3 J05  355.29639  +41.545557    716.135 0.749617  +0.659822    Spain          Bootes Observatory, Boecillo
  3 J06  358.81247  +52.909132     48.265 0.604374  +0.794039    UK/England     Trent Astronomical Observatory, Clifton
  3 J07  353.89543  +39.935161    414.738 0.767881  +0.638546    Spain          Observatorio SPAG Monfrague, Palazuelo-Empalme
@@ -1835,7 +1868,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 K48   10.83881  +45.209185     25.648 0.705714  +0.706127    Italy          Keyhole Observatory, San Giorgio di Mantova
  3 K49   11.18581  +43.681117    253.729 0.724381  +0.687146    Italy          Carpione Observatory, Spedaletto
  3 K50   11.13300  +49.790115    489.515 0.646903  +0.760116    Germany        Sternwarte Feuerstein, Ebermannstadt
- 3 K51   11.6579   +46.029412   1232.191 0.69563   +0.71626     Italy          Osservatorio del Celado, Castello Tesino
+ 3 K51   11.65789  +46.029483   1295.483 0.695636  +0.716268    Italy          Osservatorio del Celado, Castello Tesino
  3 K52    7.6478   +45.230562    300.858 0.70548   +0.70642     Italy          Gwen Observatory, San Francesco al Campo
  3 K53   12.04564  +41.981365      7.018 0.744479  +0.665409    Italy          Marina di Cerveteri
  3 K54   11.33678  +43.312669    290.262 0.728803  +0.682494    Italy          Astronomical Observatory University of Siena
@@ -1847,7 +1880,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 K60   13.51069  +55.435949     40.994 0.568623  +0.819848    Sweden         Lindby
  3 K61   13.6026   +49.751403    406.207 0.64741   +0.75967     Czech Republi  Rokycany Observatory
  3 K62   13.84675  +50.638321    277.939 0.635514  +0.769557    Czech Republi  Teplice Observatory
- 3 K63   10.4620   +44.082410    208.868 0.71953   +0.69218     Italy          G. Pascoli Observatory, Castelvecchio Pascoli
+ 3 K63   10.46252  +44.082789    302.917 0.719536  +0.692195    Italy          G. Pascoli Observatory, Barga (before June 2023)
  3 K64   11.74397  +49.935479    471.055 0.644963  +0.761748    Germany        Waizenreuth
  3 K65   12.2339   +44.141649     16.634 0.71879   +0.69290     Italy          Cesena
  3 K66   12.62861  +41.463359     80.963 0.750491  +0.658684    Italy          Osservatorio Astronomico di Anzio
@@ -1872,7 +1905,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 K85    6.03161  +50.723994    238.039 0.634354  +0.770499    Belgium        Kelmis
  3 K86   10.18189  +45.549196    199.075 0.701516  +0.710308    Italy          Brescia
  3 K87   10.17011  +49.807693    273.486 0.646647  +0.760288    Germany        Dettelbach Vineyard Observatory
- 3 K88   19.8936   +47.917622    975.365 0.67154   +0.73869     Hungary        GINOP-KHK, Piszkesteto
+ 3 K88   19.89367  +47.917455    983.456 0.671543  +0.738689    Hungary        GINOP-KHK, Piszkesteto
  3 K89   11.56339  +42.480015    204.001 0.738665  +0.671860    Italy          Digital Stargate Observatory, Manciano
  3 K90   20.54577  +44.530241    323.499 0.714093  +0.697776    Serbia         Sopot Astronomical Observatory
  3 K91   20.81019  -32.380542   1806.975 0.845561  -0.532618    South Africa   Sutherland-LCO A
@@ -1938,7 +1971,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 L51   34.0164   +44.729400    636.020 0.71169   +0.70028     Ukraine        MARGO, Nauchnyi
  3 L52   34.01694  +44.730130    617.598 0.711679  +0.700287    Ukraine        MASTER-Tavrida
  3 L53    9.03381  +45.705208    348.311 0.699589  +0.712226    Italy          Lomazzo Observatory, Como
- 3 L54   22.88878  +45.616534    446.607 0.700705  +0.711157    Romania        Berthelot Observatory, Hunedoara
+ 3 L54   22.88878  +45.616535    437.587 0.700704  +0.711156    Romania        Berthelot Observatory, Hunedoara
  3 L55   35.08750  +48.320586    142.581 0.666222  +0.743283    Ukraine        Sura Gardens, Dnipro
  3 L56    8.05858  +50.381562    177.816 0.638960  +0.766697    Germany        Sternwarte Limburg, Limburg
  3 L57   26.90419  +46.565635    204.987 0.688762  +0.722601    Romania        Bacau Observatory, Bacau
@@ -1984,6 +2017,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 L97  357.99161  +51.437018    120.565 0.624666  +0.778298    UK/England     Castle Fields Observatory, Calne
  3 L98  357.43425  +37.982643   1583.074 0.789394  +0.612232    Spain          La Sagra Observatory, Puebla de Don Fadrique
  3 L99   30.60281  +50.607688    137.300 0.635913  +0.769201    Ukraine        Novosilky
+ 3 M00   26.21154  +60.734470    107.531 0.490116  +0.868754    Finland        Viestikallio, Artjarvi
  3 M02    0.86386  +41.123329    425.965 0.754439  +0.654271    Spain          Astropriorat Observatory
  3 M03    2.25822  +41.456428     56.282 0.750568  +0.658591    Spain          Badalona Boreal
  3 M04    1.4256   +41.717450    816.625 0.74764   +0.66207     Spain          Pujalt Observatory, Barcelona
@@ -1994,6 +2028,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 M09    5.60094  +51.032739    115.579 0.630164  +0.773882    Belgium        Observatory Gromme - Oudsbergen
  3 M10    6.85411  +43.692307    771.080 0.724305  +0.687343    France         CPF Observatory, St Vallier de Thiey
  3 M11    5.64718  +43.999389    683.567 0.720589  +0.691192    France         Novaastro Observatory, Banon
+ 3 M12   47.8639   +56.109697    169.230 0.55891   +0.82648     Russia         Puschino
  3 M13    7.74250  +48.578160    188.268 0.662866  +0.746267    France         Lucie Berger Observatory, Strasbourg
  3 M14    8.78939  +45.673318    296.649 0.699981  +0.711832    Italy          Schiaparelli Gallarate Station
  3 M15    9.1506   +45.640009    240.683 0.70039   +0.71142     Italy          Virgo Oservatory, Seveso
@@ -2019,14 +2054,14 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 M35   26.61669  +46.575381    347.485 0.688654  +0.722734    Romania        PS Observatory, Parjol
  3 M36   13.79647  +45.693884    364.517 0.699732  +0.712090    Italy          Opicina, Trieste
  3 M37   13.91243  +45.920164    836.096 0.696956  +0.714892    Slovenia       Astronomsko drustvo Nanos, Ajdovscina
- 3 M38   21.76719  +47.945779    151.244 0.671089  +0.738923    Hungary        Harsona Observatory, Nyiregyhaza
+ 3 M38   21.76719  +47.945818    155.979 0.671089  +0.738924    Hungary        Harsona Observatory, Nyiregyhaza
  3 M39   22.95888  +40.630651     87.966 0.760013  +0.647750    Greece         AUTH Observatory, Thessaloniki
  3 M40   31.82708  +29.936004    481.345 0.867372  +0.496143    Egypt          OSTS-NRIAG, Kottamia
  3 M41   39.25827  +21.521802     59.001 0.930706  +0.364567    Saudi Arabia   Jeddah
  3 M42   54.6708   +24.580820    -18.052 0.90990   +0.41343     United Arab E  Emirates Observatory, Al Rahba
  3 M43   54.68478  +24.176308     19.886 0.912805  +0.407034    United Arab E  Al Sadeem Observatory, Abu Dhabi
  3 M44   54.92031  +24.219597     55.781 0.912502  +0.407722    United Arab E  Al-Khatim Observatory, Abu Dhabi
- 3 M45   25.7689   +45.865585    570.140 0.69761   +0.71420     Romania        Starhopper Observatory, Sfantu Gheorghe
+ 3 M45   25.76889  +45.865496    624.117 0.697617  +0.714205    Romania        Starhopper Observatory, Sfantu Gheorghe
  3 M46   55.45033  +25.213476     21.599 0.905280  +0.423399    United Arab E  Althuraya Astronomy Center, Dubai
  3 M47   55.46205  +25.282675     -9.122 0.904763  +0.424484    United Arab E  Sharjah Observatory, Sharjah
  3 M48   15.09222  +37.506621     63.111 0.794277  +0.605535    Italy          GAC - Via L. Sturzo Observatory, Catania
@@ -2045,6 +2080,13 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 M61    6.58581  +51.420052     75.819 0.624893  +0.778108    Germany        Observatory Moers Kapellen
  3 M62    7.13417  +47.281115   1035.212 0.679741  +0.731214    Switzerland    Lajoux Observatory
  3 M63   18.36969  +39.842607    179.302 0.768886  +0.637286    Italy          RPF Observatory, Gagliano del Capo
+ 3 M64    0.23964  +50.966907    202.917 0.631065  +0.773170    UK/England     Holbrook, Heathfield
+ 3 M65   28.32494  +61.064799     88.046 0.485072  +0.871558    Finland        Mustola Observatory, Lappeenranta
+ 3 M66   32.84019  +34.932094   1435.382 0.820917  +0.569526    Cyprus         SNX-NET, Prodromos
+ 3 M68   37.83052  +55.760259    176.189 0.563964  +0.823064    Russia         School 1502 Rooftop Obs., Moscow
+ 3 M70   26.40409  -29.039088   1414.479 0.875173  -0.482645    South Africa   BOOTES-6, Bloemfontein
+ 3 M75   39.51155  +45.742940     44.995 0.699085  +0.712651    Russia         Online observatory, Peschany
+ 3 M77   39.96553  +44.204621    768.124 0.718110  +0.693769    Russia         Mezmay Comet Search Center
  3 M90   65.4286   +56.946120     63.640 0.54672   +0.83452     Russia         Chervishevo
  3 N27   73.7253   +54.748119     58.759 0.57847   +0.81298     Russia         Omsk-Yogik Observatory
  3 N30   74.3694   +31.472983    181.794 0.85369   +0.51909     Pakistan       Zeds Astronomical Observatory, Lahore
@@ -2054,6 +2096,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 N44   77.13931  +38.384471   1201.281 0.785023  +0.617693    China          Shache Station, Langan Village
  3 N50   78.96383  +32.779547   4475.445 0.842176  +0.538692    India          Himalayan Chandra Telescope, IAO, Hanle
  3 N51   78.96461  +32.779243   4468.905 0.842178  +0.538687    India          GROWTH India Telescope, IAO, Hanle
+ 3 N54   80.02674  +32.324939   5026.316 0.846505  +0.532071    China          Purple Mountain Observatory, Jiama'erdeng
  3 N55   80.02623  +32.326059   5044.589 0.846497  +0.532089    China          Corona Borealis Observatory, Ngari, Tibet
  3 N56   80.02675  +32.325098   5022.358 0.846503  +0.532073    China          Jiama'erdeng Tianwentai, Ali, Tibet
  3 N57   80.04600  +32.306021   5350.969 0.846724  +0.531820    China          YLT, NAOC
@@ -2063,12 +2106,17 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 N87   87.17503  +43.473613   2039.957 0.727076  +0.684720    China          Nanshan Station, Xinjiang Observatory
  3 N88   87.17322  +43.471787   2040.858 0.727098  +0.684697    China          Xingming Observatory #3, Nanshan
  3 N89   87.17906  +43.470806   2016.695 0.727107  +0.684682    China          Xingming Observatory #2, Nanshan
+ 3 N94   88.72792  +47.588448    971.591 0.675788  +0.734831    China          Altay Astronomical Observatory
  3 O02   90.52614  +30.103182   4283.753 0.866434  +0.498958    China          Galaxy Tibet YBJ Observatory,Yangbajing
  3 O17   93.88669  +38.588778   3790.308 0.783127  +0.620730    China          Purple Mountain Observatory, Lenghu-1
  3 O18   93.89522  +38.607604   4145.658 0.782966  +0.621021    China          WFST, Lenghu
  3 O37   98.48553  +18.589868   2514.131 0.948521  +0.316891    Thailand       TRT-NEO, Chiangmai
+ 3 O39  100.03105  +26.695553   3195.334 0.894458  +0.446769    China          BOOTES-4, Lijiang
+ 3 O40  100.22861  +29.013063   3854.266 0.875727  +0.482435    China          Xingyuan, Daocheng
+ 3 O41   99.46556  +18.336971    212.998 0.949569  +0.312613    Thailand       Choakanan Observatory, Lampang
+ 3 O42  100.02900  +26.722495   3134.381 0.894239  +0.447183    China          Gaomeigu Gemini Observatory, LiJiang
  3 O43   99.78111   +6.307021    111.299 0.994005  +0.109127    Malaysia       Observatori Negara, Langkawi
- 3 O44  100.0310   +26.709191   3184.696 0.89435   +0.44698     China          Lijiang Station, Yunnan Observatories
+ 3 O44  100.02973  +26.695089   3240.856 0.894468  +0.446765    China          Lijiang Station, Yunnan Observatories
  3 O45  100.03261  +26.697920   3227.314 0.894444  +0.446808    China          Yunnan-HK Observatory, Gaomeigu
  3 O46  100.22664  +29.011750   3853.753 0.875738  +0.482415    China          Daocheng Glacier Observatory
  3 O47  101.13415  +25.624399   2274.672 0.902535  +0.429998    China          Yunling Observatory, Yunnan
@@ -2077,11 +2125,17 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 O50  101.43942   +3.033412     56.171 0.998617  +0.052565    Malaysia       Hin Hua Observatory, Klang
  3 O51  101.27869  +12.734700    -25.562 0.975556  +0.218996    Thailand       Akin Observatory, Rayong
  3 O52  100.72972  +13.578635    -26.336 0.972224  +0.233250    Thailand       Astro820, Samut Prakan
+ 3 O53  101.40403  +14.669313    288.411 0.967655  +0.251610    Thailand       Pakchong, Nachonratchasima
+ 3 O54  100.94939  +13.294693    -16.278 0.973370  +0.228460    Thailand       TSky Observatory, Chonburi
+ 3 O55  101.85450   +2.445334     28.907 0.999100  +0.042381    Malaysia       Telok Kemang Observatory, Port Dickson
+ 3 O56  101.45455  +14.698323    292.205 0.967528  +0.252097    Thailand       Jaichalad-Pailin Observatory
  3 O68  105.33090  +37.629648   1265.425 0.793121  +0.607347    China          LW-2, NAOC-Zhongwei
  3 O72  106.33476  +47.886134   1637.802 0.672017  +0.738399    Mongolia       OWL-Net, Songino
  3 O75  107.05180  +47.865238   1606.859 0.672284  +0.738151    Mongolia       ISON-Hureltogoot Observatory
  3 O85  109.21300  +34.352281    911.138 0.826583  +0.561181    China          LiShan Observatory, Lintong
  3 P07  114.08987  -21.895687     51.267 0.928304  -0.370597    Australia/WA   Space Surveillance Telescope, HEH Station
+ 3 P13  115.57333  +39.837556   1140.146 0.769058  +0.637315    China          Baihuashan Observatory, Beijing
+ 3 P14  115.81167  -31.984472     -2.817 0.848989  -0.526638    Australia/WA   Nedlands Observatory, Perth
  3 P18  116.61083  +40.898907    482.210 0.757010  +0.651328    China          Birch Forest Observatory, LaBaGouMen
  3 P21  117.28146  -31.820553    334.732 0.850540  -0.524246    Australia/WA   6R-AUS1, Youndegin
  3 P22  117.57588  +40.394252    886.203 0.762782  +0.644702    China          LW-3, NAOC-Xinglong
@@ -2092,6 +2146,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 P35  120.55699  +24.093399     49.897 0.913398  +0.405722    Taiwan         Cuteip Remote Observatory, Changhua
  3 P36  120.62669  +31.302952     13.767 0.855207  +0.516553    China          ULTRA Observatory,Suzhou
  3 P37  120.63972  +24.153164     93.083 0.912980  +0.406672    Taiwan         HuiWen High School Observatory, Taichung City
+ 3 P38  120.71429  +22.074678     26.008 0.927137  +0.373477    Taiwan         Checheng Elementary School Observatory
  3 P40  121.53958  +25.134642    399.145 0.905916  +0.422185    Taiwan         Chinese Culture University, Taipei
  3 P48  123.32403  -75.100395   3232.597 0.258064  -0.963413    Antarctica     ASTEP, Concordia Station
  3 P61  126.33047  +43.824408    335.644 0.722664  +0.688958    China          Jilin Observatory
@@ -2100,6 +2155,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 P65  127.37568  +36.397627    160.714 0.805889  +0.590124    South Korea    OWL-Net, Daedeok
  3 P66  127.44675  +34.526296     73.809 0.824763  +0.563603    South Korea    Deokheung Optical Astronomy Observatory
  3 P67  127.7415   +37.871793    128.603 0.79040   +0.61057     South Korea    Kangwon National University Observatory
+ 3 P68  127.47440  +36.333148    175.243 0.806556  +0.589222    South Korea    DDSHS Biryong Observatory
  3 P71  128.76108  +35.502785    142.020 0.815026  +0.577520    South Korea    Miryang Arirang Astronomical Observatory
  3 P72  128.97595  +36.163884   1168.629 0.808423  +0.586939    South Korea    OWL-Net, Mt. Bohyun
  3 P73  129.0820   +35.263076    138.223 0.81744   +0.57412     South Korea    BSH Byulsem Observatory, Busan
@@ -2111,7 +2167,9 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 Q11  137.52069  +34.984299    185.236 0.820236  +0.570158    Japan          Shinshiro
  3 Q12  137.82536  +36.476962    777.994 0.805147  +0.591292    Japan          Nagano Observatory
  3 Q19  139.4390   +35.573820     81.308 0.81430   +0.57852     Japan          Machida
+ 3 Q20  139.57008  -34.544081     53.375 0.824585  -0.563856    Australia/SA   Swan Reach Imaging, Glenalta
  3 Q21  139.85335  +36.507360    100.066 0.804747  +0.591654    Japan          Southern Utsunomiya
+ 3 Q22  140.34192  -34.269187     48.802 0.827286  -0.559911    Australia/SA   SNX-NET, Moorook
  3 Q23  140.3864   +37.295470    314.028 0.79654   +0.60264     Japan          Sukagawa
  3 Q24  140.52350  +35.898994     41.108 0.810991  +0.583108    Japan          Katori
  3 Q33  142.48278  +44.373646    192.283 0.715989  +0.695814    Japan          Nayoro Observatory, Hokkaido University
@@ -2133,6 +2191,8 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 Q68  150.33742  -33.702135    957.276 0.832917  -0.551813    Australia/NSW  Blue Mountains Observatory, Leura
  3 Q69  150.44933  -33.712916    681.680 0.832777  -0.551945    Australia/NSW  Hazelbrook
  3 Q70  150.50044  -23.269456    108.324 0.919153  -0.392623    Australia/QLD  Glenlee Observatory, Glenlee
+ 3 Q71  149.06980  -31.273329   1144.816 0.855626  -0.516205    Australia/NSW  SNX-NET, Siding Spring
+ 3 Q73  151.64894  -32.765687     41.676 0.841722  -0.538113    Australia/NSW  Buckthorn, Thornton
  3 Q78  152.94789  -27.605675     84.314 0.886807  -0.460619    Australia/QLD  Woogaroo Observatory, Forest Lake
  3 Q79  152.8481   -27.368290     80.362 0.88871   -0.45696     Australia/QLD  Samford Valley Observatory
  3 Q80  153.2160   -27.503454     22.748 0.88762   -0.45904     Australia/QLD  Birkdale
@@ -2142,22 +2202,24 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 R58  170.49039  -45.864384    148.645 0.697579  -0.714138    New Zealand    Beverly-Begg Observatory, Dunedin
  3 R65  172.34981  -43.498734    116.431 0.726556  -0.684830    New Zealand    R. F. Joyce Observatory, Christchurch
  3 R66  172.58761  -43.495302     27.181 0.726587  -0.684777    New Zealand    Mooray Observatory, Christchurch
+ 3 R78  175.09104  -38.094331    164.569 0.788021  -0.613626    New Zealand    Crystal Lake Observatory, Ngutunui
+ 3 T02  203.49572  +20.900636    104.174 0.934614  +0.354517    US/Hawaii      SNX-NET, Wailuku
  3 T03  203.74247  +20.706986   3050.490 0.936240  +0.351538    US/Hawaii      Haleakala-LCO Clamshell #3
  3 T04  203.74249  +20.706966   3056.456 0.936241  +0.351538    US/Hawaii      Haleakala-LCO OGG B #2
- 3 T05  203.74299  +20.707573   3040.957 0.936235  +0.351547    US/Hawaii      ATLAS-HKO, Haleakala
+ 3 T05  203.74299  +20.707553   3046.923 0.936236  +0.351547    US/Hawaii      ATLAS-HKO, Haleakala
  3 T07  204.42387  +19.536152   3426.958 0.943290  +0.332467    US/Hawaii      ATLAS-MLO Auxiliary Camera, Mauna Loa
  3 T08  204.42395  +19.536152   3426.958 0.943290  +0.332467    US/Hawaii      ATLAS-MLO, Mauna Loa
- 3 T09  204.52398  +19.825490   4160.275 0.941706  +0.337237    US/Hawaii      Subaru Telescope, Maunakea
+ 3 T09  204.52396  +19.825501   4194.602 0.941711  +0.337239    US/Hawaii      Subaru Telescope, Maunakea
  3 T10  204.52241  +19.824136   4106.197 0.941706  +0.337212    US/Hawaii      Submillimeter Array, Maunakea (SMA)
- 3 T11  204.53036  +19.822889   4225.920 0.941731  +0.337198    US/Hawaii      United Kingdom Infrared Telescope, Maunakea
- 3 T12  204.53057  +19.822983   4216.082 0.941729  +0.337199    US/Hawaii      University of Hawaii 88-inch telescope, Maunakea
- 3 T13  204.52771  +19.827191   4126.519 0.941691  +0.337263    US/Hawaii      NASA Infrared Telescope Facility, Maunakea
- 3 T14  204.53113  +19.825280   4206.113 0.941714  +0.337236    US/Hawaii      Canada-France-Hawaii Telescope, Maunakea
- 3 T15  204.53094  +19.823834   4236.527 0.941727  +0.337214    US/Hawaii      Gemini North Observatory, Maunakea
- 3 T16  204.52570  +19.826253   4170.397 0.941703  +0.337250    US/Hawaii      W. M. Keck Observatory, Keck 1, Maunakea
- 3 T17  204.52580  +19.826636   4165.376 0.941700  +0.337256    US/Hawaii      W. M. Keck Observatory, Keck 2, Maunakea
+ 3 T11  204.52965  +19.822452   4228.780 0.941734  +0.337191    US/Hawaii      United Kingdom Infrared Telescope, Maunakea
+ 3 T12  204.53054  +19.823013   4244.409 0.941733  +0.337201    US/Hawaii      University of Hawaii 88-inch telescope, Maunakea
+ 3 T13  204.52797  +19.826229   4196.560 0.941707  +0.337251    US/Hawaii      NASA Infrared Telescope Facility, Maunakea
+ 3 T14  204.53109  +19.825438   4232.766 0.941717  +0.337240    US/Hawaii      Canada-France-Hawaii Telescope, Maunakea
+ 3 T15  204.53093  +19.823815   4242.527 0.941728  +0.337214    US/Hawaii      Gemini North Observatory, Maunakea
+ 3 T16  204.52526  +19.825938   4191.744 0.941708  +0.337246    US/Hawaii      W. M. Keck Observatory, Keck 1, Maunakea
+ 3 T17  204.52574  +19.826558   4189.377 0.941704  +0.337256    US/Hawaii      W. M. Keck Observatory, Keck 2, Maunakea
  3 T35  210.39020  -17.563461     80.078 0.953686  -0.299837    Tahiti         Astronomical Society of Tahiti
- 3 U52  237.45111  +41.579167    812.665 0.749240  +0.660270    US/California  Shasta Valley Observatory, Grenada
+ 3 U52  237.45100  +41.579167    812.665 0.749240  +0.660270    US/California  Shasta Valley Observatory, Grenada
  3 U53  237.1603   +45.450107    130.091 0.70274   +0.70909     US/Oregon      Murray Hill Observatory, Beaverton
  3 U54  237.31286  +38.565903    336.505 0.782952  +0.620081    US/California  Hume Observatory, Santa Rosa
  3 U55  237.41456  +49.253279     29.265 0.653977  +0.753984    Canada/BritCo  Golden Ears Observatory, Maple Ridge
@@ -2183,18 +2245,20 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 U81  243.61514  +34.272551    928.274 0.827367  +0.560037    US/California  CS3-Trojan Station, Landers
  3 U82  243.61519  +34.272471    929.953 0.827368  +0.560036    US/California  CS3-Palmer Divide Station, Landers
  3 U83  243.57311  +32.842004   1824.998 0.841238  +0.539380    US/California  Mount Laguna Observatory
+ 3 U86  244.53556  +31.044836   2771.394 0.857900  +0.512937    Mexico         BOOTES-5, Bajo California
  3 U93  246.28761  +37.762811   1557.743 0.791740  +0.609209    US/Utah        Skygems Dreamscope Utah, Beryl Junction
  3 U94  246.30250  +37.737783   1552.042 0.792006  +0.608864    US/Utah        iTelescope Observatory, Beryl Junction
  3 U96  246.68600  +54.713670    567.954 0.579007  +0.812698    Canada/Albert  Athabasca University Geophysical Observatory
  3 U97  248.33292  +35.202997   2191.908 0.818306  +0.573452    US/Arizona     JPL SynTrack Robotic Telescope 3, Flagstaff
  3 U98  249.74300  +31.941291   1068.944 0.849529  +0.526090    US/Arizona     NAC Observatory, Benson
+ 3 U99  247.8537   +34.064734    595.944 0.829354  +0.557017    US/Arizona     BCC Observatory, Black Canyon City
  3 V00  248.39981  +31.963127   2030.788 0.849456  +0.526492    US/Arizona     Kitt Peak-Bok
  3 V01  248.23911  +40.448904   1540.295 0.762243  +0.645493    US/Utah        Mountainville Observatory, Alpine
  3 V02  248.05794  +33.399758    341.737 0.835743  +0.547377    US/Arizona     Command Module, Tempe
  3 V03  248.3314   +37.083379   1267.045 0.79889   +0.59979     US/Utah        Big Water
  3 V04  248.46331  +35.095868   2182.756 0.819378  +0.571927    US/Arizona     FRoST, Anderson Mesa
  3 V05  248.63195  +33.310395    597.819 0.836631  +0.546101    US/Arizona     Rusty Mountain Observatory, Gold Canyon
- 3 V06  249.26745  +32.416847   2519.508 0.845317  +0.533211    US/Arizona     Catalina Sky Survey-Kuiper
+ 3 V06  249.26745  +32.416873   2491.132 0.845313  +0.533209    US/Arizona     Catalina Sky Survey-Kuiper
  3 V07  249.1219   +31.680709   2287.949 0.85208   +0.52234     US/Arizona     Whipple Observatory, Mount Hopkins-PAIRITEL
  3 V08  249.33900  +32.079598   1029.734 0.848249  +0.528126    US/Arizona     Mountain Creek Ranch, Vail
  3 V09  249.74202  +31.940560   1078.500 0.849537  +0.526080    US/Arizona     Moka Observatory, Benson
@@ -2222,17 +2286,20 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 V31  254.4750   +32.913751   2200.449 0.84061   +0.54046     US/New Mexico  Hazardous Observatory, Mayhill
  3 V32  254.47131  +32.903322   2203.848 0.840709  +0.540308    US/New Mexico  Canvas View New Mexico Skies, Mayhill
  3 V33  254.72039  +36.380357   2654.159 0.806382  +0.590114    US/New Mexico  Finlaystone Observatory, Angel Fire
- 3 V34  255.36992  +39.004636   2245.136 0.778401  +0.626222    US/Colorado    Black Forest
+ 3 V34  255.36992  +39.004636   2245.136 0.778401  +0.626222    US/Colorado    Baker Observatory, Black Forest
  3 V35  255.91881  +30.588443   1831.571 0.861839  +0.506046    US/Texas       Deep Sky Observatory Collaborative, Pier 5
  3 V36  255.61742  +32.638535    992.561 0.843042  +0.536333    US/New Mexico  The Ranch Observatory, Lakewood
  3 V37  255.98483  +30.679870   2009.519 0.861053  +0.507428    US/Texas       McDonald Observatory-LCO ELP
  3 V38  255.98493  +30.680077   2008.312 0.861051  +0.507431    US/Texas       McDonald Observatory-LCO ELP Aqawan A #1
- 3 V39  255.98452  +30.680028   2005.057 0.861051  +0.507430    US/Texas       McDonald Observatory-LCO ELP B
+ 3 V39  255.98483  +30.679821   2006.265 0.861053  +0.507427    US/Texas       McDonald Observatory-LCO ELP B
  3 V40  255.91873  +30.588443   1831.571 0.861839  +0.506046    US/Texas       Divine Creation Observatory, Fort Davis
  3 V41  256.72578  +44.052007   1039.702 0.719992  +0.691890    US/South Dako  Rapid City
  3 V42  254.47472  +32.913047   2180.278 0.840614  +0.540448    US/New Mexico  Dimension Point, Mayhill
  3 V43  250.4842   +31.866835   1420.236 0.85026   +0.52502     US/Arizona     Chiricahua Skies Observatory, Sunizona
+ 3 V44  251.82983  +34.321865   2267.069 0.827057  +0.560864    US/New Mexico  Coyote Watcher, Pie Town
  3 V54  259.69219  +20.600867   2007.698 0.936737  +0.349756    Mexico         Observatoire LAURIER, El Marques
+ 3 V56  260.30403  +31.937385    618.497 0.849505  +0.525995    US/Texas       Stonehenge Observatory, Novice
+ 3 V57  260.61773  +31.547099    431.894 0.853050  +0.520209    US/Texas       Starfront Observatories, Rockwood
  3 V58  260.73497  +29.778158    460.527 0.868735  +0.493762    US/Texas       Medina Dome, Medina
  3 V59  261.0734   +30.046447    537.153 0.86642   +0.49781     US/Texas       Millwood Observatory, Comfort
  3 V60  261.09473  +30.534071    501.120 0.862140  +0.505126    US/Texas       Putman Mountain Observatory
@@ -2242,6 +2309,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 V70  263.33572  +29.619051    100.577 0.870056  +0.491332    US/Texas       Starry Night Observatory, Columbus
  3 V72  263.89011  +41.274124    312.106 0.752696  +0.656235    US/Nebraska    JDP Observatory, Omaha
  3 V74  264.15689  +29.703308     17.315 0.869320  +0.492598    US/Texas       Katy Observatory, Katy
+ 3 V75  264.56578  +29.044439    -21.654 0.874931  +0.482617    US/Texas       Live Oak Observatory, Lake Jackson
  3 V78  265.10780  +45.660977    352.840 0.700141  +0.711688    US/Minnesota   Spirit Marsh Observatory. Sauk Centre
  3 V81  265.7604   +36.095422    336.783 0.80902   +0.58590     US/Arkansas    Fayetteville
  3 V83  266.25728  +38.677354    269.491 0.781733  +0.621590    US/Missouri    Rolling Hills Observatory, Warrensburg
@@ -2251,6 +2319,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 V93  268.61611  +40.653352    167.239 0.759765  +0.648058    US/Iowa        Pin Oak Observatory, Fort Madison
  3 V94  268.66169  +40.643752    185.038 0.759876  +0.647933    US/Iowa        Cherokeeridge Observatory, Fort Madison
  3 W04  271.00944  +40.491610    246.144 0.761606  +0.645927    US/Illinois    Mark Evans Observatory, Bloomington
+ 3 W05  271.26719  +33.347638     62.313 0.836205  +0.546596    US/Mississipp  Tree Gate Farm Observatory, Starkville
  3 W08  271.88331  +41.758980    196.856 0.747086  +0.662545    US/Illinois    Jimginny Observatory, Naperville
  3 W09  272.14753  +41.256136    171.344 0.752886  +0.655985    US/Illinois    Willowed Plains Observatory, Manteno
  3 W11  272.6247   +41.270841    195.755 0.75272   +0.65618     US/Indiana     Northwest Indiana Robotic Telescope, Lowell
@@ -2274,17 +2343,21 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 W34  277.8453   +35.225393    307.927 0.81784   +0.57360     US/North Caro  Squirrel Valley Observatory, Columbus
  3 W35  278.03910  +31.146836    -14.806 0.856610  +0.514230    US/Georgia     Buffalo Creek Observatory, Nahunta
  3 W38  278.58531  +36.252691    922.142 0.807479  +0.588163    US/North Caro  Dark Sky Observatory, Boone
- 3 W42  279.46569  +27.764539    -13.702 0.885511  +0.463056    US/Florida     Mind's Eye Observatory, Vero Beach
+ 3 W42  279.46571  +27.764566    -19.346 0.885510  +0.463056    US/Florida     Mind's Eye Observatory, Vero Beach
+ 3 W44  286.22016  +41.014860     46.725 0.755635  +0.652808    US/New York    Duo Ursi de Saltu, Scarsdale
+ 3 W45  283.93827  +36.728937    -30.935 0.802431  +0.594736    US/Virginia    Benito Loyola Observatory, Virginia Beach
  3 W46  280.41192  +35.145627    108.744 0.818614  +0.572448    US/North Caro  Foxfire Village
+ 3 W47  289.23501  -30.470470   1602.574 0.862850  -0.504261    Chile          SNX-NET, Rio Hurtado
  3 W48  280.88700  +35.831005    112.194 0.811693  +0.582156    US/North Caro  BKH Observatory, Chapel Hill
  3 W49  281.06757  +38.952839    815.574 0.778794  +0.625380    US/West Virgi  CBA-MM Observatory, Mountain Meadows
  3 W50  281.25404  +35.690054    120.319 0.813127  +0.580167    US/North Caro  Apex
+ 3 W51  287.56544  +41.051862    -21.217 0.755204  +0.653287    US/New York    Custer Institute and Observatory
  3 W52  283.51419  +38.985324    -32.572 0.778335  +0.625736    US/Maryland    US Naval Academy Hopper Hall Observatory
  3 W53  282.31524  +39.639374    114.090 0.771140  +0.634559    US/Maryland    Hagerstown
  3 W54  282.28944  +38.333748     63.391 0.785431  +0.616890    US/Virginia    Mark Slade Remote Observatory, Wilderness
  3 W55  282.58389  +39.407774     92.019 0.773703  +0.631447    US/Maryland    Natelli Observatory, Frederick
  3 W56  282.52583  +39.459533    193.547 0.773143  +0.632153    US/Maryland    Pineapple Observatory, Frederick
- 3 W57  289.26094  -29.255188   2412.162 0.873480  -0.486002    Chile          ESA TBT La Silla Observatory
+ 3 W57  289.26094  -29.255228   2378.105 0.873475  -0.486000    Chile          ESA TBT La Silla Observatory
  3 W58  283.14964  +39.046892     21.886 0.777667  +0.626574    US/Maryland    ALPHA Observatory, South Laurel
  3 W59  284.10758  +40.897966    349.531 0.757005  +0.651302    US/Pennsylvan  The Dark Side Observatory, Weatherly
  3 W60  286.36626   +5.610983   2137.204 0.995574  +0.097155    Colombia       AstroExplor Observatory, Tinjaca
@@ -2344,6 +2417,10 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 X14  295.83222  -31.389999    426.088 0.854475  -0.517879    Argentina      Observatorio Orbis Tertius, Cordoba
  3 X15  291.82053  -22.952948   2441.456 0.921647  -0.387711    Chile          ABYO, San Pedro de Atacama
  3 X16  293.8497   -17.364775   2681.834 0.95511   -0.29667     Bolivia        Astronomia Sigma Octante, Cochabamba
+ 3 X17  289.26208  -29.257419   2375.243 0.873456  -0.486033    Chile          BlackGEM
+ 3 X18  291.82053  -22.952949   2434.588 0.921646  -0.387710    Chile          6R-POL2, San Pedro de Atacama
+ 3 X19  290.67383  -31.802446   2451.588 0.850988  -0.524154    Argentina      Santel Observatory, El Leoncito
+ 3 X20  291.82051  -22.953076   2440.558 0.921646  -0.387713    Chile          BOOTES-7, San Pedro Atacama
  3 X31  299.47934  -31.823022     91.816 0.850485  -0.524263    Argentina      Galileo Galilei Observatory, Oro Verde
  3 X33  299.99039   -2.997379     37.888 0.998647  -0.051941    Brazil         OARU, Manaus
  3 X38  301.13711  -34.435686     18.196 0.825648  -0.562299    Argentina      Observatorio Pueyrredon, La Lonja
@@ -2356,10 +2433,12 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 X72  308.87889  -29.766926     42.220 0.868775  -0.493560    Brazil         Waccobs, Sao Leopoldo
  3 X74  309.49422  -21.394146    417.328 0.931569  -0.362525    Brazil         Observatorio Campo dos Amarais
  3 X77  309.92475  -25.908604    825.865 0.900184  -0.434346    Brazil         Centro Astron. Nevoeiro, Antonio Olinto
+ 3 X86  312.21833  -23.393035    552.060 0.918367  -0.394621    Brazil         Ottoservatorio, Tatui
  3 X87  312.0889   -15.891703   1044.874 0.96218   -0.27210     Brazil         Dogsheaven Observatory, Brasilia
  3 X88  312.49131  -23.445389    596.163 0.918012  -0.395458    Brazil         Observatorio Adhara, Sorocaba
  3 X89  312.21786  -15.844483   1024.765 0.962401  -0.271311    Brazil         Rocca Observatory, Brasilia
  3 X90  312.13208  -15.656914   1273.159 0.963322  -0.268189    Brazil         Carina Observatory, Brasilia
+ 3 X91  312.78881  -23.569491    878.799 0.917193  -0.397452    Brazil         Orion-Colesanti observatory, Mairinque
  3 X93  313.6047   -22.628914   1078.766 0.92363   -0.38244     Brazil         Munhoz Observatory
  3 Y00  315.21504  -20.715082   1111.997 0.935906  -0.351562    Brazil         SONEAR Observatory, Oliveira
  3 Y01  316.01580  -19.881969    885.335 0.940890  -0.337985    Brazil         SONEAR 2 Observatory, Belo Horizonte
@@ -2367,10 +2446,26 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 Y16  318.68794  -21.745265      5.455 0.929268  -0.368170    Brazil         ROCG, Campos dos Goytacazes
  3 Y28  321.3126    -8.788707    414.679 0.98840   -0.15179     Brazil         OASI, Nova Itacuruba
  3 Y40  324.03889   -8.288643    533.510 0.989706  -0.143217    Brazil         Discovery Observatory, Caruaru
- 3 Y64  343.48961  +28.298933   2424.545 0.881484  +0.471433    Canary Island  ATLAS-TDO, Teide
+ 3 Y63  352.13368  +31.206605   2780.551 0.856447  +0.515346    Morocco        SNX-NET, Oukaimeden
+ 3 Y64  343.48961  +28.298933   2424.545 0.881484  +0.471433    Canary Island  Transient Survey Telescope (TST), Teide
  3 Y65  343.49042  +28.298730   2412.450 0.881484  +0.471429    Canary Island  Two-Meter Twin Telescope, TTT1, Teide
  3 Y66  343.49053  +28.298730   2412.450 0.881484  +0.471429    Canary Island  Two-Meter Twin Telescope, TTT2, Teide
+ 3 Y67  352.13292  +31.205945   2766.021 0.856451  +0.515335    Morocco        High Atlas Window to the Kosmos,Oukaimeden
+ 3 Y70  353.37238  +38.215823    580.687 0.786766  +0.615329    Spain          ApolloIV5, Fregenal de la Sierra
+ 3 Y71  353.37251  +38.215662    582.818 0.786768  +0.615327    Spain          Makroskooppi, Fregenal de la Sierra
+ 3 Y75  354.58128  +38.262300    659.345 0.786275  +0.615972    Spain          Abraham Zacut, Salamanca
+ 3 Y76  359.79189  +39.686387     83.941 0.770614  +0.635186    Spain          Observatorio NovaCanet, Canet de Berenguer
+ 3 Y77  356.38858  +40.789626    975.196 0.758313  +0.649939    Spain          Cotos de Monterrey, Venturada
+ 3 Y78  359.46617  +39.400889    198.638 0.773792  +0.631365    Spain          Tros Alt
+ 3 Y79  359.99270  +45.517182    170.471 0.701911  +0.709914    France         Observatoire de la grande vallee
+ 3 Y80  357.16642  +47.738795    123.965 0.673761  +0.736498    France         Brenehuen, Grand-Champ
+ 3 Y81  356.5733   +55.913325    141.593 0.56175   +0.82456     UK/Scotland    Forthimage, Edinburgh
+ 3 Y82  358.06548  +51.025953    135.613 0.630258  +0.773810    UK/England     LPMR Observatory, Broad Chalke
+ 3 Y83  359.04761  +41.621176    341.185 0.748699  +0.660768    Spain          Observatorio Arcosur, Zaragoza
+ 3 Y84  358.11972  +48.375264     78.112 0.665503  +0.743909    France         Observatoire de Saint Domineuc
  3 Y85  351.85389  +43.456675    326.337 0.727084  +0.684321    Spain          Magalofes Observatory, Fene
+ 3 Y86  357.48003  +37.351818    831.730 0.796010  +0.603469    Spain          Observatorio de Seron
+ 3 Y87  353.01194  +42.222005   1313.434 0.741821  +0.668656    Spain          Trevinca Skies-Amalthea, Trevinca
  3 Y88  353.01194  +42.222210   1316.846 0.741819  +0.668659    Spain          ASERO, Valdin
  3 Y89  353.01189  +42.222446   1392.333 0.741825  +0.668670    Spain          Proxima Centauri Observatory, Valdin
  3 Y90  354.5553   +43.203490    672.706 0.73015   +0.68115     Spain          Observatorio ESTELIA, Ladines
@@ -2379,6 +2474,8 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 Y93  355.43322  +41.798064    765.592 0.746699  +0.663112    Spain          Observatorio Azahar, Valoria la Buena
  3 Y94  354.58571  +42.983624   1251.218 0.732833  +0.678415    Spain          LCB Lugueros observatory, Valdelugueros
  3 Y95  357.99864  +38.348453    744.617 0.785356  +0.617157    Spain          Pradillos Ferez
+ 3 Y96  358.08932  +40.417289   1590.036 0.762606  +0.645079    Spain          Observatorio de Vega del Codorno
+ 3 Y97  359.64303  +44.550028     62.301 0.713822  +0.697993    France         Bommes Observatory, Bommes
  3 Y98  358.68692  +51.927850    170.859 0.617953  +0.783613    UK/England     Southside Observatory, Steeple Aston
  3 Y99  359.07299  +41.642025    308.796 0.748454  +0.661036    Spain          Observatorio del Lucero del Alba
  3 Z00  353.26586  +37.104084    110.091 0.798528  +0.599968    Spain          BOOTES-1, Mazagon
@@ -2402,7 +2499,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 Z18  342.10811  +28.756590   2325.350 0.877671  +0.478415    Canary Island  Gran Telescopio Canarias, Roque de los Muchachos
  3 Z19  342.11094  +28.753995   2385.706 0.877701  +0.478380    Canary Island  La Palma-TNG
  3 Z20  342.1217   +28.762012   2356.944 0.87763   +0.47850     Canary Island  La Palma-MERCATOR
- 3 Z21  343.48830  +28.300332   2392.143 0.881468  +0.471452    Canary Island  Tenerife-LCO Aqawan A #1
+ 3 Z21  343.48830  +28.300293   2440.525 0.881475  +0.471455    Canary Island  Tenerife-LCO Aqawan A #1
  3 Z22  343.4894   +28.298890   2393.011 0.88148   +0.47143     Canary Island  MASTER-IAC Observatory, Tenerife
  3 Z23  342.11492  +28.757277   2425.315 0.877679  +0.478433    Canary Island  Nordic Optical Telescope, La Palma
  3 Z24  343.48848  +28.300546   2455.645 0.881475  +0.471460    Canary Island  Tenerife Observatory-LCO B, Tenerife
@@ -2412,7 +2509,7 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 Z28  357.67331  +38.165719   1658.217 0.787438  +0.614748    Spain          Northern Skygems Observatory, Nerpio
  3 Z29  354.11944  +41.372224    872.813 0.751634  +0.657576    Spain          Observatorio Astronomico Sobradillo
  3 Z30  355.52500  +54.178411    168.928 0.586571  +0.807215    UK/Isle of Ma  Glyn Marsh Observatory, Douglas
- 3 Z31  343.48835  +28.300417   2455.213 0.881476  +0.471458    Canary Island  Tenerife Observatory-LCO A, Tenerife
+ 3 Z31  343.48835  +28.300421   2440.957 0.881474  +0.471457    Canary Island  Tenerife Observatory-LCO A, Tenerife
  3 Z32  358.98372  +40.041843   2010.717 0.766879  +0.640130    Spain          Observatorio Astrofisico de Javalambre
  3 Z33  357.67331  +38.165746   1660.581 0.787438  +0.614748    Spain          6ROADS Observatory 2, Nerpio
  3 Z34  359.11233  +52.302083    169.150 0.612800  +0.787622    UK/England     NNHS Drummonds Observatory
@@ -2465,11 +2562,11 @@ Pl Code Longitude  Latitude     Altitude rho_cos   rho_sin_phi  region         n
  3 Z81  355.73240  +36.720606     67.080 0.802530  +0.594629    Spain          Observatorio Estrella de Mar
  3 Z82  355.95903  +36.759241    123.686 0.802135  +0.595173    Spain          BOOTES-2 Observatory, Algarrobo
  3 Z83  356.2881   +40.610079    792.156 0.76033   +0.64755     Spain          Chicharronian 3C Observatory, Tres Cantos
- 3 Z84  357.45179  +37.224049   2160.811 0.797523  +0.601826    Spain          Calar Alto-Schmidt
+ 3 Z84  357.45184  +37.224009   2261.560 0.797536  +0.601835    Spain          Calar Alto-Schmidt
  3 Z85  356.75028  +36.877254   1347.963 0.801058  +0.596932    Spain          Observatorio Sierra Contraviesa
  3 Z86  356.8900   +51.523936     20.726 0.62347   +0.77923     UK/Wales       St. Mellons
  3 Z87  357.10210  +52.648212    110.278 0.608005  +0.791293    UK/England     Stanley Laver Observatory, Pontesbury
- 3 Z88  357.5101   +51.254536    204.251 0.62716   +0.77632     UK/England     Fosseway Observatoy, Stratton-on-the-Fosse
+ 3 Z88  357.5101   +51.254536    204.251 0.62716   +0.77632     UK/England     Fosseway Observatory, Stratton-on-the-Fosse
  3 Z89  357.8281   +53.264567     97.494 0.59942   +0.79777     UK/England     Macclesfield
  3 Z90  357.8482   +37.405564    493.072 0.79540   +0.60418     Spain          Albox
  3 Z91  358.74999  +50.916485     31.749 0.631731  +0.772595    UK/England     Curdridge
