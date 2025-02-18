@@ -33,7 +33,7 @@ impl FromStr for ObsCode {
     /// Load an ObsCode from a single string.
     fn from_str(row: &str) -> KeteResult<Self> {
         let code = row[0..3].to_string();
-        let lon = f64::from_str(row[5..13].trim())?;
+        let lon = f64::from_str(row[3..13].trim())?;
         let cos = f64::from_str(row[13..21].trim())?;
         let sin = f64::from_str(row[21..30].trim())?;
         let vec = Vector3::new(cos, 0.0, sin) * EARTH_A;
