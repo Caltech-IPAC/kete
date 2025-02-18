@@ -9,9 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Added functions for estimating the position of Earth coordinates outside of the PCK
   limits. This allows for estimating Palomar's position in 1950.
 
+### Changed
+
+- Switched to using the MPC Observatory code file for the source of observatory
+  locations.
+
+### Fixed
+
+- WGS84 conversion between ECEF and Lat/Lon/Alt was missing a square-root causing a
+  small offset (typically 10s to 100s of meters). This has been fixed.
 
 ## [v1.0.6]
 
