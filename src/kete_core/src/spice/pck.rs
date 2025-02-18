@@ -14,9 +14,9 @@ use lazy_static::lazy_static;
 
 use std::io::Cursor;
 
-const PRELOAD_PCK: &[&[u8]] = &[
-    include_bytes!("../../data/earth_1962_240827_2124_combined.bpc"),
-];
+const PRELOAD_PCK: &[&[u8]] = &[include_bytes!(
+    "../../data/earth_1962_240827_2124_combined.bpc"
+)];
 
 /// A collection of segments.
 #[derive(Debug)]

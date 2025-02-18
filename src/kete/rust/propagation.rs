@@ -132,8 +132,7 @@ pub fn propagation_n_body_spk_py(
                                     eprintln!(
                                         "Impact detected between ({:?}) <-> ({}) at time {} ({})",
                                         desig,
-                                        spice::try_name_from_id(id)
-                                            .unwrap_or(id.to_string()),
+                                        spice::try_name_from_id(id).unwrap_or(id.to_string()),
                                         time,
                                         time_full.utc().to_iso().unwrap()
                                     );

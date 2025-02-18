@@ -3,8 +3,9 @@ Collection of data files which are used by kete_core.
 Files ending in BSP or BPC are are packed binary SPICE kernels.
 These are loaded and packed into the final rust binary, and are included automatically.
 
-`mpc_obs.tsv` - Tab separated table containing known ground observatory codes and
-    locations. This is also loaded and compiled into the final binary.
+`mpc_obs.tsv` - Downloaded from https://minorplanetcenter.net/iau/lists/ObsCodes.html
+    Contains obs codes and locations. These are loaded and compiled into the final
+    binary. Entries with gaps, such as spacecraft are ignored.
 
 `naif_ids.csv` - CSV containing a table of many of the known NAIF identifiers to full
     names. This is not 100% guaranteed to match, as JPL may decide to renumber objects.

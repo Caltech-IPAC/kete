@@ -3,17 +3,21 @@
 /// Earth semi major axis in km as defined by WGS84
 pub const EARTH_A: f64 = 6378.1370;
 
+/// Earth semi minor axis in km as defined by WGS84
+pub const _EARTH_B: f64 = 6356.7523142;
+
 // /// Earth inverse flattening as defined by WGS84
-const _EARTH_INV_FLAT: f64 = 298.257223563;
+const _EARTH_INV_FLAT: f64 = 298.2572235629972;
 
 /// Earth surface eccentricity squared, calculated from above.
-const EARTH_E2: f64 = 0.00669437999014;
+/// e^2 = (2 - flattening) * flattening
+const EARTH_E2: f64 = 0.0066943799901413165;
 
 /// Prime vertical radius of curvature.
 /// This is the radius of curvature of the earth surface at the specific geodetic
 /// latitude.
 pub fn prime_vert_radius(geodetic_lat: f64) -> f64 {
-    EARTH_A / (1.0 - EARTH_E2 * geodetic_lat.sin().powi(2))
+    EARTH_A / (1.0 - EARTH_E2 * geodetic_lat.sin().powi(2)).sqrt()
 }
 
 /// Compute geodetic lat/lon/height in radians/km from ECEF position in km.

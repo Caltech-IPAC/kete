@@ -86,6 +86,7 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(frame::ecef_to_wgs_lat_lon, m)?)?;
     m.add_function(wrap_pyfunction!(frame::calc_obliquity_py, m)?)?;
     m.add_function(wrap_pyfunction!(frame::calc_earth_precession, m)?)?;
+    m.add_function(wrap_pyfunction!(frame::geodetic_lat_to_geocentric_py, m)?)?;
 
     m.add_function(wrap_pyfunction!(kepler::compute_eccentric_anomaly_py, m)?)?;
     m.add_function(wrap_pyfunction!(kepler::propagation_kepler_py, m)?)?;

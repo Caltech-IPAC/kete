@@ -47,7 +47,7 @@ def find_obs_code(name: str):
     appropriate.
 
     >>> kete.mpc.find_obs_code("Palomar Mountain")
-    (33.35412, 243.13746, 1.69615, 'Palomar Mountain', '675')
+    (33.35411714208074, -116.86253999999998, 1.6960628760407417, 'Palomar Mountain', '675')
 
     Parameters
     ----------

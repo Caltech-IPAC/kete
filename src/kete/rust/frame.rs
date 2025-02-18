@@ -62,6 +62,22 @@ pub fn wgs_lat_lon_to_ecef(lat: f64, lon: f64, h: f64) -> (f64, f64, f64) {
     geodetic_lat_lon_to_ecef(lat.to_radians(), lon.to_radians(), h)
 }
 
+/// Compute geocentric latitude from geodetic latitude and height.
+///
+/// Inputs are in degrees and km.
+///
+/// Parameters
+/// ----------
+/// lat :
+///     Geodetic Latitude in degrees.
+/// h :
+///     Height above the surface of the Earth in km from the WGS ellipse.
+#[pyfunction]
+#[pyo3(name = "geodetic_lat_to_geocentric")]
+pub fn geodetic_lat_to_geocentric_py(lat: f64, h: f64) -> f64 {
+    geodetic_lat_to_geocentric(lat.to_radians(), h).to_degrees()
+}
+
 /// Compute WCS84 Geodetic latitude/longitude/height from a ECEF position.
 ///
 /// This returns the lat, lon, and height from the WGS84 oblate Earth.
@@ -77,7 +93,8 @@ pub fn wgs_lat_lon_to_ecef(lat: f64, lon: f64, h: f64) -> (f64, f64, f64) {
 #[pyfunction]
 #[pyo3(name = "ecef_to_wgs_lat_lon")]
 pub fn ecef_to_wgs_lat_lon(x: f64, y: f64, z: f64) -> (f64, f64, f64) {
-    ecef_to_geodetic_lat_lon(x, y, z)
+    let (lat, lon, alt) = ecef_to_geodetic_lat_lon(x, y, z);
+    (lat.to_degrees(), lon.to_degrees(), alt)
 }
 
 /// Calculate the obliquity angle of the Earth at the specified time.
