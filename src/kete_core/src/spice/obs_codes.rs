@@ -1,7 +1,9 @@
 //! Observatory codes used by the MPC
 use lazy_static::lazy_static;
+use nalgebra::Vector3;
 use serde::Deserialize;
 
+use crate::frames::{ecef_to_geodetic_lat_lon, rotate_around, EARTH_A};
 use crate::prelude::{Error, KeteResult};
 use std::str;
 use std::str::FromStr;
@@ -30,15 +32,19 @@ impl FromStr for ObsCode {
 
     /// Load an ObsCode from a single string.
     fn from_str(row: &str) -> KeteResult<Self> {
-        let code = row[3..6].to_string();
-        let lon = f64::from_str(row[8..19].trim()).unwrap();
-        let lat = f64::from_str(row[18..29].trim()).unwrap();
-        let altitude = f64::from_str(row[29..39].trim()).unwrap() / 1000.0;
-        let name = row[79..].trim().to_string();
+        let code = row[0..3].to_string();
+        let lon = f64::from_str(row[5..13].trim())?;
+        let cos = f64::from_str(row[13..21].trim())?;
+        let sin = f64::from_str(row[21..30].trim())?;
+        let vec = Vector3::new(cos, 0.0, sin) * EARTH_A;
+        let vec = rotate_around(&vec, [0.0, 0.0, 1.0].into(), lon.to_radians());
+        let (lat, lon, altitude) = ecef_to_geodetic_lat_lon(vec.x, vec.y, vec.z);
+
+        let name = row[30..].trim().to_string();
         Ok(ObsCode {
             code,
-            lon,
-            lat,
+            lon: lon.to_degrees(),
+            lat: lat.to_degrees(),
             altitude,
             name,
         })
@@ -53,8 +59,8 @@ lazy_static! {
         let mut codes = Vec::new();
         let text = str::from_utf8(PRELOAD_OBS).unwrap().split('\n');
         for row in text.skip(1) {
-            let code: ObsCode = ObsCode::from_str(row).unwrap();
-            codes.push(code);
+            // entries with gaps are skipped
+            if let Ok(code) = ObsCode::from_str(row) { codes.push(code) };
         }
         codes
     };
