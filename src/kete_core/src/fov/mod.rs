@@ -4,6 +4,7 @@ pub mod fov_like;
 pub mod generic;
 pub mod neos;
 pub mod patches;
+pub mod ptf;
 pub mod wise;
 pub mod ztf;
 
@@ -12,6 +13,7 @@ pub use generic::*;
 use nalgebra::Vector3;
 pub use neos::*;
 pub use patches::*;
+pub use ptf::*;
 pub use wise::*;
 pub use ztf::*;
 
@@ -32,6 +34,9 @@ pub enum FOV {
     /// ZTF Single Quad of single CCD FOV.
     ZtfCcdQuad(ZtfCcdQuad),
 
+    /// PTF Single CCD FOV.
+    PtfCcd(PtfCcd),
+
     /// Generic cone FOV without any additional metadata.
     GenericCone(GenericCone),
 
@@ -40,6 +45,9 @@ pub enum FOV {
 
     /// Full ZTF field of up to 64 individual files.
     ZtfField(ZtfField),
+
+    /// ZTF Field of ccds.
+    PtfField(PtfField),
 
     /// NEOS Visit.
     NeosVisit(NeosVisit),
@@ -60,6 +68,8 @@ impl FOV {
             FOV::Wise(fov) => fov.check_visible(states, dt_limit, include_asteroids),
             FOV::NeosCmos(fov) => fov.check_visible(states, dt_limit, include_asteroids),
             FOV::ZtfCcdQuad(fov) => fov.check_visible(states, dt_limit, include_asteroids),
+            FOV::PtfCcd(fov) => fov.check_visible(states, dt_limit, include_asteroids),
+            FOV::PtfField(fov) => fov.check_visible(states, dt_limit, include_asteroids),
             FOV::GenericCone(fov) => fov.check_visible(states, dt_limit, include_asteroids),
             FOV::GenericRectangle(fov) => fov.check_visible(states, dt_limit, include_asteroids),
             FOV::ZtfField(fov) => fov.check_visible(states, dt_limit, include_asteroids),
@@ -74,6 +84,8 @@ impl FOV {
             FOV::Wise(fov) => fov.observer(),
             FOV::NeosCmos(fov) => fov.observer(),
             FOV::ZtfCcdQuad(fov) => fov.observer(),
+            FOV::PtfCcd(fov) => fov.observer(),
+            FOV::PtfField(fov) => fov.observer(),
             FOV::GenericCone(fov) => fov.observer(),
             FOV::GenericRectangle(fov) => fov.observer(),
             FOV::ZtfField(fov) => fov.observer(),
@@ -88,6 +100,8 @@ impl FOV {
             FOV::Wise(fov) => fov.check_spks(obj_ids),
             FOV::NeosCmos(fov) => fov.check_spks(obj_ids),
             FOV::ZtfCcdQuad(fov) => fov.check_spks(obj_ids),
+            FOV::PtfCcd(fov) => fov.check_spks(obj_ids),
+            FOV::PtfField(fov) => fov.check_spks(obj_ids),
             FOV::GenericCone(fov) => fov.check_spks(obj_ids),
             FOV::GenericRectangle(fov) => fov.check_spks(obj_ids),
             FOV::ZtfField(fov) => fov.check_spks(obj_ids),
@@ -103,6 +117,8 @@ impl FOV {
             FOV::Wise(fov) => fov.check_statics(pos),
             FOV::NeosCmos(fov) => fov.check_statics(pos),
             FOV::ZtfCcdQuad(fov) => fov.check_statics(pos),
+            FOV::PtfCcd(fov) => fov.check_statics(pos),
+            FOV::PtfField(fov) => fov.check_statics(pos),
             FOV::GenericCone(fov) => fov.check_statics(pos),
             FOV::GenericRectangle(fov) => fov.check_statics(pos),
             FOV::ZtfField(fov) => fov.check_statics(pos),
@@ -118,6 +134,8 @@ impl FOV {
             FOV::NeosCmos(fov) => fov.try_frame_change_mut(target_frame),
             FOV::NeosVisit(fov) => fov.try_frame_change_mut(target_frame),
             FOV::ZtfCcdQuad(fov) => fov.try_frame_change_mut(target_frame),
+            FOV::PtfCcd(fov) => fov.try_frame_change_mut(target_frame),
+            FOV::PtfField(fov) => fov.try_frame_change_mut(target_frame),
             FOV::GenericCone(fov) => fov.try_frame_change_mut(target_frame),
             FOV::GenericRectangle(fov) => fov.try_frame_change_mut(target_frame),
             FOV::ZtfField(fov) => fov.try_frame_change_mut(target_frame),

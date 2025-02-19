@@ -101,7 +101,7 @@ impl FovLike for ZtfCcdQuad {
     }
 }
 
-/// ZTF frame data, single quad of a single chip
+/// ZTF frame data, collection of all CCD quads
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ZtfField {
     /// Individual CCD quads

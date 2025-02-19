@@ -1,4 +1,4 @@
-use kete_core::fov::{self};
+use kete_core::fov::{self, PTFFilter};
 use kete_core::fov::{FovLike, SkyPatch};
 use nalgebra::Vector3;
 use pyo3::{exceptions, prelude::*};
@@ -160,6 +160,19 @@ pub struct PyZtfCcdQuad(pub fov::ZtfCcdQuad);
 #[allow(clippy::upper_case_acronyms)]
 pub struct PyZtfField(pub fov::ZtfField);
 
+/// Field of view of a Single PTF chip.
+#[pyclass(module = "kete", frozen, name = "PtfCcd")]
+#[derive(Clone, Debug)]
+#[allow(clippy::upper_case_acronyms)]
+pub struct PyPtfCcd(pub fov::PtfCcd);
+
+/// Field of view of all 11 PTF ccds.
+/// This is a meta collection of individual PTF CCD FOVs.
+#[pyclass(module = "kete", frozen, name = "PtfField", sequence)]
+#[derive(Clone, Debug)]
+#[allow(clippy::upper_case_acronyms)]
+pub struct PyPtfField(pub fov::PtfField);
+
 /// Generic Rectangular Field of view.
 ///
 /// There are other constructors for this, for example the
@@ -218,6 +231,8 @@ pub enum AllowedFOV {
     NEOS(PyNeosCmos),
     ZTF(PyZtfCcdQuad),
     ZTFField(PyZtfField),
+    PTF(PyPtfCcd),
+    PTFField(PyPtfField),
     NEOSVisit(PyNeosVisit),
     Rectangle(PyGenericRectangle),
     Cone(PyGenericCone),
@@ -233,6 +248,8 @@ impl AllowedFOV {
             AllowedFOV::Rectangle(fov) => fov.0.observer().jd,
             AllowedFOV::ZTF(fov) => fov.0.observer().jd,
             AllowedFOV::ZTFField(fov) => fov.0.observer().jd,
+            AllowedFOV::PTF(fov) => fov.0.observer().jd,
+            AllowedFOV::PTFField(fov) => fov.0.observer().jd,
             AllowedFOV::NEOSVisit(fov) => fov.0.observer().jd,
             AllowedFOV::Cone(fov) => fov.0.observer().jd,
             AllowedFOV::OmniDirectional(fov) => fov.0.observer().jd,
@@ -248,6 +265,8 @@ impl AllowedFOV {
             AllowedFOV::NEOS(fov) => fov.0.get_fov(idx),
             AllowedFOV::ZTF(fov) => fov.0.get_fov(idx),
             AllowedFOV::ZTFField(fov) => fov.0.get_fov(idx),
+            AllowedFOV::PTF(fov) => fov.0.get_fov(idx),
+            AllowedFOV::PTFField(fov) => fov.0.get_fov(idx),
             AllowedFOV::NEOSVisit(fov) => fov.0.get_fov(idx),
             AllowedFOV::Cone(fov) => fov.0.get_fov(idx),
             AllowedFOV::OmniDirectional(fov) => fov.0.get_fov(idx),
@@ -262,6 +281,8 @@ impl AllowedFOV {
             AllowedFOV::NEOS(fov) => fov::FOV::NeosCmos(fov.0),
             AllowedFOV::ZTF(fov) => fov::FOV::ZtfCcdQuad(fov.0),
             AllowedFOV::ZTFField(fov) => fov::FOV::ZtfField(fov.0),
+            AllowedFOV::PTF(fov) => fov::FOV::PtfCcd(fov.0),
+            AllowedFOV::PTFField(fov) => fov::FOV::PtfField(fov.0),
             AllowedFOV::NEOSVisit(fov) => fov::FOV::NeosVisit(fov.0),
             AllowedFOV::Cone(fov) => fov::FOV::GenericCone(fov.0),
             AllowedFOV::OmniDirectional(fov) => fov::FOV::OmniDirectional(fov.0),
@@ -276,6 +297,8 @@ impl AllowedFOV {
             AllowedFOV::NEOS(fov) => fov.__repr__(),
             AllowedFOV::ZTF(fov) => fov.__repr__(),
             AllowedFOV::ZTFField(fov) => fov.__repr__(),
+            AllowedFOV::PTF(fov) => fov.__repr__(),
+            AllowedFOV::PTFField(fov) => fov.__repr__(),
             AllowedFOV::NEOSVisit(fov) => fov.__repr__(),
             AllowedFOV::Cone(fov) => fov.__repr__(),
             AllowedFOV::OmniDirectional(fov) => fov.__repr__(),
@@ -288,6 +311,8 @@ impl From<fov::FOV> for AllowedFOV {
         match value {
             fov::FOV::Wise(fov) => AllowedFOV::WISE(PyWiseCmos(fov)),
             fov::FOV::ZtfCcdQuad(fov) => AllowedFOV::ZTF(PyZtfCcdQuad(fov)),
+            fov::FOV::PtfCcd(fov) => AllowedFOV::PTF(PyPtfCcd(fov)),
+            fov::FOV::PtfField(fov) => AllowedFOV::PTFField(PyPtfField(fov)),
             fov::FOV::NeosCmos(fov) => AllowedFOV::NEOS(PyNeosCmos(fov)),
             fov::FOV::GenericRectangle(fov) => AllowedFOV::Rectangle(PyGenericRectangle(fov)),
             fov::FOV::ZtfField(fov) => AllowedFOV::ZTFField(PyZtfField(fov)),
@@ -1079,6 +1104,223 @@ impl PyZtfField {
             self.filtercode(),
             self.imgtypecode(),
             self.fid()
+        )
+    }
+}
+
+#[pymethods]
+#[allow(clippy::too_many_arguments)]
+impl PyPtfCcd {
+    /// Construct a new PTF CCD FOV from the corners.
+    /// The corners must be provided in clockwise order.
+    ///
+    /// Parameters
+    /// ----------
+    /// corners :
+    ///     4 Vectors which represent the corners of the FOV, these must be provided in clockwise order.
+    /// observer :
+    ///     Position of the observer as a State.
+    /// field :
+    ///     Field number of the survey.
+    /// filefracday :
+    ///     Which fraction of a day was this FOV captured.
+    /// ccdid :
+    ///     CCD ID describes which of the 16 CCDs this represents.
+    /// filtercode :
+    ///     Which filter was used for this exposure.
+    /// imgtypecode :
+    ///     Type code describing the data product of this field.
+    /// qid :
+    ///     Which quadrant of the CCD does this FOV represent.
+    /// maglimit :
+    ///     Effective magnitude limit of this exposure.
+    /// fid :
+    ///     The FID of this exposure.
+    #[new]
+    pub fn new(
+        corners: [VectorLike; 4],
+        observer: PyState,
+        field: u32,
+        filefracday: u64,
+        ccdid: u8,
+        imgtypecode: String,
+        filter: String,
+        filename: String,
+        info_bits: u32,
+        seeing: f32,
+        mag_limit: f32,
+    ) -> Self {
+        let corners = corners
+            .into_iter()
+            .map(|v| v.into_vector(observer.frame()).raw.into())
+            .collect::<Vec<_>>()
+            .try_into()
+            .unwrap();
+        let filter: PTFFilter = filter.into();
+        PyPtfCcd(fov::PtfCcd::new(
+            corners,
+            observer.0,
+            field,
+            ccdid,
+            filter,
+            filename.into(),
+            info_bits,
+            seeing,
+            mag_limit,
+        ))
+    }
+
+    /// State of the observer for this FOV.
+    #[getter]
+    pub fn observer(&self) -> PyState {
+        self.0.observer().clone().into()
+    }
+
+    /// JD of the observer location.
+    #[getter]
+    pub fn jd(&self) -> f64 {
+        self.0.observer().jd
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn field(&self) -> u32 {
+        self.0.field
+    }
+
+    /// Direction that the observer is looking.
+    #[getter]
+    pub fn pointing(&self) -> Vector {
+        Vector::new(
+            self.0.patch.pointing().into_inner().into(),
+            self.0.observer().frame.into(),
+        )
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn mag_limit(&self) -> u64 {
+        self.0.mag_limit
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn ccdid(&self) -> u8 {
+        self.0.ccdid
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn filter(&self) -> String {
+        self.0.filter.into()
+    }
+
+    /// Corners of this FOV
+    #[getter]
+    pub fn corners(&self) -> Vec<Vector> {
+        self.0
+            .patch
+            .corners()
+            .into_iter()
+            .map(|x| Vector::new(x.into(), self.0.patch.frame.into()))
+            .collect()
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "PtfCcd(observer={}, filefracday={}, ccdid={}, imgtypecode={:?}, maglimit={}, filter_id={})",
+            self.observer().__repr__(),
+            self.filefracday(),
+            self.ccdid(),
+            self.imgtypecode(),
+            self.maglimit(),
+            self.filter_id()
+        )
+    }
+}
+
+#[pymethods]
+#[allow(clippy::too_many_arguments)]
+impl PyPtfField {
+    /// Representation of an entire ZTF Field, made up of up to 64 ZTF CCD FOVs.
+    ///
+    /// Parameters
+    /// ----------
+    /// ztf_ccd_fields :
+    ///     List containing all of the CCD FOVs.
+    ///     These must have matching metadata.
+    #[new]
+    pub fn new(ztf_ccd_fields: Vec<PyZtfCcdQuad>) -> Self {
+        PyZtfField(fov::ZtfField::new(ztf_ccd_fields.into_iter().map(|x| x.0).collect()).unwrap())
+    }
+
+    /// State of the observer for this FOV.
+    #[getter]
+    pub fn observer(&self) -> PyState {
+        self.0.observer().clone().into()
+    }
+
+    /// JD of the observer location.
+    #[getter]
+    pub fn jd(&self) -> f64 {
+        self.0.observer().jd
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn field(&self) -> u32 {
+        self.0.field
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn imgtypecode(&self) -> String {
+        self.0.imgtypecode.to_string()
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn filter_id(&self) -> u64 {
+        self.0.filter_id
+    }
+
+    /// Return all of the individual CCDs present in this field.
+    #[getter]
+    pub fn ccds(&self) -> Vec<PyPtfCcd> {
+        (0..self.0.n_patches())
+            .map(|idx| {
+                PyPtfCcd(match self.0.get_fov(idx) {
+                    fov::FOV::ZtfCcdQuad(fov) => fov,
+                    _ => unreachable!(),
+                })
+            })
+            .collect()
+    }
+
+    #[allow(missing_docs)]
+    pub fn __len__(&self) -> usize {
+        self.0.n_patches()
+    }
+
+    /// Retrieve a specific CCD FOV from the contained list of FOVs.
+    pub fn __getitem__(&self, idx: usize) -> PyResult<PyPtfCcd> {
+        if idx >= self.__len__() {
+            return Err(PyErr::new::<exceptions::PyIndexError, _>(""));
+        }
+
+        Ok(PyPtfCcd(match self.0.get_fov(idx) {
+            fov::FOV::PtfCcd(fov) => fov,
+            _ => unreachable!(),
+        }))
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "PtfField(ccd_quads=<{} frames>, observer={}, imgtypecode={:?}, filter_id={})",
+            self.0.n_patches(),
+            self.observer().__repr__(),
+            self.imgtypecode(),
+            self.filter_id()
         )
     }
 }
