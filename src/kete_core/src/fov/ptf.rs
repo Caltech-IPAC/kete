@@ -1,6 +1,6 @@
 //! # PTF Fov definitions.
 
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use super::{closest_inside, Contains, FovLike, OnSkyRectangle, SkyPatch, FOV};
 use crate::prelude::*;
@@ -23,13 +23,13 @@ pub enum PTFFilter {
     HA663,
 }
 
-impl ToString for PTFFilter {
-    fn to_string(&self) -> String {
+impl Display for PTFFilter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            PTFFilter::G => "G".into(),
-            PTFFilter::R => "R".into(),
-            PTFFilter::HA656 => "HA656".into(),
-            PTFFilter::HA663 => "HA663".into(),
+            PTFFilter::G => f.write_str("G"),
+            PTFFilter::R => f.write_str("R"),
+            PTFFilter::HA656 => f.write_str("HA656"),
+            PTFFilter::HA663 => f.write_str("HA663"),
         }
     }
 }
@@ -75,9 +75,6 @@ pub struct PtfCcd {
 
     /// FWHM seeing conditions
     pub seeing: f32,
-
-    /// Magnitude limit of this frame
-    pub mag_limit: f32,
 }
 
 impl PtfCcd {
@@ -92,7 +89,6 @@ impl PtfCcd {
         filename: Box<str>,
         info_bits: u16,
         seeing: f32,
-        mag_limit: f32,
     ) -> Self {
         let patch = OnSkyRectangle::from_corners(corners, observer.frame);
         Self {
@@ -103,7 +99,6 @@ impl PtfCcd {
             filter,
             filename,
             seeing,
-            mag_limit,
             info_bits,
         }
     }

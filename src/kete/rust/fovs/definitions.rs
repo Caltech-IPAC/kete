@@ -1,5 +1,4 @@
-use kete_core::fov::{self, PTFFilter};
-use kete_core::fov::{FovLike, SkyPatch};
+use kete_core::fov::{self, FovLike, PTFFilter, SkyPatch};
 use nalgebra::Vector3;
 use pyo3::{exceptions, prelude::*};
 
@@ -883,8 +882,6 @@ impl PyZtfCcdQuad {
     ///     Type code describing the data product of this field.
     /// qid :
     ///     Which quadrant of the CCD does this FOV represent.
-    /// maglimit :
-    ///     Effective magnitude limit of this exposure.
     /// fid :
     ///     The FID of this exposure.
     #[new]
@@ -1122,33 +1119,20 @@ impl PyPtfCcd {
     ///     Position of the observer as a State.
     /// field :
     ///     Field number of the survey.
-    /// filefracday :
-    ///     Which fraction of a day was this FOV captured.
     /// ccdid :
     ///     CCD ID describes which of the 16 CCDs this represents.
-    /// filtercode :
+    /// filter :
     ///     Which filter was used for this exposure.
-    /// imgtypecode :
-    ///     Type code describing the data product of this field.
-    /// qid :
-    ///     Which quadrant of the CCD does this FOV represent.
-    /// maglimit :
-    ///     Effective magnitude limit of this exposure.
-    /// fid :
-    ///     The FID of this exposure.
     #[new]
     pub fn new(
         corners: [VectorLike; 4],
         observer: PyState,
         field: u32,
-        filefracday: u64,
         ccdid: u8,
-        imgtypecode: String,
         filter: String,
         filename: String,
-        info_bits: u32,
+        info_bits: u16,
         seeing: f32,
-        mag_limit: f32,
     ) -> Self {
         let corners = corners
             .into_iter()
@@ -1156,7 +1140,8 @@ impl PyPtfCcd {
             .collect::<Vec<_>>()
             .try_into()
             .unwrap();
-        let filter: PTFFilter = filter.into();
+        let filter: PTFFilter = filter.parse().unwrap();
+
         PyPtfCcd(fov::PtfCcd::new(
             corners,
             observer.0,
@@ -1166,7 +1151,6 @@ impl PyPtfCcd {
             filename.into(),
             info_bits,
             seeing,
-            mag_limit,
         ))
     }
 
@@ -1199,12 +1183,6 @@ impl PyPtfCcd {
 
     /// Metadata about where this FOV is in the Survey.
     #[getter]
-    pub fn mag_limit(&self) -> u64 {
-        self.0.mag_limit
-    }
-
-    /// Metadata about where this FOV is in the Survey.
-    #[getter]
     pub fn ccdid(&self) -> u8 {
         self.0.ccdid
     }
@@ -1212,7 +1190,13 @@ impl PyPtfCcd {
     /// Metadata about where this FOV is in the Survey.
     #[getter]
     pub fn filter(&self) -> String {
-        self.0.filter.into()
+        self.0.filter.to_string()
+    }
+
+    /// Metadata about where this FOV is in the Survey.
+    #[getter]
+    pub fn seeing(&self) -> f32 {
+        self.0.seeing
     }
 
     /// Corners of this FOV
@@ -1228,13 +1212,12 @@ impl PyPtfCcd {
 
     fn __repr__(&self) -> String {
         format!(
-            "PtfCcd(observer={}, filefracday={}, ccdid={}, imgtypecode={:?}, maglimit={}, filter_id={})",
+            "PtfCcd(observer={}, field={}, ccdid={}, filter={:?}, seeing={})",
             self.observer().__repr__(),
-            self.filefracday(),
+            self.field(),
             self.ccdid(),
-            self.imgtypecode(),
-            self.maglimit(),
-            self.filter_id()
+            self.filter(),
+            self.seeing()
         )
     }
 }
@@ -1242,16 +1225,16 @@ impl PyPtfCcd {
 #[pymethods]
 #[allow(clippy::too_many_arguments)]
 impl PyPtfField {
-    /// Representation of an entire ZTF Field, made up of up to 64 ZTF CCD FOVs.
+    /// Representation of an entire PTF Field, made up of up to 11 PTF CCD FOVs.
     ///
     /// Parameters
     /// ----------
-    /// ztf_ccd_fields :
+    /// ptf_ccd_fields :
     ///     List containing all of the CCD FOVs.
     ///     These must have matching metadata.
     #[new]
-    pub fn new(ztf_ccd_fields: Vec<PyZtfCcdQuad>) -> Self {
-        PyZtfField(fov::ZtfField::new(ztf_ccd_fields.into_iter().map(|x| x.0).collect()).unwrap())
+    pub fn new(ptf_ccd_fields: Vec<PyPtfCcd>) -> Self {
+        PyPtfField(fov::PtfField::new(ptf_ccd_fields.into_iter().map(|x| x.0).collect()).unwrap())
     }
 
     /// State of the observer for this FOV.
@@ -1274,14 +1257,8 @@ impl PyPtfField {
 
     /// Metadata about where this FOV is in the Survey.
     #[getter]
-    pub fn imgtypecode(&self) -> String {
-        self.0.imgtypecode.to_string()
-    }
-
-    /// Metadata about where this FOV is in the Survey.
-    #[getter]
-    pub fn filter_id(&self) -> u64 {
-        self.0.filter_id
+    pub fn filter(&self) -> String {
+        self.0.filter.to_string()
     }
 
     /// Return all of the individual CCDs present in this field.
@@ -1290,7 +1267,7 @@ impl PyPtfField {
         (0..self.0.n_patches())
             .map(|idx| {
                 PyPtfCcd(match self.0.get_fov(idx) {
-                    fov::FOV::ZtfCcdQuad(fov) => fov,
+                    fov::FOV::PtfCcd(fov) => fov,
                     _ => unreachable!(),
                 })
             })
@@ -1316,11 +1293,10 @@ impl PyPtfField {
 
     fn __repr__(&self) -> String {
         format!(
-            "PtfField(ccd_quads=<{} frames>, observer={}, imgtypecode={:?}, filter_id={})",
+            "PtfField(ccd_quads=<{} frames>, observer={}, filter={})",
             self.0.n_patches(),
             self.observer().__repr__(),
-            self.imgtypecode(),
-            self.filter_id()
+            self.filter()
         )
     }
 }

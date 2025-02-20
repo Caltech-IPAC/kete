@@ -16,6 +16,7 @@ from . import (
     mpc,
     irsa,
     ztf,
+    ptf,
     fov,
     shape,
     spice,
@@ -47,6 +48,8 @@ from .fov import (
     OmniDirectionalFOV,
     ZtfCcdQuad,
     ZtfField,
+    PtfCcd,
+    PtfField,
 )
 from .horizons import HorizonsProperties
 
@@ -71,6 +74,9 @@ __all__ = [
     "wise",
     "neos",
     "mpc",
+    "ptf",
+    "PtfCcd",
+    "PtfField",
     "spice",
     "SimultaneousStates",
     "propagate_n_body",
