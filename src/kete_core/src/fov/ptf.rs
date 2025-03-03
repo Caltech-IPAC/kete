@@ -71,7 +71,7 @@ pub struct PtfCcd {
     pub filename: Box<str>,
 
     /// Infobits flag
-    pub info_bits: u16,
+    pub info_bits: u32,
 
     /// FWHM seeing conditions
     pub seeing: f32,
@@ -87,7 +87,7 @@ impl PtfCcd {
         ccdid: u8,
         filter: PTFFilter,
         filename: Box<str>,
-        info_bits: u16,
+        info_bits: u32,
         seeing: f32,
     ) -> Self {
         let patch = OnSkyRectangle::from_corners(corners, observer.frame);

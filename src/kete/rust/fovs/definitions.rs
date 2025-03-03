@@ -1123,6 +1123,12 @@ impl PyPtfCcd {
     ///     CCD ID describes which of the 16 CCDs this represents.
     /// filter :
     ///     Which filter was used for this exposure.
+    /// filename :
+    ///     Filename of the associated exposure.
+    /// info_bits :
+    ///     Info bits of the exposure.
+    /// filter :
+    ///     Seeing conditions.
     #[new]
     pub fn new(
         corners: [VectorLike; 4],
@@ -1131,7 +1137,7 @@ impl PyPtfCcd {
         ccdid: u8,
         filter: String,
         filename: String,
-        info_bits: u16,
+        info_bits: u32,
         seeing: f32,
     ) -> Self {
         let corners = corners

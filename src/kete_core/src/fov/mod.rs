@@ -34,9 +34,6 @@ pub enum FOV {
     /// ZTF Single Quad of single CCD FOV.
     ZtfCcdQuad(ZtfCcdQuad),
 
-    /// PTF Single CCD FOV.
-    PtfCcd(PtfCcd),
-
     /// Generic cone FOV without any additional metadata.
     GenericCone(GenericCone),
 
@@ -46,14 +43,17 @@ pub enum FOV {
     /// Full ZTF field of up to 64 individual files.
     ZtfField(ZtfField),
 
-    /// ZTF Field of ccds.
-    PtfField(PtfField),
-
     /// NEOS Visit.
     NeosVisit(NeosVisit),
 
     /// Omni-Directional FOV.
     OmniDirectional(OmniDirectional),
+
+    /// PTF Single CCD FOV.
+    PtfCcd(PtfCcd),
+
+    /// ZTF Field of ccds.
+    PtfField(PtfField),
 }
 
 impl FOV {

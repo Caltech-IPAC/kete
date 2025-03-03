@@ -11,7 +11,7 @@ from astropy.io import fits
 from .cache import download_file, cache_path
 from .fov import PtfCcd, PtfField, FOVList
 from .time import Time
-from .irsa import query_irsa_tap
+from .tap import query_tap
 from .mpc import find_obs_code
 from .vector import Vector, State
 from . import spice
@@ -68,14 +68,14 @@ def fetch_fovs(year: int):
     jd_start = Time.from_ymd(year, 1, 1).jd
     jd_end = Time.from_ymd(year + 1, 1, 1).jd
 
-    irsa_query = query_irsa_tap(
+    irsa_query = query_tap(
         f"SELECT {', '.join(cols)} FROM {table} "
         f"WHERE obsjd between {jd_start} and {jd_end}",
         verbose=True,
     )
 
     # Exposures are 30 seconds
-    jds = [Time(x, scale="utc") for x in irsa_query["obsjd"]]
+    jds = [Time(x, scaling="utc") for x in irsa_query["obsjd"]]
     obs_info = find_obs_code("ZTF")
 
     # PTF fields are made up of up to 11 individual CCDs, here we first construct
@@ -90,16 +90,28 @@ def fetch_fovs(year: int):
         observer = spice.earth_pos_to_ecliptic(jd, *obs_info[:-1])
         observer = State("PTF", observer.jd, observer.pos, observer.vel)
 
-        fov = PtfCcd(
-            corners,
-            observer,
-            row.fieldid,
-            row.ccdid,
-            row.filter,
-            row.pfilename,
-            row.infobits,
-            row.seeing,
-        )
+        try:
+            fov = PtfCcd(
+                corners,
+                observer,
+                row.fieldid,
+                row.ccdid,
+                row.filter,
+                row.pfilename,
+                row.infobits,
+                row.seeing,
+            )
+        except Exception:
+            print(
+                corners,
+                observer,
+                row.fieldid,
+                row.ccdid,
+                row.filter,
+                row.pfilename,
+                row.infobits,
+                row.seeing,
+            )
         fovs.append(fov)
 
     # Now group the quad information into full 64 size Fields

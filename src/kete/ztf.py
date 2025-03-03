@@ -11,7 +11,7 @@ from astropy.io import fits
 from .cache import download_file, cache_path
 from .fov import ZtfCcdQuad, ZtfField, FOVList
 from .time import Time
-from .irsa import query_irsa_tap
+from .tap import query_tap
 from .mpc import find_obs_code
 from .vector import Vector, State
 from . import spice
@@ -76,10 +76,11 @@ def fetch_ZTF_fovs(year: int):
     jd_start = Time.from_ymd(year, 1, 1).jd
     jd_end = Time.from_ymd(year + 1, 1, 1).jd
 
-    irsa_query = query_irsa_tap(
+    irsa_query = query_tap(
         f"SELECT {', '.join(cols)} FROM {table} "
         f"WHERE obsjd between {jd_start} and {jd_end}",
         verbose=True,
+        cache=False,
     )
 
     # Exposures are 30 seconds

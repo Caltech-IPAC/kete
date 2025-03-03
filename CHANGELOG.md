@@ -178,7 +178,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- Removed `plot_frame` from ZTF, as a better version of this is available in kete.irsa.
+- Removed `plot_frame` from ZTF, as a better version of this is available in kete.tap.
 - Removed `cache_WISE_frame` and `fetch_WISE_frame` deprecated functions in WISE.
 
 
