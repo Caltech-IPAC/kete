@@ -149,7 +149,7 @@ def fetch(name, update_name=True, cache=True, update_cache=False, exact_name=Fal
             phys["covariance"] = Covariance(name, cov_epoch, params, mat)
     else:
         raise ValueError(
-            "Horizons did not return orbit information for this object:" f"\n{props}"
+            f"Horizons did not return orbit information for this object:\n{props}"
         )
 
     if "phys_par" in props:
@@ -226,7 +226,8 @@ def _fetch_json(
     query = "des" if exact_name else "sstr"
     response = requests.get(
         f"https://ssd-api.jpl.nasa.gov/sbdb.api?{query}={name}"
-        "&phys-par=true&full-prec=true&cov=mat",
+        "&phys-par=true&full-prec=true&cov=mat"
+        "&alt-des=true&alt-spk=true&alt-orbits=true",
         timeout=30,
     )
 
@@ -334,10 +335,32 @@ def _sample(self, n_samples):
     return states, non_gravs
 
 
+@property  # type: ignore
+def _desigs(self) -> list[str]:
+    """
+    List of alternate designations for this object.
+
+    First designation in this list is the Horizons preferred designation.
+    """
+    obj_dict = self.json["object"]
+    desigs = [obj_dict["des"]]
+    for alt in obj_dict.get("des_alt", []):
+        # dont trust horizons to always provide lower case keys
+        alt = {k.lower(): v for k, v in alt.items()}
+        if "des" in alt:
+            # some objects are prepended with the full designation plus a /
+            # for example: 10P/1878 O1
+            # This line strips that '10P/' from the designation.
+            des = alt["des"].replace(desigs[0] + "/", "")
+            desigs.append(des)
+    return desigs
+
+
 HorizonsProperties.fetch = fetch
 HorizonsProperties.json = _json
 HorizonsProperties.non_grav = _nongrav
 HorizonsProperties.sample = _sample
+HorizonsProperties.desigs = _desigs
 
 
 def fetch_spice_kernel(
