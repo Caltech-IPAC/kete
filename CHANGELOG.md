@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   This will use a cached json file, for existing installations you will have to update
   the cached horizons properties: `HorizonsProperties.fetch(desig, update_cache=True)`
 - Updated the NAIF ID list for all comets, allowing kete to resolve recent comet
-  spice IDs.
+  spice IDs, this includes redesignations of known comets.
 
 
 ## [v1.0.7]
