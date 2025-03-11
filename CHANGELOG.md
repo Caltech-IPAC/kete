@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated the NAIF ID list for all comets, allowing kete to resolve recent comet
   spice IDs, this includes redesignations of known comets.
 
+### Fixed
+
+- Previous update to WISE spice kernel accidentally deleted the original mission spice
+  kernel. This section has been re-added to the WISE kernel, which should now contain
+  all phases of operation with the best orbit knowledge available.
+
 
 ## [v1.0.7]
 
