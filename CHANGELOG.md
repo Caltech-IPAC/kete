@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Added
+
+- Added `HorizonsProperties.desigs` which lists all of the designations in horizons.
+  This will use a caches json file, for existing installations you will have to update
+  the cached horizons properties: `HorizonsProperties.fetch(desig, update_cache=True)`
+- Updated the NAIF ID list for all comets, allowing kete to resolve recent comet
+  spice IDs.
+
+
 ## [v1.0.7]
 
 ### Added
@@ -22,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - WGS84 conversion between ECEF and Lat/Lon/Alt was missing a square-root causing a
   small offset (typically 10s to 100s of meters). This has been fixed.
+
 
 ## [v1.0.6]
 
