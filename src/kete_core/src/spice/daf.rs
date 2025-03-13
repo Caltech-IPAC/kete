@@ -56,24 +56,26 @@ pub enum DafSegments {
     Pck(PckSegment),
 }
 
-impl DafSegments {
-    /// Return the contained SPK segment.
-    /// Panic if not SPK.
-    pub fn spk(self) -> SpkSegment {
-        if let Self::Spk(seg) = self {
-            seg
+impl TryFrom<DafSegments> for SpkSegment {
+    type Error = Error;
+
+    fn try_from(value: DafSegments) -> Result<Self, Self::Error> {
+        if let DafSegments::Spk(seg) = value {
+            Ok(seg)
         } else {
-            panic!("Not an SPK segment.")
+            Err(Error::ValueError("Not an SPK segment.".into()))
         }
     }
+}
 
-    /// Return the contained PCK segment.
-    /// Panic if not PCK.
-    pub fn pck(self) -> PckSegment {
-        if let Self::Pck(seg) = self {
-            seg
+impl TryFrom<DafSegments> for PckSegment {
+    type Error = Error;
+
+    fn try_from(value: DafSegments) -> Result<Self, Self::Error> {
+        if let DafSegments::Pck(seg) = value {
+            Ok(seg)
         } else {
-            panic!("Not an PCK segment.")
+            Err(Error::ValueError("Not a PCK segment.".into()))
         }
     }
 }

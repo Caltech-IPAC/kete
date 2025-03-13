@@ -47,7 +47,7 @@ const PRELOAD_SPKS: &[&[u8]] = &[
 #[derive(Debug)]
 pub struct SpkCollection {
     /// Collection of SPK Segment information
-    segments: Vec<SpkSegment>,
+    segments: HashMap<i64, Vec<SpkSegment>>,
 
     map_cache: HashMap<(i64, i64), Vec<i64>>,
 
@@ -64,9 +64,11 @@ impl SpkCollection {
     /// into the file.
     #[inline(always)]
     pub fn try_get_raw_state(&self, id: i64, jd: f64) -> KeteResult<State> {
-        for segment in self.segments.iter() {
-            if id == segment.obj_id && segment.contains(jd) {
-                return segment.try_get_state(jd);
+        if let Some(segments) = self.segments.get(&id) {
+            for segment in segments.iter() {
+                if segment.contains(jd) {
+                    return segment.try_get_state(jd);
+                }
             }
         }
         Err(Error::DAFLimits(format!(
@@ -119,8 +121,8 @@ impl SpkCollection {
     /// For a given NAIF ID, return all increments of time which are currently loaded.
     pub fn available_info(&self, id: i64) -> Vec<(f64, f64, i64, Frame, i32)> {
         let mut segment_info = Vec::<(f64, f64, i64, Frame, i32)>::new();
-        for segment in self.segments.iter() {
-            if id == segment.obj_id {
+        if let Some(segments) = self.segments.get(&id) {
+            for segment in segments.iter() {
                 let jd_range = segment.jd_range();
                 segment_info.push((
                     jd_range.0,
@@ -128,7 +130,7 @@ impl SpkCollection {
                     segment.center_id,
                     segment.ref_frame,
                     segment.segment_type,
-                ))
+                ));
             }
         }
         if segment_info.is_empty() {
@@ -164,12 +166,14 @@ impl SpkCollection {
     pub fn loaded_objects(&self, include_centers: bool) -> HashSet<i64> {
         let mut found = HashSet::new();
 
-        for segment in self.segments.iter() {
-            let _ = found.insert(segment.obj_id);
+        self.segments.iter().for_each(|(obj_id, segs)| {
+            let _ = found.insert(*obj_id);
             if include_centers {
-                let _ = found.insert(segment.center_id);
+                segs.iter().for_each(|seg| {
+                    let _ = found.insert(seg.center_id);
+                });
             }
-        }
+        });
         found
     }
 
@@ -234,8 +238,8 @@ impl SpkCollection {
             }
         }
 
-        for segment in self.segments.iter() {
-            update_nodes(segment, &mut nodes);
+        for (_, segs) in self.segments.iter() {
+            segs.iter().for_each(|x| update_nodes(x, &mut nodes));
         }
 
         let loaded = self.loaded_objects(true);
@@ -278,8 +282,13 @@ impl SpkCollection {
                 filename
             )))?;
         }
-        self.segments
-            .extend(file.segments.into_iter().map(|x| x.spk()));
+        for segment in file.segments {
+            let segment: SpkSegment = segment.try_into().expect("Failed to load SPK");
+            self.segments
+                .entry(segment.obj_id)
+                .or_default()
+                .push(segment);
+        }
         Ok(())
     }
 
@@ -288,7 +297,7 @@ impl SpkCollection {
         let spk_files: SpkCollection = SpkCollection {
             map_cache: HashMap::new(),
             nodes: HashMap::new(),
-            segments: Vec::new(),
+            segments: HashMap::new(),
         };
 
         *self = spk_files;
@@ -297,8 +306,13 @@ impl SpkCollection {
             for buffer in PRELOAD_SPKS {
                 let mut curse = Cursor::new(buffer);
                 let file = DafFile::from_buffer(&mut curse).unwrap();
-                self.segments
-                    .extend(file.segments.into_iter().map(|x| x.spk()));
+                for segment in file.segments {
+                    let segment: SpkSegment = segment.try_into().expect("Failed to load SPK");
+                    self.segments
+                        .entry(segment.obj_id)
+                        .or_default()
+                        .push(segment);
+                }
             }
             self.build_cache();
         }
@@ -315,7 +329,7 @@ lazy_static! {
         let mut segments: SpkCollection = SpkCollection {
             map_cache: HashMap::new(),
             nodes: HashMap::new(),
-            segments: Vec::new(),
+            segments: HashMap::new(),
         };
         segments.reset(true);
         ShardedLock::new(segments)
