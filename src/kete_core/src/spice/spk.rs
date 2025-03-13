@@ -41,14 +41,22 @@ const PRELOAD_SPKS: &[&[u8]] = &[
     include_bytes!("../../data/wise.bsp"),
 ];
 
-/// A collection of segments.
-/// This does not contain the full SPK file information, it is just a vector containing
-/// all of the segments within the SPK files.
+/// A collection of SPK segments.
 #[derive(Debug)]
 pub struct SpkCollection {
-    /// Collection of SPK Segment information
+    // This collection is split into two parts, the DE440 segments and the rest of the
+    // segments. This is done to allow the DE440 segments to be accessed quickly,
+    // as they are by far the most commonly used. Somewhat suprisingly, the
+    // DE440 segments perform much better as a vector than as a hashmap, by about 40%
+    // in typical usage. Putting everything in a vector destroys performance for
+    // items further down the vector.
+    /// DE440 segments specifically for speed.
+    de440_segments: Vec<SpkSegment>,
+
+    /// Collection of SPK Segment information.
     segments: HashMap<i64, Vec<SpkSegment>>,
 
+    /// Cache for the pathfinding algorithm between different segments.
     map_cache: HashMap<(i64, i64), Vec<i64>>,
 
     /// Map from object id to all connected pairs.
@@ -64,6 +72,11 @@ impl SpkCollection {
     /// into the file.
     #[inline(always)]
     pub fn try_get_raw_state(&self, id: i64, jd: f64) -> KeteResult<State> {
+        for segment in self.de440_segments.iter() {
+            if segment.obj_id == id && segment.contains(jd) {
+                return segment.try_get_state(jd);
+            }
+        }
         if let Some(segments) = self.segments.get(&id) {
             for segment in segments.iter() {
                 if segment.contains(jd) {
@@ -238,6 +251,10 @@ impl SpkCollection {
             }
         }
 
+        self.de440_segments
+            .iter()
+            .for_each(|x| update_nodes(x, &mut nodes));
+
         for (_, segs) in self.segments.iter() {
             segs.iter().for_each(|x| update_nodes(x, &mut nodes));
         }
@@ -295,6 +312,7 @@ impl SpkCollection {
     /// Delete all segments in the SPK singleton, equivalent to unloading all files.
     pub fn reset(&mut self, include_preload: bool) {
         let spk_files: SpkCollection = SpkCollection {
+            de440_segments: Vec::new(),
             map_cache: HashMap::new(),
             nodes: HashMap::new(),
             segments: HashMap::new(),
@@ -303,15 +321,19 @@ impl SpkCollection {
         *self = spk_files;
 
         if include_preload {
-            for buffer in PRELOAD_SPKS {
+            for (idx, buffer) in PRELOAD_SPKS.iter().enumerate() {
                 let mut curse = Cursor::new(buffer);
                 let file = DafFile::from_buffer(&mut curse).unwrap();
                 for segment in file.segments {
                     let segment: SpkSegment = segment.try_into().expect("Failed to load SPK");
-                    self.segments
-                        .entry(segment.obj_id)
-                        .or_default()
-                        .push(segment);
+                    if idx == 0 {
+                        self.de440_segments.push(segment);
+                    } else {
+                        self.segments
+                            .entry(segment.obj_id)
+                            .or_default()
+                            .push(segment);
+                    };
                 }
             }
             self.build_cache();
@@ -327,6 +349,7 @@ lazy_static! {
     /// This singleton starts initialized with preloaded SPK files for the planets.
     pub static ref LOADED_SPK: SpkSingleton = {
         let mut segments: SpkCollection = SpkCollection {
+            de440_segments: Vec::new(),
             map_cache: HashMap::new(),
             nodes: HashMap::new(),
             segments: HashMap::new(),
