@@ -95,13 +95,16 @@ impl SpkCollection {
     #[inline(always)]
     pub fn try_get_state(&self, id: i64, jd: f64, center: i64, frame: Frame) -> KeteResult<State> {
         let mut state = self.try_get_raw_state(id, jd)?;
-        self.try_change_center(&mut state, center)?;
-        state.try_change_frame_mut(frame)?;
+        if state.center_id != center {
+            self.try_change_center(&mut state, center)?;
+        }
+        if state.frame != frame {
+            state.try_change_frame_mut(frame)?;
+        }
         Ok(state)
     }
 
     /// Use the data loaded in the SPKs to change the center ID of the provided state.
-    #[inline(always)]
     pub fn try_change_center(&self, state: &mut State, new_center: i64) -> KeteResult<()> {
         match (state.center_id, new_center) {
             (a, b) if a == b => (),
@@ -116,7 +119,7 @@ impl SpkCollection {
                 state.try_change_center(self.try_get_raw_state(i, state.jd)?)?;
                 state.try_change_center(self.try_get_raw_state(10, state.jd)?)?;
             }
-            (10, i) if i < 10 => {
+            (10, i) if (i > 1) & (i < 10) => {
                 state.try_change_center(self.try_get_raw_state(10, state.jd)?)?;
                 state.try_change_center(self.try_get_raw_state(i, state.jd)?)?;
             }
