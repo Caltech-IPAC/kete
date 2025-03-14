@@ -146,6 +146,19 @@ impl SpkCollection {
                 ));
             }
         }
+
+        self.de440_segments.iter().for_each(|segment| {
+            if segment.obj_id == id {
+                let jd_range = segment.jd_range();
+                segment_info.push((
+                    jd_range.0,
+                    jd_range.1,
+                    segment.center_id,
+                    segment.ref_frame,
+                    segment.segment_type,
+                ));
+            }
+        });
         if segment_info.is_empty() {
             return segment_info;
         }
@@ -178,6 +191,13 @@ impl SpkCollection {
     /// anything else.
     pub fn loaded_objects(&self, include_centers: bool) -> HashSet<i64> {
         let mut found = HashSet::new();
+
+        self.de440_segments.iter().for_each(|x| {
+            let _ = found.insert(x.obj_id);
+            if include_centers {
+                let _ = found.insert(x.center_id);
+            };
+        });
 
         self.segments.iter().for_each(|(obj_id, segs)| {
             let _ = found.insert(*obj_id);
