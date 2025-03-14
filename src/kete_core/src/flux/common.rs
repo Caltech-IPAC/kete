@@ -130,9 +130,11 @@ impl ModelResults {
 /// this by `c / wavelength**2`.
 ///
 /// # Arguments
-///
-/// * `temp` - Temperature in kelvin.
+/// * `temp` - Temperature in Kelvin.
 /// * `wavelength` - Wavelength in nm.
+///
+/// # Returns
+/// * Flux in Jy / steradian.
 #[inline(always)]
 pub fn black_body_flux(temp: f64, wavelength: f64) -> f64 {
     if wavelength < 10.0 || temp < 30.0 {
