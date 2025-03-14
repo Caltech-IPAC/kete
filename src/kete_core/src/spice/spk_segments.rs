@@ -1101,14 +1101,13 @@ impl SpkSegmentType21 {
     }
 }
 
+// This segment type has poor documentation on the NAIF website.
 /// Segments of type 10 and 14 use a "generic segment" definition.
-/// This segment type has poor documentation on the NAIF website, a significant amount
-/// of reverse engineering was to understand this.
 /// The DAF Array is big flat vector of floats.
-
 #[derive(Debug)]
 #[allow(dead_code)]
 struct GenericSegment {
+    /// Underlying DAF array
     array: DafArray,
 
     /// Number of metadata value stored in this segment.
