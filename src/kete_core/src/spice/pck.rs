@@ -39,8 +39,11 @@ impl PckCollection {
                 filename
             )))?;
         }
-        self.segments
-            .extend(file.segments.into_iter().map(|x| x.pck()));
+        self.segments.extend(
+            file.segments
+                .into_iter()
+                .map(|x| x.try_into().expect("Failed to load PCK")),
+        );
         Ok(())
     }
 
@@ -70,8 +73,11 @@ impl PckCollection {
         for preload in PRELOAD_PCK {
             let mut buffer = Cursor::new(preload);
             let file = DafFile::from_buffer(&mut buffer).unwrap();
-            self.segments
-                .extend(file.segments.into_iter().map(|x| x.pck()))
+            self.segments.extend(
+                file.segments
+                    .into_iter()
+                    .map(|x| x.try_into().expect("Failed to load PCK")),
+            );
         }
     }
 }

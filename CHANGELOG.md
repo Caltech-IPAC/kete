@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Improved SPICE kernel lookup performance when using large numbers of kernels.
+  Testing with 1500 kernels has increased lookup speed by ~26x.
 - Added `HorizonsProperties.desigs` which lists all of the designations in horizons.
   This will use a cached json file, for existing installations you will have to update
   the cached horizons properties: `HorizonsProperties.fetch(desig, update_cache=True)`
