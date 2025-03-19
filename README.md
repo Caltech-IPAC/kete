@@ -7,6 +7,11 @@ The repository for Kete, Solar System Survey Simulation Software.
 'Kete' comes from ancient greek mythology, meaning sea monsters, and is the root word
 for Cetaceans (Whales).
 
+## Note:
+
+Original maintainer (Dar Dahlen) is beginning a PhD and will no longer be performing
+maintenance, as he is no longer affiliated with CalTech.
+
 ## Introduction
 
 The kete tools are intended to enable the simulation of all-sky surveys of minor
