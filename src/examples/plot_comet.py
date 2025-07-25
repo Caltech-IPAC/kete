@@ -124,10 +124,13 @@ def plot_syndyne(wcs, state, fov, beta, back_days=90, day_step=1, **kwargs):
     decs = [x.dec for x in pos]
     shape = wcs.array_shape
     pix = []
-    for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
-        if not np.isfinite(x) or not np.isfinite(y):
-            continue
-        pix.append([x, y])
+    try:
+        for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
+            if not np.isfinite(x) or not np.isfinite(y):
+                continue
+            pix.append([x, y])
+    except:
+        warn("problem with plotting syndynes")
     plt.xlim(0, shape[0])
     plt.ylim(0, shape[1])
     plt.plot(*np.transpose(pix), **kwargs)
