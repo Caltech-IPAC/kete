@@ -46,6 +46,15 @@ from kete import mpc
         ["J18W010", "1918 W1"],
         ["J51G020", "1951 G2"],
         ["K16J01b", "2016 J1-B"],
+        # extended provisional packing
+        ["K23B00A", "2023 BA"],
+        ["K24C03Z", "2024 CZ3"],
+        ["K25Dz9Z", "2025 DZ619"],
+        ["_PD0000", "2025 DA620"],
+        ["_QD000N", "2026 DY620"],
+        ["_RD0aEM", "2027 DZ6190"],
+        ["_SEZZZZ", "2028 EA339749"],
+        ["_TFzzzz", "2029 FL591673"],
     ],
 )
 def test_provisional(packed, unpacked):
