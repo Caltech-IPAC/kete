@@ -233,7 +233,7 @@ def unpack_provisional_designation(packed: str):
         # new MPC extended packed format - 2025-07-24
         year = "20" + str(_mpc_hex.index(packed[1]))
         halfmonth = packed[2]
-        order = (
+        odometer = (
             15501
             + 62**3 * _mpc_hex.index(packed[3])
             + 62**2 * _mpc_hex.index(packed[4])
@@ -244,8 +244,8 @@ def unpack_provisional_designation(packed: str):
             year
             + " "
             + halfmonth
-            + _mpc_cnt[((order - 1) % 25)]
-            + str((order - 1) // 25)
+            + _mpc_cnt[((odometer - 1) % 25)]
+            + str((odometer - 1) // 25)
         )
     if packed[:3] in ["PLS", "T1S", "T2S", "T3S"]:
         return packed[3:] + " " + packed[0] + "-" + packed[1]
