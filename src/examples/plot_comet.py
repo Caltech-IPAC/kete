@@ -163,10 +163,13 @@ def plot_synchrone(
     decs = [x.dec for x in pos]
     shape = wcs.array_shape
     pix = []
-    for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
-        if not np.isfinite(x) or not np.isfinite(y):
-            continue
-        pix.append([x, y])
+    try:
+        for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
+            if not np.isfinite(x) or not np.isfinite(y):
+                continue
+            pix.append([x, y])
+    except:
+        print("error in synchrone plotting")
     plt.xlim(0, shape[0])
     plt.ylim(0, shape[1])
     plt.plot(*np.transpose(pix), **kwargs)
