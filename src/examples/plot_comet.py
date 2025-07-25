@@ -130,7 +130,7 @@ def plot_syndyne(wcs, state, fov, beta, back_days=90, day_step=1, **kwargs):
                 continue
             pix.append([x, y])
     except:
-        warn("problem with plotting syndynes")
+        print("problem with plotting syndynes")
     plt.xlim(0, shape[0])
     plt.ylim(0, shape[1])
     plt.plot(*np.transpose(pix), **kwargs)

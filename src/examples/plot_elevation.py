@@ -127,7 +127,7 @@ for idx, line in zip(np.argmax(np.array(elevation).T, axis=1), lines):
 try:
     labelLines(lines, xvals=max_elev, zorder=2.5)
 except:
-    warn("Problem with plotting labels on the elevation plot")
+    print("Problem with plotting labels on the elevation plot")
 
 line = plt.plot(
     dates, moon_elevation, label=f"Moon ({moon_frac:0.0%})", ls="--", c="k", lw=1
