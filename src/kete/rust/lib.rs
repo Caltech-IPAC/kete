@@ -124,11 +124,14 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(spice::spk_reset_py, m)?)?;
     m.add_function(wrap_pyfunction!(spice::spk_get_name_from_id_py, m)?)?;
     m.add_function(wrap_pyfunction!(spice::spk_available_info_py, m)?)?;
+    m.add_function(wrap_pyfunction!(spice::spk_load_cache_py, m)?)?;
+    m.add_function(wrap_pyfunction!(spice::spk_load_core_py, m)?)?;
 
     m.add_function(wrap_pyfunction!(spice::pck_reset_py, m)?)?;
     m.add_function(wrap_pyfunction!(spice::pck_load_py, m)?)?;
     m.add_function(wrap_pyfunction!(spice::pck_earth_frame_py, m)?)?;
     m.add_function(wrap_pyfunction!(spice::pck_state_to_earth, m)?)?;
+    m.add_function(wrap_pyfunction!(spice::pck_loaded_objects_py, m)?)?;
 
     m.add_function(wrap_pyfunction!(spice::daf_header_info_py, m)?)?;
     m.add_function(wrap_pyfunction!(spice::obs_codes, m)?)?;
@@ -137,6 +140,8 @@ fn _core(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(fitting::ks_test_py, m)?)?;
     m.add_function(wrap_pyfunction!(fitting::fit_chi2_py, m)?)?;
+
+    m.add_function(wrap_pyfunction!(kete_core::cache::cache_path, m)?)?;
 
     Ok(())
 }

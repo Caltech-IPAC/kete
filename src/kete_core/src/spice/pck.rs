@@ -5,21 +5,19 @@
 //! meaning before its use it must by unwrapped. A vast majority of intended use cases
 //! will only be the read case.
 //!
+use std::collections::HashSet;
+use std::fs;
+
 use super::daf::{DAFType, DafFile};
 use super::pck_segments::PckSegment;
+use crate::cache::cache_path;
 use crate::errors::{Error, KeteResult};
 use crate::frames::Frame;
 use crossbeam::sync::ShardedLock;
 use lazy_static::lazy_static;
 
-use std::io::Cursor;
-
-const PRELOAD_PCK: &[&[u8]] = &[include_bytes!(
-    "../../data/earth_1962_240827_2124_combined.bpc"
-)];
-
 /// A collection of segments.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct PckCollection {
     /// Collection of PCK file information
     pub segments: Vec<PckSegment>,
@@ -49,7 +47,7 @@ impl PckCollection {
 
     /// Get the raw orientation from the loaded PCK files.
     /// This orientation will have the frame of what was originally present in the file.
-    pub fn try_get_orientation(&self, id: isize, jd: f64) -> KeteResult<Frame> {
+    pub fn try_get_orientation(&self, id: i32, jd: f64) -> KeteResult<Frame> {
         for segment in self.segments.iter() {
             if id == segment.center_id && segment.contains(jd) {
                 return segment.try_get_orientation(jd);
@@ -64,21 +62,45 @@ impl PckCollection {
 
     /// Delete all segments in the PCK singleton, equivalent to unloading all files.
     pub fn reset(&mut self) {
-        let files = PckCollection {
-            segments: Vec::new(),
-        };
+        *self = PckCollection::default();
+    }
 
-        *self = files;
+    /// Return a list of all loaded segments in the PCK singleton.
+    /// This is a list of the center NAIF IDs of the segments.
+    pub fn loaded_objects(&self) -> Vec<i32> {
+        let loaded: HashSet<i32> = self.segments.iter().map(|x| x.center_id).collect();
+        loaded.into_iter().collect()
+    }
 
-        for preload in PRELOAD_PCK {
-            let mut buffer = Cursor::new(preload);
-            let file = DafFile::from_buffer(&mut buffer).unwrap();
-            self.segments.extend(
-                file.segments
-                    .into_iter()
-                    .map(|x| x.try_into().expect("Failed to load PCK")),
-            );
-        }
+    /// Load the core files.
+    pub fn load_core(&mut self) -> KeteResult<()> {
+        let cache = cache_path("kernels/core")?;
+        self.load_directory(cache)?;
+        Ok(())
+    }
+
+    /// Load files in the cache directory.
+    pub fn load_cache(&mut self) -> KeteResult<()> {
+        let cache = cache_path("kernels")?;
+        self.load_directory(cache)?;
+        Ok(())
+    }
+
+    /// Load all PCK files from a directory.
+    pub fn load_directory(&mut self, directory: String) -> KeteResult<()> {
+        fs::read_dir(&directory)?.for_each(|entry| {
+            let entry = entry.unwrap();
+            let path = entry.path();
+            if path.is_file() {
+                let filename = path.to_str().unwrap();
+                if filename.to_lowercase().ends_with(".bpc") {
+                    if let Err(err) = self.load_file(filename) {
+                        eprintln!("Failed to load PCK file {}: {}", filename, err);
+                    }
+                }
+            }
+        });
+        Ok(())
     }
 }
 
@@ -87,10 +109,8 @@ lazy_static! {
     /// This is a RwLock protected PCKCollection, and must be `.try_read().unwrapped()` for any
     /// read-only cases.
     pub static ref LOADED_PCK: PckSingleton = {
-        let mut files = PckCollection {
-            segments: Vec::new(),
-        };
-        files.reset();
-        ShardedLock::new(files)
+        let mut singleton = PckCollection::default();
+        let _ = singleton.load_core();
+        ShardedLock::new(singleton)
     };
 }

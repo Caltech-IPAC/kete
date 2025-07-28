@@ -1,30 +1,30 @@
 [project]
 name = "kete"
-version = "1.0.8"
+version = "1.1.0"
 description = "Kete Asteroid Survey Tools"
 readme = "README.md"
-authors = [{name = "Dar Dahlen", email = "ddahlen@ipac.caltech.edu"},
-           {name = "Joe Masiero", email = "jmasiero@ipac.caltech.edu"},
-          ]
-license = {text = "BSD"}
+authors = [
+        { name = "Dar Dahlen", email = "ddahlen@ipac.caltech.edu" },
+        { name = "Joe Masiero", email = "jmasiero@ipac.caltech.edu" },
+]
+license = { text = "BSD" }
 requires-python = ">=3.9"
-classifiers=["Programming Language :: Python :: 3"]
-dependencies = ["astropy>=5.3.4",
-                "matplotlib",
-                "matplotlib-label-lines",
-                "numpy>=1.24",
-                "pandas",
-                "requests",
-                "scipy",
-                ]
+classifiers = ["Programming Language :: Python :: 3"]
+dependencies = [
+        "astropy>=5.3.4",
+        "matplotlib",
+        "matplotlib-label-lines",
+        "numpy>=1.24",
+        "pandas",
+        "requests",
+        "scipy",
+]
 
 [project.urls]
-homepage = "https://github.com/IPAC-SW/kete"
+homepage = "https://github.com/Caltech-IPAC/kete"
 
 [build-system]
-requires = ["maturin>=1.0",
-            "wheel",
-            ]
+requires = ["maturin>=1.0", "wheel"]
 build-backend = "maturin"
 
 [tool.maturin]
@@ -32,42 +32,44 @@ python-source = "src"
 module-name = "kete._core"
 
 [project.optional-dependencies]
-dev = ["black>=23.1.0",
-       "pytest",
-       "pytest-cov",
-       "sphinx",
-       "autodoc",
-       "sphinx-gallery",
-       "mypy",
-       "types-requests",
-       "sphinx_rtd_theme",
+dev = [
+        "black>=23.1.0",
+        "pytest",
+        "pytest-cov",
+        "sphinx",
+        "autodoc",
+        "sphinx-gallery",
+        "mypy",
+        "types-requests",
+        "sphinx_rtd_theme",
         "click",
-       ]
-docs = ["sphinx",
+]
+docs = [
+        "sphinx",
         "autodoc",
         "sphinx-gallery",
         "sphinx_rtd_theme",
         "click",
         "pytz",
-        ]
+]
 
 # Options for pytest
 [tool.pytest.ini_options]
 testpaths = ["src/tests"]
-markers = [
-    "horizons: run JPL Horizons tests, requires an internet connection.",
-]
+markers = ["horizons: run JPL Horizons tests, requires an internet connection."]
 # filterwarnings = "error"
 
 # Options for the coverage report.
 [tool.coverage.run]
-omit = ["*/kete/mpc.py",
+omit = [
+        "*/kete/mpc.py",
         "*/kete/irsa.py",
         "*/kete/wise.py",
         "*/kete/ztf.py",
         "*/kete/horizons.py",
         "*/kete/data/*",
-        "*/examples/*",]
+        "*/examples/*",
+]
 
 # See https://github.com/psf/black/blob/main/pyproject.toml for more details
 [tool.black]
@@ -83,7 +85,7 @@ exclude = '''
 '''
 
 [tool.pylint.imports]
-ignored-modules=["_core", "kete._core"]
+ignored-modules = ["_core", "kete._core"]
 
 [tool.mypy]
 plugins = "numpy.typing.mypy_plugin"
