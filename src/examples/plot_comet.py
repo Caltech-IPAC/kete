@@ -125,8 +125,6 @@ def plot_syndyne(wcs, state, fov, beta, back_days=90, day_step=1, **kwargs):
     shape = wcs.array_shape
     pix = []
     for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
-        if not np.isfinite(x) or not np.isfinite(y):
-            continue
         pix.append([x, y])
     plt.xlim(0, shape[0])
     plt.ylim(0, shape[1])
@@ -161,8 +159,6 @@ def plot_synchrone(
     shape = wcs.array_shape
     pix = []
     for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
-        if not np.isfinite(x) or not np.isfinite(y):
-            continue
         pix.append([x, y])
     plt.xlim(0, shape[0])
     plt.ylim(0, shape[1])
@@ -203,7 +199,16 @@ plot_syndyne(
 # plot synchrones
 for days in [-10, -15, -20, -25]:
     plot_synchrone(
-        wcs, vis[0], fov, days, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6, label=str(days)
+        wcs,
+        vis[0],
+        fov,
+        days,
+        0.2,
+        ls="--",
+        c=(0, 0.5, 1),
+        lw=0.6,
+        label=str(days),
+        beta_steps=2000,
     )
 plot_synchrone(wcs, vis[0], fov, -5, 0.8, ls="--", c=(0, 0.5, 1), lw=0.6, label=-5)
 
@@ -251,7 +256,7 @@ for line in plt.gca().get_lines():
         label_pos = [line._x[idx], 0 - offset]
         ha = "center"
         va = "bottom"
-    elif edge == 3:
+    else:
         label_pos = [line._x[idx], shape[0] + offset]
         ha = "center"
         va = "top"

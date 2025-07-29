@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.1.0]
+
+Announcement: Author of Kete (Dar Dahlen) has left IPAC Caltech to begin a PhD at
+TU Braunschweig in Germany. Kete has been forked from the public copy maintained by
+Caltech, and future development of this fork will occur as a personal project.
+
+### Changed
+
+- SPICE kernels were removed for the respository, and now automatically download on
+  first use.
 
 ## [v1.0.8]
 
@@ -24,7 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kernel. This section has been re-added to the WISE kernel, which should now contain
   all phases of operation with the best orbit knowledge available.
 
-
 ## [v1.0.7]
 
 ### Added
@@ -41,7 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - WGS84 conversion between ECEF and Lat/Lon/Alt was missing a square-root causing a
   small offset (typically 10s to 100s of meters). This has been fixed.
-
 
 ## [v1.0.6]
 
@@ -64,7 +72,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated the WISE spice kernels, which improves accuracy significantly for the final 2
   years of WISE/NEOWISE.
 
-
 ## [v1.0.5]
 
 ### Added
@@ -84,7 +91,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a text case-sensitivity but on Horizons parameter parsing.
 - Thermal model example had function arguments out of order.
 
-
 ## [v1.0.4]
 
 ### Added
@@ -101,7 +107,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gaps between the chips.
 - NEOS FOV rotation was being calculated in the ecliptic frame, whereas images will be
   in the equatorial frame. Rotation is now defaulting to the equatorial frame.
-
 
 ## [v1.0.3]
 
@@ -133,7 +138,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   equivalent variations of latitude/longitude conversions. Nothing in the Python was
   impacted.
 
-
 ## [v1.0.2]
 
 ### Added
@@ -156,7 +160,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Epoch and Perihelion time conversion when loading JPL Horizons covariance matrices was
   not being done for UTC to TDB, leading to small residuals in covariance sampling.
-
 
 ## [v1.0.0]
 
@@ -201,7 +204,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `plot_frame` from ZTF, as a better version of this is available in kete.irsa.
 - Removed `cache_WISE_frame` and `fetch_WISE_frame` deprecated functions in WISE.
 
-
 ## [0.3.0] - 2024 - 8 - 28
 
 ### Added
@@ -222,7 +224,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   information was not being saved correctly.
 - Fixed incompatibility with older versions of the rust compiler, working back to
   at least v1.75.0
-
 
 ## [0.2.5] - 2024 - 8 - 12
 
@@ -258,14 +259,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `cached_zip_download` was deprecated, this was automatically unzipping folders.
 
-
 ## [0.2.4] - 2024 - 7 - 15
 
 ### Added
 
 - Add `J2` non-spherical terms for the gravitational models of Earth and Jupiter.
 - Add non-gravitational force model for dust particles which includes the
-  Poynting-Roberterson effect. 
+  Poynting-Roberterson effect.
 - Added `Time.year_float` which converts the `Time` object to the Year as a float.
 - Added `SimultaneousState.obs_vecs` which creates vectors from the observer to the
   objects contained within the state.
@@ -311,7 +311,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   however I do not have access to a file of type 3 for testing. Because it cannot be
   validated at the moment, the code has been removed.
 
-
 ## [0.2.3] - 2024 - 6 - 12
 
 ### Added
@@ -338,7 +337,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Astropy will no longer warning about deprecated WCS header values for NEOWISE images.
-
 
 ## [0.2.2] - 2024 - 5 - 20
 
@@ -372,8 +370,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   level of the package.
 - Removed PDS related tools.
 
-
-## [0.2.1]  - 2024 - 5 - 13
+## [0.2.1] - 2024 - 5 - 13
 
 ### Added
 
@@ -394,17 +391,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed main belt construction tools, out of scope and not accurate enough.
 - Removed redundant MPC name resolver function.
 
-
-## [0.2.0]  - 2024-3-16
+## [0.2.0] - 2024-3-16
 
 Initial Release
 
 - Initial version release of kete!
-- kete's primary goal is to enable simulations of NEOs, however it also supports any 
+- kete's primary goal is to enable simulations of NEOs, however it also supports any
   asteroid or comet. Included are n-body orbit propagation tools, thermal and optical
   modeling, tools for computing what minor planets can be seen by an observer.
   Along with many helpful interfaces to web tools such as JPL Horizons or IPAC's IRSA.
-
 
 [Unreleased]: https://github.com/IPAC-SW/kete/tree/main
 [1.0.7]: https://github.com/IPAC-SW/kete/releases/tag/v1.0.7
