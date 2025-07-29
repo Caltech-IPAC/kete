@@ -9,9 +9,11 @@ for Cetaceans (Whales).
 
 ## Note:
 
-The original version of this repo was developed at Caltech IPAC. This is a fork of that repo
-where the work will continue as a personal project. Work done while at IPAC is of course owned
-by Caltech, but all future work will have well marked as owned by Dar Dahlen & future contributors.
+The original version of this repo was developed at Caltech IPAC. This
+version includes additions made on a fork of this repo that was
+continued as a personal project by the original author D. Dahlen. Work
+done while at IPAC is of course owned by Caltech, but that additional
+work will be marked as owned by Dar Dahlen & future contributors.
 License will remain as BSD-3 Clause to simplify things.
 
 ## Introduction
