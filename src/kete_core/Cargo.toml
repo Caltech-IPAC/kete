@@ -1,6 +1,6 @@
 [package]
 name = "kete_core"
-version = "1.0.8"
+version = "1.1.0"
 edition = "2021"
 readme = "README.md"
 license = "BSD-3-Clause"
@@ -14,13 +14,14 @@ argmin = "^0.10.0"
 argmin-math = "^0.4.0"
 chrono = "^0.4.38"
 crossbeam = "^0.8.4"
+directories = "^5.0"
 itertools = "^0.14.0"
 kdtree = "^0.7.0"
 lazy_static = "^1.5.0"
 nalgebra = {version = "^0.33.0"}
 polars = {version = "0.45.1", optional=true, features=["parquet", "polars-io"]}
 pathfinding = "^4.10.0"
-pyo3 = { version =  "^0.23.4", optional=true}
+pyo3 = { version =  "^0.24.1", optional=true}
 rayon = "^1.10.0"
 serde = { version = "^1.0.203", features = ["derive"] }
 sgp4 = "^2.2.0"

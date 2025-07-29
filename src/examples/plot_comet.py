@@ -124,13 +124,8 @@ def plot_syndyne(wcs, state, fov, beta, back_days=90, day_step=1, **kwargs):
     decs = [x.dec for x in pos]
     shape = wcs.array_shape
     pix = []
-    try:
-        for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
-            if not np.isfinite(x) or not np.isfinite(y):
-                continue
-            pix.append([x, y])
-    except:
-        print("problem with plotting syndynes")
+    for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
+        pix.append([x, y])
     plt.xlim(0, shape[0])
     plt.ylim(0, shape[1])
     plt.plot(*np.transpose(pix), **kwargs)
@@ -163,13 +158,8 @@ def plot_synchrone(
     decs = [x.dec for x in pos]
     shape = wcs.array_shape
     pix = []
-    try:
-        for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
-            if not np.isfinite(x) or not np.isfinite(y):
-                continue
-            pix.append([x, y])
-    except:
-        print("error in synchrone plotting")
+    for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
+        pix.append([x, y])
     plt.xlim(0, shape[0])
     plt.ylim(0, shape[1])
     plt.plot(*np.transpose(pix), **kwargs)
@@ -209,7 +199,16 @@ plot_syndyne(
 # plot synchrones
 for days in [-10, -15, -20, -25]:
     plot_synchrone(
-        wcs, vis[0], fov, days, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6, label=str(days)
+        wcs,
+        vis[0],
+        fov,
+        days,
+        0.2,
+        ls="--",
+        c=(0, 0.5, 1),
+        lw=0.6,
+        label=str(days),
+        beta_steps=2000,
     )
 plot_synchrone(wcs, vis[0], fov, -5, 0.8, ls="--", c=(0, 0.5, 1), lw=0.6, label=-5)
 
@@ -257,7 +256,7 @@ for line in plt.gca().get_lines():
         label_pos = [line._x[idx], 0 - offset]
         ha = "center"
         va = "bottom"
-    elif edge == 3:
+    else:
         label_pos = [line._x[idx], shape[0] + offset]
         ha = "center"
         va = "top"
