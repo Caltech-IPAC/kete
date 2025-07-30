@@ -159,6 +159,8 @@ def plot_synchrone(
     shape = wcs.array_shape
     pix = []
     for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
+        if not np.isfinite(x) or not np.isfinite(y):
+            continue
         pix.append([x, y])
     plt.xlim(0, shape[0])
     plt.ylim(0, shape[1])
