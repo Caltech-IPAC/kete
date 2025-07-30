@@ -5,12 +5,12 @@ name: Release-Wheels
 
 on:
   release:
-    types: 
+    types:
       - published
   push:
-    tags: 'v[0-9]+.[0-9]+.[0-9]+'
+    tags: "v[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
-        
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
