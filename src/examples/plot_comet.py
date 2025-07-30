@@ -125,6 +125,8 @@ def plot_syndyne(wcs, state, fov, beta, back_days=90, day_step=1, **kwargs):
     shape = wcs.array_shape
     pix = []
     for x, y in zip(*wcs.world_to_pixel_values(ras, decs)):
+        if not np.isfinite(x) or not np.isfinite(y):
+            continue
         pix.append([x, y])
     plt.xlim(0, shape[0])
     plt.ylim(0, shape[1])
@@ -196,8 +198,8 @@ plt.title("Comet NEOWISE - C/2020 F3\n")
 #     c=(1, 0.0, 0.3),
 #     label=f"{1:0.2g}",
 # )
-# 
-# 
+#
+#
 # # plot synchrones
 # for days in [-10, -15, -20, -25]:
 #     plot_synchrone(
@@ -213,7 +215,7 @@ plt.title("Comet NEOWISE - C/2020 F3\n")
 #         beta_steps=2000,
 #     )
 # plot_synchrone(wcs, vis[0], fov, -5, 0.8, ls="--", c=(0, 0.5, 1), lw=0.6, label=-5)
-# 
+#
 # plot_synchrone(
 #     wcs,
 #     vis[0],
@@ -226,7 +228,7 @@ plt.title("Comet NEOWISE - C/2020 F3\n")
 #     lw=0.6,
 #     label=0,
 # )
-# 
+#
 # Fancy plotting of labels around the edge
 shape = wcs.array_shape
 xvals = []
