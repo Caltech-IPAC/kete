@@ -175,60 +175,51 @@ frame = kete.ztf.fetch_frame(vis.fov)
 wcs = kete.irsa.plot_fits_image(frame, percentiles=None)
 plt.title("Comet NEOWISE - C/2020 F3\n")
 
-# # plot syndynes
-# for beta in [0.002, 0.004, 0.01, 0.04, 0.2]:
-#     plot_syndyne(
-#         wcs,
-#         vis[0],
-#         fov,
-#         beta,
-#         day_step=0.1,
-#         lw=0.6,
-#         c=(1, 0.0, 0.3),
-#         label=f"{beta:0.2g}",
-#     )
-# plot_syndyne(
-#     wcs,
-#     vis[0],
-#     fov,
-#     1,
-#     back_days=10,
-#     day_step=0.1,
-#     lw=0.6,
-#     c=(1, 0.0, 0.3),
-#     label=f"{1:0.2g}",
-# )
-#
-#
-# # plot synchrones
-# for days in [-10, -15, -20, -25]:
-#     plot_synchrone(
-#         wcs,
-#         vis[0],
-#         fov,
-#         days,
-#         0.2,
-#         ls="--",
-#         c=(0, 0.5, 1),
-#         lw=0.6,
-#         label=str(days),
-#         beta_steps=2000,
-#     )
-# plot_synchrone(wcs, vis[0], fov, -5, 0.8, ls="--", c=(0, 0.5, 1), lw=0.6, label=-5)
-#
-# plot_synchrone(
-#     wcs,
-#     vis[0],
-#     fov,
-#     0.01,
-#     1200000.0,
-#     ls="--",
-#     beta_steps=2000,
-#     c=(0, 0.5, 1),
-#     lw=0.6,
-#     label=0,
-# )
-#
+# plot syndynes
+for beta in [0.002, 0.004, 0.01, 0.04, 0.2]:
+    plot_syndyne(
+        wcs,
+        vis[0],
+        fov,
+        beta,
+        day_step=0.1,
+        lw=0.6,
+        c=(1, 0.0, 0.3),
+        label=f"{beta:0.2g}",
+    )
+plot_syndyne(
+    wcs,
+    vis[0],
+    fov,
+    1,
+    back_days=10,
+    day_step=0.1,
+    lw=0.6,
+    c=(1, 0.0, 0.3),
+    label=f"{1:0.2g}",
+)
+
+
+# plot synchrones
+for days in [-10, -15, -20, -25]:
+    plot_synchrone(
+        wcs, vis[0], fov, days, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6, label=str(days)
+    )
+plot_synchrone(wcs, vis[0], fov, -5, 0.8, ls="--", c=(0, 0.5, 1), lw=0.6, label=-5)
+
+plot_synchrone(
+    wcs,
+    vis[0],
+    fov,
+    0.01,
+    1200000.0,
+    ls="--",
+    beta_steps=2000,
+    c=(0, 0.5, 1),
+    lw=0.6,
+    label=0,
+)
+
 # Fancy plotting of labels around the edge
 shape = wcs.array_shape
 xvals = []
@@ -260,7 +251,7 @@ for line in plt.gca().get_lines():
         label_pos = [line._x[idx], 0 - offset]
         ha = "center"
         va = "bottom"
-    else:
+    elif edge == 3:
         label_pos = [line._x[idx], shape[0] + offset]
         ha = "center"
         va = "top"
@@ -275,3 +266,4 @@ plot_vectors(frame_wcs, vis[0], vis.fov, y=0.85)
 # this just un-inverts it.
 plt.gca().invert_yaxis()
 plt.show()
+
