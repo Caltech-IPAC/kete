@@ -124,12 +124,23 @@ lines = plt.gca().get_lines()
 max_elev = []
 for idx, line in zip(np.argmax(np.array(elevation).T, axis=1), lines):
     max_elev.append(line._x[idx])
-labelLines(lines, xvals=max_elev, zorder=2.5)
+try:
+    labelLines(lines, xvals=max_elev, zorder=2.5)
+except Exception as e:
+    print("Problem with plotting labels on the elevation plot", e)
 
 line = plt.plot(
     dates, moon_elevation, label=f"Moon ({moon_frac:0.0%})", ls="--", c="k", lw=1
 )[0]
-labelLines([line], xvals=line._x[np.argmax(moon_elevation)], zorder=2.45, fontsize=8)
+try:
+    labelLines(
+        [line],
+        xvals=line._x[np.argmax(moon_elevation)],
+        zorder=2.45,
+        fontsize=8,
+    )
+except Exception as e:
+    print("Problem with plotting labels on the elevation plot", e)
 
 plt.axvline(midnight, c="k", zorder=2)
 

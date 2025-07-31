@@ -34,7 +34,10 @@ __all__ = [
     "normalize_names",
 ]
 
+# base 62 counter used by the MPC
 _mpc_hex = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+# base 25 counter used by the MPC for provisional designation counting
+_mpc_cnt = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
 
 logger = logging.getLogger(__name__)
 
@@ -226,6 +229,24 @@ def unpack_provisional_designation(packed: str):
         return unpack_comet_designation(packed)
     if len(packed) != 7:
         raise ValueError("Packed designation is not correctly formatted.")
+    if packed[0] == "_":
+        # new MPC extended packed format - 2025-07-24
+        year = "20" + str(_mpc_hex.index(packed[1]))
+        halfmonth = packed[2]
+        odometer = (
+            15501
+            + 62**3 * _mpc_hex.index(packed[3])
+            + 62**2 * _mpc_hex.index(packed[4])
+            + 62**1 * _mpc_hex.index(packed[5])
+            + _mpc_hex.index(packed[6])
+        )
+        return (
+            year
+            + " "
+            + halfmonth
+            + _mpc_cnt[((odometer - 1) % 25)]
+            + str((odometer - 1) // 25)
+        )
     if packed[:3] in ["PLS", "T1S", "T2S", "T3S"]:
         return packed[3:] + " " + packed[0] + "-" + packed[1]
     year = str(_mpc_hex.index(packed[0]) * 100 + int(packed[1:3]))
@@ -258,19 +279,27 @@ def pack_provisional_designation(unpacked: str):
     year, designation = unpacked.split()
     if designation[:3] in ["P-L", "T-1", "T-2", "T-3"]:
         return designation[0] + designation[2] + "S" + year
-
     order = designation[1]
+    half_month = designation[0]
     if order.isnumeric() or "/" in unpacked:
         # its a comet
         return pack_comet_designation(unpacked)
     else:
         num = 0 if len(designation) == 2 else int(designation[2:])
+    if num > 619:
+        # use MPC extended packed format
+        odometer = (_mpc_cnt.index(order) + 1) + num * 25
+        hex_odo = odometer - 15501
+        extpackout = ""
+        for ii in range(4):
+            extpackout = _mpc_hex[hex_odo % 62] + extpackout
+            hex_odo = hex_odo // 62
+        return "_" + _mpc_hex[int(year) % 100] + half_month + extpackout
     loop = _mpc_hex[int(num / 10)]
     subloop = str(int(num % 10))
     year_lookup = {"18": "I", "19": "J", "20": "K", "A9": "J", "A8": "I"}
     century = year_lookup[year[:2]]
     decade = year[2:]
-    half_month = designation[0]
     return century + decade + half_month + loop + subloop + order
 
 
