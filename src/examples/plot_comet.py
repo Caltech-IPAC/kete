@@ -33,7 +33,7 @@ frame = astropy.io.fits.open(kete.ztf.fetch_ZTF_file(**frame_info))[0]
 
 # Grab frame information from this file
 jd = kete.Time(frame.header["OBSJD"], scaling="utc").jd
-frame_wcs = WCS(frame.header)
+frame_wcs = WCS(frame.header,minerr=1e-8)
 
 corners = []
 dx, dy = frame_wcs.pixel_shape
@@ -177,48 +177,63 @@ plt.title("Comet NEOWISE - C/2020 F3\n")
 
 # plot syndynes
 for beta in [0.002, 0.004, 0.01, 0.04, 0.2]:
+    try:
+        plot_syndyne(
+            wcs,
+            vis[0],
+            fov,
+            beta,
+            day_step=0.1,
+            lw=0.6,
+            c=(1, 0.0, 0.3),
+            label=f"{beta:0.2g}",
+        )
+    except:
+        print(f"failure in B={beta:f} syndyne plotting")
+try:
     plot_syndyne(
         wcs,
         vis[0],
         fov,
-        beta,
+        1,
+        back_days=10,
         day_step=0.1,
         lw=0.6,
         c=(1, 0.0, 0.3),
-        label=f"{beta:0.2g}",
+        label=f"{1:0.2g}",
     )
-plot_syndyne(
-    wcs,
-    vis[0],
-    fov,
-    1,
-    back_days=10,
-    day_step=0.1,
-    lw=0.6,
-    c=(1, 0.0, 0.3),
-    label=f"{1:0.2g}",
-)
+except:
+    print("failure in B=1 syndyne")
 
 
 # plot synchrones
 for days in [-10, -15, -20, -25]:
-    plot_synchrone(
-        wcs, vis[0], fov, days, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6, label=str(days)
-    )
-plot_synchrone(wcs, vis[0], fov, -5, 0.8, ls="--", c=(0, 0.5, 1), lw=0.6, label=-5)
+    try:
+        plot_synchrone(
+            wcs, vis[0], fov, days, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6, label=str(days)
+        )
+    except:
+        print(f"failure in {days:d} synchrone plotting")
+try:
+    plot_synchrone(wcs, vis[0], fov, -5, 0.8, ls="--", c=(0, 0.5, 1), lw=0.6, label=-5)
+except:
+    print("failure in -5 synchrone")
 
-plot_synchrone(
-    wcs,
-    vis[0],
-    fov,
-    0.01,
-    1200000.0,
-    ls="--",
-    beta_steps=2000,
-    c=(0, 0.5, 1),
-    lw=0.6,
-    label=0,
-)
+try:
+    plot_synchrone(
+        wcs,
+        vis[0],
+        fov,
+        0.01,
+        1200000.0,
+        ls="--",
+        beta_steps=2000,
+        c=(0, 0.5, 1),
+        lw=0.6,
+        label=0,
+    )
+except:
+    print("Failure in 0 day synchrone")
 
 # Fancy plotting of labels around the edge
 shape = wcs.array_shape
@@ -260,8 +275,10 @@ for line in plt.gca().get_lines():
     )
 
 # add vectors
-plot_vectors(frame_wcs, vis[0], vis.fov, y=0.85)
-
+try:
+    plot_vectors(frame_wcs, vis[0], vis.fov, y=0.85)
+except:
+    print("Failure in vector plot")
 # for some reason astropy for this frame is plotting the y-axis inverted
 # this just un-inverts it.
 plt.gca().invert_yaxis()
