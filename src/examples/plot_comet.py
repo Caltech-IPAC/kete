@@ -33,7 +33,7 @@ frame = astropy.io.fits.open(kete.ztf.fetch_ZTF_file(**frame_info))[0]
 
 # Grab frame information from this file
 jd = kete.Time(frame.header["OBSJD"], scaling="utc").jd
-frame_wcs = WCS(frame.header,minerr=1e-8)
+frame_wcs = WCS(frame.header, minerr=1e-8)
 
 corners = []
 dx, dy = frame_wcs.pixel_shape
@@ -283,4 +283,3 @@ except:
 # this just un-inverts it.
 plt.gca().invert_yaxis()
 plt.show()
-
