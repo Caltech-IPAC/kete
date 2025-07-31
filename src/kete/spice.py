@@ -269,7 +269,7 @@ def _download_core_files():
 
     # required files:
     de440 = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440s.bsp"
-    wise = "https://raw.githubusercontent.com/Caltech-IPAC/kete/refs/tags/v1.0.8/src/kete_core/data/wise.bsp"
+    wise = "https://github.com/Caltech-IPAC/kete/raw/refs/heads/main/src/kete_core/data/wise.bsp"
 
     if not any(["de440s.bsp" in file for file in cache_files]):
         # Cannot find the de440s file, so download it
