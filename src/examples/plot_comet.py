@@ -188,8 +188,8 @@ for beta in [0.002, 0.004, 0.01, 0.04, 0.2]:
             c=(1, 0.0, 0.3),
             label=f"{beta:0.2g}",
         )
-    except:
-        print(f"failure in B={beta:f} syndyne plotting")
+    except Exception as err:
+        print(f"failure in B={beta:f} syndyne plotting, {err}")
 try:
     plot_syndyne(
         wcs,
@@ -202,8 +202,8 @@ try:
         c=(1, 0.0, 0.3),
         label=f"{1:0.2g}",
     )
-except:
-    print("failure in B=1 syndyne")
+except Exception as err:
+    print(f"failure in B=1 syndyne, {err}")
 
 
 # plot synchrones
@@ -212,12 +212,12 @@ for days in [-10, -15, -20, -25]:
         plot_synchrone(
             wcs, vis[0], fov, days, 0.1, ls="--", c=(0, 0.5, 1), lw=0.6, label=str(days)
         )
-    except:
-        print(f"failure in {days:d} synchrone plotting")
+    except Exception as err:
+        print(f"failure in {days:d} synchrone plotting {err}")
 try:
     plot_synchrone(wcs, vis[0], fov, -5, 0.8, ls="--", c=(0, 0.5, 1), lw=0.6, label=-5)
-except:
-    print("failure in -5 synchrone")
+except Exception as err:
+    print(f"failure in -5 synchrone, {err}")
 
 try:
     plot_synchrone(
@@ -232,8 +232,8 @@ try:
         lw=0.6,
         label=0,
     )
-except:
-    print("Failure in 0 day synchrone")
+except Exception as err:
+    print(f"Failure in 0 day synchrone {err}")
 
 # Fancy plotting of labels around the edge
 shape = wcs.array_shape
@@ -277,8 +277,8 @@ for line in plt.gca().get_lines():
 # add vectors
 try:
     plot_vectors(frame_wcs, vis[0], vis.fov, y=0.85)
-except:
-    print("Failure in vector plot")
+except Exception as err:
+    print(f"Failure in vector plot, {err}")
 # for some reason astropy for this frame is plotting the y-axis inverted
 # this just un-inverts it.
 plt.gca().invert_yaxis()
