@@ -334,7 +334,7 @@ struct Type2RecordView<'a> {
 
 impl SpkSegmentType2 {
     #[inline(always)]
-    fn get_record(&self, idx: usize) -> Type2RecordView {
+    fn get_record(&self, idx: usize) -> Type2RecordView<'_> {
         unsafe {
             let vals = self
                 .array
@@ -426,7 +426,7 @@ struct Type3RecordView<'a> {
 
 impl SpkSegmentType3 {
     #[inline(always)]
-    fn get_record(&self, idx: usize) -> Type3RecordView {
+    fn get_record(&self, idx: usize) -> Type3RecordView<'_> {
         unsafe {
             let vals = self
                 .array
@@ -526,7 +526,7 @@ struct Type9RecordView<'a> {
 
 impl SpkSegmentType9 {
     #[inline(always)]
-    fn get_record(&self, idx: usize) -> Type9RecordView {
+    fn get_record(&self, idx: usize) -> Type9RecordView<'_> {
         unsafe {
             let rec = self.array.data.get_unchecked(idx * 6..(idx + 1) * 6);
             Type9RecordView {
@@ -741,7 +741,7 @@ struct Type13RecordView<'a> {
 
 impl SpkSegmentType13 {
     #[inline(always)]
-    fn get_record(&self, idx: usize) -> Type13RecordView {
+    fn get_record(&self, idx: usize) -> Type13RecordView<'_> {
         unsafe {
             let rec = self.array.data.get_unchecked(idx * 6..(idx + 1) * 6);
             Type13RecordView {
@@ -853,7 +853,7 @@ struct Type18RecordView<'a> {
 
 impl SpkSegmentType18 {
     #[inline(always)]
-    fn get_record(&self, idx: usize) -> Type18RecordView {
+    fn get_record(&self, idx: usize) -> Type18RecordView<'_> {
         unsafe {
             let rec = self
                 .array
