@@ -1,45 +1,45 @@
 # This workflow will create wheels files for all major distros for several versions of python.
 # This only triggers on release tags.
 
-name: Release-Wheels
+name: Release Wheels
 
 on:
   release:
     types:
       - published
   push:
-    tags: "v[0-9]+.[0-9]+.[0-9]+"
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
 jobs:
   build_wheels:
-    name: Build wheel for py${{ matrix.python }}-${{ matrix.platform_id }}
+    name: Build wheel for python ${{ matrix.python }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       # Ensure that a wheel builder finishes even if another fails
       fail-fast: false
       matrix:
-        python: [39, 310, 311, 312, 313]
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        include:
-          # Window 64 bit
-          - os: windows-latest
-            platform_id: win_amd64
-
-          # Linux 64 bit manylinux2014
-          - os: ubuntu-latest
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-
-          # MacOS - latest is now arm64, no longer x86_64
-          - os: macos-latest
-            platform_id: macosx_arm64
+        python:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+        os:
+          - macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Cache downloaded files
         id: cache-kete
         uses: actions/cache@v4
@@ -51,45 +51,143 @@ jobs:
           # These files are valid long term, and are not expected to change
           # between runs. So there is no need to a changing name.
           key: kete-cache
+
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-      - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          python-version: "3.12"
+          toolchain: stable
+          cache-key: ${{ runner.os }}-stable
+
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+          activate-environment: true
+          restore-cache: true
+          save-cache: true
+          prune-cache: false
+          ignore-nothing-to-cache: true
+
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools
-          python3 -m pip install cibuildwheel
+          uv sync
+
       - name: Build wheels
-        env:
-          CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
-          CIBW_ARCHS: all
-          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
-          CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
-          CIBW_TEST_SKIP: "*-macosx_arm64"
-          CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH" CARGO_TERM_COLOR="always"'
-          CIBW_ENVIRONMENT_WINDOWS: 'PATH="$UserProfile\.cargo\bin;$PATH"'
-          CIBW_BEFORE_BUILD: rustup show
-          CIBW_BEFORE_BUILD_LINUX: >
-            curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=stable --profile=minimal -y &&
-            rustup show
-          CIBW_TEST_REQUIRES: pytest
-          CIBW_BUILD_VERBOSITY: 1
-          CONDA_HOME: /usr/local/miniconda
-        run: python3 -m cibuildwheel --output-dir wheelhouse
-      - uses: actions/upload-artifact@v4
+        run: |
+          uv build --wheel
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
         with:
-          name: wheel-cp${{ matrix.python }}-${{ matrix.platform_id }}
-          path: ./wheelhouse/*.whl
+          name: wheel-cp${{ matrix.python }}-${{ runner.os }}
+          path: ./dist/*.whl
+
+  build_linux:
+    name: Build wheel for python ${{ matrix.python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      id-token: write
+      contents: read
+    timeout-minutes: 30
+    strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
+      matrix:
+        python:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+        os:
+          - self-hosted
+    environment:
+      name: devpi
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache downloaded files
+        id: cache-kete
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-kete
+        with:
+          # kete stores all files in `~/.kete/` by default
+          path: ~/.kete
+          # These files are valid long term, and are not expected to change
+          # between runs. So there is no need to a changing name.
+          key: kete-cache
+
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache-key: ${{ runner.os }}-stable
+
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+          activate-environment: true
+          restore-cache: true
+          save-cache: true
+          prune-cache: false
+          ignore-nothing-to-cache: true
+
+      - name: Install devpi
+        run: |
+          uv tool install devpi-client
+
+      - name: Configure uv to use devpi
+        run: |
+          devpi use -y https://pypi.neosdev.ipac.caltech.edu
+          devpi login -y ${{ secrets.DEVPI_USER }} --password '${{ secrets.DEVPI_PASS }}'
+          devpi use -y --set-cfg --pip-set-trusted yes neos/stable
+
+      - name: Install dependencies
+        run: |
+          uv sync
+        env:
+          UV_DEFAULT_INDEX: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
+          UV_INDEX: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
+          PIP_INDEX_URL: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
+          PIP_EXTRA_INDEX_URL: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
+          PIP_TRUSTED_HOST: pypi.neosdev.ipac.caltech.edu
+
+      - name: Build wheels
+        run: |
+          uv build --wheel
+        env:
+          UV_DEFAULT_INDEX: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
+          UV_INDEX: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
+          PIP_INDEX_URL: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
+          PIP_EXTRA_INDEX_URL: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
+          PIP_TRUSTED_HOST: pypi.neosdev.ipac.caltech.edu
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-cp${{ matrix.python }}-${{ runner.os }}
+          path: ./dist/*.whl
+
+      - name: Remove local configuration changes
+        run: |
+          rm -f ~/.config/pip/pip.conf
+          rm -f ~/.config/uv/uv.toml
+          rm -f ~/.pydistutils.cfg
+          rm -f ~/.buildout/default.cfg
+
   publish-to-pypi:
     name: Publish Kete to PyPI
     needs:
       - build_wheels
-    runs-on: ubuntu-latest
+      - build_linux
+    runs-on: self-hosted
     environment:
-      name: pypi
-      url: https://pypi.org/p/kete
+      name: devpi
     permissions:
       id-token: write
     steps:
@@ -99,5 +197,14 @@ jobs:
           pattern: wheel-*
           path: dist
           merge-multiple: true
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
+          print-hash: true
+          attestations: false
+          user: ${{ secrets.DEVPI_USER }}
+          password: ${{ secrets.DEVPI_PASS }}
+          repository-url: https://pypi.neosdev.ipac.caltech.edu/neos/stable/
+	  

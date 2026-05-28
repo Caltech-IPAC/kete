@@ -19,13 +19,26 @@ concurrency:
 
 jobs:
   build:
-    timeout-minutes: 20
-    runs-on: ubuntu-latest
+    name: Build and test with python ${{ matrix.python-version }} on ${{ matrix.os }}
+    timeout-minutes: 30
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-
+      matrix:
+        python-version:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+        os:
+          - macos-latest
+          - ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Cache downloaded files
         id: cache-kete
@@ -39,41 +52,87 @@ jobs:
           # between runs. So there is no need to a changing name.
           key: kete-cache
 
-      - name: Setup Rust
+      - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           cache-key: ${{ runner.os }}-stable
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
+          activate-environment: true
+          enable-cache: true
+          restore-cache: true
+          save-cache: true
+          prune-cache: false
+          ignore-nothing-to-cache: true
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools ruff mypy types-requests numpy
+          uv sync --all-groups --all-extras
 
-      - name: Ruff Formatting
-        run: |
-          python3 -m ruff check
+      - name: Check formatting with ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check"
 
       - name: Lint with mypy
         run: |
-          python3 -m mypy src/kete/
-
-      # Build and run pytest
-      - name: Build kete
-        run: |
-          python3 -m pip install '.[dev]' -v
+          uv run mypy src/kete/
 
       - name: Test with pytest
         run: |
-          python3 -m pytest --cov-report term-missing --cov=kete
+          uv run pytest --cov-report term-missing --cov=kete
 
       - name: Test with cargo
         run: |
           cargo test
+
+  docs:
+    needs: build
+    if: success()
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache downloaded files
+        id: cache-kete
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-kete
+        with:
+          # kete stores all files in `~/.kete/` by default
+          path: ~/.kete
+          # These files are valid long term, and are not expected to change
+          # between runs. So there is no need to a changing name.
+          key: kete-cache
+
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache-key: ${{ runner.os }}-stable
+
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@v6
+        with:
+          activate-environment: true
+          python-version: "3.11"
+          enable-cache: true
+          restore-cache: true
+          save-cache: true
+          prune-cache: false
+          ignore-nothing-to-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-groups --all-extras
 
       - name: Cargo Docs
         run: |
@@ -106,7 +165,7 @@ jobs:
           path: docs/html/
 
   deploy:
-    needs: build
+    needs: docs
     if: success() && github.ref == 'refs/heads/main'
 
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
@@ -125,3 +184,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+	
