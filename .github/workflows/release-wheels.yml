@@ -60,7 +60,7 @@ jobs:
           cache-key: ${{ runner.os }}-stable
 
       - name: Install uv and set the Python version
-        uses: astral-sh/setup-uv@v8
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ matrix.python }}
           activate-environment: true
@@ -123,7 +123,7 @@ jobs:
           cache-key: ${{ runner.os }}-stable
 
       - name: Install uv and set the Python version
-        uses: astral-sh/setup-uv@v8
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ matrix.python }}
           activate-environment: true
@@ -239,7 +239,7 @@ jobs:
           cache-key: ${{ runner.os }}-stable
 
       - name: Install uv and set the Python version
-        uses: astral-sh/setup-uv@v8
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: "3.13"
           activate-environment: true
