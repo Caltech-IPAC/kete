@@ -98,8 +98,6 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-    environment:
-      name: devpi
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -183,8 +181,6 @@ jobs:
       - build_wheels
       - build_linux
     runs-on: self-hosted
-    environment:
-      name: devpi
     permissions:
       id-token: write
     steps:
@@ -214,8 +210,6 @@ jobs:
       id-token: write
       contents: read
     timeout-minutes: 30
-    environment:
-      name: devpi
     steps:
       - name: Checkout
         uses: actions/checkout@v6
