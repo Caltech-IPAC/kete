@@ -1,3 +1,4 @@
+---
 # This workflow will create wheels files for all major distros for several versions of python.
 # This only triggers on release tags.
 
@@ -38,11 +39,11 @@ jobs:
           - macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Cache downloaded files
         id: cache-kete
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           cache-name: cache-kete
         with:
@@ -59,14 +60,10 @@ jobs:
           cache-key: ${{ runner.os }}-stable
 
       - name: Install uv and set the Python version
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v8
         with:
           python-version: ${{ matrix.python }}
-          enable-cache: true
           activate-environment: true
-          restore-cache: true
-          save-cache: true
-          prune-cache: false
           ignore-nothing-to-cache: true
 
       - name: Install dependencies
@@ -78,14 +75,15 @@ jobs:
           uv build --wheel
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheel-cp${{ matrix.python }}-${{ runner.os }}
           path: ./dist/*.whl
+          if-no-files-found: error
 
   build_linux:
-    name: Build wheel for python ${{ matrix.python }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Build wheel for python ${{ matrix.python }} on internal runner
+    runs-on: self-hosted
     permissions:
       id-token: write
       contents: read
@@ -100,17 +98,15 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-        os:
-          - self-hosted
     environment:
       name: devpi
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Cache downloaded files
         id: cache-kete
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           cache-name: cache-kete
         with:
@@ -127,14 +123,10 @@ jobs:
           cache-key: ${{ runner.os }}-stable
 
       - name: Install uv and set the Python version
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v8
         with:
           python-version: ${{ matrix.python }}
-          enable-cache: true
           activate-environment: true
-          restore-cache: true
-          save-cache: true
-          prune-cache: false
           ignore-nothing-to-cache: true
 
       - name: Install devpi
@@ -145,33 +137,38 @@ jobs:
         run: |
           devpi use -y https://pypi.neosdev.ipac.caltech.edu
           devpi login -y ${{ secrets.DEVPI_USER }} --password '${{ secrets.DEVPI_PASS }}'
-          devpi use -y --set-cfg --pip-set-trusted yes neos/stable
+          devpi use --set-cfg --always-set-cfg yes --pip-set-trusted yes neos/stable
 
       - name: Install dependencies
         run: |
           uv sync
         env:
-          UV_DEFAULT_INDEX: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
-          UV_INDEX: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
-          PIP_INDEX_URL: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
-          PIP_EXTRA_INDEX_URL: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
-          PIP_TRUSTED_HOST: pypi.neosdev.ipac.caltech.edu
+          UV_INDEX: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          UV_DEFAULT_INDEX: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          UV_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          UV_EXTRA_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          PIP_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          PIP_EXTRA_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          PIP_TRUSTED_HOST: "pypi.org pypi.neosdev.ipac.caltech.edu"
 
       - name: Build wheels
         run: |
           uv build --wheel
         env:
-          UV_DEFAULT_INDEX: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
-          UV_INDEX: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
-          PIP_INDEX_URL: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
-          PIP_EXTRA_INDEX_URL: https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/
-          PIP_TRUSTED_HOST: pypi.neosdev.ipac.caltech.edu
+          UV_INDEX: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          UV_DEFAULT_INDEX: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          UV_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          UV_EXTRA_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          PIP_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          PIP_EXTRA_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          PIP_TRUSTED_HOST: "pypi.org pypi.neosdev.ipac.caltech.edu"
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheel-cp${{ matrix.python }}-${{ runner.os }}
           path: ./dist/*.whl
+          if-no-files-found: error
 
       - name: Remove local configuration changes
         run: |
@@ -192,7 +189,7 @@ jobs:
       id-token: write
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: wheel-*
           path: dist
@@ -204,7 +201,97 @@ jobs:
           verbose: true
           print-hash: true
           attestations: false
+          skip-existing: false
           user: ${{ secrets.DEVPI_USER }}
           password: ${{ secrets.DEVPI_PASS }}
           repository-url: https://pypi.neosdev.ipac.caltech.edu/neos/stable/
-	  
+
+  build_docs:
+    name: Build docs
+    runs-on: self-hosted
+    needs: [publish-to-pypi]
+    permissions:
+      id-token: write
+      contents: read
+    timeout-minutes: 30
+    environment:
+      name: devpi
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Cache downloaded files
+        id: cache-kete
+        uses: actions/cache@v5
+        env:
+          cache-name: cache-kete
+        with:
+          # kete stores all files in `~/.kete/` by default
+          path: ~/.kete
+          # These files are valid long term, and are not expected to change
+          # between runs. So there is no need to a changing name.
+          key: kete-cache
+
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache-key: ${{ runner.os }}-stable
+
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@v8
+        with:
+          python-version: "3.13"
+          activate-environment: true
+          ignore-nothing-to-cache: true
+
+      - name: Install devpi
+        run: |
+          uv tool install devpi-client
+
+      - name: Configure uv to use devpi
+        run: |
+          devpi use -y https://pypi.neosdev.ipac.caltech.edu
+          devpi login -y ${{ secrets.DEVPI_USER }} --password '${{ secrets.DEVPI_PASS }}'
+          devpi use --set-cfg --always-set-cfg yes --pip-set-trusted yes neos/stable
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-groups --all-extras
+        env:
+          UV_INDEX: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          UV_DEFAULT_INDEX: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          UV_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          UV_EXTRA_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          PIP_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          PIP_EXTRA_INDEX_URL: "https://pypi.neosdev.ipac.caltech.edu/neos/stable/+simple/"
+          PIP_TRUSTED_HOST: "pypi.org pypi.neosdev.ipac.caltech.edu"
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-groups --all-extras
+
+      - name: Cargo Docs
+        run: |
+          cargo doc --no-deps --release
+
+      # Build documentation and push artifact
+      - name: Build Docs
+        run: |
+          cd docs
+          make clean
+          make doctest
+          make html
+
+      - name: Fix permissions
+        run: |
+          chmod -c -R +rX "docs/" | while read line; do
+            echo "::warning title=Invalid file permissions automatically fixed::$line"
+          done
+
+      - name: Upload docs
+        run: |
+          read -r package_name package_version < <(uv version)
+          cd docs
+          zip -rz "${package_name}-${package_version}.doc.zip" html/*
+          devpi upload "docs/${package_name}-${package_version}.doc.zip"

@@ -19,13 +19,13 @@ concurrency:
 
 jobs:
   build:
-    name: Build and test with python ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: Build and test with python ${{ matrix.python }} on ${{ matrix.os }}
     timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version:
+        python:
           - "3.9"
           - "3.10"
           - "3.11"
@@ -36,13 +36,13 @@ jobs:
           - ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Cache downloaded files
         id: cache-kete
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           cache-name: cache-kete
         with:
@@ -59,14 +59,10 @@ jobs:
           cache-key: ${{ runner.os }}-stable
 
       - name: Install uv and set the Python version
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v8
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
           activate-environment: true
-          enable-cache: true
-          restore-cache: true
-          save-cache: true
-          prune-cache: false
           ignore-nothing-to-cache: true
 
       - name: Install dependencies
@@ -74,9 +70,9 @@ jobs:
           uv sync --all-groups --all-extras
 
       - name: Check formatting with ruff
-        uses: astral-sh/ruff-action@v3
+        uses: astral-sh/ruff-action@v4
         with:
-          args: "check"
+          args: "format --check --diff"
 
       - name: Lint with mypy
         run: |
@@ -97,13 +93,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Cache downloaded files
         id: cache-kete
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           cache-name: cache-kete
         with:
@@ -120,14 +116,10 @@ jobs:
           cache-key: ${{ runner.os }}-stable
 
       - name: Install uv and set the Python version
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v8
         with:
+          python-version: ${{ matrix.python }}
           activate-environment: true
-          python-version: "3.11"
-          enable-cache: true
-          restore-cache: true
-          save-cache: true
-          prune-cache: false
           ignore-nothing-to-cache: true
 
       - name: Install dependencies
@@ -136,7 +128,7 @@ jobs:
 
       - name: Cargo Docs
         run: |
-          cargo doc
+          cargo doc --no-deps --release
 
       # Build documentation and push artifact
       - name: Build Docs
@@ -152,14 +144,8 @@ jobs:
             echo "::warning title=Invalid file permissions automatically fixed::$line"
           done
 
-      - name: Upload Docs artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: "docs"
-          path: docs/html/
-
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           name: "github-pages"
           path: docs/html/
@@ -183,5 +169,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
-	
+        uses: actions/deploy-pages@v5
