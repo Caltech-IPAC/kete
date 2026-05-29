@@ -10,7 +10,7 @@ keywords = ["physics", "simulation", "astronomy"]
 name = "kete_core"
 
 [dependencies]
-argmin = "^0.10.0"
+argmin = "^0.11.0"
 argmin-math = "^0.4.0"
 chrono = "^0.4.38"
 crossbeam = "^0.8.4"
