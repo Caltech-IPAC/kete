@@ -288,4 +288,4 @@ jobs:
           read -r package_name package_version < <(uv version)
           cd docs
           zip -rz "${package_name}-${package_version}.doc.zip" html/*
-          devpi upload "docs/${package_name}-${package_version}.doc.zip"
+          devpi upload "${package_name}-${package_version}.doc.zip"
