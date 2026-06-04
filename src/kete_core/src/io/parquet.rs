@@ -58,7 +58,7 @@ pub fn write_states_parquet(states: &[State], filename: &str) -> KeteResult<()> 
         "center".into(),
         states.iter().map(|state| state.center_id).collect_vec(),
     );
-    let mut df = DataFrame::new(vec![desigs, jd, x, y, z, vx, vy, vz, frame, center])
+    let mut df = DataFrame::new_infer_height(vec![desigs, jd, x, y, z, vx, vy, vz, frame, center])
         .expect("Failed to construct dataframe");
     let file = File::create(filename).expect("could not create file");
     let _ = ParquetWriter::new(file)
@@ -76,7 +76,7 @@ pub fn read_states_parquet(filename: &str) -> KeteResult<Vec<State>> {
     let mut dataframe = reader.finish().map_err(|_| {
         Error::IOError("Failed to read contents of file as a parquet table.".into())
     })?;
-    let dataframe = dataframe.as_single_chunk_par();
+    let _ = dataframe.align_chunks_par();
 
     // create all the iterators, these are all type dependant, so they get special cased
     let mut desig_iter = dataframe
@@ -102,9 +102,10 @@ pub fn read_states_parquet(filename: &str) -> KeteResult<Vec<State>> {
 
     // the remaining columns are all floats, so here we make a vector of iterators of
     // floats
-    let mut state_iters = dataframe
-        .columns(["jd", "x", "y", "z", "vx", "vy", "vz"])
-        .map_err(|_| Error::IOError("File doesn't contain the correct columns".into()))?
+    let state_columns = dataframe
+        .select_to_vec(["jd", "x", "y", "z", "vx", "vy", "vz"])
+        .map_err(|_| Error::IOError("File doesn't contain the correct columns".into()))?;
+    let mut state_iters = state_columns
         .iter()
         .map(|s| {
             s.f64()
