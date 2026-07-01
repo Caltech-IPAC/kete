@@ -42,7 +42,7 @@ jobs:
 
       - name: Cache downloaded files
         id: cache-kete
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         env:
           cache-name: cache-kete
         with:
@@ -99,7 +99,7 @@ jobs:
 
       - name: Cache downloaded files
         id: cache-kete
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         env:
           cache-name: cache-kete
         with:
