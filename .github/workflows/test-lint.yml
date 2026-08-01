@@ -70,7 +70,7 @@ jobs:
           uv sync --all-groups --all-extras
 
       - name: Check formatting with ruff
-        uses: astral-sh/ruff-action@v4.0.0
+        uses: astral-sh/ruff-action@v4.1.0
         with:
           args: "format --check --diff"
 
