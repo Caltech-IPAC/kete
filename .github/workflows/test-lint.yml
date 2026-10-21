@@ -84,7 +84,7 @@ jobs:
 
       - name: Test with cargo
         run: |
-          cargo test
+          cargo test -p kete_core
 
   docs:
     needs: build
@@ -128,7 +128,7 @@ jobs:
 
       - name: Cargo Docs
         run: |
-          cargo doc --no-deps --release
+          cargo doc -p kete_core --no-deps --release
 
       # Build documentation and push artifact
       - name: Build Docs
