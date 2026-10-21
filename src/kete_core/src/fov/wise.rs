@@ -1,6 +1,4 @@
 //! # WISE Fov definitions.
-use core::f64;
-
 use super::{Contains, FovLike, Frame, OnSkyRectangle, SkyPatch, FOV};
 use crate::constants::WISE_WIDTH;
 use crate::prelude::*;
