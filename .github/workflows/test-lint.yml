@@ -40,6 +40,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install Podman
+        uses: redhat-actions/podman-install@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Cache downloaded files
         id: cache-kete
         uses: actions/cache@v5
