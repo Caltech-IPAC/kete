@@ -31,7 +31,8 @@ sgp4 = "^2.2.0"
 bincode = {version = "2.0.0-rc.3", features=["derive", "serde"]}
 
 [dev-dependencies]
-criterion = { version = "*", features = ["html_reports"] }
+# criterion must match the version pprof implements its `Profiler` trait for.
+criterion = { version = "0.5", features = ["html_reports"] }
 
 # pprof is used for flame graphs, this is failing on windows currently so only
 # linux and mac are supported here.

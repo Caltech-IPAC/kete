@@ -9,7 +9,6 @@ use crate::prelude::CometElements;
 use crate::state::State;
 use crate::{constants::*, prelude::KeteResult};
 use argmin::solver::neldermead::NelderMead;
-use core::f64;
 use nalgebra::{ComplexField, Vector3};
 use std::f64::consts::TAU;
 

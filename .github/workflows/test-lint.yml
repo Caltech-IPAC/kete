@@ -40,6 +40,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install and Start Apple Container
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew install container
+          /opt/homebrew/opt/container/bin/container system start --enable-kernel-install
+
       - name: Cache downloaded files
         id: cache-kete
         uses: actions/cache@v5
@@ -51,6 +57,30 @@ jobs:
           # These files are valid long term, and are not expected to change
           # between runs. So there is no need to a changing name.
           key: kete-cache
+
+      - name: Check cache (macos)
+        if: ${{ matrix.os == 'macos-latest' }}
+        shell: bash
+        # Check if the cache was populated. If not, grab it from the OCI container.
+        run: |
+          if [[ ! -d "$HOME/.kete/kernels" ]]; then
+            rm -rf "$HOME/.kete"
+            container create --name kete-cache ghcr.io/caltech-ipac/kete-cache:latest
+            container cp kete-cache:/kete/ "$HOME/.kete"
+            container rm kete-cache
+          fi
+
+      - name: Check cache (non-macos)
+        if: ${{ matrix.os != 'macos-latest' }}
+        shell: bash
+        # Check if the cache was populated. If not, grab it from the OCI container.
+        run: |
+          if [[ ! -d "$HOME/.kete/kernels" ]]; then
+            rm -rf "$HOME/.kete"
+            podman create --name kete-cache ghcr.io/caltech-ipac/kete-cache:latest
+            podman cp kete-cache:/kete/ "$HOME/.kete"
+            podman rm kete-cache
+          fi
 
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -84,7 +114,7 @@ jobs:
 
       - name: Test with cargo
         run: |
-          cargo test
+          cargo test -p kete_core
 
   docs:
     needs: build
@@ -128,7 +158,7 @@ jobs:
 
       - name: Cargo Docs
         run: |
-          cargo doc --no-deps --release
+          cargo doc -p kete_core --no-deps --release
 
       # Build documentation and push artifact
       - name: Build Docs

@@ -168,16 +168,16 @@ There are a test suite of micro-benchmarks in the rust backend of kete. These re
 `gnuplot` to be installed, and may be run using the following command:
 
 ``` bash
-cargo bench
+cargo bench -p kete_core
 open target/criterion/report/index.html
 ```
 
 Additionally, Flamegraphs may be produced using the following:
 
 ``` bash
-cargo bench --bench propagation -- --profile-time=5
-cargo bench --bench spice -- --profile-time=5
-cargo bench --bench thermal -- --profile-time=5
+cargo bench -p kete_core --bench propagation -- --profile-time=5
+cargo bench -p kete_core --bench spice -- --profile-time=5
+cargo bench -p kete_core --bench thermal -- --profile-time=5
 ```
 
 These flamegraphs will be put in `target/criterion/*/profile/flamegraph.svg`. Opening

@@ -8,17 +8,20 @@ license = "BSD-3-Clause"
 keywords = ["physics", "simulation", "astronomy"]
 
 [dependencies]
-kete_core = { version = "*", path = "src/kete_core", features=["pyo3", "polars"]}
-pyo3 = { version =  "^0.24.1", features = ["extension-module"] }
+kete_core = { version = "*", path = "src/kete_core", features = [
+  "pyo3",
+  "polars",
+] }
+pyo3 = { version = "^0.24.1", features = ["extension-module"] }
 serde = { version = "^1.0.203", features = ["derive"] }
-nalgebra = {version = "^0.33.0"}
+nalgebra = { version = "^0.33.0" }
 itertools = "^0.14.0"
 rayon = "^1.10.0"
 sgp4 = "2.2.0"
 
 # bincode is pinned to ensure backward compatability with saved files, all updates to
 # this version need to be validated that they are forward compatable.
-bincode = {version = "2.0.0-rc.3", features=["derive", "serde"]}
+bincode = { version = "2.0.0-rc.3", features = ["derive", "serde"] }
 
 [lib]
 name = "_core"
@@ -27,8 +30,8 @@ crate-type = ["cdylib", "lib"]
 
 [workspace]
 members = ["src/kete_core"]
-default-members = ["src/kete_core"]
 
 [profile.release]
 opt-level = 3
 codegen-units = 1
+
