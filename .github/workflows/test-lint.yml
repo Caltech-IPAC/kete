@@ -43,7 +43,7 @@ jobs:
       - name: Install and Start Apple Container
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
-          brew install apple/container
+          brew install container
           container system start
 
       - name: Cache downloaded files
