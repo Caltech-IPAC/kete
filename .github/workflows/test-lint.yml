@@ -40,10 +40,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Podman
-        uses: redhat-actions/podman-install@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install and Start Podman
+        if: ${{ matrix.os == "macos-latest" }}
+        run: |
+          brew install podman
+          podman machine init
+          podman machine start
 
       - name: Cache downloaded files
         id: cache-kete
