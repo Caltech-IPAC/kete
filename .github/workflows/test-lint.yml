@@ -52,6 +52,17 @@ jobs:
           # between runs. So there is no need to a changing name.
           key: kete-cache
 
+      - name: Check cache
+        shell: bash
+        # Check if the cache was populated. If not, grab it from the OCI container.
+        run: |
+          if [[ ! -d "$HOME/.kete/kernels" ]]; then
+            rm -rf "$HOME/.kete"
+            podman create --name kete-cache ghcr.io/caltech-ipac/kete-cache:latest
+            podman cp kete-cache:/kete/ "$HOME/.kete"
+            podman rm kete-cache
+          fi
+
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:

@@ -281,7 +281,7 @@ def dec_degrees_to_dms(dec: NDArray) -> Union[str, list[str]]:
     dec = np.array(dec)
 
     def _val(dec):
-        degree = np.fix(dec)
+        degree = np.trunc(dec)
         arc_min = int((dec - degree) * 60)
         arc_sec = (((dec - degree) * 60) - arc_min) * 60
         return f"{degree:+03.0f} {abs(arc_min):02d} {abs(arc_sec):05.2f}"
