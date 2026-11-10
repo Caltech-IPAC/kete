@@ -14,6 +14,7 @@ on:
   workflow_dispatch:
 
 env:
+  DEVPI_USER: github
   KETE_KERNEL_VERSION: v1
 
 concurrency:
@@ -165,7 +166,7 @@ jobs:
       - name: Configure uv to use devpi
         run: |
           devpi use -y https://pypi.neosdev.ipac.caltech.edu
-          devpi login -y ${{ secrets.DEVPI_USER }} --password '${{ secrets.DEVPI_PASS }}'
+          devpi login -y "$DEVPI_USER" --password '${{ secrets.DEVPI_PASS }}'
           devpi use --set-cfg --always-set-cfg yes --pip-set-trusted yes neos/stable
 
       - name: Install dependencies
@@ -229,7 +230,7 @@ jobs:
           print-hash: true
           attestations: false
           skip-existing: false
-          user: ${{ secrets.DEVPI_USER }}
+          user: ${{ env.DEVPI_USER }}
           password: ${{ secrets.DEVPI_PASS }}
           repository-url: https://pypi.neosdev.ipac.caltech.edu/neos/stable/
 
@@ -291,7 +292,7 @@ jobs:
       - name: Configure uv to use devpi
         run: |
           devpi use -y https://pypi.neosdev.ipac.caltech.edu
-          devpi login -y ${{ secrets.DEVPI_USER }} --password '${{ secrets.DEVPI_PASS }}'
+          devpi login -y "$DEVPI_USER" --password '${{ secrets.DEVPI_PASS }}'
           devpi use --set-cfg --always-set-cfg yes --pip-set-trusted yes neos/stable
 
       - name: Install dependencies
