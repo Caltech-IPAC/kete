@@ -2,6 +2,10 @@
 
 set -Eeuo pipefail
 
+if [[ "${DEBUG:-}" == "true" ]]; then
+  set -x
+fi
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 if [[ ! -d "$HOME/.kete" ]]; then
@@ -76,7 +80,7 @@ for image in "${images[@]}"; do
   podman manifest create "${manifest_args[@]}" "$image"
 done
 
-for arch in "amd64" "arm64" "ppc64le" "s390x" "riscv64"; do
+for arch in "amd64" "arm64" "ppc64le" "s390x"; do
   podman build \
     --platform="linux/$arch" \
     -t "${CONTAINER_REPO}/${CONTAINER_NAME}:${CALVER}-${arch}" \

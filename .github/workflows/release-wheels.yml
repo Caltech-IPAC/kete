@@ -66,9 +66,9 @@ jobs:
         run: |
           if [[ ! -d "$HOME/.kete/kernels" ]]; then
             rm -rf "$HOME/.kete"
-            container create --name kete-cache ghcr.io/caltech-ipac/kete-cache:latest
+            container run --rm -d --name kete-cache ghcr.io/caltech-ipac/kete-cache:latest
             container cp kete-cache:/kete/ "$HOME/.kete"
-            container rm kete-cache
+            container stop kete-cache
           fi
 
       - name: Check cache (non-macos)
@@ -144,20 +144,7 @@ jobs:
           # between runs. So there is no need to a changing name.
           key: kete-cache
 
-      - name: Check cache (macos)
-        if: ${{ matrix.os == 'macos-latest' }}
-        shell: bash
-        # Check if the cache was populated. If not, grab it from the OCI container.
-        run: |
-          if [[ ! -d "$HOME/.kete/kernels" ]]; then
-            rm -rf "$HOME/.kete"
-            container create --name kete-cache ghcr.io/caltech-ipac/kete-cache:latest
-            container cp kete-cache:/kete/ "$HOME/.kete"
-            container rm kete-cache
-          fi
-
       - name: Check cache (non-macos)
-        if: ${{ matrix.os != 'macos-latest' }}
         shell: bash
         # Check if the cache was populated. If not, grab it from the OCI container.
         run: |
