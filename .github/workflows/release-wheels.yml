@@ -13,6 +13,9 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
 
+env:
+  KETE_KERNEL_VERSION: v1
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -41,12 +44,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Install and Start Apple Container
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          brew install container
-          /opt/homebrew/opt/container/bin/container system start --enable-kernel-install
-
       - name: Cache downloaded files
         id: cache-kete
         uses: actions/cache@v5
@@ -59,28 +56,18 @@ jobs:
           # between runs. So there is no need to a changing name.
           key: kete-cache
 
-      - name: Check cache (macos)
-        if: ${{ matrix.os == 'macos-latest' }}
+      - name: Check cache
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # Check if the cache was populated. If not, grab it from the OCI container.
         run: |
           if [[ ! -d "$HOME/.kete/kernels" ]]; then
             rm -rf "$HOME/.kete"
-            container run --rm -d --name kete-cache ghcr.io/caltech-ipac/kete-cache:latest
-            container cp kete-cache:/kete/ "$HOME/.kete"
-            container stop kete-cache
-          fi
-
-      - name: Check cache (non-macos)
-        if: ${{ matrix.os != 'macos-latest' }}
-        shell: bash
-        # Check if the cache was populated. If not, grab it from the OCI container.
-        run: |
-          if [[ ! -d "$HOME/.kete/kernels" ]]; then
-            rm -rf "$HOME/.kete"
-            podman create --name kete-cache ghcr.io/caltech-ipac/kete-cache:latest
-            podman cp kete-cache:/kete/ "$HOME/.kete"
-            podman rm kete-cache
+            gh release download "kete-kernels-$KETE_KERNEL_VERSION" --repo ${{ github.repository }} --dir "$HOME/.kete"
+            cd "$HOME/.kete"
+            sha256sum -c kete-kernels.tar.gz.sha256
+            tar -xzf kete-kernels.tar.gz
           fi
 
       - name: Set up Rust
@@ -144,15 +131,18 @@ jobs:
           # between runs. So there is no need to a changing name.
           key: kete-cache
 
-      - name: Check cache (non-macos)
+      - name: Check cache
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # Check if the cache was populated. If not, grab it from the OCI container.
         run: |
           if [[ ! -d "$HOME/.kete/kernels" ]]; then
             rm -rf "$HOME/.kete"
-            podman create --name kete-cache ghcr.io/caltech-ipac/kete-cache:latest
-            podman cp kete-cache:/kete/ "$HOME/.kete"
-            podman rm kete-cache
+            gh release download "kete-kernels-$KETE_KERNEL_VERSION" --repo ${{ github.repository }} --dir "$HOME/.kete"
+            cd "$HOME/.kete"
+            sha256sum -c kete-kernels.tar.gz.sha256
+            tar -xzf kete-kernels.tar.gz
           fi
 
       - name: Set up Rust
@@ -266,6 +256,20 @@ jobs:
           # These files are valid long term, and are not expected to change
           # between runs. So there is no need to a changing name.
           key: kete-cache
+
+      - name: Check cache
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Check if the cache was populated. If not, grab it from the OCI container.
+        run: |
+          if [[ ! -d "$HOME/.kete/kernels" ]]; then
+            rm -rf "$HOME/.kete"
+            gh release download "kete-kernels-$KETE_KERNEL_VERSION" --repo ${{ github.repository }} --dir "$HOME/.kete"
+            cd "$HOME/.kete"
+            sha256sum -c kete-kernels.tar.gz.sha256
+            tar -xzf kete-kernels.tar.gz
+          fi
 
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
