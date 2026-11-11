@@ -153,6 +153,32 @@ pub fn black_body_flux(temp: f64, wavelength: f64) -> f64 {
     coef / (exponent.exp() - 1.0)
 }
 
+/// Wavelength-dependent terms shared by every facet in a thermal model.
+pub(crate) struct BlackBodyBand {
+    wavelength: f64,
+    exponent_scale: f64,
+    coefficient: f64,
+}
+
+impl BlackBodyBand {
+    pub(crate) fn new(wavelength: f64) -> Self {
+        let wavelength_um = wavelength * 1e-3;
+        Self {
+            wavelength,
+            exponent_scale: 1.43877688e4 / wavelength_um,
+            coefficient: 397.289171e17 / wavelength_um.powi(3),
+        }
+    }
+
+    #[inline(always)]
+    pub(crate) fn flux(&self, temp: f64) -> f64 {
+        if self.wavelength < 10.0 || temp < 30.0 {
+            return 0.0;
+        }
+        self.coefficient / ((self.exponent_scale / temp).exp() - 1.0)
+    }
+}
+
 /// Calculate the total flux visible from an observers position from a Lambertian
 /// surface.
 ///

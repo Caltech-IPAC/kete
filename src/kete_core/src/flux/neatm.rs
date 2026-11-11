@@ -1,5 +1,5 @@
 use super::{
-    common::{black_body_flux, lambertian_vis_scale_factor, sub_solar_temperature, ModelResults},
+    common::{lambertian_vis_scale_factor, sub_solar_temperature, BlackBodyBand, ModelResults},
     flux_to_mag, HGParams, ObserverBands, DEFAULT_SHAPE,
 };
 use crate::{constants::V_MAG_ZERO, io::FileIO};
@@ -108,9 +108,9 @@ impl NeatmParams {
         let obs2obj = UnitVector3::new_normalize(obs2obj);
 
         let mut fluxes = vec![0.0; bands.len()];
+        let thermal_bands: Vec<_> = bands.iter().copied().map(BlackBodyBand::new).collect();
 
         for facet in geom.facets.iter() {
-            let temp = neatm_facet_temperature(&facet.normal, &obj2sun, &ss_temp);
             let obs_flux_scaling = lambertian_vis_scale_factor(
                 &facet.normal,
                 &obs2obj,
@@ -118,11 +118,16 @@ impl NeatmParams {
                 &diameter,
                 &self.emissivity,
             );
-            if temp == 0.0 || obs_flux_scaling == 0.0 {
+            // Hidden facets cannot contribute, so avoid computing their temperature.
+            if obs_flux_scaling == 0.0 {
                 continue;
             }
-            for (idx, (wavelength, flux)) in bands.iter().zip(&mut fluxes).enumerate() {
-                let mut facet_flux = black_body_flux(temp, *wavelength);
+            let temp = neatm_facet_temperature(&facet.normal, &obj2sun, &ss_temp);
+            if temp == 0.0 {
+                continue;
+            }
+            for (idx, (band, flux)) in thermal_bands.iter().zip(&mut fluxes).enumerate() {
+                let mut facet_flux = band.flux(temp);
                 if let Some(funcs) = color_correction {
                     facet_flux *= funcs[idx](temp);
                 };

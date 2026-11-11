@@ -1,5 +1,5 @@
 use super::{
-    common::{black_body_flux, lambertian_vis_scale_factor, sub_solar_temperature, ModelResults},
+    common::{lambertian_vis_scale_factor, sub_solar_temperature, BlackBodyBand, ModelResults},
     flux_to_mag, HGParams, ObserverBands, DEFAULT_SHAPE,
 };
 use crate::{constants::V_MAG_ZERO, io::FileIO};
@@ -22,10 +22,11 @@ pub fn frm_facet_temperature(
     subsolar_temp: f64,
     obj2sun: &UnitVector3<f64>,
 ) -> f64 {
-    // since the facet normals are length 1, and the sun_norm vec is length one, the
-    // angle difference is arcsin(z_sun) - arcsin(z_normal)
-
-    let tmp = (facet_normal.z.asin() - obj2sun.z.asin()).cos();
+    // cos(asin(a) - asin(b)) = sqrt(1 - a²) * sqrt(1 - b²) + a*b.
+    // Unit-vector z components are sines of latitude, so both square roots
+    // are nonnegative.
+    let tmp = (1.0 - facet_normal.z.powi(2)).sqrt() * (1.0 - obj2sun.z.powi(2)).sqrt()
+        + facet_normal.z * obj2sun.z;
     if tmp > 0.0 {
         return tmp.sqrt().sqrt() * subsolar_temp;
     }
@@ -102,8 +103,8 @@ impl FrmParams {
         let obs2obj = UnitVector3::new_normalize(obs2obj);
 
         let mut fluxes = vec![0.0; bands.len()];
+        let thermal_bands: Vec<_> = bands.iter().copied().map(BlackBodyBand::new).collect();
         for facet in geom.facets.iter() {
-            let temp = frm_facet_temperature(&facet.normal, ss_temp, &obj2sun);
             let obs_flux_scaling = lambertian_vis_scale_factor(
                 &facet.normal,
                 &obs2obj,
@@ -111,11 +112,16 @@ impl FrmParams {
                 &diameter,
                 &self.emissivity,
             );
-            if temp == 0.0 || obs_flux_scaling == 0.0 {
+            // Hidden facets cannot contribute, so avoid computing their temperature.
+            if obs_flux_scaling == 0.0 {
                 continue;
             }
-            for (idx, (wavelength, flux)) in bands.iter().zip(&mut fluxes).enumerate() {
-                let mut facet_flux = black_body_flux(temp, *wavelength);
+            let temp = frm_facet_temperature(&facet.normal, ss_temp, &obj2sun);
+            if temp == 0.0 {
+                continue;
+            }
+            for (idx, (band, flux)) in thermal_bands.iter().zip(&mut fluxes).enumerate() {
+                let mut facet_flux = band.flux(temp);
                 if let Some(funcs) = color_correction {
                     facet_flux *= funcs[idx](temp);
                 };
