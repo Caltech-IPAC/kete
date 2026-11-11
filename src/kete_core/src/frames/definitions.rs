@@ -222,7 +222,13 @@ pub fn ecliptic_to_galactic(vec: &Vector3<f64>) -> Vector3<f64> {
 /// * `vec` - Vector, arbitrary units.
 #[inline(always)]
 pub fn ecliptic_to_equatorial(vec: &Vector3<f64>) -> Vector3<f64> {
-    ECLIPTIC_EQUATORIAL_ROT.transform_vector(vec)
+    // This is a rotation about X: only the Y/Z plane changes.
+    let rotation = &*ECLIPTIC_EQUATORIAL_ROT;
+    Vector3::new(
+        vec.x,
+        rotation[(1, 1)] * vec.y + rotation[(1, 2)] * vec.z,
+        rotation[(2, 1)] * vec.y + rotation[(2, 2)] * vec.z,
+    )
 }
 
 /// Convert a vector from equatorial to ecliptic J2000 frames assuming the 1984 JPL DE
@@ -233,7 +239,12 @@ pub fn ecliptic_to_equatorial(vec: &Vector3<f64>) -> Vector3<f64> {
 /// * `vec` - Vector, arbitrary units.
 #[inline(always)]
 pub fn equatorial_to_ecliptic(vec: &Vector3<f64>) -> Vector3<f64> {
-    ECLIPTIC_EQUATORIAL_ROT.inverse().transform_vector(vec)
+    let rotation = &*ECLIPTIC_EQUATORIAL_ROT;
+    Vector3::new(
+        vec.x,
+        rotation[(1, 1)] * vec.y + rotation[(2, 1)] * vec.z,
+        rotation[(1, 2)] * vec.y + rotation[(2, 2)] * vec.z,
+    )
 }
 
 /// Derivative of the z rotation matrix with respect to the rotation angle.
