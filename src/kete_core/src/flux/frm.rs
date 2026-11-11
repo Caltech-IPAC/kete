@@ -103,7 +103,6 @@ impl FrmParams {
 
         let mut fluxes = vec![0.0; bands.len()];
         for facet in geom.facets.iter() {
-            let temp = frm_facet_temperature(&facet.normal, ss_temp, &obj2sun);
             let obs_flux_scaling = lambertian_vis_scale_factor(
                 &facet.normal,
                 &obs2obj,
@@ -111,7 +110,12 @@ impl FrmParams {
                 &diameter,
                 &self.emissivity,
             );
-            if temp == 0.0 || obs_flux_scaling == 0.0 {
+            // Hidden facets cannot contribute, so avoid computing their temperature.
+            if obs_flux_scaling == 0.0 {
+                continue;
+            }
+            let temp = frm_facet_temperature(&facet.normal, ss_temp, &obj2sun);
+            if temp == 0.0 {
                 continue;
             }
             for (idx, (wavelength, flux)) in bands.iter().zip(&mut fluxes).enumerate() {

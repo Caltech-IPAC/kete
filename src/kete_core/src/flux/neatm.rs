@@ -110,7 +110,6 @@ impl NeatmParams {
         let mut fluxes = vec![0.0; bands.len()];
 
         for facet in geom.facets.iter() {
-            let temp = neatm_facet_temperature(&facet.normal, &obj2sun, &ss_temp);
             let obs_flux_scaling = lambertian_vis_scale_factor(
                 &facet.normal,
                 &obs2obj,
@@ -118,7 +117,12 @@ impl NeatmParams {
                 &diameter,
                 &self.emissivity,
             );
-            if temp == 0.0 || obs_flux_scaling == 0.0 {
+            // Hidden facets cannot contribute, so avoid computing their temperature.
+            if obs_flux_scaling == 0.0 {
+                continue;
+            }
+            let temp = neatm_facet_temperature(&facet.normal, &obj2sun, &ss_temp);
+            if temp == 0.0 {
                 continue;
             }
             for (idx, (wavelength, flux)) in bands.iter().zip(&mut fluxes).enumerate() {
