@@ -81,6 +81,13 @@ impl FovLike for WiseCmos {
     }
 
     #[inline]
+    fn check_linear_fov(&self, state: &State) -> (usize, Contains) {
+        // The rough rejection check only needs geometry, not a cloned designation.
+        let (pos, _) = super::fov_like::linear_position(state, &self.observer);
+        self.contains(&(pos - Vector3::from(self.observer.pos)))
+    }
+
+    #[inline]
     fn n_patches(&self) -> usize {
         1
     }

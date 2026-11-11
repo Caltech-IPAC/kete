@@ -213,6 +213,7 @@ impl<const D: usize> SkyPatch for SphericalPolygon<D> {
     /// Is the obs_to_obj vector inside of the polygon.
     fn contains(&self, obs_to_obj: &Vector3<f64>) -> Contains {
         let mut closest_edge = f64::NEG_INFINITY;
+        let mut outside = false;
         for normal in self.edge_normals.iter() {
             let normal = Vector3::from(*normal);
             let d = obs_to_obj.dot(&normal);
@@ -222,13 +223,12 @@ impl<const D: usize> SkyPatch for SphericalPolygon<D> {
             // of all the edges where d is outside, we need to find the maximum
             // distance one. This will be the *minimum* distance which the
             // object must move to be inside of the patch.
-            if d.is_sign_negative() && d.abs() > closest_edge {
-                closest_edge = d.abs();
-            }
+            outside |= d.is_sign_negative();
+            closest_edge = closest_edge.max(-d);
         }
 
         match closest_edge {
-            x if x.is_finite() => Contains::Outside(x.min(obs_to_obj.norm())),
+            x if outside && x.is_finite() => Contains::Outside(x.abs().min(obs_to_obj.norm())),
             _ => Contains::Inside,
         }
     }
