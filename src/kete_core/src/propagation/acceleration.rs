@@ -128,6 +128,7 @@ pub fn spk_accel(
     let spk = &LOADED_SPK.try_read().unwrap();
     spk_accel_with(time, pos, vel, meta, exact_eval, |_, id| {
         spk.try_get_state(id, time, 0, Frame::Equatorial)
+            .map(|state| (state.pos, state.vel))
     })
 }
 
@@ -141,7 +142,7 @@ pub(super) fn spk_accel_with<F>(
     mut get_state: F,
 ) -> KeteResult<Vector3<f64>>
 where
-    F: FnMut(usize, i64) -> KeteResult<crate::state::State>,
+    F: FnMut(usize, i64) -> KeteResult<([f64; 3], [f64; 3])>,
 {
     let mut accel = Vector3::<f64>::zeros();
 
@@ -156,9 +157,9 @@ where
     for (index, grav_params) in meta.massive_obj.iter().enumerate() {
         let id = grav_params.naif_id;
         let radius = grav_params.radius;
-        let state = get_state(index, id)?;
-        let rel_pos: Vector3<f64> = pos - Vector3::from(state.pos);
-        let rel_vel: Vector3<f64> = vel - Vector3::from(state.vel);
+        let (planet_pos, planet_vel) = get_state(index, id)?;
+        let rel_pos: Vector3<f64> = pos - Vector3::from(planet_pos);
+        let rel_vel: Vector3<f64> = vel - Vector3::from(planet_vel);
 
         if exact_eval {
             let r = rel_pos.norm();

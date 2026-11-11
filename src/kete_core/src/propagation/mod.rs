@@ -97,7 +97,10 @@ pub fn propagate_n_body_spk(
     // Radau revisits its seven intermediate times during convergence. Planetary
     // states depend only on time, not on the trial position of the test particle.
     // Keep one step's nodes plus its endpoint; the SPK read guard stays held.
-    let planet_cache = RefCell::new(VecDeque::<(f64, Vec<State>)>::with_capacity(8));
+    // Force evaluations only need the vectors, not the designation or frame metadata.
+    let planet_cache = RefCell::new(VecDeque::<(f64, Vec<([f64; 3], [f64; 3])>)>::with_capacity(
+        8,
+    ));
     let acceleration =
         |time, pos: &Vector3<f64>, vel: &Vector3<f64>, meta: &mut AccelSPKMeta, exact| {
             let mut cache = planet_cache.borrow_mut();
@@ -117,9 +120,10 @@ pub fn propagate_n_body_spk(
             let states = &mut cache[slot].1;
             spk_accel_with(time, pos, vel, meta, exact, |index, id| {
                 if index == states.len() {
-                    states.push(spk.try_get_state(id, time, 0, Frame::Equatorial)?);
+                    let state = spk.try_get_state(id, time, 0, Frame::Equatorial)?;
+                    states.push((state.pos, state.vel));
                 }
-                Ok(states[index].clone())
+                Ok(states[index])
             })
         };
 
