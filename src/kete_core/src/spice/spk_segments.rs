@@ -10,6 +10,9 @@
 //!
 //! <https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/req/spk.html#Supported%20Data%20Types>
 //!
+//! Large interpolation routines use the compiler's normal inlining heuristics to
+//! avoid inflating the hot planetary lookup path. Types 2 and 3 remain inlined.
+//!
 //! There is a lot of repetition in this file, as many of the segment types have very
 //! similar internal structures.
 use super::interpolation::*;
@@ -203,7 +206,6 @@ impl SpkSegmentType1 {
         }
     }
 
-    #[inline(always)]
     fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
         // Records are laid out as so:
         //
@@ -545,7 +547,6 @@ impl SpkSegmentType9 {
         }
     }
 
-    #[inline(always)]
     fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
         let jd = jd_to_spice_jd(jd);
         let times = self.get_times();
@@ -642,7 +643,6 @@ impl SpkSegmentType10 {
         .expect("Failed to load orbit values")
     }
 
-    #[inline(always)]
     fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
         // TODO: this does not yet implement the interpolation between two neighboring states
         // which is present in the cSPICE implementation.
@@ -760,7 +760,6 @@ impl SpkSegmentType13 {
         }
     }
 
-    #[inline(always)]
     fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
         let jd = jd_to_spice_jd(jd);
         let times = self.get_times();
@@ -875,7 +874,6 @@ impl SpkSegmentType18 {
         }
     }
 
-    #[inline(always)]
     fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
         let jd = jd_to_spice_jd(jd);
         let times = self.get_times();
@@ -1003,7 +1001,6 @@ impl SpkSegmentType21 {
         }
     }
 
-    #[inline(always)]
     fn try_get_pos_vel(&self, _: &SpkSegment, jd: f64) -> KeteResult<([f64; 3], [f64; 3])> {
         // Records are laid out as so:
         //

@@ -10,6 +10,7 @@ use crate::prelude::{Desig, KeteResult};
 use crate::spice::LOADED_SPK;
 use crate::state::State;
 use nalgebra::{DVector, Vector3};
+use std::{cell::RefCell, collections::VecDeque};
 
 mod acceleration;
 mod kepler;
@@ -93,9 +94,42 @@ pub fn propagate_n_body_spk(
         massive_obj: mass_list,
     };
 
+    // Radau revisits its seven intermediate times during convergence. Planetary
+    // states depend only on time, not on the trial position of the test particle.
+    // Keep one step's nodes plus its endpoint; the SPK read guard stays held.
+    // Force evaluations only need the vectors, not the designation or frame metadata.
+    let planet_cache = RefCell::new(VecDeque::<(f64, Vec<([f64; 3], [f64; 3])>)>::with_capacity(
+        8,
+    ));
+    let acceleration =
+        |time, pos: &Vector3<f64>, vel: &Vector3<f64>, meta: &mut AccelSPKMeta, exact| {
+            let mut cache = planet_cache.borrow_mut();
+            let slot = match cache.iter().position(|(jd, _)| *jd == time) {
+                Some(slot) => slot,
+                None => {
+                    let mut states = if cache.len() == 8 {
+                        cache.pop_front().unwrap().1
+                    } else {
+                        Vec::with_capacity(mass_list.len())
+                    };
+                    states.clear();
+                    cache.push_back((time, states));
+                    cache.len() - 1
+                }
+            };
+            let states = &mut cache[slot].1;
+            spk_accel_with(time, pos, vel, meta, exact, |index, id| {
+                if index == states.len() {
+                    let state = spk.try_get_state(id, time, 0, Frame::Equatorial)?;
+                    states.push((state.pos, state.vel));
+                }
+                Ok(states[index])
+            })
+        };
+
     let (pos, vel, _meta) = {
         RadauIntegrator::integrate(
-            &spk_accel,
+            &acceleration,
             state.pos.into(),
             state.vel.into(),
             state.jd,
