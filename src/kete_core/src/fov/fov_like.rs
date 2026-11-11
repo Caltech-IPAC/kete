@@ -8,6 +8,15 @@ use rayon::prelude::*;
 use crate::constants::C_AU_PER_DAY_INV;
 use crate::prelude::*;
 
+/// Linear position and time offset, including first-order light delay.
+#[inline]
+pub(super) fn linear_position(state: &State, obs: &State) -> (Vector3<f64>, f64) {
+    let pos = Vector3::from(state.pos);
+    let rel_pos = pos - Vector3::from(obs.pos);
+    let dt = obs.jd - state.jd - rel_pos.norm() * C_AU_PER_DAY_INV;
+    (pos + Vector3::from(state.vel) * dt, dt)
+}
+
 /// Field of View like objects.
 /// These may contain multiple unique sky patches, so as a result the expected
 /// behavior is to return the index as well as the [`Contains`] for the closest
@@ -41,17 +50,11 @@ pub trait FovLike: Sync + Sized {
     /// field of view.
     #[inline]
     fn check_linear(&self, state: &State) -> (usize, Contains, State) {
-        let pos: Vector3<_> = state.pos.into();
         let vel = state.vel.into();
         let obs = self.observer();
 
         let obs_pos: Vector3<_> = obs.pos.into();
-
-        let rel_pos = pos - obs_pos;
-
-        // This also accounts for first order light delay.
-        let dt = obs.jd - state.jd - rel_pos.norm() * C_AU_PER_DAY_INV;
-        let new_pos = pos + vel * dt;
+        let (new_pos, dt) = linear_position(state, obs);
         let new_rel_pos = new_pos - obs_pos;
         let (idx, contains) = self.contains(&new_rel_pos);
         let new_state = State::new(
@@ -63,6 +66,14 @@ pub trait FovLike: Sync + Sized {
             obs.center_id,
         );
         (idx, contains, new_state)
+    }
+
+    /// Linear containment without returning a propagated state.
+    /// The default preserves implementations that override `check_linear`.
+    #[inline]
+    fn check_linear_fov(&self, state: &State) -> (usize, Contains) {
+        let (idx, contains, _) = self.check_linear(state);
+        (idx, contains)
     }
 
     /// Assuming the object undergoes two-body motion, check to see if it is within the
@@ -149,7 +160,7 @@ pub trait FovLike: Sync + Sized {
                     * 2.0;
 
                 if (state.jd - obs_state.jd).abs() < dt_limit {
-                    let (_, contains, _) = self.check_linear(state);
+                    let (_, contains) = self.check_linear_fov(state);
                     if let Contains::Outside(dist) = contains {
                         if dist > max_dist {
                             return None;
